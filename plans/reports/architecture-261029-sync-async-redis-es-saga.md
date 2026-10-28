@@ -148,7 +148,7 @@ sequenceDiagram
     P-->>S: giá vốn + lô
     S->>S: 1 transaction: hóa đơn + phiếu thu TT + công nợ + vận đơn + gắn cọc
     alt Bước lưu hóa đơn lỗi
-        S->>S: bỏ giữ chỗ đơn; kho ĐÃ trừ, chờ client gửi lại cùng id
+        S->>S: bỏ giữ chỗ đơn, kho ĐÃ trừ, chờ client gửi lại cùng id
     end
     S-->>B: mã hóa đơn
     Note over B,S: Mất mạng: phiếu vào hàng đợi localStorage, gửi lại mỗi 15s cùng id
