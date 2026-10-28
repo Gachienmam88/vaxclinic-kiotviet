@@ -47,7 +47,7 @@ export function EInvoicePackageDialog({ pkg, onClose }: { pkg: PackageUsage | nu
           <label className="col-span-2 grid gap-1"><span className="text-xs text-muted-foreground">Tên gói *</span>
             <Input autoFocus value={f.name} maxLength={100} placeholder="VD: Gói 5.000 hóa đơn 2026" onChange={(e) => setF({ ...f, name: e.target.value })} /></label>
           <label className="col-span-2 grid gap-1"><span className="text-xs text-muted-foreground">Tổng số HĐĐT *</span>
-            <Input inputMode="numeric" value={f.quantity} onChange={(e) => setF({ ...f, quantity: formatMoney(parseNumber(e.target.value)) })} /></label>
+            <Input inputMode="numeric" value={f.quantity} onChange={(e) => { const d = e.target.value.replace(/\D/g, ""); setF({ ...f, quantity: d ? formatMoney(d) : "" }); }} /></label>
           <label className="grid gap-1"><span className="text-xs text-muted-foreground">Ngày bắt đầu *</span>
             <DatePicker value={f.startDate} onChange={(v) => setF({ ...f, startDate: v })} /></label>
           <label className="grid gap-1"><span className="text-xs text-muted-foreground">Ngày hết hạn *</span>
