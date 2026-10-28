@@ -17,7 +17,13 @@ spring:
             - id: identity
               uri: ${IDENTITY_URL:http://localhost:8081}
               predicates:
-                - Path=/api/auth/**,/api/users/**,/api/roles/**,/api/branches/**,/api/settings/**,/api/print-templates/**,/api/audit-logs/**,/api/hr/**
+                - Path=/api/auth/**,/api/users/**,/api/roles/**,/api/branches/**,/api/settings/**,/api/print-templates/**,/api/audit-logs/**,/api/hr/**,/api/notifications/**,/api/announcements/**,/api/store-profile/**
+            # Hồ sơ cửa hàng → Hóa đơn điện tử & Chữ ký số (integration-service) PHẢI khớp trước /api/store-profile/** của identity
+            - id: integration-store-profile
+              uri: ${INTEGRATION_URL:http://localhost:8088}
+              order: -1
+              predicates:
+                - Path=/api/store-profile/einvoice/**,/api/store-profile/certificates/**
             # product-service: hàng hóa, nhóm hàng, thuế, vị trí, tồn kho, thẻ kho
             # Báo cáo kho / NCC (product-service) PHẢI khớp trước /api/reports/** của sales: order nhỏ hơn được xét trước
             - id: product-reports
