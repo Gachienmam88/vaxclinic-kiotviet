@@ -35,10 +35,11 @@ public class PosCatalogQuery {
     public List<PosProduct> load(UUID branchId) {
         Map<UUID, PosProduct> out = new LinkedHashMap<>();
         jdbc.query("""
-                select p.id, p.name, p.lot_managed, coalesce(b.quantity, 0) stock,
+                select p.id, p.name, p.lot_managed, coalesce(b.quantity, 0) stock, t.code tax_code,
                        u.id unit_id, u.code, u.barcode, u.unit_name, u.conversion_rate, u.price
                 from products p
                 join product_units u on u.product_id = p.id and u.direct_sale
+                left join tax_rates t on t.id = p.tax_rate_id
                 left join stock_balances b on b.product_id = p.id and b.branch_id = :branchId
                 where p.active and not p.deleted
                 order by p.name, u.sort_order""", new MapSqlParameterSource("branchId", branchId), rs -> {
