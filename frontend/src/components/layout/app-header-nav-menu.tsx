@@ -17,7 +17,9 @@ const NAV: NavItem[] = [
   {
     href: "/products", label: "Hàng hóa", perm: "catalog.view",
     groups: [
-      { title: "Hàng hóa", links: [{ href: "/products", label: "Danh sách hàng hóa" }] },
+      { title: "Hàng hóa", links: [
+        { href: "/products", label: "Danh sách hàng hóa" }, { href: "/products/price-books", label: "Thiết lập giá" },
+      ] },
       { title: "Kho hàng", links: [
         { href: "/inventory/stock-takes", label: "Kiểm kho", perm: "inventory.view" },
         { href: "/inventory/internal-use", label: "Xuất dùng nội bộ", perm: "inventory.view" },
@@ -40,11 +42,15 @@ const NAV: NavItem[] = [
   },
   {
     href: "/invoices", label: "Đơn hàng", perm: "sales.perform",
-    groups: [{ title: "Đơn hàng", links: [{ href: "/invoices", label: "Hóa đơn" }, { href: "/returns", label: "Trả hàng" }] }],
+    groups: [{ title: "Đơn hàng", links: [
+      { href: "/orders", label: "Đặt hàng" }, { href: "/invoices", label: "Hóa đơn" }, { href: "/returns", label: "Trả hàng" },
+    ] }],
   },
   {
     href: "/customers", label: "Khách hàng", perm: "patient.view",
-    groups: [{ title: "Khách hàng", links: [{ href: "/customers", label: "Khách hàng" }] }],
+    groups: [{ title: "Khách hàng", links: [
+      { href: "/customers", label: "Khách hàng" }, { href: "/customers/groups", label: "Nhóm khách hàng" },
+    ] }],
   },
   {
     href: "/settings/users", label: "Nhân viên", perm: "user.manage",
@@ -64,6 +70,9 @@ const isActive = (pathname: string, href: string) => (href === "/" ? pathname ==
 function MegaPanel({ groups, pathname }: { groups: NavGroup[]; pathname: string }) {
   // Bấm chọn xong thì bỏ focus để bảng đóng lại (bảng mở khi rê chuột hoặc khi focus bằng bàn phím)
   const close = () => (document.activeElement as HTMLElement | null)?.blur();
+  // Mục đang mở = href khớp dài nhất (vd. /customers/groups không tô cả "Khách hàng")
+  const current = groups.flatMap((g) => g.links).map((l) => l.href)
+    .filter((h) => pathname === h || pathname.startsWith(h + "/")).sort((a, b) => b.length - a.length)[0];
   return (
     <div className="invisible absolute left-0 top-full z-50 pt-1 opacity-0 transition-opacity duration-100 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
       <div className="flex rounded-lg bg-background py-2 text-foreground shadow-[0_4px_16px_rgba(0,0,0,0.14)]">
@@ -73,7 +82,7 @@ function MegaPanel({ groups, pathname }: { groups: NavGroup[]; pathname: string 
             {g.links.map((l) => (
               <Link key={l.href} href={l.href} onClick={close}
                 className={cn("flex h-8 items-center rounded-md px-2.5 text-[13px] font-normal hover:bg-[#f3f4f6]",
-                  pathname.startsWith(l.href) && "text-primary")}>
+                  l.href === current && "text-primary")}>
                 {l.label}
               </Link>
             ))}
