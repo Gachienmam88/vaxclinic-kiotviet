@@ -42,8 +42,8 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public TokenPair login(@Valid @RequestBody LoginRequest req) {
-        return authService.login(req.username(), req.password(), req.code());
+    public TokenPair login(@Valid @RequestBody LoginRequest req, HttpServletRequest http) {
+        return authService.login(req.username(), req.password(), req.code(), ClientIpResolver.resolve(http));
     }
 
     @PostMapping("/refresh")
