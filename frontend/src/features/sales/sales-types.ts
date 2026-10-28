@@ -47,7 +47,7 @@ export type Invoice = {
   customerName: string; customerPhone: string | null; sellerId: string | null; sellerName: string | null;
   createdByName: string; soldAt: string; status: "COMPLETED" | "CANCELLED"; saleMode: string; subtotal: number;
   discount: number; total: number; paid: number; paymentMethod: string | null; note: string | null; offline: boolean;
-  lines: InvoiceLine[]; payments: InvoicePayment[];
+  revision: number; lines: InvoiceLine[]; payments: InvoicePayment[];
 };
 
 export type InvoiceListItem = {
