@@ -1,0 +1,54 @@
+"use client";
+
+import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Copy, Pencil, Plus, Trash2 } from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { api, errorMessage } from "@/lib/api-client";
+import { RoleFormDialog } from "./role-form-dialog";
+import { SETTINGS_TABLE as T } from "./settings-layout-parts";
+import { useRoles, type Role } from "./settings-queries";
+
+/** Tab Quản lý vai trò: vai trò, mô tả, tài khoản đang dùng; sửa / sao chép / xóa. */
+export function RolesTab() {
+  const qc = useQueryClient();
+  const { data: roles = [] } = useRoles();
+  const [dialog, setDialog] = useState<{ role?: Role; copyFrom?: Role } | null>(null);
+  const remove = useMutation({
+    mutationFn: (id: string) => api(`/roles/${id}`, { method: "DELETE" }),
+    onSuccess: () => { toast.success("Đã xóa vai trò"); qc.invalidateQueries({ queryKey: ["roles"] }); },
+    onError: (e) => toast.error(errorMessage(e)),
+  });
+  return (
+    <div className="space-y-3">
+      <div className="flex justify-end">
+        <Button variant="outline" size="sm" onClick={() => setDialog({})}><Plus className="size-4" /> Tạo vai trò</Button>
+      </div>
+      <table className={T.table}>
+        <thead className={T.head}><tr>
+          <th>Vai trò</th><th>Mô tả</th><th>Tài khoản</th><th className="w-28 text-right">Thao tác</th>
+        </tr></thead>
+        <tbody>
+          {!roles.length && <tr><td colSpan={4} className={T.empty}>Chưa có vai trò</td></tr>}
+          {roles.map((r) => (
+            <tr key={r.id} className={T.row}>
+              <td className="font-medium">{r.name}</td>
+              <td className="text-muted-foreground">{r.description}</td>
+              <td>{r.usernames.length ? r.usernames.join(", ") : <span className="text-muted-foreground">Chưa có</span>}</td>
+              <td className="text-right whitespace-nowrap !py-1.5">
+                <Button size="icon-sm" variant="ghost" title="Sửa" aria-label={`Sửa ${r.name}`} onClick={() => setDialog({ role: r })}><Pencil className="size-4" /></Button>
+                <Button size="icon-sm" variant="ghost" title="Sao chép" aria-label={`Sao chép ${r.name}`} onClick={() => setDialog({ copyFrom: r })}><Copy className="size-4" /></Button>
+                {!r.system && (
+                  <Button size="icon-sm" variant="ghost" title="Xóa" aria-label={`Xóa ${r.name}`} className="text-destructive"
+                    onClick={() => confirm(`Xóa vai trò ${r.name}?`) && remove.mutate(r.id)}><Trash2 className="size-4" /></Button>
+                )}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {dialog && <RoleFormDialog role={dialog.role} copyFrom={dialog.copyFrom} onClose={() => setDialog(null)} />}
+    </div>
+  );
+}
