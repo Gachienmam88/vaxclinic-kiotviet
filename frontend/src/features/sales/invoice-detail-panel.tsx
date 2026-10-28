@@ -89,6 +89,7 @@ export function InvoiceDetailPanel({ id }: { id: string }) {
               <div className="flex justify-between font-semibold"><span>Khách đã trả</span><span>{formatMoney(inv.paid)}</span></div>
             </div>
           </div>
+          <div className="border-t pt-3"><EInvoiceStatus invoiceId={inv.id} active={active} /></div>
           {active && (
             <div className="flex gap-2 border-t pt-3">
               {can("sales.cancel") && (
