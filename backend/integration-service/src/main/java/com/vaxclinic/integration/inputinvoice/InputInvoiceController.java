@@ -67,47 +67,29 @@ public class InputInvoiceController {
         if ("NOT_CREATED".equals(receiptStatus)) w.append(" and receipt_id is null");
         var agg = jdbc.queryForMap("select count(*) cnt, coalesce(sum(total),0) tot" + w, p);
         p.addValue("limit", Math.min(Math.max(size, 1), 100)).addValue("offset", (long) Math.max(page, 0) * size);
-        var items = jdbc.query("select *" + w + " order by issued_at desc, number desc limit :limit offset :offset", p, (rs, n) -> {
-            JsonNode lines;
-            try {
-                lines = rs.getString("lines") == null ? json.createArrayNode() : json.readTree(rs.getString("lines"));
-            } catch (IOException e) {
-                lines = json.createArrayNode();
-            }
-            return new Item(rs.getObject("id", UUID.class), rs.getString("buyer_tax_code"), rs.getString("seller_tax_code"),
-                    rs.getString("seller_name"), rs.getString("template_no"), rs.getString("series"), rs.getString("number"),
-                    rs.getDate("issued_at").toLocalDate(), rs.getBigDecimal("total_before_tax"), rs.getBigDecimal("vat_amount"),
-                    rs.getBigDecimal("total"), rs.getString("nature"), rs.getString("source"),
-                    rs.getObject("receipt_id", UUID.class), rs.getString("receipt_code"), lines);
-        });
+        var items = jdbc.query("select *" + w + " order by issued_at desc, number desc limit :limit offset :offset", p, this::toItem);
         return new Page(items, ((Number) agg.get("cnt")).longValue(), (BigDecimal) agg.get("tot"));
     }
 
     @GetMapping("/api/input-invoices/{id}")
     public Item get(@PathVariable UUID id) {
-        var page = list(null, null, null, null, null, null, 0, 1); // reuse mapping
-        var rows = jdbc.query("select id from input_invoices where id = :id", new MapSqlParameterSource("id", id),
-                (rs, n) -> rs.getObject("id", UUID.class));
-        if (rows.isEmpty()) {
-            throw BusinessException.notFound("INPUT_INVOICE_NOT_FOUND", "Không tìm thấy hóa đơn đầu vào");
-        }
-        return byId(id);
+        return jdbc.query("select * from input_invoices where id = :id", new MapSqlParameterSource("id", id), this::toItem)
+                .stream().findFirst()
+                .orElseThrow(() -> BusinessException.notFound("INPUT_INVOICE_NOT_FOUND", "Không tìm thấy hóa đơn đầu vào"));
     }
 
-    private Item byId(UUID id) {
-        return jdbc.query("select * from input_invoices where id = :id", new MapSqlParameterSource("id", id), (rs, n) -> {
-            JsonNode lines;
-            try {
-                lines = rs.getString("lines") == null ? json.createArrayNode() : json.readTree(rs.getString("lines"));
-            } catch (IOException e) {
-                lines = json.createArrayNode();
-            }
-            return new Item(rs.getObject("id", UUID.class), rs.getString("buyer_tax_code"), rs.getString("seller_tax_code"),
-                    rs.getString("seller_name"), rs.getString("template_no"), rs.getString("series"), rs.getString("number"),
-                    rs.getDate("issued_at").toLocalDate(), rs.getBigDecimal("total_before_tax"), rs.getBigDecimal("vat_amount"),
-                    rs.getBigDecimal("total"), rs.getString("nature"), rs.getString("source"),
-                    rs.getObject("receipt_id", UUID.class), rs.getString("receipt_code"), lines);
-        }).get(0);
+    private Item toItem(java.sql.ResultSet rs, int rowNum) throws java.sql.SQLException {
+        JsonNode lines;
+        try {
+            lines = rs.getString("lines") == null ? json.createArrayNode() : json.readTree(rs.getString("lines"));
+        } catch (IOException e) {
+            lines = json.createArrayNode();
+        }
+        return new Item(rs.getObject("id", UUID.class), rs.getString("buyer_tax_code"), rs.getString("seller_tax_code"),
+                rs.getString("seller_name"), rs.getString("template_no"), rs.getString("series"), rs.getString("number"),
+                rs.getDate("issued_at").toLocalDate(), rs.getBigDecimal("total_before_tax"), rs.getBigDecimal("vat_amount"),
+                rs.getBigDecimal("total"), rs.getString("nature"), rs.getString("source"),
+                rs.getObject("receipt_id", UUID.class), rs.getString("receipt_code"), lines);
     }
 
     @GetMapping("/api/input-invoices/buyer-tax-codes")
