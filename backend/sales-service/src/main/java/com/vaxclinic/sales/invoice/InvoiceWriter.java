@@ -83,6 +83,7 @@ public class InvoiceWriter {
                     .map(a -> a.lotNumber() + ":" + a.baseQuantity().setScale(0, RoundingMode.DOWN).toPlainString())
                     .collect(Collectors.joining(", ")));
             line.setNote(in.note());
+            line.setTaxCode(in.taxCode());
             inv.getLines().add(line);
         }
         invoices.saveAndFlush(inv); // Invoice implements Persistable → persist (INSERT), entity stays managed
