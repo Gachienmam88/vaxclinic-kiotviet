@@ -1,0 +1,24 @@
+server:
+  port: 8080
+
+app:
+  jwt:
+    secret: ${JWT_SECRET}
+
+spring:
+  application:
+    name: gateway-service
+  cloud:
+    gateway:
+      routes:
+        # identity-service: auth, users, roles, branches (điểm tiêm)
+        - id: identity
+          uri: ${IDENTITY_URL:http://localhost:8081}
+          predicates:
+            - Path=/api/auth/**,/api/users/**,/api/roles/**,/api/branches/**
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
