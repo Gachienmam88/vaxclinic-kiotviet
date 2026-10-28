@@ -42,9 +42,15 @@ const NAV: NavItem[] = [
   },
   {
     href: "/invoices", label: "Đơn hàng", perm: "sales.perform",
-    groups: [{ title: "Đơn hàng", links: [
-      { href: "/orders", label: "Đặt hàng" }, { href: "/invoices", label: "Hóa đơn" }, { href: "/returns", label: "Trả hàng" },
-    ] }],
+    groups: [
+      { title: "Đơn hàng", links: [
+        { href: "/orders", label: "Đặt hàng" }, { href: "/invoices", label: "Hóa đơn" }, { href: "/returns", label: "Trả hàng" },
+      ] },
+      { title: "Giao hàng", links: [
+        { href: "/delivery/shipments", label: "Vận đơn" }, { href: "/delivery", label: "Quản lý giao hàng" },
+        { href: "/delivery/partners", label: "Đối tác giao hàng" },
+      ] },
+    ],
   },
   {
     href: "/customers", label: "Khách hàng", perm: "patient.view",
