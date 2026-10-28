@@ -78,7 +78,9 @@ export function UserFormDialog({ open, onOpenChange, user }: Props) {
           </div>
           <div className="col-span-2 grid gap-1.5">
             <Label>Vai trò</Label>
-            <Select value={form.roleId} onValueChange={(v) => setForm((f) => ({ ...f, roleId: v }))}>
+            <Select value={form.roleId || null}
+              items={roles.map((r) => ({ value: r.id, label: r.name }))}
+              onValueChange={(v) => setForm((f) => ({ ...f, roleId: v ?? "" }))}>
               <SelectTrigger className="w-full"><SelectValue placeholder="Chọn vai trò" /></SelectTrigger>
               <SelectContent>
                 {roles.map((r) => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}
