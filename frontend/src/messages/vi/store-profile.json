@@ -1,0 +1,291 @@
+{
+  "shell": {
+    "navLabel": "Hồ sơ cửa hàng",
+    "groups": {
+      "store": "Gian hàng",
+      "einvoice": "Hóa đơn điện tử & Chữ ký số",
+      "other": "Khác"
+    },
+    "items": {
+      "storeInfo": "Thông tin gian hàng",
+      "einvoice": "Hóa đơn điện tử",
+      "certificates": "Quản lý chữ ký số",
+      "terms": "Điều khoản sử dụng"
+    }
+  },
+  "info": {
+    "tabs": {
+      "general": "Thông tin chung",
+      "history": "Lịch sử cập nhật"
+    },
+    "history": {
+      "time": "Thời gian",
+      "user": "Người thực hiện",
+      "content": "Nội dung",
+      "empty": "Chưa có lịch sử cập nhật"
+    }
+  },
+  "general": {
+    "profileSection": "Thông tin hồ sơ",
+    "storeSection": "Thông tin gian hàng",
+    "fields": {
+      "businessType": "Loại hình kinh doanh",
+      "birthDate": "Ngày sinh",
+      "representative": "Người đại diện",
+      "idNumber": "CCCD/Hộ chiếu",
+      "phone": "Điện thoại",
+      "idIssueDate": "Ngày cấp",
+      "email": "Email",
+      "gender": "Giới tính",
+      "idIssuePlace": "Nơi cấp",
+      "address": "Địa chỉ",
+      "accessCode": "Tên gian hàng",
+      "storeName": "Tên cửa hàng",
+      "industry": "Ngành hàng",
+      "owner": "Chủ gian hàng",
+      "branchCount": "Số chi nhánh",
+      "status": "Tình trạng"
+    },
+    "statusPaused": "Đang bảo lưu đến {date}",
+    "statusInUse": "Đang sử dụng",
+    "reopen": "Mở lại gian hàng",
+    "pause": "Bảo lưu gian hàng",
+    "pauseUsed": "Gian hàng đã dùng lượt bảo lưu duy nhất",
+    "update": "Cập nhật",
+    "reopenedToast": "Đã mở lại gian hàng"
+  },
+  "businessTypes": {
+    "PERSONAL": "Cá nhân",
+    "HOUSEHOLD": "Hộ kinh doanh",
+    "ENTERPRISE": "Doanh nghiệp"
+  },
+  "genders": {
+    "MALE": "Nam",
+    "FEMALE": "Nữ"
+  },
+  "flow": {
+    "cancel": "Hủy bỏ",
+    "skip": "Bỏ qua",
+    "next": "Tiếp tục",
+    "confirm": "Xác nhận",
+    "back": "Quay lại"
+  },
+  "verify": {
+    "hintTotp": "Để xác nhận bạn là người thực hiện, nhập mã 6 số đang hiển thị trong ứng dụng xác thực (Google Authenticator, Microsoft Authenticator...).",
+    "hintPassword": "Để xác nhận bạn là người thực hiện, nhập mật khẩu đăng nhập hiện tại của bạn.",
+    "noSms": "Hệ thống không gửi mã OTP qua SMS. Bật xác thực 2 lớp ở menu tài khoản để xác thực bằng ứng dụng thay cho mật khẩu.",
+    "codePlaceholder": "Mã xác thực 6 số",
+    "codeLabel": "Mã xác thực",
+    "password": "Mật khẩu"
+  },
+  "updateChoice": {
+    "title": "Bạn muốn cập nhật thông tin?",
+    "prompt": "Lựa chọn thông tin cần cập nhật:",
+    "ownerOnly": "Chỉ chủ gian hàng được thực hiện.",
+    "options": {
+      "profile": {
+        "title": "Cập nhật thông tin hồ sơ",
+        "hint": "Email, Số CCCD, Người đại diện, Ngày sinh, Địa chỉ,..."
+      },
+      "phone": {
+        "title": "Cập nhật số điện thoại chủ gian hàng"
+      },
+      "rename": {
+        "title": "Đổi tên gian hàng",
+        "hint": "Thay đổi địa chỉ truy cập hệ thống"
+      },
+      "transfer": {
+        "title": "Chuyển nhượng gian hàng",
+        "hint": "Chuyển quyền chủ gian hàng cho quản trị viên khác. Cần xác thực của chủ gian hàng hiện tại."
+      }
+    }
+  },
+  "pause": {
+    "title": "Bảo lưu gian hàng là gì?",
+    "intro": "Bảo lưu gian hàng cho phép tạm khóa gian hàng khi không có nhu cầu sử dụng mà vẫn giữ nguyên vẹn dữ liệu. Trong thời gian bảo lưu, mọi nhân viên sẽ không sử dụng được tính năng nào của hệ thống.",
+    "termsTitle": "Thông tin thời hạn bảo lưu:",
+    "term1": "Thời hạn bảo lưu tối đa 2 tháng. Gian hàng sẽ tự động mở lại vào ngày mở lại bạn chọn.",
+    "term2": "Chủ gian hàng có thể chủ động mở lại gian hàng trước khi hết thời gian bảo lưu.",
+    "term3": "Dữ liệu, thiết lập và tài khoản được giữ nguyên trong thời gian bảo lưu.",
+    "onceNote": "Lưu ý: Gian hàng chỉ được bảo lưu một lần duy nhất trong suốt quá trình sử dụng.",
+    "dateLabel": "Ngày tự động mở lại gian hàng (tối đa {days} ngày kể từ hôm nay)",
+    "dateError": "Chọn ngày từ ngày mai đến tối đa {days} ngày sau",
+    "submit": "Bảo lưu",
+    "toast": "Đã bảo lưu gian hàng"
+  },
+  "transfer": {
+    "title": "Chuyển nhượng gian hàng",
+    "steps": {
+      "pickRecipient": "Chọn người nhận",
+      "verify": "Xác thực"
+    },
+    "intro": "Sau khi chuyển nhượng, bạn không còn quyền đổi tên, bảo lưu hay chuyển nhượng gian hàng. Người nhận phải là quản trị viên đang hoạt động.",
+    "noCandidates": "Chưa có quản trị viên nào khác. Tạo tài khoản vai trò Quản trị hệ thống ở Thiết lập → Quản lý người dùng trước.",
+    "recipient": "Người nhận:",
+    "submit": "Chuyển nhượng",
+    "toast": "Đã chuyển nhượng gian hàng"
+  },
+  "phone": {
+    "title": "Yêu cầu thay đổi số điện thoại",
+    "steps": {
+      "verify": "Xác thực",
+      "newPhone": "Nhập SĐT mới",
+      "confirm": "Xác nhận"
+    },
+    "current": "Số điện thoại hiện tại",
+    "none": "Chưa có",
+    "newLabel": "Số điện thoại mới của chủ gian hàng",
+    "placeholder": "VD: 0912345678",
+    "invalid": "Số điện thoại gồm 10 số, bắt đầu bằng 0 và khác số hiện tại",
+    "confirmPrompt": "Xác nhận đổi số điện thoại chủ gian hàng:",
+    "currentShort": "Số hiện tại",
+    "newShort": "Số mới",
+    "usageNote": "Số mới được dùng cho thông tin cửa hàng và đầu mẫu in.",
+    "toast": "Đã cập nhật số điện thoại chủ gian hàng"
+  },
+  "profileUpdate": {
+    "title": "Cập nhật thông tin hồ sơ",
+    "pickGender": "Chọn giới tính",
+    "province": "Tỉnh/Thành phố",
+    "addressRequired": "Địa chỉ *",
+    "verifyNote": "Để hoàn tất cập nhật, hệ thống cần xác thực chủ tài khoản đang thực hiện. Nhấn \"Tiếp tục\" để sang bước xác thực.",
+    "toast": "Đã cập nhật thông tin hồ sơ"
+  },
+  "rename": {
+    "title": "Đổi tên gian hàng",
+    "steps": {
+      "notes": "Thông tin lưu ý",
+      "newName": "Nhập tên mới",
+      "verify": "Xác thực"
+    },
+    "intro": "Trước khi đổi tên gian hàng, hãy hiểu rõ các tác động sẽ xảy ra.",
+    "warnings": {
+      "loggedOut": {
+        "title": "Toàn bộ thiết bị bị đăng xuất ngay lập tức",
+        "p1": "Tất cả nhân viên đang đăng nhập trên web và máy bán hàng tại quầy sẽ bị đăng xuất, kể cả bạn.",
+        "p2": "Bạn có trách nhiệm thông báo tên gian hàng mới cho toàn bộ nhân viên trước hoặc ngay sau khi đổi."
+      },
+      "links": {
+        "title": "Các liên kết đang dùng sẽ không còn hoạt động",
+        "p1": "Link đăng nhập cũ, bookmark trên trình duyệt có chứa tên cũ sẽ không vào được. Cần cập nhật và thông báo link mới."
+      },
+      "oldName": {
+        "title": "Tên cũ không được giữ lại sau khi đổi",
+        "p1": "Muốn dùng lại tên cũ phải đổi tên thêm một lần nữa (mọi thiết bị lại bị đăng xuất)."
+      }
+    },
+    "agree": "Tôi đã đọc và hiểu rõ các tác động của việc đổi tên gian hàng",
+    "currentName": "Tên hiện tại: {name}",
+    "newLabel": "Tên gian hàng mới (địa chỉ truy cập nhập ở bước đầu khi đăng nhập)",
+    "placeholder": "VD: vacxinso1yenlac",
+    "rule": "Chỉ gồm chữ thường không dấu và số, 3–40 ký tự, khác tên hiện tại.",
+    "summary": "Đổi tên gian hàng {from} thành {to}.",
+    "submit": "Đổi tên"
+  },
+  "certificates": {
+    "title": "Danh sách chữ ký số",
+    "add": "Thêm chữ ký số",
+    "empty": "Chưa có chữ ký số",
+    "confirmDelete": "Xóa chữ ký số \"{name}\"?",
+    "fields": {
+      "subjectName": "Tên chủ thể",
+      "taxCode": "Mã số thuế",
+      "representative": "Người đại diện",
+      "activatedOn": "Ngày kích hoạt",
+      "expiresOn": "Ngày hết hạn",
+      "certStatus": "Trạng thái chứng thư số",
+      "active": "Trạng thái hoạt động",
+      "signatureType": "Loại chữ ký",
+      "provider": "Nhà cung cấp",
+      "serialNumber": "Số Serial",
+      "publicCert": "Chứng thư số công khai",
+      "issuer": "Tổ chức cấp (Issuer)"
+    },
+    "tabs": {
+      "general": "Thông tin chung",
+      "cert": "Chứng thư số"
+    },
+    "uploaded": "Đã tải lên (.cer)",
+    "notUploaded": "Chưa tải lên — thông tin nhập tay",
+    "activeOn": "Hoạt động",
+    "activeOff": "Ngừng hoạt động",
+    "signatureTypes": {
+      "USB_TOKEN": "USB Token",
+      "HSM": "HSM",
+      "RMS": "RMS (Chữ ký số từ xa)"
+    },
+    "certStatuses": {
+      "PENDING": "Chờ duyệt CTS",
+      "APPROVED": "Đã duyệt CTS",
+      "REVOKED": "Đã thu hồi"
+    },
+    "form": {
+      "titleEdit": "Sửa chữ ký số",
+      "titleAdd": "Thêm chữ ký số",
+      "savedCert": "Đã lưu chứng thư số",
+      "uploadHint": "Tải chứng thư số công khai (.cer, .crt) để tự điền thông tin",
+      "privateKeyWarning": "Chỉ dùng file chứng thư công khai. Không bao giờ tải khóa bí mật (.pfx, .p12, .key).",
+      "pickFile": "Chọn file",
+      "providerPlaceholder": "VD: IntrustCA, Viettel-CA, VNPT-CA",
+      "parseError": "Không đọc được chứng thư số",
+      "toast": "Đã lưu danh sách chữ ký số"
+    }
+  },
+  "einvoice": {
+    "account": "Tài khoản: {account}",
+    "active": "Đang hoạt động",
+    "notConnected": "Chưa kết nối — thiết lập MISA meInvoice",
+    "viewInvoices": "Xem danh sách hoá đơn",
+    "issuer": "Nhà phát hành",
+    "totalQuantity": "Tổng tài nguyên",
+    "published": "Tổng HĐ đã phát hành",
+    "remaining": "Còn lại",
+    "serviceExpiry": "Ngày hết hạn dịch vụ",
+    "packagesTitle": "Danh sách Gói hóa đơn",
+    "addPackage": "Thêm gói",
+    "cols": {
+      "name": "Tên gói",
+      "quantity": "Tổng số HĐĐT",
+      "used": "Đã dùng",
+      "remaining": "Còn lại",
+      "start": "Ngày bắt đầu",
+      "end": "Ngày hết hạn",
+      "status": "Trạng thái"
+    },
+    "editPackage": "Sửa gói",
+    "deletePackage": "Xóa gói",
+    "confirmDelete": "Xóa gói \"{name}\"?",
+    "empty": "Chưa có gói hóa đơn. Nhấn \"Thêm gói\" để nhập gói đã mua.",
+    "note": "Gói hóa đơn được nhập tay theo hợp đồng với nhà phát hành (hệ thống chưa kết nối API hạn mức của MISA). \"Đã dùng\" là số hóa đơn đã phát hành từ hệ thống, phân bổ theo ngày phát hành vào gói còn hiệu lực.",
+    "unallocated": "Có {amount} hóa đơn phát hành ngoài thời hạn / vượt số lượng các gói đã nhập.",
+    "statuses": {
+      "NOT_STARTED": "Chưa hiệu lực",
+      "ACTIVE": "Đang hiệu lực",
+      "EXPIRED": "Hết hạn"
+    },
+    "packageDialog": {
+      "titleEdit": "Sửa gói hóa đơn",
+      "titleAdd": "Thêm gói hóa đơn",
+      "name": "Tên gói *",
+      "namePlaceholder": "VD: Gói 5.000 hóa đơn 2026",
+      "quantity": "Tổng số HĐĐT *",
+      "start": "Ngày bắt đầu *",
+      "end": "Ngày hết hạn *",
+      "toast": "Đã lưu gói hóa đơn"
+    }
+  },
+  "terms": {
+    "acceptedAt": "Bạn đã đồng ý phiên bản {version} lúc {time}.",
+    "vietnameseOnlyNote": "Điều khoản sử dụng chỉ được cung cấp bằng tiếng Việt.",
+    "dialogLabel": "Điều khoản sử dụng",
+    "agreeCheckbox": "Tôi đã đọc và đồng ý với Điều khoản sử dụng",
+    "agreeButton": "Tôi đồng ý"
+  },
+  "paused": {
+    "title": "Gian hàng đang bảo lưu",
+    "body": "Gian hàng tạm khóa, dữ liệu được giữ nguyên. Gian hàng tự động mở lại ngày {date}.",
+    "ownerHint": "Bạn là chủ gian hàng, có thể mở lại trước hạn.",
+    "staffHint": "Liên hệ chủ gian hàng nếu cần mở lại trước hạn.",
+    "reopen": "Mở lại gian hàng"
+  }
+}
