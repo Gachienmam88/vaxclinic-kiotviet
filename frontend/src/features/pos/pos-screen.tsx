@@ -30,7 +30,7 @@ function toBody(d: DraftInvoice, branchId: string, sellerName: string | undefine
     lines: d.lines.map((l) => {
       const u = l.units.find((x) => x.id === l.unitId)!;
       return { productId: l.productId, unitId: l.unitId, productCode: u.code, productName: l.productName, unitName: u.unitName,
-        quantity: l.quantity, unitPrice: l.unitPrice, discount: l.discount, note: l.note || null };
+        quantity: l.quantity, unitPrice: l.unitPrice, discount: l.discount, note: l.note || null, taxCode: l.taxCode };
     }),
   };
 }
