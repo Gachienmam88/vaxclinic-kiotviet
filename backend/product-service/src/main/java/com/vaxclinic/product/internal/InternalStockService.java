@@ -7,6 +7,8 @@ import com.vaxclinic.product.product.Product;
 import com.vaxclinic.product.product.ProductRepository;
 import com.vaxclinic.product.stock.ProductLot;
 import com.vaxclinic.product.stock.ProductLotRepository;
+import com.vaxclinic.product.stock.StockBalance;
+import com.vaxclinic.product.stock.StockBalanceRepository;
 import com.vaxclinic.product.stock.StockLedgerEntry.DocType;
 import com.vaxclinic.product.stock.StockMovementService;
 import com.vaxclinic.product.stock.StockMovementService.Movement;
