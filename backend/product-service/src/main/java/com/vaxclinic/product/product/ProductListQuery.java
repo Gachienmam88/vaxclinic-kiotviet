@@ -47,10 +47,10 @@ public class ProductListQuery {
 
         var where = new StringBuilder(" where not p.deleted");
         if (f.q() != null && !f.q().isBlank()) {
-            where.append("""
-                     and (p.name ilike :q or p.short_name ilike :q
-                          or exists (select 1 from product_units x where x.product_id = p.id
-                                     and (x.code ilike :q or x.barcode ilike :q)))""");
+            // Leading space is explicit: text blocks strip indentation.
+            where.append(" and (p.name ilike :q or p.short_name ilike :q")
+                    .append(" or exists (select 1 from product_units x where x.product_id = p.id")
+                    .append(" and (x.code ilike :q or x.barcode ilike :q)))");
             params.addValue("q", "%" + f.q().trim() + "%");
         }
         if (f.categoryIds() != null && !f.categoryIds().isEmpty()) {
