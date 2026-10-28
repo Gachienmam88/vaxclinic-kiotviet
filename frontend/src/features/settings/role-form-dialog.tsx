@@ -18,6 +18,7 @@ const PERMISSION_GROUPS: { title: string; perms: [string, string][] }[] = [
   { title: "Bán hàng & khách hàng", perms: [["sales.perform", "Bán hàng, sửa hóa đơn, trả hàng"], ["sales.cancel", "Hủy hóa đơn, hủy phiếu trả"],
     ["patient.view", "Xem khách hàng"], ["patient.manage", "Thêm / sửa khách hàng"]] },
   { title: "Sổ quỹ & báo cáo", perms: [["cashbook.manage", "Sổ quỹ, công nợ, tài khoản ngân hàng"], ["report.view", "Xem báo cáo"]] },
+  { title: "Nhân viên", perms: [["hr.manage", "Nhân viên, lịch làm việc, chấm công, bảng lương, hoa hồng"]] },
   { title: "Quy trình tiêm", perms: [["reception.perform", "Tiếp đón"], ["screening.perform", "Khám sàng lọc"], ["injection.perform", "Tiêm"]] },
   { title: "Thiết lập", perms: [["user.manage", "Người dùng, vai trò, hóa đơn điện tử"], ["branch.manage", "Chi nhánh"],
     ["settings.manage", "Sửa thiết lập cửa hàng, khóa sổ"]] },
