@@ -21,7 +21,16 @@ import java.util.UUID;
 public class StockLedgerEntry {
 
     /** Loại giao dịch kho; tên hiển thị ở frontend. */
-    public enum DocType { OPENING, PURCHASE, PURCHASE_RETURN, SALE, SALE_RETURN, ADJUSTMENT, TRANSFER_OUT, TRANSFER_IN, DAMAGE }
+    public enum DocType {
+        OPENING, PURCHASE, PURCHASE_CANCEL, PURCHASE_RETURN, PURCHASE_RETURN_CANCEL,
+        SALE, SALE_RETURN, ADJUSTMENT, TRANSFER_OUT, TRANSFER_IN, DAMAGE;
+
+        /** Giao dịch với NCC làm thay đổi giá vốn bình quân (nhập, hủy nhập, trả hàng nhập và hủy trả). */
+        public boolean affectsCost() {
+            return this == OPENING || this == PURCHASE || this == PURCHASE_CANCEL
+                    || this == PURCHASE_RETURN || this == PURCHASE_RETURN_CANCEL;
+        }
+    }
 
     @Id
     private UUID id;
