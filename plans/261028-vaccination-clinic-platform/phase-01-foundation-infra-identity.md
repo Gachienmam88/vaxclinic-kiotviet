@@ -17,12 +17,15 @@ Priority: P0 | Status: in progress
 
 ## Todo
 - [x] Git repo + branch feature
-- [ ] backend parent pom + common-lib (lỗi chuẩn, security JWT)
-- [ ] gateway-service
-- [ ] identity-service (Flyway, entity, auth, user, branch, role)
-- [ ] docker-compose infra + Dockerfile dùng chung
-- [ ] FE: Next.js, đăng nhập, layout, trang người dùng / điểm tiêm
-- [ ] Build + chạy thử end-to-end
+- [x] backend parent pom + common-lib (lỗi chuẩn, security JWT)
+- [x] gateway-service
+- [x] identity-service (Flyway, entity, auth, user, branch, role)
+- [x] docker-compose infra + Dockerfile dùng chung
+- [x] FE: Next.js, đăng nhập, layout, trang người dùng / điểm tiêm
+- [x] Build + chạy thử end-to-end (curl qua gateway + BFF)
+- [ ] Unit/integration test tự động (Testcontainers) — chưa viết
+- [ ] Bố cục UI theo ảnh chụp user gửi
+- [ ] Docker image backend: Dockerfile đã viết nhưng chưa build thử
 
 ## Success criteria
 - `docker compose up -d` + chạy service → đăng nhập admin trên web → xem danh sách user, điểm tiêm.
