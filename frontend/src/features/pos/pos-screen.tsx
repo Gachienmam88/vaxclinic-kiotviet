@@ -52,6 +52,40 @@ export function PosScreen() {
   }, [qc]);
   const queue = useOfflineQueue(onSynced);
   const d = tabs.active;
+  const params = useSearchParams();
+  const router = useRouter();
+
+  // /pos?edit=<id> (nút "Chỉnh sửa") hoặc /pos?return=<id> (nút "Trả hàng") từ chi tiết hóa đơn
+  useEffect(() => {
+    const editId = params.get("edit");
+    const returnId = params.get("return");
+    if (!me || !(editId || returnId) || (editId && !catalog.loadedAt)) return;
+    draftFromInvoice((editId ?? returnId)!, editId ? "edit" : "return", catalog.products, me.user.id)
+      .then((draft) => { tabs.open(draft); router.replace("/pos"); })
+      .catch((e) => toast.error(`Không mở được hóa đơn: ${(e as Error).message}`));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- chạy 1 lần khi có đủ user + danh mục
+  }, [me, params, catalog.loadedAt]);
+
+  async function submitReturn() {
+    if (!d?.returnOf || paying) return;
+    const t = returnTotals(d);
+    if (!d.customer && t.refund < t.total) return toast.error("Khách lẻ: phải trả đủ tiền cho khách");
+    setPaying(true);
+    try {
+      const r = await api<{ code: string }>("/sales-returns", { method: "POST", body: {
+        id: d.id, invoiceId: d.returnOf.invoiceId, discount: t.discount, fee: t.fee, refundAmount: t.refund,
+        paymentMethod: d.paymentMethod, note: d.note,
+        lines: d.returnOf.lines.filter((l) => l.quantity > 0).map((l) => ({ invoiceLineId: l.invoiceLineId, quantity: l.quantity })) } });
+      toast.success(`Đã tạo phiếu trả hàng ${r.code}${t.refund > 0 ? ` — trả khách ${formatMoney(t.refund)}` : ""}`);
+      tabs.close(d.id);
+      void catalog.refresh();
+      SALES_KEYS.forEach((k) => qc.invalidateQueries({ queryKey: k }));
+    } catch (e) {
+      toast.error(isNetworkError(e) ? "Mất kết nối: trả hàng cần có mạng, vui lòng thử lại" : (e as Error).message);
+    } finally {
+      setPaying(false);
+    }
+  }
 
   useEffect(() => {
     const update = () => setOnline(navigator.onLine);
