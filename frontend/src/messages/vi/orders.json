@@ -1,0 +1,77 @@
+{
+  "status": { "DRAFT": "Phiếu tạm", "CONFIRMED": "Đã xác nhận", "COMPLETED": "Hoàn thành", "CANCELLED": "Đã hủy" },
+  "list": {
+    "title": "Đặt hàng",
+    "searchPlaceholder": "Theo mã đặt hàng, tên / mã / SĐT khách",
+    "newOrder": "Đặt hàng",
+    "newOrderHint": "Mở màn bán hàng, bấm biểu tượng Thêm đặt hàng trên thanh tab",
+    "exportHint": "Xuất các dòng đang hiển thị ra file CSV",
+    "emptyWhat": "đơn đặt hàng",
+    "unit": "đơn đặt hàng"
+  },
+  "cols": {
+    "code": "Mã đặt hàng",
+    "time": "Thời gian",
+    "customerCode": "Mã KH",
+    "customer": "Khách hàng",
+    "subtotal": "Tổng tiền hàng",
+    "discount": "Giảm giá",
+    "total": "Khách cần trả",
+    "paid": "Khách đã trả",
+    "status": "Trạng thái",
+    "invoice": "Hóa đơn",
+    "productCode": "Mã hàng",
+    "productName": "Tên hàng",
+    "unit": "ĐVT",
+    "quantity": "Số lượng",
+    "unitPrice": "Đơn giá",
+    "price": "Giá bán",
+    "amount": "Thành tiền"
+  },
+  "csv": { "listFile": "dat-hang", "detailFile": "dat-hang-{code}" },
+  "filter": { "status": "Trạng thái", "createdBy": "Người tạo", "pickCreator": "Chọn người tạo" },
+  "detail": {
+    "tabInfo": "Thông tin",
+    "tabPayments": "Lịch sử thanh toán",
+    "invoiceBadge": "Hóa đơn {code}",
+    "creditKept": "Cọc {amount} giữ làm công nợ",
+    "createdBy": "Người tạo:",
+    "seller": "Người bán:",
+    "orderedAt": "Ngày đặt:",
+    "noNote": "Chưa có ghi chú",
+    "cancel": "Hủy",
+    "createInvoice": "Tạo hóa đơn",
+    "edit": "Chỉnh sửa",
+    "confirm": "Xác nhận",
+    "confirmed": "Đã xác nhận đơn đặt hàng"
+  },
+  "totals": {
+    "subtotal": "Tổng tiền hàng ({qty})",
+    "discount": "Giảm giá phiếu đặt",
+    "total": "Khách cần trả",
+    "paid": "Khách đã trả"
+  },
+  "payments": {
+    "code": "Mã phiếu",
+    "time": "Thời gian",
+    "createdBy": "Người tạo",
+    "type": "Loại phiếu",
+    "method": "Phương thức",
+    "status": "Trạng thái",
+    "amount": "Tiền thu/chi",
+    "emptyWhat": "phiếu thanh toán",
+    "depositReceipt": "Phiếu thu đặt cọc",
+    "depositRefund": "Phiếu chi hoàn cọc",
+    "paid": "Đã thanh toán",
+    "cancelled": "Đã hủy"
+  },
+  "cancel": {
+    "title": "Hủy đơn {code}",
+    "depositBody": "Khách đã đặt cọc {amount}. Xử lý tiền cọc:",
+    "confirmBody": "Bạn có chắc muốn hủy đơn đặt hàng này?",
+    "submit": "Hủy đơn",
+    "done": "Đã hủy đơn đặt hàng",
+    "doneCredit": "Đã hủy đơn, giữ {amount} làm tiền khách trả trước",
+    "doneRefund": "Đã hủy đơn, hoàn {amount} cho khách (phiếu chi {voucher})"
+  }
+}
