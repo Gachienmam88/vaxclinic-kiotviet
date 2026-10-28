@@ -34,7 +34,7 @@ export const DEBT_TYPE_LABEL: Record<string, string> = {
 export type InvoiceLine = {
   id: string; lineNo: number; productId: string; unitId: string; productCode: string; productName: string;
   unitName: string; quantity: number; unitPrice: number; discount: number; price: number; amount: number;
-  cost: number; lots: string | null; note: string | null;
+  cost: number; lots: string | null; note: string | null; taxCode: string | null; returnedQuantity: number;
 };
 
 export type InvoicePayment = {
