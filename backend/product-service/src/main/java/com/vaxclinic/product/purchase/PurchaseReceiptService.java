@@ -128,7 +128,7 @@ public class PurchaseReceiptService {
         }
         Map<UUID, Product> cache = support.newCache();
         r.getLines().clear();
-        BigDecimal raw = BigDecimal.ZERO;
+        var amounts = new java.util.ArrayList<BigDecimal>();
         int no = 1;
         for (var in : inputs) {
             Product p = support.product(cache, in.productId());
