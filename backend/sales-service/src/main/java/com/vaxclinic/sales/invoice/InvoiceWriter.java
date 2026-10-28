@@ -62,31 +62,10 @@ public class InvoiceWriter {
         inv.setPaymentMethod(paid.signum() > 0 ? (req.paymentMethod() == null ? "CASH" : req.paymentMethod()) : null);
         inv.setNote(req.note());
         inv.setOffline(req.offline());
-        var byLine = stockResult.lines().stream().collect(Collectors.toMap(ProductStockClient.LineResult::lineId, r -> r));
-        for (int i = 0; i < req.lines().size(); i++) {
-            var in = req.lines().get(i);
-            var sr = byLine.get(lineIds.get(i));
-            var line = new InvoiceLine();
-            line.setId(lineIds.get(i));
-            line.setInvoice(inv);
-            line.setLineNo(i + 1);
-            line.setProductId(in.productId());
-            line.setUnitId(in.unitId());
-            line.setProductCode(in.productCode());
-            line.setProductName(in.productName());
-            line.setUnitName(in.unitName());
-            line.setQuantity(in.quantity());
-            line.setUnitPrice(in.unitPrice());
-            line.setDiscount(in.discount() == null ? BigDecimal.ZERO : in.discount());
-            line.setCost(sr == null ? BigDecimal.ZERO : sr.unitCost());
-            line.setLots(sr == null ? null : sr.allocations().stream().filter(a -> a.lotNumber() != null)
-                    .map(a -> a.lotNumber() + ":" + a.baseQuantity().setScale(0, RoundingMode.DOWN).toPlainString())
-                    .collect(Collectors.joining(", ")));
-            line.setNote(in.note());
-            line.setTaxCode(in.taxCode());
-            inv.getLines().add(line);
-        }
+        inv.setStockDocId(req.id()); // chứng từ kho đầu tiên dùng chính id hóa đơn
+        lineBuilder.addLines(inv, req.lines(), lineIds, stockResult);
         invoices.saveAndFlush(inv); // Invoice implements Persistable → persist (INSERT), entity stays managed
+        lineBuilder.saveLots(stockResult);
 
         if (paid.signum() > 0) {
             var v = CashbookWriter.newVoucher("TT" + code, "RECEIPT", fundOf(inv.getPaymentMethod()), "Thu Tiền khách trả", paid);
