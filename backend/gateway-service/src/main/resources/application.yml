@@ -22,7 +22,7 @@ spring:
             - id: product
               uri: ${PRODUCT_URL:http://localhost:8082}
               predicates:
-                - Path=/api/products/**,/api/categories/**,/api/tax-rates/**,/api/positions/**,/api/suppliers/**,/api/purchase-receipts/**,/api/purchase-returns/**,/api/stock-takes/**,/api/stock-issues/**,/api/accounting/stock/**
+                - Path=/api/products/**,/api/categories/**,/api/tax-rates/**,/api/positions/**,/api/suppliers/**,/api/purchase-receipts/**,/api/purchase-returns/**,/api/stock-takes/**,/api/stock-issues/**,/api/accounting/stock/**,/api/price-books/**
             # sales-service: khách hàng, hóa đơn, sổ quỹ, công nợ (/internal/** KHÔNG được route ra ngoài)
             - id: sales
               uri: ${SALES_URL:http://localhost:8086}
