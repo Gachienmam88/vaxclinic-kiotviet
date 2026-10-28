@@ -80,7 +80,7 @@ export default function AuditLogsPage() {
                   <td>{l.userName}</td>
                   <td>{l.feature}<span className="block text-xs text-muted-foreground">{l.action}</span></td>
                   <td>{formatDateTime(l.occurredAt)}</td>
-                  <td className="whitespace-normal">{l.detail}</td>
+                  <td className="whitespace-normal"><AuditDetail log={l} /></td>
                 </tr>
               ))}
             </tbody>
