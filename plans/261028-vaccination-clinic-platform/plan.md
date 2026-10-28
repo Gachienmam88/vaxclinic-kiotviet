@@ -23,8 +23,7 @@ Tiếp đón ─▶ Khám sàng lọc ─▶ Chỉ định vắc xin ─▶ Thu 
 |---|---|---|
 | gateway | 8080 | routing, verify JWT |
 | identity | 8081 | user, vai trò/quyền, điểm tiêm (chi nhánh), đăng nhập JWT |
-| catalog | 8082 | vắc xin (hãng, nước SX, bệnh phòng, đường tiêm, liều, độ tuổi), **phác đồ** (số mũi, khoảng cách tối thiểu), gói tiêm, dịch vụ, bảng giá |
-| inventory | 8083 | kho theo lô/HSD (bắt buộc), nhập NCC, FEFO, chuyển kho, hủy, kiểm kho, lọ đa liều, **nhật ký nhiệt độ tủ lạnh** |
+| product | 8082 | hàng hóa + kho (gộp): nhóm hàng, đơn vị quy đổi, thuế, hàng theo lô/HSD hoặc không, tồn theo điểm tiêm, thẻ kho, FEFO, giá vốn bình quân. Sau: phác đồ, gói tiêm, chuyển kho, kiểm kho |
 | patient | 8084 | khách hàng/người tiêm, người giám hộ, lịch sử tiêm (cả nơi khác), mũi đã mua chưa tiêm, lịch hẹn |
 | clinical | 8085 | lượt khám, hàng đợi theo phòng, sàng lọc, chỉ định, ghi nhận tiêm, theo dõi sau tiêm, AEFI |
 | sales | 8086 | thu ngân POS (offline), hóa đơn, cọc, hoàn tiền, sổ quỹ, công nợ NCC |
