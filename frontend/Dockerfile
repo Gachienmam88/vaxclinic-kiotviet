@@ -4,7 +4,9 @@
 FROM node:22-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN --mount=type=cache,target=/root/.npm npm ci --no-audit --no-fund
+# lockfile is written by npm 11 (dev machine); Node 22 ships npm 10
+RUN --mount=type=cache,target=/root/.npm npm install -g npm@11.6.2 --no-audit --no-fund \
+    && npm ci --no-audit --no-fund
 
 FROM node:22-alpine AS build
 WORKDIR /app
