@@ -37,12 +37,14 @@ public class ProductController {
     private final ProductCommandService commands;
     private final ProductListQuery listQuery;
     private final ProductDetailQuery detailQuery;
+    private final PosCatalogQuery posCatalog;
 
     public ProductController(ProductCommandService commands, ProductListQuery listQuery,
-                             ProductDetailQuery detailQuery) {
+                             ProductDetailQuery detailQuery, PosCatalogQuery posCatalog) {
         this.commands = commands;
         this.listQuery = listQuery;
         this.detailQuery = detailQuery;
+        this.posCatalog = posCatalog;
     }
 
     @GetMapping
