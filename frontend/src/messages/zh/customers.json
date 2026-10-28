@@ -1,0 +1,190 @@
+{
+  "list": {
+    "title": "客户",
+    "searchPlaceholder": "按编码、名称、电话",
+    "searchAria": "搜索客户",
+    "addButton": "客户",
+    "emptyWhat": "客户",
+    "pagerSummary": "{total} 位客户 · 第 {page}/{pages} 页",
+    "cols": {
+      "code": "客户编码",
+      "name": "客户名称",
+      "phone": "电话",
+      "debt": "当前欠款",
+      "totalSales": "销售总额",
+      "netSales": "净销售额（扣退货）"
+    }
+  },
+  "filter": {
+    "group": "客户分组",
+    "allGroups": "全部分组",
+    "createdAt": "创建日期",
+    "createdBy": "创建人",
+    "pickCreator": "选择创建人",
+    "type": "客户类型",
+    "gender": "性别"
+  },
+  "enums": {
+    "customerType": { "PERSONAL": "个人", "COMPANY": "公司" },
+    "gender": { "MALE": "男", "FEMALE": "女" },
+    "debtType": {
+      "SALE": "销售",
+      "SALE_CANCEL": "作废销售单",
+      "PAYMENT": "收款",
+      "PAYMENT_CANCEL": "作废收款单",
+      "ADJUST": "调整",
+      "DISCOUNT": "付款折扣"
+    },
+    "invoiceStatus": { "COMPLETED": "已完成", "CANCELLED": "已取消" }
+  },
+  "groups": {
+    "title": "客户分组",
+    "addButton": "客户分组",
+    "emptyWhat": "客户分组",
+    "cols": { "name": "分组名称", "discount": "折扣", "count": "客户数", "note": "备注" },
+    "editAria": "编辑分组 {name}",
+    "deleteAria": "删除分组 {name}",
+    "confirmDelete": "删除分组“{name}”？",
+    "confirmDeleteWithCustomers_other": "删除分组“{name}”？组内 {count} 位客户将变为未分组。",
+    "deleted": "已删除客户分组",
+    "deletedUnlinked_other": "已删除客户分组，{count} 位客户已移出分组"
+  },
+  "groupDialog": {
+    "titleAdd": "新增客户分组",
+    "titleEdit": "编辑客户分组",
+    "name": "分组名称",
+    "discount": "折扣",
+    "discountAria": "分组折扣",
+    "currencyUnit": "VND",
+    "discountHint": "在销售界面选择该分组客户时自动填入整单折扣（仍可修改）。",
+    "note": "备注",
+    "added": "已新增客户分组",
+    "updated": "已更新客户分组"
+  },
+  "detail": {
+    "tabSales": "销售/退货记录",
+    "tabDebt": "应收欠款",
+    "edit": "编辑"
+  },
+  "info": {
+    "empty": "暂无",
+    "createdBy": "创建人：{value}",
+    "createdAt": "创建日期：{value}",
+    "group": "分组：{value}",
+    "phone": "电话",
+    "birthday": "生日",
+    "gender": "性别",
+    "email": "邮箱",
+    "facebook": "Facebook",
+    "address": "地址",
+    "invoiceInfo": "开票信息",
+    "noNote": "暂无备注"
+  },
+  "debtTab": {
+    "filterAria": "按交易类型筛选",
+    "allTypes": "全部交易",
+    "emptyWhat": "交易",
+    "cols": { "code": "单号", "time": "时间", "type": "类型", "amount": "金额", "balance": "客户欠款余额" },
+    "exportDebt": "导出欠款",
+    "pay": "收款",
+    "adjust": "调整",
+    "discount": "付款折扣",
+    "createQr": "生成二维码"
+  },
+  "salesTab": {
+    "emptyWhat": "交易",
+    "cols": { "code": "销售单号", "time": "时间", "seller": "销售员", "total": "合计", "status": "状态" }
+  },
+  "allocation": {
+    "cols": {
+      "code": "销售单号",
+      "time": "时间",
+      "invoiceValue": "单据金额",
+      "paidBefore": "已收",
+      "remaining": "待收",
+      "collect": "本次收款"
+    },
+    "empty": "未找到匹配记录",
+    "collectAria": "{code} 本次收款",
+    "unallocated": "未分配金额："
+  },
+  "debtDialog": {
+    "title": { "payment": "收款", "discount": "付款折扣", "adjust": "欠款调整" },
+    "created": {
+      "payment": "已创建收款单",
+      "discount": "已创建付款折扣单",
+      "adjust": "已创建调整单"
+    },
+    "currentDebt": "当前欠款：{amount}",
+    "currentDebtLabel": "当前应收",
+    "adjustDate": "调整日期",
+    "adjustValue": "调整后欠款",
+    "description": "说明",
+    "time": "时间",
+    "collector": "收款人",
+    "performer": "经办人",
+    "method": "支付方式",
+    "amount": "金额",
+    "discountAmount": "给客户的折扣",
+    "remainingAfterPayment": "剩余欠款：{amount}",
+    "remainingAfterDiscount": "剩余欠款：{amount}",
+    "note": "备注",
+    "notePlaceholder": "输入备注",
+    "allocate": "分配到销售单",
+    "createAndPrint": "创建收款单并打印",
+    "createReceipt": "创建收款单",
+    "createVoucher": "创建单据",
+    "printFailed": "已创建单据 {code}，但打印失败，请在收支中重新打印"
+  },
+  "form": {
+    "titleAdd": "新增客户",
+    "titleEdit": "编辑客户",
+    "branch": "创建门店：{name}",
+    "tabGeneral": "基本信息",
+    "tabInvoice": "开票信息",
+    "added": "已新增客户 {code}",
+    "updated": "已更新客户",
+    "code": "客户编码",
+    "codePlaceholder": "自动生成",
+    "name": "客户名称",
+    "phone": "电话",
+    "phone2": "电话 2",
+    "address": "地址",
+    "addressPlaceholder": "门牌号、楼栋、巷、街道",
+    "area": "地区",
+    "ward": "坊/社",
+    "group": "分组",
+    "groupAria": "客户分组",
+    "pickGroup": "选择客户分组",
+    "birthday": "出生日期",
+    "email": "邮箱",
+    "facebook": "Facebook",
+    "note": "备注",
+    "invoice": {
+      "customerType": "客户类型",
+      "personal": "个人/个体户",
+      "company": "企业",
+      "buyerName": "购买人姓名",
+      "buyerNamePlaceholder": "输入购买人姓名",
+      "taxCode": "税号",
+      "taxCodePlaceholder": "输入税号",
+      "address": "地址",
+      "addressAria": "开票地址",
+      "province": "省/市",
+      "ward": "坊/社",
+      "companyName": "单位名称",
+      "companyNamePlaceholder": "输入单位名称",
+      "idNumber": "身份证号",
+      "idNumberPlaceholder": "输入身份证号",
+      "passport": "护照号",
+      "passportPlaceholder": "输入护照号",
+      "email": "邮箱",
+      "phone": "电话",
+      "phonePlaceholder": "输入电话号码",
+      "bankName": "银行名称",
+      "bankNamePlaceholder": "输入银行名称",
+      "bankAccount": "银行账号",
+      "bankAccountPlaceholder": "输入账号"
+    }
+  }
+}
