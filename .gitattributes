@@ -1,0 +1,4 @@
+# Shell scripts and CI/deploy files run on Linux: always LF.
+*.sh text eol=lf
+*.yml text eol=lf
+Dockerfile text eol=lf

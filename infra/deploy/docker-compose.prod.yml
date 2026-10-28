@@ -1,0 +1,101 @@
+# Production stack: images from GHCR, secrets from the server-side .env (same folder, never in git).
+# Required in .env: DB_USER, DB_PASSWORD, JWT_SECRET,
+#                   ADMIN_USERNAME, ADMIN_PASSWORD, ENCRYPTION_KEY. IMAGE_PREFIX + IMAGE_TAG are passed by CD/deploy.sh.
+# Ports bind to 127.0.0.1 only; expose the frontend publicly through a reverse proxy (Caddy/Traefik) with HTTPS.
+x-jvm: &jvm
+  restart: unless-stopped
+  mem_limit: 512m
+  depends_on:
+    postgres: { condition: service_healthy }
+  logging:
+    driver: json-file
+    options: { max-size: "10m", max-file: "3" }
+
+x-jvm-env: &jvm-env
+  JAVA_TOOL_OPTIONS: "-Xmx256m -Xss512k -XX:+UseSerialGC"
+  DB_USER: ${DB_USER:?}
+  DB_PASSWORD: ${DB_PASSWORD:?}
+  JWT_SECRET: ${JWT_SECRET:?}
+  IDENTITY_URL: http://identity-service:8081
+  PRODUCT_URL: http://product-service:8082
+  SALES_URL: http://sales-service:8086
+  INTEGRATION_URL: http://integration-service:8088
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    mem_limit: 512m
+    environment:
+      POSTGRES_USER: ${DB_USER:?}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?}
+      POSTGRES_DB: postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init-databases.sql:/docker-entrypoint-initdb.d/01-init-databases.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
+      interval: 5s
+      retries: 20
+
+  identity-service:
+    <<: *jvm
+    image: ${IMAGE_PREFIX:?}-identity-service:${IMAGE_TAG:-main}
+    ports: ["127.0.0.1:8081:8081"]
+    environment:
+      <<: *jvm-env
+      DB_URL: jdbc:postgresql://postgres:5432/identity_db
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:?}
+
+  product-service:
+    <<: *jvm
+    image: ${IMAGE_PREFIX:?}-product-service:${IMAGE_TAG:-main}
+    ports: ["127.0.0.1:8082:8082"]
+    environment:
+      <<: *jvm-env
+      DB_URL: jdbc:postgresql://postgres:5432/product_db
+
+  sales-service:
+    <<: *jvm
+    image: ${IMAGE_PREFIX:?}-sales-service:${IMAGE_TAG:-main}
+    ports: ["127.0.0.1:8086:8086"]
+    environment:
+      <<: *jvm-env
+      DB_URL: jdbc:postgresql://postgres:5432/sales_db
+
+  integration-service:
+    <<: *jvm
+    image: ${IMAGE_PREFIX:?}-integration-service:${IMAGE_TAG:-main}
+    ports: ["127.0.0.1:8088:8088"]
+    environment:
+      <<: *jvm-env
+      DB_URL: jdbc:postgresql://postgres:5432/integration_db
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:?}
+
+  gateway-service:
+    <<: *jvm
+    mem_limit: 384m
+    image: ${IMAGE_PREFIX:?}-gateway-service:${IMAGE_TAG:-main}
+    ports: ["127.0.0.1:8080:8080"]
+    environment:
+      <<: *jvm-env
+      JAVA_TOOL_OPTIONS: "-Xmx192m -Xss512k -XX:+UseSerialGC"
+    depends_on: [identity-service, product-service, sales-service, integration-service]
+
+  frontend:
+    image: ${IMAGE_PREFIX:?}-frontend:${IMAGE_TAG:-main}
+    restart: unless-stopped
+    mem_limit: 384m
+    ports: ["127.0.0.1:3000:3000"]
+    environment:
+      GATEWAY_URL: http://gateway-service:8080
+      COOKIE_SECURE: ${COOKIE_SECURE:-true}
+    depends_on: [gateway-service]
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
+volumes:
+  pgdata:

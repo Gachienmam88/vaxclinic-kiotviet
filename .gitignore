@@ -6,3 +6,12 @@ node_modules/
 .idea/
 .vscode/
 *.log
+backups/
+.env.*
+!.env.example
+frontend/.env*
+coverage/
+*.dump
+*.sql.gz
+*.tsbuildinfo
+new prompt/
