@@ -127,9 +127,4 @@ public class RoleController {
     private RoleResponse find(UUID id) {
         return list().stream().filter(r -> r.id().equals(id)).findFirst().orElseThrow();
     }
-
-    @SuppressWarnings("unused")
-    private static Set<String> sorted(Set<String> s) {
-        return s.stream().sorted().collect(Collectors.toCollection(java.util.LinkedHashSet::new));
-    }
 }
