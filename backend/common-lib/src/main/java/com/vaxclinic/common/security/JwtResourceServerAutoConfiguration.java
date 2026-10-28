@@ -61,7 +61,7 @@ public class JwtResourceServerAutoConfiguration {
         converter.setJwtGrantedAuthoritiesConverter(jwt -> {
             Collection<String> perms = jwt.getClaimAsStringList("perms");
             return perms == null ? List.of()
-                    : perms.stream().map(p -> (org.springframework.security.core.GrantedAuthority) new SimpleGrantedAuthority(p)).toList();
+                    : perms.stream().<GrantedAuthority>map(SimpleGrantedAuthority::new).toList();
         });
         return converter;
     }
