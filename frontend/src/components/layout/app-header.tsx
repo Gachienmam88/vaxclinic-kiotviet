@@ -69,6 +69,9 @@ export function AppHeader() {
                 {can("user.manage") && (
                   <DropdownMenuItem render={<Link href="/settings/einvoice" />}>Hóa đơn điện tử (MISA)</DropdownMenuItem>
                 )}
+                {can("cashbook.manage") && (
+                  <DropdownMenuItem render={<Link href="/settings/bank-accounts" />}>Tài khoản ngân hàng</DropdownMenuItem>
+                )}
               </DropdownMenuGroup>
             </DropdownMenuContent>
           </DropdownMenu>
