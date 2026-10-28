@@ -5,10 +5,10 @@ import { QrCode } from "lucide-react";
 import { QrPaymentDialog } from "@/features/sales/qr-payment-dialog";
 import { Button } from "@/components/ui/button";
 import { NumberInput } from "@/components/number-input";
-import { useUserLookup } from "@/features/purchases/purchase-queries";
-import { PAYMENT_METHODS } from "@/features/sales/sales-types";
 import { formatMoney } from "@/lib/format";
 import { PosCustomerPicker } from "./pos-customer-picker";
+import { PosSellerPicker } from "./pos-seller-picker";
+import { PaymentMethodRadios, PosDateTime, SummaryRow, underlineInput } from "./pos-ui-parts";
 import { cartTotals } from "./use-pos-tabs";
 import type { DraftInvoice } from "./pos-types";
 
@@ -20,12 +20,17 @@ type Props = {
   paying: boolean;
 };
 
-/** Cột phải màn bán hàng: người bán, khách, tổng tiền, giảm giá, khách thanh toán, THANH TOÁN (F9). */
+/** Cột phải màn bán hàng: người bán, ngày giờ, khách, tổng tiền, giảm giá, khách thanh toán (+QR), THANH TOÁN (F9). */
 export function PosCheckoutPanel({ draft, branchId, update, onPay, paying }: Props) {
-  const { data: users = [] } = useUserLookup();
   const [qr, setQr] = useState(false);
+  const [autoPay, setAutoPay] = useState(false);
   const t = cartTotals(draft);
   const change = t.paid - t.total;
+
+  // SePay báo đã nhận đủ tiền + bật tự hoàn thành → thanh toán hóa đơn ngay khi số tiền đã cập nhật vào tab
+  useEffect(() => {
+    if (autoPay && draft.paymentMethod === "TRANSFER") { setAutoPay(false); setQr(false); onPay(); }
+  }, [autoPay, draft, onPay]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === "F9") { e.preventDefault(); onPay(); } };
@@ -34,41 +39,34 @@ export function PosCheckoutPanel({ draft, branchId, update, onPay, paying }: Pro
   }, [onPay]);
 
   return (
-    <div className="flex h-full flex-col gap-3 text-sm">
-      <div className="flex items-center justify-between">
-        <select className="max-w-48 bg-transparent font-medium outline-none" value={draft.sellerId} aria-label="Người bán"
-          onChange={(e) => update({ sellerId: e.target.value })}>
-          {users.map((u) => <option key={u.id} value={u.id}>{u.fullName}</option>)}
-        </select>
-        <span className="text-muted-foreground">{new Date().toLocaleString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
+    <div className="flex h-full flex-col text-[13px]">
+      <div className="flex h-8 items-center justify-between gap-3">
+        <PosSellerPicker value={draft.sellerId} onChange={(sellerId) => update({ sellerId })} />
+        <PosDateTime />
       </div>
-      <PosCustomerPicker value={draft.customer} branchId={branchId} onChange={(customer) => update({ customer })} />
-      <div className="space-y-2.5 border-t border-dashed pt-3">
-        <div className="flex justify-between"><span>Tổng tiền hàng <span className="ml-6 text-muted-foreground">{t.quantity}</span></span><span>{formatMoney(t.subtotal)}</span></div>
-        <div className="flex items-center justify-between"><span>Giảm giá</span>
-          <NumberInput className="h-7 w-32 border-0 border-b shadow-none" value={draft.discount} onValueChange={(discount) => update({ discount })} /></div>
-        <div className="flex justify-between font-semibold"><span>Khách cần trả</span><span className="text-lg text-primary">{formatMoney(t.total)}</span></div>
-        <div className="flex items-center justify-between font-semibold">
-          <span className="flex items-center gap-2">Khách thanh toán
-            <button type="button" title="Thanh toán qua mã QR" className="text-muted-foreground hover:text-primary"
-              onClick={() => { update({ paymentMethod: "TRANSFER" }); setQr(true); }}><QrCode className="size-4" /></button>
-          </span>
-          <NumberInput className="h-7 w-32 border-0 border-b shadow-none" value={t.paid} onValueChange={(paid) => update({ paid })} /></div>
-        <div className="flex flex-wrap gap-1.5">
-          {PAYMENT_METHODS.map((m) => (
-            <button key={m.value} type="button" onClick={() => update({ paymentMethod: m.value })}
-              className={`rounded-full border px-3 py-1 text-xs ${draft.paymentMethod === m.value ? "border-primary bg-primary text-primary-foreground" : "hover:bg-muted"}`}>
-              {m.label}</button>))}
-        </div>
-        {change > 0 && <div className="flex justify-between"><span>Tiền thừa trả khách</span><span className="font-semibold">{formatMoney(change)}</span></div>}
-        {change < 0 && <div className="flex justify-between text-destructive"><span>Tính vào công nợ</span><span className="font-semibold">{formatMoney(-change)}</span></div>}
+      <div className="mt-2"><PosCustomerPicker value={draft.customer} branchId={branchId} onChange={(customer) => update({ customer })} /></div>
+      <div className="mt-4 space-y-1 border-t border-dashed border-[#d6d9de] pt-3">
+        <SummaryRow label="Tổng tiền hàng" sub={t.quantity}>{formatMoney(t.subtotal)}</SummaryRow>
+        <SummaryRow label="Giảm giá">
+          <NumberInput aria-label="Giảm giá hóa đơn" className={`${underlineInput} w-[104px] text-[15px]`} value={draft.discount}
+            onValueChange={(discount) => update({ discount })} />
+        </SummaryRow>
+        <SummaryRow label="Khách cần trả" bold><span className="text-[17px] text-primary">{formatMoney(t.total)}</span></SummaryRow>
+        <SummaryRow bold label={<>Khách thanh toán
+          <button type="button" title="Thanh toán qua mã QR" aria-label="Thanh toán qua mã QR" className="text-[#4b5563] hover:text-primary"
+            onClick={() => { update({ paymentMethod: "TRANSFER" }); setQr(true); }}><QrCode className="size-4" /></button></>}>
+          <NumberInput aria-label="Khách thanh toán" className={`${underlineInput} w-[104px] font-normal`} value={t.paid}
+            onValueChange={(paid) => update({ paid })} />
+        </SummaryRow>
+        <PaymentMethodRadios value={draft.paymentMethod} onChange={(paymentMethod) => update({ paymentMethod })} />
+        {change > 0 && <SummaryRow label="Tiền thừa trả khách">{formatMoney(change)}</SummaryRow>}
+        {change < 0 && <div className="text-destructive"><SummaryRow label="Tính vào công nợ">{formatMoney(-change)}</SummaryRow></div>}
       </div>
-      <textarea className="min-h-16 rounded-md border bg-transparent p-2 outline-none" placeholder="Ghi chú đơn hàng" value={draft.note}
-        onChange={(e) => update({ note: e.target.value })} />
-      <Button className="mt-auto h-12 text-base font-bold" disabled={paying || !draft.lines.length} onClick={onPay}>
-        {paying ? "ĐANG LƯU..." : draft.editOf ? "LƯU HÓA ĐƠN (F9)" : "THANH TOÁN (F9)"}
+      <Button title="F9" className="mt-auto h-12 w-full rounded-md text-[15px] font-bold uppercase" disabled={paying || !draft.lines.length} onClick={onPay}>
+        {paying ? "Đang lưu..." : "Thanh toán"}
       </Button>
-      {qr && <QrPaymentDialog amount={t.paid} info={draft.editOf?.code ?? draft.label} onClose={() => setQr(false)} />}
+      {qr && <QrPaymentDialog amount={t.paid} info={draft.editOf?.code ?? draft.label} onClose={() => setQr(false)}
+        onPaid={draft.editOf ? undefined : (paid, auto) => { update({ paid, paymentMethod: "TRANSFER" }); if (auto) setAutoPay(true); }} />}
     </div>
   );
 }
