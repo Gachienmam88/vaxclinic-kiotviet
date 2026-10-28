@@ -22,7 +22,7 @@ import java.util.UUID;
 
 /**
  * Startup tasks:
- * 1. Sync default permissions of system roles from {@link Permissions#DEFAULTS} (new permissions appear automatically).
+ * 1. Give the ADMIN role every permission in {@link Permissions#ALL} (new permissions appear automatically).
  * 2. Create the first admin from ADMIN_USERNAME / ADMIN_PASSWORD if it does not exist (no password in source code).
  */
 @Configuration
@@ -59,12 +59,9 @@ public class IdentityBootstrap {
         @Override
         @Transactional
         public void run(ApplicationArguments args) {
-            roles.findBySystemTrue().forEach(role -> {
-                var defaults = Permissions.DEFAULTS.get(role.getCode());
-                if (defaults != null && !role.getPermissions().containsAll(defaults)) {
-                    role.getPermissions().addAll(defaults);
-                }
-            });
+            // ADMIN luôn có mọi quyền (kể cả quyền mới thêm). Vai trò khác do người dùng tự chỉnh ở Quản lý vai trò,
+            // nên KHÔNG đồng bộ lại — tránh ghi đè quyền họ đã bỏ đi.
+            roles.findByCode("ADMIN").ifPresent(admin -> admin.getPermissions().addAll(Permissions.ALL));
 
             if (users.existsByUsernameIgnoreCase(adminUsername)) {
                 return;
@@ -77,7 +74,7 @@ public class IdentityBootstrap {
             admin.setId(UUID.randomUUID());
             admin.setUsername(adminUsername.toLowerCase());
             admin.setPasswordHash(passwordEncoder.encode(adminPassword));
-            admin.setFullName("Quản trị hệ thống");
+            admin.setFullName(adminUsername.toLowerCase()); // hiển thị như KiotViet: "admin", không phải tên vai trò
             admin.setRole(roles.findByCode("ADMIN").orElseThrow());
             admin.setBranches(new HashSet<>(branches.findAll()));
             users.save(admin);
