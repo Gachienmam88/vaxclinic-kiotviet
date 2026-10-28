@@ -36,9 +36,9 @@ FE: Next.js 15 (App Router) + Tailwind + shadcn/ui + TanStack Query, BFF route h
 ## Phases
 | # | Phase | Status |
 |---|---|---|
-| 1 | Nền tảng: repo, docker, gateway, identity, FE shell + đăng nhập | **in progress** |
-| 2 | Danh mục vắc xin, phác đồ, gói tiêm, bảng giá | todo — cần ảnh UI |
-| 3 | Kho vắc xin theo lô/HSD, nhập hàng NCC, nhiệt độ | todo — cần ảnh UI |
+| 1 | Nền tảng: repo, docker, gateway, identity, FE shell + đăng nhập | done (thiếu test tự động) |
+| 2 | [Hàng hóa + kho](phase-02-products-and-stock.md) | **in progress** — core xong |
+| 3 | Mua hàng: NCC, phiếu nhập (theo lô), trả hàng nhập, hóa đơn đầu vào | todo — cần ảnh UI |
 | 4 | Khách hàng & hồ sơ tiêm chủng, lịch hẹn | todo — cần ảnh UI |
 | 5 | Quy trình: tiếp đón → sàng lọc → chỉ định → tiêm → theo dõi | todo — cần ảnh UI |
 | 6 | Thu ngân POS offline, sổ quỹ | todo — cần ảnh UI |
