@@ -369,7 +369,7 @@ flowchart LR
     OK -->|"merge vào main"| IMG["Build 5 ảnh backend + 1 ảnh frontend, tag = git sha"]
     IMG --> REG["Đẩy lên GHCR"]
     REG --> BAK["SSH: pg_dump trước khi deploy"]
-    BAK --> DEP["SSH: docker compose pull && up -d"]
+    BAK --> DEP["SSH: docker compose pull, rồi up -d"]
     DEP --> HC{"Health OK trong 120s?"}
     HC -->|"có"| SMK["Smoke test e2e"]
     HC -->|"không"| RB["Quay về tag trước"]
