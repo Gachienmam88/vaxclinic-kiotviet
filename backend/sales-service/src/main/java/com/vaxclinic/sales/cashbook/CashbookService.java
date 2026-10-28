@@ -73,8 +73,8 @@ public class CashbookService {
     public void cancel(UUID id) {
         CashVoucher v = vouchers.findById(id)
                 .orElseThrow(() -> BusinessException.notFound("VOUCHER_NOT_FOUND", "Không tìm thấy phiếu"));
-        if ("INVOICE".equals(v.getSourceType()) || "PURCHASE".equals(v.getSourceType())) {
-            throw BusinessException.badRequest("VOUCHER_AUTO", "Phiếu tự động — hãy hủy hóa đơn / phiếu nhập gốc");
+        if ("INVOICE".equals(v.getSourceType()) || "PURCHASE".equals(v.getSourceType()) || "RETURN".equals(v.getSourceType())) {
+            throw BusinessException.badRequest("VOUCHER_AUTO", "Phiếu tự động — hãy hủy hóa đơn / phiếu nhập / phiếu trả hàng gốc");
         }
         if ("CANCELLED".equals(v.getStatus())) {
             return;
