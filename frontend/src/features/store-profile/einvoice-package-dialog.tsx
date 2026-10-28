@@ -37,7 +37,7 @@ export function usePackageMutation() {
 export function EInvoicePackageDialog({ pkg, onClose }: { pkg: PackageUsage | null; onClose: () => void }) {
   const [f, setF] = useState({ name: pkg?.name ?? "", quantity: pkg ? String(pkg.quantity) : "", startDate: pkg?.startDate ?? "", endDate: pkg?.endDate ?? "" });
   const save = usePackageMutation();
-  const qty = parseNumber(f.quantity) ?? 0;
+  const qty = parseNumber(f.quantity);
   const valid = !!f.name.trim() && qty > 0 && !!f.startDate && !!f.endDate && f.endDate >= f.startDate;
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
