@@ -53,8 +53,9 @@ tc("actions.save");
   // render: t(tab.label)
   ```
   Non-React helpers that produce UI text should take a `t` argument (`type TFunction` from `@/lib/i18n`).
-- Sentences with embedded links/buttons: split into keys (`before`, `link`, `after`) — word order differs in ja/zh,
-  so put the variable part via `{var}` whenever possible instead of concatenating fragments.
+- Sentences with embedded elements (bold, links, buttons): keep ONE key with `{placeholders}` and render with
+  `renderRichText(t("rename.summary"), { from: <b>{a}</b>, to: <b>{b}</b> })` from `@/lib/i18n/render-rich-text`
+  (call `t` without vars so `{from}` stays in the string). Word order differs in ja/zh — never concatenate fragments.
 - Do not put strings in `common` from phase 2; if something is genuinely shared, use your namespace and tell the lead.
 - Shared components already translate their own defaults (pickers, calendar month/weekday names, `ListEmptyState`,
   `SearchableSelect`, `VnAddressFields`, dialog close button, `DetailSingleTab`). Props you pass are shown as-is, so
