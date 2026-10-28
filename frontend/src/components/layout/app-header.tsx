@@ -31,6 +31,7 @@ export function AppHeader() {
             <Syringe className="size-7 text-primary" /> {APP_NAME}
           </Link>
           <div className="ml-auto flex items-center gap-3 text-[13px] text-foreground">
+            <NotificationBell />
             <Link href="/settings" className="rounded-md p-1 hover:bg-muted" aria-label="Thiết lập" title="Thiết lập">
               <Settings className="size-[18px]" />
             </Link>
