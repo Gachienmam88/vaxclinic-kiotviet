@@ -10,7 +10,8 @@ Browser ──▶ Next.js (frontend, BFF giữ JWT trong cookie httpOnly)
               ▼
          gateway-service :8080 (verify JWT, routing)
               ▼
-         identity-service :8081 ──▶ PostgreSQL identity_db
+         identity-service :8081 ──▶ PostgreSQL identity_db   (user, vai trò, điểm tiêm)
+         product-service  :8082 ──▶ PostgreSQL product_db    (hàng hóa, lô/HSD, tồn kho, thẻ kho)
          (các service khác thêm dần theo phase, mỗi service 1 database)
 ```
 - Backend: Java 17, Spring Boot 3.5, Spring Cloud Gateway, Spring Security (JWT HS256), JPA + Flyway, Maven multi-module (`backend/`).
