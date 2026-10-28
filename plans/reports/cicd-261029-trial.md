@@ -36,7 +36,30 @@ flowchart LR
 
 ## 2. Kết quả chạy thử
 
-RUN_RESULTS_PLACEHOLDER
+| Run | Nhánh / commit | Kết quả |
+|---|---|---|
+| [CI 40754500978](https://github.com/Gachienmam88/vaxclinic-kiotviet/actions/runs/40754500978) | feature `bb65c2e` | Backend ✓ · Frontend ✗ `npm ci` (lockfile npm 11 vs npm 10) → đã sửa cấu hình |
+| [CI 40754914530](https://github.com/Gachienmam88/vaxclinic-kiotviet/actions/runs/40754914530) | feature `7af5c20` | `npm ci` ✓ (đã sửa). Backend ✗ + Frontend ✗ do code đang sửa dở (xem dưới) |
+| [CI 40758364114](https://github.com/Gachienmam88/vaxclinic-kiotviet/actions/runs/40758364114) | feature `15c33c8` | **Backend ✓ (mvn verify, 8 lớp test)** · Frontend ✗ type check |
+| [CI 40758597854](https://github.com/Gachienmam88/vaxclinic-kiotviet/actions/runs/40758597854) | feature `e5b9268` | Backend ✓ · Frontend ✗ type check (17 lỗi TS) |
+| [CD 40758609545](https://github.com/Gachienmam88/vaxclinic-kiotviet/actions/runs/40758609545) | main `e5b9268` | CI trong CD: Backend ✓, Frontend ✗ → **Build image: skipped, Deploy: skipped** — chặn đúng thiết kế (code lỗi không được đóng gói) |
+
+**Kết luận:** cấu hình pipeline đã chạy được (checkout, cache, npm 11, `npm ci`, Maven verify, gate CI→CD). Chưa xanh toàn bộ
+vì **lỗi code ứng dụng frontend đang được agent i18n sửa dở** — không thuộc phạm vi CI, không sửa. Bước build/push image GHCR
+và job deploy-skip **chưa được chạy thật** (bị gate chặn); sẽ chạy ở lần push `main` đầu tiên có CI xanh.
+
+Lỗi code ứng dụng (run 40758597854, `npx tsc --noEmit`):
+```
+src/features/hr/employee-form-dialog.tsx(45,19): error TS2345: Argument of type '"employeeForm.toastUpdated"' is not assignable to parameter of type 'MessageKey<...>'   (13 lỗi: key i18n employeeForm.* chưa có trong file messages)
+src/features/hr/commission-product-grid.tsx(53,88): error TS2448: Block-scoped variable 't' used before its declaration.
+src/features/reports/orders-report.tsx(32,25): error TS2552: Cannot find name 'ReportsT'. Did you mean 'Report'?
+```
+Trước đó (run 40754914530) còn: `store-access-gate.tsx`/`store-flow-parts.tsx`/`update-choice-dialog.tsx` TS2451 khai báo trùng `t`
+(đã được sửa ở run sau) và backend `ShopSettingsAutoConfiguration.java:[21,39] incompatible types: String cannot be converted to RestClient`
+(đã được sửa ở run sau). Test frontend chạy cục bộ: 32/33 đạt, 1 lỗi `i18n-keys.test.mjs` "có ít nhất các namespace khung app" (`auth`) — cũng do i18n đang làm.
+
+**Để có run xanh hoàn chỉnh:** khi agent i18n xong → `git add -A && git commit` → `git push origin feature/phase-01-foundation`
+→ CI xanh → `git push origin HEAD:main` → CD build 6 image lên GHCR, deploy in "Deploy skipped".
 
 ## 3. Việc đã làm
 
@@ -68,7 +91,8 @@ Redis/RabbitMQ/MinIO có trong compose dev nhưng code chưa dùng → không đ
 |---|---|---|
 | Workflow không chạy ở lần push đầu | push khởi tạo ~1.070 commit không sinh sự kiện workflow | push commit kế tiếp → workflow được đăng ký |
 | `npm ci`: "Missing @emnapi/runtime from lock file" | lockfile do npm 11.6.2 (máy dev) tạo; Node 22 kèm npm 10 đọc khác | CI + Dockerfile cài `npm@11.6.2` trước `npm ci` (không sửa lockfile) |
-| Maven 403 từ Maven Central (1 lần) | lỗi tạm thời phía runner/repo | chạy lại là qua |
+| Maven 403 từ Maven Central (1 lần) | lỗi tạm thời phía runner/repo | run sau qua bình thường |
+| Cảnh báo action Node 20 deprecated | checkout/setup-java/setup-node v4 | đã nâng lên v5 (upload-artifact giữ v4) |
 | Commit snapshot bị gộp vào commit hook `auto: update login-language-select.tsx` | hook auto-commit chạy đúng lúc index đã stage | nội dung đúng; không rewrite history vì hook vẫn đang commit liên tục |
 
 ## 5. Việc còn lại / cần quyết định
@@ -77,7 +101,7 @@ Redis/RabbitMQ/MinIO có trong compose dev nhưng code chưa dùng → không đ
 - Bật "Required reviewers" cho environment `production` nếu muốn duyệt tay trước khi lên máy chủ.
 - Quy trình làm việc: hiện code chỉ lên GitHub khi có người `git push` (repo chưa có push tự động). Nên thống nhất: làm trên
   nhánh → mở PR vào `main` → CI xanh mới merge.
-- Annotation GitHub: action v4 (checkout/setup-node/upload-artifact) đang chạy trên Node 20 đã deprecated — nâng lên v5 khi tiện.
+- Repo local không tự push: các commit `auto:` của hook chỉ nằm trên máy; file sửa bằng shell không được hook commit → trước mỗi push cần `git add -A`.
 
 ## Câu hỏi chưa giải quyết
 

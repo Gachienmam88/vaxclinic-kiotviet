@@ -49,8 +49,8 @@ flowchart LR
 | Hạng mục | Trạng thái |
 |---|---|
 | Kho code riêng tư trên GitHub, nhánh `main` + nhánh phát triển | Đã có |
-| CI tự kiểm tra mỗi lần đẩy code / mở pull request | Đã chạy |
-| CD đóng gói image lên GHCR khi `main` thay đổi | Đã chạy |
+| CI tự kiểm tra mỗi lần đẩy code / mở pull request | Đã chạy (backend xanh; frontend đang báo lỗi code i18n làm dở) |
+| CD đóng gói image lên GHCR khi `main` thay đổi | Đã cấu hình, gate hoạt động; build image chạy thật ở lần `main` đầu tiên có CI xanh |
 | Triển khai lên máy chủ, sao lưu, kiểm tra sức khỏe, tự rollback | Đã viết sẵn — **chờ máy chủ** (hiện tự bỏ qua) |
 | Tên miền + HTTPS | Cần máy chủ + tên miền |
 
