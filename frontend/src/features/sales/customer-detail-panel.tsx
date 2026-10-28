@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { DollarSign, Pencil, Percent, SlidersHorizontal, UserRound } from "lucide-react";
+import { DollarSign, Pencil, Percent, QrCode, SlidersHorizontal, UserRound } from "lucide-react";
+import { QrPaymentDialog } from "./qr-payment-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
