@@ -1,0 +1,122 @@
+{
+  "page": {
+    "title": "Tax & Accounting",
+    "noProfile": "There is no active tax declaration profile. Go to {link} to add a tax code, revenue group and business locations.",
+    "noProfileLink": "Settings → Tax & Accounting",
+    "taxCodeOption": "Tax code {code}",
+    "yearOption": "Year {year}",
+    "byQuarter": "Quarterly",
+    "byMonth": "Monthly",
+    "periodHint": "The selected period applies to the books; the declaration shows every period of the year.",
+    "tabs": {
+      "declaration": "Declaration & tax due",
+      "revenue": "Revenue book ({code})",
+      "stock": "Goods book ({code})",
+      "cash": "Cash book ({code})"
+    }
+  },
+  "period": {
+    "month": "Month {n}",
+    "quarter": "Q{n}"
+  },
+  "groups": {
+    "g1": "Group 1: Up to 1 billion",
+    "g2": "Group 2: Over 1 – 3 billion",
+    "g3": "Group 3: Over 3 – 50 billion",
+    "g4": "Group 4: Over 50 billion"
+  },
+  "books": {
+    "formPeriod": "Form {code} — {period} ({from} – {to})",
+    "noRevenue": "No revenue in this period",
+    "stockNote": "Form {code} — {period}. Receipts valued at purchase price (incl. VAT), issues at weighted average cost.",
+    "fundCash": "Cash",
+    "fundBank": "Bank deposits",
+    "cashAllBranches": "The cash book covers all branches"
+  },
+  "declaration": {
+    "taxCodeLabel": "Tax code:",
+    "pitLabel": "PIT:",
+    "vatLabel": "VAT:",
+    "pitByProfit": "on income, {rate}%",
+    "pitByRevenue": "on revenue, rate per sector",
+    "vatBySector": "rate per sector on taxable revenue",
+    "vatNotApplied": "Not applicable",
+    "group1Note": "Group 1 (annual revenue up to 1 billion): no VAT or PIT payable — only the revenue book (S1a-HKD) is required.",
+    "period": "Period",
+    "yearTotal": "Total {year}",
+    "total": "Total",
+    "footnote": "Revenue = completed invoices − customer returns (after discounts). Year-to-date revenue: {total}. Figures are estimates under the current household-business tax rules from 2026; have your accountant reconcile them before filing on the tax portal.",
+    "cols": {
+      "revenue": "Revenue",
+      "vatRevenue": "VAT-able revenue",
+      "exemptRevenue": "Non-VAT revenue",
+      "vat": "VAT",
+      "cogs": "Cost of goods",
+      "expenses": "Other expenses",
+      "taxableIncome": "Taxable income",
+      "pitBaseRevenue": "PIT revenue base (over 1 bn)",
+      "pit": "PIT",
+      "totalDue": "Total payable"
+    },
+    "sector": {
+      "title": "Breakdown by business sector — {period}",
+      "name": "Business sector",
+      "rates": "VAT / PIT rate",
+      "pitBase": "PIT revenue base",
+      "allocationNote": "The deductible revenue (1 billion/year) is split across sectors by their share of revenue in the period — confirm the allocation with your accountant."
+    }
+  },
+  "profile": {
+    "declaring": "Declaring",
+    "notDeclaring": "Not declaring",
+    "manageTitle": "Manage declaration profile",
+    "manageDesc": "Based on the revenue group and tax method, the system compiles data for the accounting books and declarations of each business location.",
+    "revenueGroup": "Revenue group",
+    "pitMethod": "PIT calculation method",
+    "pitRevenue": "On revenue",
+    "pitProfit": "On income (revenue - expenses)",
+    "locations": "Business locations",
+    "addLocation": "Add business location",
+    "editLocation": "Edit location",
+    "colCode": "Location code",
+    "colName": "Location name",
+    "colAddress": "Address",
+    "colBranches": "Branches",
+    "colStartDate": "Declared from",
+    "colStatus": "Status",
+    "noLocations": "No locations yet — the books will include data from all branches",
+    "confirmDeactivate": "Deactivate this business location?\nData from its branches will no longer be included in the accounting books and declarations from now on. Existing data is not changed.",
+    "deleteTitle": "Delete tax code",
+    "deleteDesc": "The tax settings of tax code {code} will be deleted. Sales data is not affected.",
+    "confirmDelete": "Delete tax code {code}?",
+    "saved": "Settings updated successfully"
+  },
+  "location": {
+    "addTitle": "Add business location",
+    "editTitle": "Edit business location",
+    "name": "Business location name *",
+    "namePlaceholder": "E.g. Head office",
+    "code": "Business location code *",
+    "province": "Province/City",
+    "branches": "Branches",
+    "startDate": "Declared from"
+  },
+  "sectors": {
+    "title": "Business sectors & tax rates on revenue",
+    "name": "Business sector",
+    "vat": "VAT (%)",
+    "pit": "PIT (%)",
+    "default": "Default",
+    "remove": "Remove sector",
+    "add": "Add business sector",
+    "newName": "New sector",
+    "cannotRemoveDefault": "The default business sector cannot be removed — choose another default first.",
+    "categoriesTitle": "Assign sectors to product categories",
+    "categoriesDesc": "Product revenue is taxed by the sector of its category. Blank subcategories follow their parent; unassigned ones use the default sector.",
+    "noCategories": "No product categories yet (create them in Settings → Products).",
+    "followParent": "-- Same as parent --",
+    "followDefault": "-- Default sector --",
+    "defaultTaxRate": "Default tax rate for products without one",
+    "note": "Products with tax rate KCT / KKKNT are not subject to VAT. Vaccines and medical services are usually VAT-exempt. Default rates follow the 2026 household-business tax rules — have your accountant confirm them."
+  }
+}
