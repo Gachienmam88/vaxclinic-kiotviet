@@ -56,7 +56,8 @@ public class RevenueBookController {
                 ), sale as (
                   select inv.d, coalesce(l.tax_code, '') tax_code, count(distinct inv.id) n,
                     sum(case when inv.subtotal = 0 then 0
-                             else round(inv.total * l.quantity * (l.unit_price - l.discount) / inv.subtotal) end) amount
+                             else round(inv.total * l.quantity * (l.unit_price - l.discount) / inv.subtotal) end) amount,
+                    sum(round(l.quantity * l.cost)) cogs
                   from inv join invoice_lines l on l.invoice_id = inv.id group by 1, 2
                 ), ret as (
                   select r.id, (r.returned_at at time zone 'Asia/Ho_Chi_Minh')::date d, r.total, r.subtotal
