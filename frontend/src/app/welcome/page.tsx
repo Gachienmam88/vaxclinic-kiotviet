@@ -1,81 +1,80 @@
 "use client";
 
-import { Suspense, useState } from "react";
-import { useSearchParams } from "next/navigation";
-import { CalendarCheck, PackageCheck, ShieldCheck, Syringe, WifiOff } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useEffect, useState } from "react";
+import { Play, Syringe } from "lucide-react";
 import { StoreAccessDialog } from "@/features/auth/store-access-dialog";
 
 const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME ?? "VaxClinic";
 
-const FEATURES = [
-  { icon: PackageCheck, title: "Kho vắc xin theo lô, hạn dùng", text: "Hết hạn trước xuất trước, không bán lô đã hết hạn." },
-  { icon: WifiOff, title: "Bán hàng khi mất mạng", text: "Quầy thu ngân vẫn chạy, có mạng tự đồng bộ." },
-  { icon: ShieldCheck, title: "Hóa đơn điện tử & thuế", text: "Kết nối MISA, sổ sách và tờ khai hộ kinh doanh." },
-];
-
-/** Minh họa bên phải: khung màn hình quản lý vẽ bằng CSS (không dùng ảnh bên ngoài). */
-function Illustration() {
+/** Ảnh bên phải: file public/brand/hero.jpg (ảnh của cửa hàng); chưa có → khung màn hình vẽ bằng CSS. */
+function HeroImage() {
+  const [ok, setOk] = useState(true);
   return (
-    <div className="relative rounded-3xl bg-gradient-to-br from-sky-100 to-emerald-100 p-8">
-      <div className="rounded-xl border-8 border-slate-800 bg-white shadow-2xl">
-        <div className="flex items-center gap-2 bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground"><Syringe className="size-4" /> {APP_NAME}</div>
-        <div className="space-y-2 p-3">
-          {[["Rotateq", "Lô RT2601", "665.000"], ["Hexaxim", "Lô HX2512", "1.015.000"], ["Varivax", "Lô VX2602", "900.000"]].map(([n, l, p]) => (
-            <div key={n} className="flex items-center gap-2 rounded-md bg-slate-50 px-2 py-1.5 text-xs">
-              <span className="font-medium">Vắc xin {n}</span><span className="text-slate-500">{l}</span><span className="ml-auto font-semibold text-primary">{p}</span>
+    <div className="flex h-[350px] items-end justify-center overflow-hidden rounded-[28px] bg-[#c9e3c1]">
+      {ok
+        // eslint-disable-next-line @next/next/no-img-element -- ảnh tĩnh của cửa hàng, có thể chưa có
+        ? <img src="/brand/hero.jpg" alt="" className="h-full w-full object-cover" onError={() => setOk(false)} />
+        : (
+          <div className="mb-10 w-[310px] rounded-lg border-[7px] border-[#2b2f36] bg-white shadow-2xl">
+            <div className="flex h-6 items-center gap-1 bg-primary px-2 text-[10px] font-bold text-white"><Syringe className="size-3" /> {APP_NAME}</div>
+            <div className="space-y-1.5 p-2">
+              {["Vắc xin Rotateq", "Vắc xin Hexaxim", "Vắc xin Varivax", "Vắc xin Gardasil 9"].map((n) => (
+                <div key={n} className="flex h-5 items-center rounded bg-[#f3f4f6] px-2 text-[10px]">{n}<span className="ml-auto h-1.5 w-10 rounded bg-primary/40" /></div>
+              ))}
             </div>
-          ))}
-          <div className="flex justify-end"><span className="rounded bg-primary px-3 py-1 text-xs font-bold text-primary-foreground">THANH TOÁN</span></div>
-        </div>
-      </div>
-      <div className="absolute -right-3 top-6 hidden w-44 rounded-xl bg-white p-3 text-xs shadow-xl md:block">
-        <p className="mb-1 flex items-center gap-1 font-semibold"><CalendarCheck className="size-3.5 text-emerald-600" /> Hẹn tiêm hôm nay</p>
-        {["Nguyễn Minh An · 08:30", "Trần Bảo Ngọc · 09:15", "Lê Gia Huy · 10:00"].map((x) => <p key={x} className="text-slate-600">{x}</p>)}
-      </div>
+          </div>
+        )}
     </div>
   );
 }
 
-function Welcome() {
-  const params = useSearchParams();
-  const [login, setLogin] = useState(params.get("login") === "1");
+/**
+ * Trang giới thiệu (chưa đăng nhập) — bố cục theo trang chủ KiotViet (ảnh 1365px): thanh trên cao 88px,
+ * tiêu đề 46px đậm 2 dòng, mô tả 18px, 2 nút bo tròn cao 64px, ảnh bên phải bo 28px. ?login=1 → mở hộp địa chỉ cửa hàng.
+ */
+export default function WelcomePage() {
+  const [login, setLogin] = useState(false);
+  // Đọc tham số sau khi tải trang (không dùng useSearchParams để trang được dựng sẵn, hiện ngay)
+  useEffect(() => { if (new URLSearchParams(window.location.search).get("login") === "1") setLogin(true); }, []);
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="border-b bg-white">
-        <div className="mx-auto flex h-16 max-w-6xl items-center gap-6 px-4">
-          <span className="flex items-center gap-2 text-xl font-bold text-primary"><Syringe className="size-7" /> {APP_NAME}</span>
-          <nav className="hidden gap-6 text-sm font-medium text-slate-700 md:flex">
-            <a href="#tinh-nang" className="hover:text-primary">Tính năng</a><a href="#lien-he" className="hover:text-primary">Hỗ trợ</a>
+    <div className="min-h-screen bg-[#f0f2f5] text-[#111827]">
+      <header className="border-b border-[#e5e7eb] bg-white">
+        <div className="mx-auto flex h-[88px] max-w-[1270px] items-center px-4">
+          <span className="flex items-center gap-2 text-[28px] font-bold text-[#0a2540]"><Syringe className="size-9 text-primary" /> {APP_NAME}</span>
+          <nav className="ml-16 hidden items-center gap-10 text-[16px] font-medium text-[#1f2937] lg:flex">
+            <a href="#tinh-nang" className="hover:text-primary">Tính năng</a>
+            <a href="#nganh-hang" className="hover:text-primary">Ngành hàng</a>
+            <a href="#ho-tro" className="hover:text-primary">Hỗ trợ</a>
           </nav>
-          <button type="button" className="ml-auto text-sm font-semibold text-slate-800 hover:text-primary" onClick={() => setLogin(true)}>Đăng nhập</button>
+          <div className="ml-auto flex items-center gap-6">
+            <span className="hidden h-6 border-l border-[#d1d5db] lg:block" />
+            <button type="button" className="text-[16px] font-medium hover:text-primary" onClick={() => setLogin(true)}>Đăng nhập</button>
+            <button type="button" className="h-10 rounded-full bg-primary px-5 text-[16px] font-semibold text-white hover:bg-[#0062d6]" onClick={() => setLogin(true)}>Vào cửa hàng</button>
+          </div>
         </div>
       </header>
-      <main className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-14 md:grid-cols-2">
-        <div className="space-y-6">
-          <h1 className="text-4xl font-extrabold leading-tight text-slate-900 md:text-5xl">Quản lý phòng tiêm chủng<br />gọn trong một phần mềm</h1>
-          <p className="text-lg text-slate-600">Bán vắc xin, quản lý kho theo lô, công nợ, sổ quỹ, hóa đơn điện tử và sổ sách thuế — cho mọi điểm tiêm của doanh nghiệp.</p>
-          <div className="flex gap-3">
-            <Button size="lg" className="h-12 rounded-full px-8 text-base" onClick={() => setLogin(true)}>Đăng nhập</Button>
-            <Button size="lg" variant="outline" className="h-12 rounded-full px-8 text-base" render={<a href="#tinh-nang" />}>Khám phá</Button>
+      <main className="mx-auto grid max-w-[1270px] grid-cols-1 items-center gap-10 px-4 pb-16 pt-[95px] lg:grid-cols-[1fr_485px]">
+        <div>
+          <h1 className="text-[46px] font-bold leading-[1.27] tracking-[-0.01em]">Phần mềm quản lý<br />phòng tiêm chủng</h1>
+          <p className="mt-5 max-w-[580px] text-[18px] leading-7 text-[#1f2937]">Bán vắc xin, kho theo lô – hạn dùng, công nợ, sổ quỹ, hóa đơn điện tử và sổ sách thuế cho mọi điểm tiêm.</p>
+          <div className="mt-12 flex flex-wrap gap-4">
+            <button type="button" onClick={() => setLogin(true)}
+              className="h-16 w-[275px] rounded-full bg-primary text-[23px] font-bold text-white hover:bg-[#0062d6]">Đăng nhập</button>
+            <a href="#tinh-nang" className="flex h-16 items-center gap-3 rounded-full bg-white pl-8 pr-2.5 text-[23px] font-bold text-primary">
+              Khám phá <span className="flex size-11 items-center justify-center rounded-full border-2 border-primary"><Play className="ml-0.5 size-5 fill-primary" /></span></a>
           </div>
         </div>
-        <Illustration />
+        <HeroImage />
       </main>
-      <section id="tinh-nang" className="mx-auto grid max-w-6xl gap-4 px-4 pb-16 md:grid-cols-3">
-        {FEATURES.map((f) => (
-          <div key={f.title} className="rounded-2xl bg-white p-5 shadow-sm">
-            <f.icon className="size-8 text-primary" /><h3 className="mt-3 font-semibold">{f.title}</h3><p className="mt-1 text-sm text-slate-600">{f.text}</p>
-          </div>
+      <section id="tinh-nang" className="mx-auto grid max-w-[1270px] gap-4 px-4 pb-16 md:grid-cols-3">
+        {[["Kho vắc xin theo lô, hạn dùng", "Hết hạn trước xuất trước, không bán lô đã hết hạn."],
+          ["Bán hàng khi mất mạng", "Quầy thu ngân vẫn chạy, có mạng tự đồng bộ."],
+          ["Hóa đơn điện tử & thuế", "Kết nối MISA, sổ sách và tờ khai hộ kinh doanh."]].map(([t, d]) => (
+          <div key={t} className="rounded-2xl bg-white p-6"><h3 className="text-[18px] font-semibold">{t}</h3><p className="mt-1 text-[15px] text-[#4b5563]">{d}</p></div>
         ))}
       </section>
-      <footer id="lien-he" className="border-t bg-white py-6 text-center text-sm text-slate-500">Cần hỗ trợ, liên hệ quản trị hệ thống của doanh nghiệp.</footer>
+      <footer id="ho-tro" className="border-t bg-white py-6 text-center text-[14px] text-[#6b7280]">Cần hỗ trợ, liên hệ quản trị hệ thống của doanh nghiệp.</footer>
       {login && <StoreAccessDialog onClose={() => setLogin(false)} />}
     </div>
   );
-}
-
-/** Trang giới thiệu (chưa đăng nhập) → "Đăng nhập" mở hộp nhập địa chỉ cửa hàng. */
-export default function WelcomePage() {
-  return <Suspense><Welcome /></Suspense>;
 }
