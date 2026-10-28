@@ -63,8 +63,9 @@ export function PosCheckoutPanel({ draft, branchId, update, onPay, paying }: Pro
       <textarea className="min-h-16 rounded-md border bg-transparent p-2 outline-none" placeholder="Ghi chú đơn hàng" value={draft.note}
         onChange={(e) => update({ note: e.target.value })} />
       <Button className="mt-auto h-12 text-base font-bold" disabled={paying || !draft.lines.length} onClick={onPay}>
-        {paying ? "ĐANG LƯU..." : "THANH TOÁN (F9)"}
+        {paying ? "ĐANG LƯU..." : draft.editOf ? "LƯU HÓA ĐƠN (F9)" : "THANH TOÁN (F9)"}
       </Button>
+      {qr && <QrPaymentDialog amount={t.paid} info={draft.editOf?.code ?? draft.label} onClose={() => setQr(false)} />}
     </div>
   );
 }
