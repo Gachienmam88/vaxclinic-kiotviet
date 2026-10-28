@@ -1,46 +1,38 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
 import { useQueryClient } from "@tanstack/react-query";
-import { CloudOff, LayoutGrid, Plus, Undo2, Wifi, X, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/lib/api-client";
 import { formatMoney } from "@/lib/format";
 import { useCurrentUser } from "@/lib/use-current-user";
 import { useUserLookup } from "@/features/purchases/purchase-queries";
 import { SALES_KEYS } from "@/features/sales/sales-queries";
+import type { Invoice } from "@/features/sales/sales-types";
+import { usePrinter } from "@/features/print/print-button";
+import { invoiceData } from "@/features/print/print-data";
 import { useRouter, useSearchParams } from "next/navigation";
 import { PosCart } from "./pos-cart";
 import { draftFromInvoice } from "./pos-open-invoice";
-import { ReturnCheckout, ReturnLines, returnTotals } from "./pos-return-panel";
+import { ReturnLines, returnTotals } from "./pos-return-panel";
+import { ReturnCheckout } from "./pos-return-checkout";
 import { PosCheckoutPanel } from "./pos-checkout-panel";
 import { PosProductGrid } from "./pos-product-grid";
-import { PosProductSearch } from "./pos-product-search";
+import { PosFooter } from "./pos-footer";
+import { PosHeader } from "./pos-header";
+import { toBody } from "./pos-invoice-body";
+import { PosOrderNote } from "./pos-ui-parts";
 import { PosQueueDialog } from "./pos-queue-dialog";
 import { isNetworkError, newId } from "./pos-storage";
 import { useOfflineQueue } from "./use-offline-queue";
 import { usePosCatalog } from "./use-pos-catalog";
 import { cartTotals, usePosTabs } from "./use-pos-tabs";
-import type { CatalogProduct, DraftInvoice } from "./pos-types";
-
-function toBody(d: DraftInvoice, branchId: string, sellerName: string | undefined, offline: boolean) {
-  const t = cartTotals(d);
-  return {
-    id: d.id, branchId, customerId: d.customer?.id ?? null, sellerId: d.sellerId || null, sellerName,
-    soldAt: new Date().toISOString(), saleMode: d.mode, discount: t.discount, paidAmount: Math.min(t.paid, t.total),
-    paymentMethod: d.paymentMethod, note: d.note, offline,
-    lines: d.lines.map((l) => {
-      const u = l.units.find((x) => x.id === l.unitId)!;
-      return { productId: l.productId, unitId: l.unitId, productCode: u.code, productName: l.productName, unitName: u.unitName,
-        quantity: l.quantity, unitPrice: l.unitPrice, discount: l.discount, note: l.note || null, taxCode: l.taxCode };
-    }),
-  };
-}
+import type { CatalogProduct } from "./pos-types";
 
 /** Màn bán hàng toàn màn hình (Bán nhanh / Bán thường), chạy được khi mất mạng. */
 export function PosScreen() {
   const qc = useQueryClient();
+  const printDoc = usePrinter();
   const { data: me } = useCurrentUser();
   const { data: users = [] } = useUserLookup();
   const branchId = me?.user.branches[0]?.id ?? "";
@@ -102,6 +94,16 @@ export function PosScreen() {
 
   function addProduct(p: CatalogProduct, unitId: string) {
     const unit = p.units.find((u) => u.id === unitId) ?? p.units[0];
+    // Tab trả hàng ("Tìm hàng trả (F3)"): tăng số lượng trả của dòng hóa đơn cùng mã, không thêm vào giỏ bán
+    if (d?.returnOf) {
+      const r = d.returnOf;
+      const line = r.lines.find((l) => l.productCode === unit.code) ?? r.lines.find((l) => p.units.some((u) => u.code === l.productCode));
+      if (!line) { toast.error(`${p.name} không có trong hóa đơn ${r.code}`); return; }
+      const max = line.sold - line.returned;
+      if (line.quantity >= max) { toast.error(`${line.productName}: chỉ còn trả được ${max}`); return; }
+      tabs.update({ returnOf: { ...r, lines: r.lines.map((l) => (l === line ? { ...l, quantity: l.quantity + 1 } : l)) } });
+      return;
+    }
     tabs.setLines((lines) => {
       const same = lines.find((l) => l.productId === p.id && l.unitId === unit.id);
       if (same) return lines.map((l) => (l === same ? { ...l, quantity: l.quantity + 1 } : l));
@@ -133,8 +135,9 @@ export function PosScreen() {
       return;
     }
     try {
-      const inv = await api<{ code: string }>("/invoices", { method: "POST", body: toBody(d, branchId, sellerName, false) });
-      toast.success(`Đã thanh toán hóa đơn ${inv.code}${t.paid > t.total ? ` — trả lại khách ${formatMoney(t.paid - t.total)}` : ""}`);
+      const inv = await api<Invoice>("/invoices", { method: "POST", body: toBody(d, branchId, sellerName, false) });
+      toast.success(`Đã thanh toán hóa đơn ${inv.code}${t.paid > t.total ? ` — trả lại khách ${formatMoney(t.paid - t.total)}` : ""}`,
+        { duration: 8000, action: { label: "In hóa đơn", onClick: () => printDoc("INVOICE", invoiceData(inv), branchId) } });
       tabs.resetActive();
       void catalog.refresh();
       SALES_KEYS.forEach((k) => qc.invalidateQueries({ queryKey: k }));
@@ -156,52 +159,30 @@ export function PosScreen() {
   const pending = queue.queue.length;
 
   return (
-    <div className="flex h-screen flex-col bg-muted">
-      <header className="flex h-12 shrink-0 items-center gap-3 bg-primary px-3 text-primary-foreground">
-        <PosProductSearch products={catalog.products} onPick={addProduct} />
-        <div className="flex min-w-0 flex-1 items-end gap-1 self-end overflow-x-auto">
-          {tabs.tabs.map((t) => (
-            <div key={t.id} className={`flex shrink-0 items-center gap-2 rounded-t-md px-3 py-2 text-sm ${t.id === d.id ? "bg-muted font-semibold text-foreground" : "hover:bg-white/10"}`}>
-              <button onClick={() => tabs.setActiveId(t.id)}>{t.label}</button>
-              <button aria-label={`Đóng ${t.label}`} onClick={() => (t.lines.length === 0 || confirm(`Đóng ${t.label}? Giỏ hàng sẽ bị xóa.`)) && tabs.close(t.id)}>
-                <X className="size-3.5" /></button>
-            </div>))}
-          <button aria-label="Thêm hóa đơn" className="mb-1.5 rounded-full p-1 hover:bg-white/10" onClick={tabs.add}><Plus className="size-4" /></button>
-        </div>
-        <button onClick={() => setShowQueue(true)} title="Hóa đơn chờ đồng bộ"
-          className={`flex items-center gap-1 rounded-md px-2 py-1 text-xs ${online && !catalog.offline ? "" : "bg-orange-500"}`}>
-          {online && !catalog.offline ? <Wifi className="size-4" /> : <CloudOff className="size-4" />}
-          {pending > 0 ? `${pending} chờ đồng bộ` : online && !catalog.offline ? "Trực tuyến" : "Mất mạng"}
-        </button>
-        <Link href="/invoices" className="rounded-md p-1.5 hover:bg-white/10" title="Về trang quản lý"><Undo2 className="size-4" /></Link>
-        <span className="text-sm">{me.user.fullName}</span>
-      </header>
-      <main className="flex min-h-0 flex-1 gap-3 p-3">
-        <section className="flex min-w-0 flex-1 flex-col gap-3">
+    <div className="flex h-screen flex-col bg-[#e8eaed] text-[13px] text-[#1f2329] dark:bg-muted dark:text-foreground">
+      <PosHeader products={catalog.products} onPick={addProduct} tabs={tabs} online={online && !catalog.offline}
+        pending={pending} onShowQueue={() => setShowQueue(true)} userName={me.user.fullName} />
+      <main className="flex min-h-0 flex-1 gap-2 p-2">
+        <section className="flex min-w-0 flex-1 flex-col gap-2">
           {d.returnOf ? (
-            <div className="flex-1 overflow-y-auto"><ReturnLines draft={d} update={tabs.update} /></div>
+            <div className="min-h-0 flex-1 overflow-y-auto"><ReturnLines draft={d} update={tabs.update} /></div>
           ) : (
             <>
-              <div className={`overflow-y-auto ${d.mode === "NORMAL" ? "h-1/2" : "flex-1"}`}>
+              <div className={`min-h-0 overflow-y-auto ${d.mode === "NORMAL" ? "h-1/2" : "flex-1"}`}>
                 <PosCart lines={d.lines} customerId={d.customer?.id ?? null} onChange={tabs.setLines} />
               </div>
               {d.mode === "NORMAL" && <PosProductGrid products={catalog.products} onPick={addProduct} />}
             </>
           )}
+          <div className="px-2.5 pb-0.5"><PosOrderNote value={d.note} onChange={(note) => tabs.update({ note })} /></div>
         </section>
-        <aside className="w-96 shrink-0 rounded-lg bg-background p-4">
+        <aside className="flex w-[406px] shrink-0 flex-col rounded-lg bg-background px-4 pt-2.5 pb-4">
           {d.returnOf
             ? <ReturnCheckout draft={d} update={tabs.update} onSubmit={submitReturn} busy={paying} />
             : <PosCheckoutPanel draft={d} branchId={branchId} update={tabs.update} onPay={pay} paying={paying} />}
         </aside>
       </main>
-      <footer className="flex h-11 shrink-0 items-center gap-1 bg-background px-3 text-sm">
-        {([["QUICK", "Bán nhanh", Zap], ["NORMAL", "Bán thường", LayoutGrid]] as const).map(([m, label, Icon]) => (
-          <button key={m} onClick={() => tabs.update({ mode: m })}
-            className={`flex h-full items-center gap-2 border-t-2 px-4 ${d.mode === m ? "border-primary text-primary" : "border-transparent"}`}>
-            <Icon className="size-4" /> {label}</button>))}
-        {catalog.loadedAt && <span className="ml-auto text-xs text-muted-foreground">Danh mục cập nhật {new Date(catalog.loadedAt).toLocaleTimeString("vi-VN")}</span>}
-      </footer>
+      <PosFooter mode={d.mode} showModes={!d.returnOf} onMode={(mode) => tabs.update({ mode })} loadedAt={catalog.loadedAt} />
       {showQueue && <PosQueueDialog queue={queue.queue} onRetry={queue.retry} onRemove={queue.remove} onClose={() => setShowQueue(false)} />}
     </div>
   );
