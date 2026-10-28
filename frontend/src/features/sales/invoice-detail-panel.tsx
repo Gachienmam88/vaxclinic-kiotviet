@@ -28,6 +28,9 @@ export function InvoiceDetailPanel({ id }: { id: string }) {
   const { data: users = [] } = useUserLookup();
   const { data: branches = [] } = useBranches();
   const [edit, setEdit] = useState<{ sellerId: string; at: string; note: string } | null>(null);
+  const [taxDialog, setTaxDialog] = useState(false);
+  const { data: einvoices = [] } = useEInvoiceRecords([id]);
+  const published = einvoices[0]?.status === "PUBLISHED";
   const refresh = () => SALES_KEYS.forEach((k) => qc.invalidateQueries({ queryKey: k }));
 
   const save = useMutation({
