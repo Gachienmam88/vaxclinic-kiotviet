@@ -30,6 +30,9 @@ final class InvoiceFilterSql {
 
     static final String HAS_RETURN = "exists (select 1 from sales_returns r where r.invoice_id = i.id and r.status = 'COMPLETED')";
 
+    /** Trạng thái HĐĐT do integration-service phân loại (ACCEPTED = đã có mã CQT). */
+    static final List<String> EINVOICE_STATES = List.of("PUBLISHED", "ACCEPTED", "FAILED");
+
     private InvoiceFilterSql() {
     }
 
