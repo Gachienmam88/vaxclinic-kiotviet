@@ -56,6 +56,13 @@ tc("actions.save");
 - Sentences with embedded links/buttons: split into keys (`before`, `link`, `after`) — word order differs in ja/zh,
   so put the variable part via `{var}` whenever possible instead of concatenating fragments.
 - Do not put strings in `common` from phase 2; if something is genuinely shared, use your namespace and tell the lead.
+- Shared components already translate their own defaults (pickers, calendar month/weekday names, `ListEmptyState`,
+  `SearchableSelect`, `VnAddressFields`, dialog close button, `DetailSingleTab`). Props you pass are shown as-is, so
+  pass translated text: `<ListEmptyState what={t("list.emptyWhat")} period={t("list.thisMonth")} />` (sentence order
+  is handled by `common.emptyState.*`; `what` is a plain noun — "hàng hóa" / "products" / "商品").
+- There is no shared pager component; feature pagers live in features/* — use `common.pager.*`
+  (`range: "{from} - {to} of {total}"`, `prev`, `next`, `first`, `last`, `perPage`) instead of new keys.
+- Province/ward names (`vn-admin-data`) are data and stay Vietnamese.
 
 ## 4. Key naming
 - Nested JSON, camelCase segments: `<screen-or-component>.<element>` e.g. `list.title`, `form.fields.name`,
