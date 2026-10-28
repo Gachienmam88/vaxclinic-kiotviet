@@ -55,9 +55,8 @@ public class ProductListQuery {
         }
         if (f.categoryIds() != null && !f.categoryIds().isEmpty()) {
             // Chọn nhóm cha thì lấy cả nhóm con (đệ quy).
-            where.append("""
-                     and p.category_id in (with recursive t as (select id from categories where id in (:categoryIds)
-                         union all select c.id from categories c join t on c.parent_id = t.id) select id from t)""");
+            where.append(" and p.category_id in (with recursive t as (select id from categories where id in (:categoryIds)")
+                    .append(" union all select c.id from categories c join t on c.parent_id = t.id) select id from t)");
             params.addValue("categoryIds", f.categoryIds());
         }
         if (f.taxRateIds() != null && !f.taxRateIds().isEmpty()) {
