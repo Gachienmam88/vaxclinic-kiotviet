@@ -1,0 +1,122 @@
+{
+  "page": {
+    "title": "税務・会計",
+    "noProfile": "有効な税務申告プロファイルがありません。{link} で税番号、売上区分、事業所を追加してください。",
+    "noProfileLink": "設定 → 税務・会計",
+    "taxCodeOption": "税番号 {code}",
+    "yearOption": "{year}年",
+    "byQuarter": "四半期別",
+    "byMonth": "月別",
+    "periodHint": "選択した期間は各帳簿に適用されます。申告書には年間の全期間が表示されます。",
+    "tabs": {
+      "declaration": "申告・納税額",
+      "revenue": "売上帳（{code}）",
+      "stock": "商品帳（{code}）",
+      "cash": "現金帳（{code}）"
+    }
+  },
+  "period": {
+    "month": "{n}月",
+    "quarter": "第{n}四半期"
+  },
+  "groups": {
+    "g1": "区分1：10億以下",
+    "g2": "区分2：10億超～30億",
+    "g3": "区分3：30億超～500億",
+    "g4": "区分4：500億超"
+  },
+  "books": {
+    "formPeriod": "様式 {code} — {period}（{from} – {to}）",
+    "noRevenue": "期間内の売上はありません",
+    "stockNote": "様式 {code} — {period}。入庫は仕入価格（VAT込）、出庫は移動平均原価で評価。",
+    "fundCash": "現金",
+    "fundBank": "銀行預金",
+    "cashAllBranches": "現金帳は全店舗の合計です"
+  },
+  "declaration": {
+    "taxCodeLabel": "税番号：",
+    "pitLabel": "個人所得税：",
+    "vatLabel": "付加価値税：",
+    "pitByProfit": "所得基準、{rate}%",
+    "pitByRevenue": "売上基準、業種別税率",
+    "vatBySector": "課税売上に業種別税率",
+    "vatNotApplied": "適用なし",
+    "group1Note": "区分1（年間売上10億以下）：付加価値税・個人所得税の納付は不要 — 売上帳（S1a-HKD）の記帳のみ必要です。",
+    "period": "期間",
+    "yearTotal": "{year}年 合計",
+    "total": "合計",
+    "footnote": "売上 = 完了した請求書 − 顧客返品（値引き控除後）。年初来売上：{total}。数値は2026年からの個人事業者税制に基づく見積もりです。税務ポータルで申告する前に会計担当者に照合してもらってください。",
+    "cols": {
+      "revenue": "売上",
+      "vatRevenue": "VAT課税売上",
+      "exemptRevenue": "VAT非課税売上",
+      "vat": "付加価値税",
+      "cogs": "原価",
+      "expenses": "その他経費",
+      "taxableIncome": "課税所得",
+      "pitBaseRevenue": "所得税対象売上（10億超）",
+      "pit": "個人所得税",
+      "totalDue": "納付額合計"
+    },
+    "sector": {
+      "title": "業種別内訳 — {period}",
+      "name": "業種",
+      "rates": "VAT / 所得税率",
+      "pitBase": "所得税対象売上",
+      "allocationNote": "控除売上（年10億）は期間内の売上比率で各業種に配分されます — 配分方法は会計担当者に確認してください。"
+    }
+  },
+  "profile": {
+    "declaring": "申告中",
+    "notDeclaring": "申告停止",
+    "manageTitle": "申告プロファイル管理",
+    "manageDesc": "売上区分と税額計算方法に基づき、事業所ごとの会計帳簿と申告書のデータを自動集計します。",
+    "revenueGroup": "売上区分",
+    "pitMethod": "個人所得税の計算方法",
+    "pitRevenue": "売上基準",
+    "pitProfit": "所得基準（売上 - 経費）",
+    "locations": "事業所一覧",
+    "addLocation": "事業所を追加",
+    "editLocation": "事業所を編集",
+    "colCode": "事業所コード",
+    "colName": "事業所名",
+    "colAddress": "住所",
+    "colBranches": "店舗",
+    "colStartDate": "申告開始日",
+    "colStatus": "ステータス",
+    "noLocations": "事業所がありません — 帳簿には全店舗のデータが集計されます",
+    "confirmDeactivate": "この事業所を停止しますか？\n今後、この事業所に属する店舗のデータは会計帳簿と申告書に含まれません。既存のデータは変更されません。",
+    "deleteTitle": "税番号を削除",
+    "deleteDesc": "税番号 {code} の税務設定が削除されます。販売データには影響しません。",
+    "confirmDelete": "税番号 {code} を削除しますか？",
+    "saved": "設定を更新しました"
+  },
+  "location": {
+    "addTitle": "事業所を追加",
+    "editTitle": "事業所を編集",
+    "name": "事業所名 *",
+    "namePlaceholder": "例：本社",
+    "code": "事業所コード *",
+    "province": "省・市",
+    "branches": "店舗",
+    "startDate": "申告開始日"
+  },
+  "sectors": {
+    "title": "業種と売上に対する税率",
+    "name": "業種",
+    "vat": "VAT（%）",
+    "pit": "所得税（%）",
+    "default": "既定",
+    "remove": "業種を削除",
+    "add": "業種を追加",
+    "newName": "新しい業種",
+    "cannotRemoveDefault": "既定の業種は削除できません。先に別の業種を既定にしてください。",
+    "categoriesTitle": "商品グループに業種を割り当て",
+    "categoriesDesc": "商品の売上は商品グループの業種で課税されます。空欄のサブグループは親グループに従い、未割り当ては既定の業種になります。",
+    "noCategories": "商品グループがありません（設定 → 商品 で作成）。",
+    "followParent": "-- 親グループに従う --",
+    "followDefault": "-- 既定の業種 --",
+    "defaultTaxRate": "税率未設定の商品の既定税率",
+    "note": "税率 KCT / KKKNT の商品は VAT 対象外です。ワクチンや医療サービスは通常 VAT 非課税です。既定税率は2026年の個人事業者税制に基づきます — 会計担当者に確認してください。"
+  }
+}
