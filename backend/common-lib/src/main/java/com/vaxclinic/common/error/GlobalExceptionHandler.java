@@ -39,6 +39,12 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(ApiError.of("MALFORMED_REQUEST", "Dữ liệu gửi lên không đúng định dạng"));
     }
 
+    /** Thiếu tham số bắt buộc trên query (vd. from/to của báo cáo) → 400, không phải 500. */
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ApiError> handleMissingParam(MissingServletRequestParameterException ex) {
+        return ResponseEntity.badRequest().body(ApiError.of("MISSING_PARAMETER", "Thiếu tham số bắt buộc: " + ex.getParameterName()));
+    }
+
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ApiError> handleDenied(AccessDeniedException ex) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
