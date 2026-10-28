@@ -33,15 +33,13 @@ export function ProductFormDialog({ product, onClose }: Props) {
   const setBase = (patch: object) => set({ units: form.units.map((u, i) => (i === 0 ? { ...u, ...patch } : u)) });
 
   const save = useMutation({
-    mutationFn: (_andNew: boolean) => isCreate
+    mutationFn: () => isCreate
       ? api<ProductDetail>("/products", { method: "POST", body: toRequest(form, true) })
       : api<ProductDetail>(`/products/${product.id}`, { method: "PUT", body: toRequest(form, false) }),
-    onSuccess: (saved, andNew) => {
+    onSuccess: (saved) => {
       toast.success(isCreate ? `Đã tạo hàng hóa ${saved.units[0]?.code}` : "Đã cập nhật hàng hóa");
       qc.invalidateQueries({ queryKey: ["products"] });
       qc.invalidateQueries({ queryKey: ["product", saved.id] });
-      if (andNew) setForm({ ...blank(), categoryId: form.categoryId, taxRateId: form.taxRateId });
-      else onClose();
     },
     onError: (e) => toast.error(errorMessage(e)),
   });
