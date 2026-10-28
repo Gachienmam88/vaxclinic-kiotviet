@@ -9,12 +9,13 @@ import {
 import { formatMoney } from "@/lib/format";
 import type { CartLine } from "./pos-types";
 
-type Props = { lines: CartLine[]; onChange: (fn: (lines: CartLine[]) => CartLine[]) => void };
+type Props = { lines: CartLine[]; customerId: string | null; onChange: (fn: (lines: CartLine[]) => CartLine[]) => void };
 
-/** Giỏ hàng: STT, xóa, mã, tên, đơn vị, SL (+/−), đơn giá (sửa được), thành tiền, menu (giảm giá, ghi chú). */
-export function PosCart({ lines, onChange }: Props) {
+/** Giỏ hàng: STT, xóa, mã, tên, đơn vị, SL (+/−), đơn giá (sửa được), thành tiền, menu (giá gần nhất, giảm giá, ghi chú, chi tiết). */
+export function PosCart({ lines, customerId, onChange }: Props) {
   const [showDiscount, setShowDiscount] = useState<Record<string, boolean>>({});
   const [showNote, setShowNote] = useState<Record<string, boolean>>({});
+  const [dialog, setDialog] = useState<{ kind: "price" | "info"; line: CartLine } | null>(null);
   const update = (key: string, patch: Partial<CartLine>) => onChange((all) => all.map((l) => (l.key === key ? { ...l, ...patch } : l)));
 
   if (!lines.length) {
