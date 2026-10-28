@@ -51,10 +51,13 @@ public class AuthService {
     }
 
     /** totpCode: bắt buộc khi user đã bật xác thực 2 lớp (thiếu → 401 TOTP_REQUIRED để màn đăng nhập hiện ô nhập mã). */
+    /** clientIp: giới hạn đăng nhập sai theo (tên đăng nhập, IP) — xem LoginAttemptLimiter. */
     @Transactional(noRollbackFor = BusinessException.class)
-    public TokenPair login(String username, String password, String totpCode) {
-        AppUser user = users.findByUsernameIgnoreCase(username.trim()).orElseThrow(() -> BAD_CREDENTIALS);
-        if (!passwordEncoder.matches(password, user.getPasswordHash())) {
+    public TokenPair login(String username, String password, String totpCode, String clientIp) {
+        loginAttempts.checkAllowed(username, clientIp);
+        AppUser user = users.findByUsernameIgnoreCase(username.trim()).orElse(null);
+        if (user == null || !passwordEncoder.matches(password, user.getPasswordHash())) {
+            loginAttempts.recordFailure(username, clientIp);
             throw BAD_CREDENTIALS;
         }
         if (!user.isActive()) {
