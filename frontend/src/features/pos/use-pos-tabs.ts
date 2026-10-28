@@ -72,7 +72,21 @@ export function usePosTabs(userId: string) {
     setCounter((c) => c + 1);
   };
 
-  return { tabs, active, setActiveId, update, setLines, add, close, resetActive };
+  /** Mở tab sửa / trả hàng (đã mở rồi thì chuyển sang tab đó). */
+  const open = (d: DraftInvoice) => {
+    setTabs((all) => {
+      const same = all.find((t) => (d.editOf && t.editOf?.invoiceId === d.editOf.invoiceId)
+        || (d.returnOf && t.returnOf?.invoiceId === d.returnOf.invoiceId));
+      if (same) {
+        setActiveId(same.id);
+        return all;
+      }
+      setActiveId(d.id);
+      return [...all, d];
+    });
+  };
+
+  return { tabs, active, setActiveId, update, setLines, add, close, resetActive, open };
 }
 
 /** Tạm tính giống InvoiceMath (backend): làm tròn từng dòng, giảm giá HĐ không vượt tổng. */
