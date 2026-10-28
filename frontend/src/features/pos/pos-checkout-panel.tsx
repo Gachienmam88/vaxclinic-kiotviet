@@ -60,7 +60,7 @@ export function PosCheckoutPanel({ draft, branchId, update, onPay, paying }: Pro
         <PosSellerPicker value={draft.sellerId} onChange={(sellerId) => update({ sellerId })} />
         <PosDateTime />
       </div>
-      <div className="mt-2"><PosCustomerPicker value={draft.customer} branchId={branchId} onChange={(c) => update(customerPatch(c))} /></div>
+      <div className="mt-2"><PosCustomerPicker value={draft.customer} branchId={branchId} onChange={(c) => update(customerPatch(c, draft))} /></div>
       {ref && <p className="mt-3 text-[13px] font-bold text-[#16a34a]">{order ? "Đặt hàng" : "Hóa đơn từ đơn"} / <span className="font-medium text-primary">{ref.code}</span></p>}
       <div className="mt-4 space-y-1 border-t border-dashed border-[#d6d9de] pt-3">
         <SummaryRow label="Tổng tiền hàng" sub={t.quantity}>{formatMoney(t.subtotal)}</SummaryRow>
