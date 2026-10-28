@@ -1,0 +1,83 @@
+{
+  "menu": {
+    "overview": "Dashboard",
+    "products": "Products",
+    "purchases": "Purchasing",
+    "orders": "Orders",
+    "customers": "Customers",
+    "employees": "Employees",
+    "cashbook": "Cash flow",
+    "reports": "Reports",
+    "accounting": "Tax & Accounting",
+    "sale": "Sell"
+  },
+  "groups": {
+    "products": "Products",
+    "warehouse": "Warehouse",
+    "suppliers": "Suppliers",
+    "purchasing": "Purchasing",
+    "orders": "Orders",
+    "delivery": "Delivery",
+    "customers": "Customers",
+    "reports": "Reports"
+  },
+  "links": {
+    "productList": "Product list",
+    "priceBooks": "Price books",
+    "stockTakes": "Stock takes",
+    "internalUse": "Internal use",
+    "damages": "Write-offs",
+    "suppliers": "Suppliers",
+    "inputInvoices": "Purchase invoices",
+    "receipts": "Goods receipts",
+    "purchaseReturns": "Purchase returns",
+    "orderBooking": "Orders",
+    "invoices": "Invoices",
+    "returns": "Returns",
+    "shipments": "Shipments",
+    "deliveryManagement": "Delivery management",
+    "deliveryPartners": "Delivery partners",
+    "customers": "Customers",
+    "customerGroups": "Customer groups",
+    "employeeList": "Employee list",
+    "schedules": "Work schedules",
+    "timesheets": "Timesheets",
+    "payrolls": "Payroll",
+    "commissions": "Commissions",
+    "employeeSettings": "Employee settings",
+    "reportEndOfDay": "End of day",
+    "reportSales": "Sales",
+    "reportOrders": "Orders",
+    "reportProducts": "Products",
+    "reportCustomers": "Customers",
+    "reportSuppliers": "Suppliers",
+    "reportEmployees": "Employees",
+    "reportChannels": "Sales channels",
+    "reportFinance": "Finance"
+  },
+  "header": {
+    "settings": "Settings",
+    "account": "Account"
+  },
+  "account": {
+    "twoFactorOn": "Two-factor authentication on",
+    "twoFactorOff": "Two-factor authentication off",
+    "storeProfile": "Store profile",
+    "theme": "Theme",
+    "language": "Language",
+    "chooseLanguage": "Choose language",
+    "beta": "Beta",
+    "betaHint": "Beta translation — some text may still be in Vietnamese. Printed and legal documents remain in Vietnamese."
+  },
+  "accents": {
+    "blue": "Blue",
+    "slate": "Slate",
+    "green": "Green",
+    "purple": "Purple",
+    "red": "Red",
+    "sage": "Sage",
+    "teal": "Teal",
+    "orange": "Orange",
+    "pink": "Pink"
+  }
+}
