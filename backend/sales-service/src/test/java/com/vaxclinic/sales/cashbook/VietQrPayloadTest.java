@@ -21,7 +21,7 @@ class VietQrPayloadTest {
         assertThat(p).contains("0006970415" + "010888875668");
         assertThat(p).contains("0208QRIBFTTA");
         assertThat(p).contains("5303704" + "5406390000" + "5802VN");
-        assertThat(p).contains("0817Thanh toan HD015313"); // bỏ dấu tiếng Việt
+        assertThat(p).contains("0819Thanh toan HD015313"); // bỏ dấu tiếng Việt, 19 ký tự
         // CRC ở cuối phải khớp phần còn lại
         assertThat(p.substring(p.length() - 4)).isEqualTo(VietQrPayload.crc16(p.substring(0, p.length() - 4)));
     }
