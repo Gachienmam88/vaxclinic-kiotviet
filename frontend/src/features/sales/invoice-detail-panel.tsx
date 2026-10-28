@@ -16,7 +16,7 @@ import { fromLocalInput, toLocalInput } from "@/features/purchases/purchase-line
 import { useUserLookup } from "@/features/purchases/purchase-queries";
 import { useBranches } from "@/features/settings/settings-queries";
 import { api, errorMessage } from "@/lib/api-client";
-import { formatDateTime, formatNumber } from "@/lib/format";
+import { formatNumber } from "@/lib/format";
 import { useCurrentUser } from "@/lib/use-current-user";
 import { cn } from "@/lib/utils";
 import { EInvoiceStatus } from "@/features/integrations/einvoice-status";
@@ -75,6 +75,7 @@ export function InvoiceDetailPanel({ id }: { id: string }) {
               <span>{inv.code}</span>
               <StatusBadge tone={active ? "green" : "red"}>{active ? "Hoàn thành" : "Đã hủy"}</StatusBadge>
               {inv.offline && <StatusBadge tone="gray">Bán offline</StatusBadge>}
+              {inv.orderCode && <StatusBadge tone="blue">Từ đơn đặt hàng {inv.orderCode}</StatusBadge>}
               <span className="ml-auto">{branches.find((b) => b.id === inv.branchId)?.name}</span>
             </div>
             <div className="grid grid-cols-1 gap-x-8 gap-y-2 text-xs md:grid-cols-3">
@@ -104,8 +105,8 @@ export function InvoiceDetailPanel({ id }: { id: string }) {
               <Button variant="outline" className={DETAIL_BTN} disabled={!edit || save.isPending} onClick={() => save.mutate()}>
                 <Save className="size-4" /> Lưu</Button>
               <Button variant="outline" className={DETAIL_BTN} render={<Link href={`/pos?return=${inv.id}`} />}><Undo2 className="size-4" /> Trả hàng</Button>
+              <PrintButton type="INVOICE" data={invoiceData(inv)} branchId={inv.branchId} />
             </>}
-            <span className={cn(!active && "ml-auto")}><PrintButton type="INVOICE" data={invoiceData(inv)} branchId={inv.branchId} /></span>
             {active && (
               <DropdownMenu>
                 <DropdownMenuTrigger className="inline-flex size-[30px] items-center justify-center rounded-md border hover:bg-muted" aria-label="Thêm thao tác">
@@ -120,7 +121,6 @@ export function InvoiceDetailPanel({ id }: { id: string }) {
         </TabsContent>
         <TabsContent value="payments"><InvoicePaymentHistory inv={inv} /></TabsContent>
       </Tabs>
-      <p className="sr-only">Cập nhật {formatDateTime(inv.soldAt)}</p>
     </div>
   );
 }
