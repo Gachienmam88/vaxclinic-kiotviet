@@ -24,22 +24,26 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Trừ / hoàn kho cho chứng từ bán hàng của sales-service.
- * - SALE: hàng theo lô tự phân bổ FEFO trên các lô CÒN HẠN tại điểm tiêm; thiếu → lỗi (không bán vắc xin hết hạn).
- * - SALE_CANCEL: hoàn lại đúng các lô đã xuất của chứng từ SALE gốc.
- * Idempotent theo (docId, docType): gọi lại trả về kết quả lần đầu, không trừ kho lần 2.
+ * Trừ / hoàn kho cho chứng từ bán hàng của sales-service. Mỗi lời gọi = 1 transaction, idempotent theo (docId, docType).
+ * - SALE: hàng theo lô tự phân bổ FEFO trên lô CÒN HẠN; thiếu → lỗi (không bán vắc xin hết hạn).
+ * - SALE_CANCEL: hoàn đúng các lô của chứng từ bán hiện hành (SALE hoặc SALE_REPLACE cùng docId).
+ * - SALE_REPLACE (sửa hóa đơn): hoàn lô của previousDocId + xuất lại theo dòng mới, CÙNG 1 transaction
+ *   → thiếu hàng ở bản mới thì kho giữ nguyên như trước khi sửa.
+ * - SALE_RETURN: nhập lại đúng các lô sales-service chỉ định (lotNumber + baseQuantity); SALE_RETURN_CANCEL: đảo lại.
  */
 @Service
 public class InternalStockService {
 
-    public record LineInput(UUID lineId, UUID productId, UUID unitId, BigDecimal quantity) {
+    /** Bán: productId + unitId + quantity. Trả hàng: productId + lotNumber + baseQuantity. */
+    public record LineInput(UUID lineId, UUID productId, UUID unitId, BigDecimal quantity, String lotNumber,
+                            BigDecimal baseQuantity) {
     }
 
     public record StockDocRequest(UUID docId, String docType, String docCode, UUID branchId, String partnerName,
-                                  UUID userId, List<LineInput> lines) {
+                                  UUID userId, UUID previousDocId, List<LineInput> lines) {
     }
 
-    public record Allocation(String lotNumber, java.time.LocalDate expiryDate, BigDecimal baseQuantity) {
+    public record Allocation(String lotNumber, LocalDate expiryDate, BigDecimal baseQuantity) {
     }
 
     /** unitCost = giá vốn của 1 đơn vị đã bán (theo đơn vị trên dòng) tại thời điểm xuất. */
@@ -58,8 +62,7 @@ public class InternalStockService {
     private final StockMovementService stock;
 
     public InternalStockService(JdbcTemplate jdbc, ObjectMapper json, ProductRepository products,
-                                ProductLotRepository lots, StockBalanceRepository balances,
-                                StockMovementService stock) {
+                                ProductLotRepository lots, StockBalanceRepository balances, StockMovementService stock) {
         this.jdbc = jdbc;
         this.json = json;
         this.products = products;
@@ -70,13 +73,19 @@ public class InternalStockService {
 
     @Transactional
     public StockDocResult apply(StockDocRequest req) {
-        var existing = load(req.docId(), req.docType());
+        var existing = load(req.docId(), List.of(req.docType()));
         if (existing != null) {
             return existing;
         }
         StockDocResult result = switch (req.docType()) {
-            case "SALE" -> sale(req);
-            case "SALE_CANCEL" -> cancelSale(req);
+            case "SALE" -> sale(req, DocType.SALE);
+            case "SALE_CANCEL" -> reverse(req, List.of("SALE", "SALE_REPLACE"), req.docId(), DocType.SALE_CANCEL, true);
+            case "SALE_REPLACE" -> {
+                reverse(req, List.of("SALE", "SALE_REPLACE"), req.previousDocId(), DocType.SALE_CANCEL, true);
+                yield sale(req, DocType.SALE);
+            }
+            case "SALE_RETURN" -> saleReturn(req);
+            case "SALE_RETURN_CANCEL" -> reverse(req, List.of("SALE_RETURN"), req.docId(), DocType.SALE_RETURN, false);
             default -> throw BusinessException.badRequest("DOC_TYPE_UNSUPPORTED", "Loại chứng từ kho không hỗ trợ");
         };
         try {
@@ -88,11 +97,10 @@ public class InternalStockService {
         return result;
     }
 
-    private StockDocResult sale(StockDocRequest req) {
+    private StockDocResult sale(StockDocRequest req, DocType type) {
         var results = new ArrayList<LineResult>();
         for (var line : req.lines()) {
-            Product p = products.findById(line.productId()).filter(x -> !x.isDeleted())
-                    .orElseThrow(() -> BusinessException.badRequest("PRODUCT_NOT_FOUND", "Hàng hóa không tồn tại"));
+            Product p = product(line.productId());
             var unit = p.getUnits().stream().filter(u -> u.getId().equals(line.unitId())).findFirst()
                     .orElseThrow(() -> BusinessException.badRequest("UNIT_NOT_FOUND", "Đơn vị tính không hợp lệ"));
             BigDecimal baseQty = line.quantity().multiply(unit.getConversionRate());
@@ -108,7 +116,7 @@ public class InternalStockService {
                         break;
                     }
                     BigDecimal take = remaining.min(lot.getQuantity());
-                    move(p, req, take.negate(), lot.getLotNumber(), DocType.SALE);
+                    move(p, req, take.negate(), lot.getLotNumber(), type);
                     allocations.add(new Allocation(lot.getLotNumber(), lot.getExpiryDate(), take));
                     remaining = remaining.subtract(take);
                 }
@@ -117,7 +125,7 @@ public class InternalStockService {
                             p.getName() + ": không đủ tồn ở các lô còn hạn sử dụng (thiếu " + remaining.stripTrailingZeros().toPlainString() + ")");
                 }
             } else {
-                move(p, req, baseQty.negate(), null, DocType.SALE);
+                move(p, req, baseQty.negate(), null, type);
                 allocations.add(new Allocation(null, null, baseQty));
             }
             results.add(new LineResult(line.lineId(), p.getId(), unitCost, unit.getConversionRate(), allocations));
@@ -125,15 +133,36 @@ public class InternalStockService {
         return new StockDocResult(req.docId(), req.docType(), results);
     }
 
-    private StockDocResult cancelSale(StockDocRequest req) {
-        StockDocResult original = load(req.docId(), "SALE");
+    /** Khách trả hàng: nhập lại kho theo lô được chỉ định (lô đã bán cho khách). */
+    private StockDocResult saleReturn(StockDocRequest req) {
+        var results = new ArrayList<LineResult>();
+        for (var line : req.lines()) {
+            Product p = product(line.productId());
+            if (p.isLotManaged() && (line.lotNumber() == null || line.lotNumber().isBlank())) {
+                throw BusinessException.badRequest("LOT_REQUIRED", p.getName() + ": thiếu lô hàng trả");
+            }
+            move(p, req, line.baseQuantity(), p.isLotManaged() ? line.lotNumber() : null, DocType.SALE_RETURN);
+            results.add(new LineResult(line.lineId(), p.getId(), p.getCost(), BigDecimal.ONE,
+                    List.of(new Allocation(line.lotNumber(), null, line.baseQuantity()))));
+        }
+        return new StockDocResult(req.docId(), req.docType(), results);
+    }
+
+    /**
+     * Đảo chứng từ docId (loại trong originalTypes): outgoing = true → chứng từ gốc là xuất, đảo = nhập lại;
+     * false → chứng từ gốc là nhập (trả hàng), đảo = xuất ra.
+     */
+    private StockDocResult reverse(StockDocRequest req, List<String> originalTypes, UUID docId, DocType type,
+                                   boolean outgoing) {
+        StockDocResult original = load(docId, originalTypes);
         if (original == null) {
-            throw BusinessException.badRequest("SALE_DOC_NOT_FOUND", "Không tìm thấy chứng từ xuất kho của hóa đơn");
+            throw BusinessException.badRequest("STOCK_DOC_NOT_FOUND", "Không tìm thấy chứng từ kho gốc của " + req.docCode());
         }
         for (var line : original.lines()) {
-            Product p = products.findById(line.productId()).orElseThrow();
+            Product p = product(line.productId());
             for (var a : line.allocations()) {
-                move(p, req, a.baseQuantity(), a.lotNumber(), DocType.SALE_CANCEL);
+                move(p, req, outgoing ? a.baseQuantity() : a.baseQuantity().negate(), a.lotNumber(),
+                        outgoing ? DocType.SALE_CANCEL : DocType.SALE_RETURN_CANCEL_OUT);
             }
         }
         return new StockDocResult(req.docId(), req.docType(), original.lines());
@@ -146,14 +175,22 @@ public class InternalStockService {
                 .stream().filter(l -> l.getBranchId().equals(branchId) && !l.getExpiryDate().isBefore(today)).toList();
     }
 
+    private Product product(UUID id) {
+        return products.findById(id)
+                .orElseThrow(() -> BusinessException.badRequest("PRODUCT_NOT_FOUND", "Hàng hóa không tồn tại"));
+    }
+
     private void move(Product p, StockDocRequest req, BigDecimal qty, String lot, DocType type) {
         stock.apply(p, new Movement(req.branchId(), qty, lot, null, type, req.docId(), req.docCode(), null,
                 req.partnerName(), req.userId()));
     }
 
-    private StockDocResult load(UUID docId, String docType) {
-        var rows = jdbc.queryForList("select result from external_stock_docs where doc_id = ? and doc_type = ?",
-                String.class, docId, docType);
+    private StockDocResult load(UUID docId, List<String> docTypes) {
+        if (docId == null) {
+            return null;
+        }
+        var rows = jdbc.queryForList("select result from external_stock_docs where doc_id = ? and doc_type = any(?)",
+                String.class, docId, docTypes.toArray(String[]::new));
         if (rows.isEmpty()) {
             return null;
         }
