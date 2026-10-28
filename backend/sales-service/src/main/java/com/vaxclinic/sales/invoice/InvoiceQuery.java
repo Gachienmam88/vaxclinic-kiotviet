@@ -96,7 +96,7 @@ public class InvoiceQuery {
                 customer == null ? null : customer.getPhone(), inv.getSellerId(), inv.getSellerName(),
                 inv.getCreatedByName(), inv.getSoldAt(), inv.getStatus(), inv.getSaleMode(), inv.getSubtotal(),
                 inv.getDiscount(), inv.getTotal(), inv.getPaid(), inv.getPaymentMethod(), inv.getNote(), inv.isOffline(),
-                lines, payments);
+                inv.getRevision(), lines, payments);
     }
 
     private static void add(StringBuilder w, MapSqlParameterSource p, boolean when, String sql, String name, Object value) {
