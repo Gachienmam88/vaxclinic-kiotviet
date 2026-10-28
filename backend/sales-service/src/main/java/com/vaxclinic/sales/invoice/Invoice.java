@@ -68,6 +68,12 @@ public class Invoice implements Persistable<UUID> {
     private boolean offline;
     @Column(name = "cancelled_at")
     private Instant cancelledAt;
+    /** Tăng mỗi lần sửa; client gửi kèm để không sửa đè bản người khác vừa sửa. */
+    @Column(nullable = false)
+    private int revision;
+    /** Chứng từ kho hiện hành ở product-service (lần đầu = id hóa đơn; mỗi lần sửa đổi sang id mới). */
+    @Column(name = "stock_doc_id", nullable = false)
+    private UUID stockDocId;
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
 
