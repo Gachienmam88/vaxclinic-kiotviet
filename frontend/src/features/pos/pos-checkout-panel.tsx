@@ -45,7 +45,11 @@ export function PosCheckoutPanel({ draft, branchId, update, onPay, paying }: Pro
         <div className="flex items-center justify-between"><span>Giảm giá</span>
           <NumberInput className="h-7 w-32 border-0 border-b shadow-none" value={draft.discount} onValueChange={(discount) => update({ discount })} /></div>
         <div className="flex justify-between font-semibold"><span>Khách cần trả</span><span className="text-lg text-primary">{formatMoney(t.total)}</span></div>
-        <div className="flex items-center justify-between font-semibold"><span>Khách thanh toán</span>
+        <div className="flex items-center justify-between font-semibold">
+          <span className="flex items-center gap-2">Khách thanh toán
+            <button type="button" title="Thanh toán qua mã QR" className="text-muted-foreground hover:text-primary"
+              onClick={() => { update({ paymentMethod: "TRANSFER" }); setQr(true); }}><QrCode className="size-4" /></button>
+          </span>
           <NumberInput className="h-7 w-32 border-0 border-b shadow-none" value={t.paid} onValueChange={(paid) => update({ paid })} /></div>
         <div className="flex flex-wrap gap-1.5">
           {PAYMENT_METHODS.map((m) => (
