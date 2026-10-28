@@ -47,13 +47,14 @@ export function AppHeader() {
         </nav>
         <div className="ml-auto">
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="text-primary-foreground hover:bg-white/10">
-                <UserRound className="size-4" /> {me?.user.fullName ?? "..."}
-              </Button>
+            <DropdownMenuTrigger
+              render={<Button variant="ghost" size="sm" className="text-primary-foreground hover:bg-white/10" />}>
+              <UserRound className="size-4" /> {me?.user.fullName ?? "..."}
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuLabel>{me?.user.roleName}</DropdownMenuLabel>
+              <DropdownMenuGroup>
+                <DropdownMenuLabel>{me?.user.roleName}</DropdownMenuLabel>
+              </DropdownMenuGroup>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={logout}>
                 <LogOut className="size-4" /> Đăng xuất
