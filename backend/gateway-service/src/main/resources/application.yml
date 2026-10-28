@@ -33,7 +33,7 @@ spring:
             - id: sales
               uri: ${SALES_URL:http://localhost:8086}
               predicates:
-                - Path=/api/customers/**,/api/invoices/**,/api/cashbook/**,/api/bank-accounts/**,/api/sales-returns/**,/api/accounting/revenue/**,/api/customer-groups/**,/api/orders/**
+                - Path=/api/customers/**,/api/invoices/**,/api/cashbook/**,/api/bank-accounts/**,/api/sales-returns/**,/api/accounting/revenue/**,/api/customer-groups/**,/api/orders/**,/api/reports/**
             # integration-service: hóa đơn đầu vào (cổng thuế), hóa đơn điện tử MISA
             - id: integration
               uri: ${INTEGRATION_URL:http://localhost:8088}
