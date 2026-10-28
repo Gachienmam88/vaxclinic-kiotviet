@@ -12,11 +12,24 @@ import { cn } from "@/lib/utils";
 
 const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME ?? "VaxClinic";
 
+type NavItem = { href: string; label: string; perm?: string; children?: { href: string; label: string }[] };
+
 /** Module chính trên thanh menu xanh. Thêm dần khi từng phase hoàn thành. */
-const NAV: { href: string; label: string; perm?: string }[] = [
+const NAV: NavItem[] = [
   { href: "/", label: "Tổng quan" },
   { href: "/products", label: "Hàng hóa", perm: "catalog.view" },
+  {
+    href: "/purchases", label: "Mua hàng", perm: "inventory.view",
+    children: [
+      { href: "/purchases/receipts", label: "Nhập hàng" },
+      { href: "/purchases/returns", label: "Trả hàng nhập" },
+      { href: "/purchases/suppliers", label: "Nhà cung cấp" },
+    ],
+  },
 ];
+
+const navClass = (active: boolean) =>
+  cn("rounded-md px-4 py-1.5 text-sm font-semibold hover:bg-black/10", active && "bg-black/20");
 
 /** Thanh trên (trắng): logo + cài đặt + tài khoản. Thanh dưới (xanh): menu module. */
 export function AppHeader() {
