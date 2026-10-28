@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 /**
  * Quản lý vai trò (Thiết lập → Quản lý người dùng → Quản lý vai trò). Vai trò ADMIN luôn đủ mọi quyền, không sửa quyền được.
