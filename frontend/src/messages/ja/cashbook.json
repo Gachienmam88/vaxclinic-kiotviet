@@ -1,0 +1,99 @@
+{
+  "page": {
+    "title": {
+      "CASH": "入出金（現金）",
+      "BANK": "入出金（銀行）",
+      "EWALLET": "入出金（電子マネー）",
+      "ALL": "入出金（全資金）"
+    },
+    "searchPlaceholder": "伝票番号で検索",
+    "newReceipt": "入金伝票",
+    "newPayment": "出金伝票",
+    "exportTitle": "表示中の行をCSVに出力（列見出しはベトナム語）",
+    "summary": { "opening": "期首残高", "receipts": "入金合計", "payments": "出金合計", "closing": "期末残高" },
+    "cols": { "code": "伝票番号", "time": "日時", "category": "入出金区分", "partner": "支払者/受取人", "amount": "金額" },
+    "emptyWhat": "入出金伝票",
+    "unit": "件"
+  },
+  "enums": {
+    "status": { "PAID": "支払済み", "CANCELLED": "取消済み" },
+    "voucherType": { "RECEIPT": "入金伝票", "PAYMENT": "出金伝票" },
+    "partnerType": {
+      "CUSTOMER": "顧客",
+      "SUPPLIER": "仕入先",
+      "EMPLOYEE": "従業員",
+      "DELIVERY_PARTNER": "配送業者",
+      "OTHER": "その他"
+    }
+  },
+  "detail": {
+    "accounting": "損益計上",
+    "noAccounting": "損益計上なし",
+    "createdBy": "作成者：{name}",
+    "collectorReceipt": "受領者：{name}",
+    "collectorPayment": "支払担当：{name}",
+    "time": "日時：{time}",
+    "sourceDoc": "元伝票：{code}",
+    "amount": "金額",
+    "categoryReceipt": "入金区分",
+    "categoryPayment": "出金区分",
+    "partnerTypeReceipt": "支払者区分",
+    "partnerTypePayment": "受取人区分",
+    "method": "支払方法",
+    "partnerReceipt": "支払者",
+    "partnerPayment": "受取人",
+    "linkedReceipt": "この入金伝票は売上伝票 {invoices} に紐付いています",
+    "linkedReceiptAuto": "この自動入金伝票は売上伝票 {invoices} に紐付いています",
+    "linkedPayment": "この出金伝票は売上伝票 {invoices} に紐付いています",
+    "linkedPaymentAuto": "この自動出金伝票は売上伝票 {invoices} に紐付いています",
+    "allocCols": { "code": "伝票番号", "time": "日時", "voucherValue": "伝票金額", "collected": "入金額" },
+    "noNote": "備考なし",
+    "autoHint": {
+      "INVOICE": "自動作成の伝票です。取り消すには元の売上伝票を取り消してください。",
+      "DELIVERY": "自動作成の伝票です。取り消すには配送業者の元の精算伝票を取り消してください。",
+      "PURCHASE": "自動作成の伝票です。取り消すには元の入荷伝票を取り消してください。"
+    },
+    "cancel": "取消",
+    "confirmCancel": "伝票 {code} を取り消しますか？",
+    "cancelled": "伝票を取り消しました"
+  },
+  "dialog": {
+    "titleReceipt": "入金伝票を作成",
+    "titlePayment": "出金伝票を作成",
+    "time": "日時",
+    "collectorReceipt": "受領者",
+    "collectorPayment": "支払担当",
+    "fund": "資金",
+    "account": "口座",
+    "pickAccount": "口座を選択",
+    "categoryPlaceholderReceipt": "例：その他入金",
+    "categoryPlaceholderPayment": "例：水道光熱費",
+    "amount": "金額",
+    "supplierHint": "仕入先との入出金は {link} →「仕入先への買掛金」タブ → 支払 から作成してください。買掛金と入出金が常に一致します。",
+    "supplierLink": "仕入れ → 仕入先",
+    "partnerNameReceipt": "支払者名",
+    "partnerNamePayment": "受取人名",
+    "phone": "電話番号",
+    "note": "備考",
+    "accountingCheck": "事業損益に計上する",
+    "createdReceipt": "入金伝票 {code} を作成しました",
+    "createdPayment": "出金伝票 {code} を作成しました"
+  },
+  "filter": {
+    "fund": "資金",
+    "docType": "伝票種別",
+    "category": "入出金区分",
+    "pickCategory": "区分を選択",
+    "status": "状態",
+    "accounting": "損益計上",
+    "createdBy": "作成者",
+    "pickCreator": "作成者を選択",
+    "employee": "担当者",
+    "employeeAria": "入出金担当者",
+    "pickEmployee": "担当者を選択",
+    "partner": "支払者/受取人",
+    "partnerTypeAria": "支払者/受取人の区分",
+    "partnerPlaceholder": "氏名または電話番号",
+    "partnerAria": "支払者/受取人の氏名または電話番号"
+  }
+}
