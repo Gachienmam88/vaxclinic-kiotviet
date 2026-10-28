@@ -2,6 +2,7 @@ package com.vaxclinic.product.purchase;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.List;
 
 /**
  * Công thức tiền của chứng từ mua hàng (VNĐ, làm tròn đồng HALF_UP):
