@@ -58,8 +58,8 @@ public final class InvoiceDtos {
                                   String customerName, String customerPhone, UUID sellerId, String sellerName,
                                   String createdByName, Instant soldAt, String status, String saleMode,
                                   BigDecimal subtotal, BigDecimal discount, BigDecimal total, BigDecimal paid,
-                                  String paymentMethod, String note, boolean offline, List<LineResponse> lines,
-                                  List<PaymentResponse> payments) {
+                                  String paymentMethod, String note, boolean offline, int revision,
+                                  List<LineResponse> lines, List<PaymentResponse> payments) {
     }
 
     public record InvoiceListItem(UUID id, String code, Instant soldAt, String customerCode, String customerName,
