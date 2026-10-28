@@ -41,12 +41,6 @@ public class RevenueBookController {
     @PreAuthorize("hasAuthority('report.view') or hasAuthority('cashbook.manage')")
     public List<DailyRevenue> daily(@RequestParam LocalDate from, @RequestParam LocalDate to,
                                     @RequestParam(required = false) List<UUID> branchIds) {
-        var p = new MapSqlParameterSource()
-                .addValue("from", Timestamp.from(from.atStartOfDay(ShopSettings.ZONE).toInstant()))
-                .addValue("to", Timestamp.from(to.plusDays(1).atStartOfDay(ShopSettings.ZONE).toInstant()))
-                // Danh sách rỗng → "in ()" sai cú pháp: thay bằng 1 id giả, cờ allBranches bỏ qua điều kiện
-                .addValue("branches", branchIds == null || branchIds.isEmpty() ? List.of(new UUID(0, 0)) : branchIds)
-                .addValue("allBranches", branchIds == null || branchIds.isEmpty());
         return jdbc.query("""
                 with inv as (
                   select i.id, (i.sold_at at time zone 'Asia/Ho_Chi_Minh')::date d, i.total, i.subtotal
