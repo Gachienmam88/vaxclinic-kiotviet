@@ -1,0 +1,190 @@
+{
+  "list": {
+    "title": "顧客",
+    "searchPlaceholder": "コード・氏名・電話番号",
+    "searchAria": "顧客を検索",
+    "addButton": "顧客",
+    "emptyWhat": "顧客",
+    "pagerSummary": "顧客 {total} 件 · {page}/{pages} ページ",
+    "cols": {
+      "code": "顧客コード",
+      "name": "顧客名",
+      "phone": "電話番号",
+      "debt": "現在の売掛金",
+      "totalSales": "売上合計",
+      "netSales": "純売上（返品控除）"
+    }
+  },
+  "filter": {
+    "group": "顧客グループ",
+    "allGroups": "すべてのグループ",
+    "createdAt": "作成日",
+    "createdBy": "作成者",
+    "pickCreator": "作成者を選択",
+    "type": "顧客区分",
+    "gender": "性別"
+  },
+  "enums": {
+    "customerType": { "PERSONAL": "個人", "COMPANY": "法人" },
+    "gender": { "MALE": "男性", "FEMALE": "女性" },
+    "debtType": {
+      "SALE": "販売",
+      "SALE_CANCEL": "売上伝票取消",
+      "PAYMENT": "入金",
+      "PAYMENT_CANCEL": "入金伝票取消",
+      "ADJUST": "調整",
+      "DISCOUNT": "支払割引"
+    },
+    "invoiceStatus": { "COMPLETED": "完了", "CANCELLED": "キャンセル済み" }
+  },
+  "groups": {
+    "title": "顧客グループ",
+    "addButton": "顧客グループ",
+    "emptyWhat": "顧客グループ",
+    "cols": { "name": "グループ名", "discount": "割引", "count": "顧客数", "note": "備考" },
+    "editAria": "グループ「{name}」を編集",
+    "deleteAria": "グループ「{name}」を削除",
+    "confirmDelete": "グループ「{name}」を削除しますか？",
+    "confirmDeleteWithCustomers_other": "グループ「{name}」を削除しますか？所属する顧客 {count} 件はグループなしになります。",
+    "deleted": "顧客グループを削除しました",
+    "deletedUnlinked_other": "顧客グループを削除しました（顧客 {count} 件をグループから外しました）"
+  },
+  "groupDialog": {
+    "titleAdd": "顧客グループを追加",
+    "titleEdit": "顧客グループを編集",
+    "name": "グループ名",
+    "discount": "割引",
+    "discountAria": "グループ割引",
+    "currencyUnit": "VND",
+    "discountHint": "販売画面でこのグループの顧客を選ぶと伝票割引に自動入力されます（変更可）。",
+    "note": "備考",
+    "added": "顧客グループを追加しました",
+    "updated": "顧客グループを更新しました"
+  },
+  "detail": {
+    "tabSales": "販売・返品履歴",
+    "tabDebt": "売掛金",
+    "edit": "編集"
+  },
+  "info": {
+    "empty": "未設定",
+    "createdBy": "作成者：{value}",
+    "createdAt": "作成日：{value}",
+    "group": "グループ：{value}",
+    "phone": "電話番号",
+    "birthday": "誕生日",
+    "gender": "性別",
+    "email": "メール",
+    "facebook": "Facebook",
+    "address": "住所",
+    "invoiceInfo": "請求書発行情報",
+    "noNote": "備考なし"
+  },
+  "debtTab": {
+    "filterAria": "取引種別で絞り込み",
+    "allTypes": "すべての取引",
+    "emptyWhat": "取引",
+    "cols": { "code": "伝票番号", "time": "日時", "type": "種別", "amount": "金額", "balance": "顧客残高" },
+    "exportDebt": "売掛金をエクスポート",
+    "pay": "入金",
+    "adjust": "調整",
+    "discount": "支払割引",
+    "createQr": "QR作成"
+  },
+  "salesTab": {
+    "emptyWhat": "取引",
+    "cols": { "code": "伝票番号", "time": "日時", "seller": "販売担当", "total": "合計", "status": "状態" }
+  },
+  "allocation": {
+    "cols": {
+      "code": "伝票番号",
+      "time": "日時",
+      "invoiceValue": "伝票金額",
+      "paidBefore": "入金済み",
+      "remaining": "未収額",
+      "collect": "入金額"
+    },
+    "empty": "該当する記録がありません",
+    "collectAria": "{code} の入金額",
+    "unallocated": "未配分額："
+  },
+  "debtDialog": {
+    "title": { "payment": "入金", "discount": "支払割引", "adjust": "売掛金調整" },
+    "created": {
+      "payment": "入金伝票を作成しました",
+      "discount": "支払割引伝票を作成しました",
+      "adjust": "調整伝票を作成しました"
+    },
+    "currentDebt": "現在の売掛金：{amount}",
+    "currentDebtLabel": "現在の売掛金",
+    "adjustDate": "調整日",
+    "adjustValue": "調整後の売掛金",
+    "description": "説明",
+    "time": "日時",
+    "collector": "回収者",
+    "performer": "担当者",
+    "method": "支払方法",
+    "amount": "金額",
+    "discountAmount": "顧客への割引",
+    "remainingAfterPayment": "残額：{amount}",
+    "remainingAfterDiscount": "残額：{amount}",
+    "note": "備考",
+    "notePlaceholder": "備考を入力",
+    "allocate": "伝票に配分",
+    "createAndPrint": "入金伝票を作成して印刷",
+    "createReceipt": "入金伝票を作成",
+    "createVoucher": "伝票を作成",
+    "printFailed": "伝票 {code} を作成しましたが印刷できませんでした。入出金から再印刷してください"
+  },
+  "form": {
+    "titleAdd": "顧客を追加",
+    "titleEdit": "顧客を編集",
+    "branch": "作成店舗：{name}",
+    "tabGeneral": "基本情報",
+    "tabInvoice": "請求書発行情報",
+    "added": "顧客 {code} を追加しました",
+    "updated": "顧客を更新しました",
+    "code": "顧客コード",
+    "codePlaceholder": "自動採番",
+    "name": "顧客名",
+    "phone": "電話番号",
+    "phone2": "電話番号2",
+    "address": "住所",
+    "addressPlaceholder": "番地・建物名・通り",
+    "area": "地域",
+    "ward": "坊・社",
+    "group": "グループ",
+    "groupAria": "顧客グループ",
+    "pickGroup": "顧客グループを選択",
+    "birthday": "生年月日",
+    "email": "メール",
+    "facebook": "Facebook",
+    "note": "備考",
+    "invoice": {
+      "customerType": "顧客区分",
+      "personal": "個人・個人事業",
+      "company": "法人",
+      "buyerName": "購入者名",
+      "buyerNamePlaceholder": "購入者名を入力",
+      "taxCode": "税番号",
+      "taxCodePlaceholder": "税番号を入力",
+      "address": "住所",
+      "addressAria": "請求書の住所",
+      "province": "省・市",
+      "ward": "坊・社",
+      "companyName": "法人名",
+      "companyNamePlaceholder": "法人名を入力",
+      "idNumber": "身分証番号",
+      "idNumberPlaceholder": "身分証番号を入力",
+      "passport": "旅券番号",
+      "passportPlaceholder": "旅券番号を入力",
+      "email": "メール",
+      "phone": "電話番号",
+      "phonePlaceholder": "電話番号を入力",
+      "bankName": "銀行名",
+      "bankNamePlaceholder": "銀行名を入力",
+      "bankAccount": "口座番号",
+      "bankAccountPlaceholder": "口座番号を入力"
+    }
+  }
+}
