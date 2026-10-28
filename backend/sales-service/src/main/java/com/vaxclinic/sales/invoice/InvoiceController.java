@@ -63,6 +63,28 @@ public class InvoiceController {
         return query.detail(service.create(req, Actor.of(jwt)));
     }
 
+    /** Sửa hóa đơn từ màn bán hàng. revision = số phiên bản lúc mở hóa đơn (chống sửa đè). */
+    @org.springframework.web.bind.annotation.PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('sales.perform')")
+    public InvoiceResponse update(@PathVariable UUID id, @RequestParam int revision, @Valid @RequestBody InvoiceRequest req,
+                                  @AuthenticationPrincipal Jwt jwt) {
+        return query.detail(service.update(id, revision, req, Actor.of(jwt)));
+    }
+
+    /** Sửa tỷ lệ thuế từng dòng (trước khi phát hành hóa đơn điện tử). */
+    @PatchMapping("/{id}/tax-codes")
+    @PreAuthorize("hasAuthority('sales.perform')")
+    public InvoiceResponse updateTaxCodes(@PathVariable UUID id, @Valid @RequestBody List<InvoiceDtos.TaxCodeChange> changes) {
+        writer.updateTaxCodes(id, changes);
+        return query.detail(id);
+    }
+
+    /** "Xem giá bán gần nhất" của 1 hàng (ưu tiên cho đúng khách nếu có). */
+    @GetMapping("/recent-prices")
+    public List<InvoiceDtos.RecentPrice> recentPrices(@RequestParam UUID productId, @RequestParam(required = false) UUID customerId) {
+        return query.recentPrices(productId, customerId);
+    }
+
     @PatchMapping("/{id}/info")
     @PreAuthorize("hasAuthority('sales.perform')")
     public InvoiceResponse updateInfo(@PathVariable UUID id, @Valid @RequestBody InfoRequest req) {
