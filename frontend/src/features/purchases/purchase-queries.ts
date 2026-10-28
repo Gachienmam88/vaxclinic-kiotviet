@@ -3,13 +3,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { api, type PageResponse } from "@/lib/api-client";
 import type {
-  DocStatus, ListResponse, PurchaseReturn, Receipt, ReceiptListItem, ReturnListItem, Supplier, UserLookup,
+  ListResponse, PurchaseReturn, Receipt, ReceiptListItem, ReturnListItem, Supplier, UserLookup,
 } from "./purchase-types";
 
 /** Bộ lọc bên trái dùng chung cho Nhập hàng và Trả hàng nhập. */
 export type PurchaseFilters = {
   q: string;
-  statuses: DocStatus[];
+  statuses: string[]; // DocStatus; kiểm kho thêm BALANCED
   period: "month" | "custom";
   from: string; // yyyy-mm-dd (khi period = custom)
   to: string;
@@ -22,6 +22,11 @@ export const DEFAULT_PURCHASE_FILTERS: PurchaseFilters = {
   q: "", statuses: ["DRAFT", "COMPLETED"], period: "month", from: "", to: "", createdBy: "", personId: "",
   inputInvoiceNo: "",
 };
+
+/** Link sâu ?code=: lọc theo mã, mọi trạng thái, toàn thời gian (phiếu cũ hơn tháng này vẫn thấy). */
+export const deepLinkPurchaseFilters = (code: string): PurchaseFilters => ({
+  ...DEFAULT_PURCHASE_FILTERS, q: code, statuses: ["DRAFT", "COMPLETED", "CANCELLED"], period: "custom",
+});
 
 /** Khoảng thời gian theo giờ máy: "Tháng này" hoặc [từ 00:00, đến hết ngày]. */
 export function periodRange(f: PurchaseFilters): { from?: string; to?: string } {
@@ -70,15 +75,13 @@ export const useReturns = (f: PurchaseFilters, page: number, size: number) =>
 export const useReturn = (id: string | null) =>
   useQuery({ queryKey: ["purchase-return", id], queryFn: () => api<PurchaseReturn>(`/purchase-returns/${id}`), enabled: !!id });
 
+/** Ô chọn NCC trên phiếu nhập: chỉ NCC đang hoạt động (NCC ngừng hoạt động không được chọn cho phiếu mới). */
 export const useSuppliers = (q: string, page = 0, size = 15) =>
   useQuery({
-    queryKey: ["suppliers", q, page, size],
-    queryFn: () => api<PageResponse<Supplier>>(`/suppliers?q=${encodeURIComponent(q)}&page=${page}&size=${size}`),
+    queryKey: ["suppliers", "picker", q, page, size],
+    queryFn: () => api<PageResponse<Supplier>>(`/suppliers?q=${encodeURIComponent(q)}&active=true&page=${page}&size=${size}`),
     placeholderData: (prev) => prev,
   });
-
-export const useSupplierGroups = () =>
-  useQuery({ queryKey: ["supplier-groups"], queryFn: () => api<string[]>("/suppliers/groups") });
 
 export const useUserLookup = () =>
   useQuery({ queryKey: ["user-lookup"], queryFn: () => api<UserLookup[]>("/users/lookup"), staleTime: 5 * 60_000 });
