@@ -1,0 +1,122 @@
+{
+  "page": {
+    "title": "税务与会计",
+    "noProfile": "暂无有效的纳税申报档案。请前往 {link} 添加税号、收入组别和经营地点。",
+    "noProfileLink": "设置 → 税务与会计",
+    "taxCodeOption": "税号 {code}",
+    "yearOption": "{year}年",
+    "byQuarter": "按季度",
+    "byMonth": "按月",
+    "periodHint": "所选期间适用于各账簿；申报表显示全年所有期间。",
+    "tabs": {
+      "declaration": "申报与应纳税额",
+      "revenue": "收入账（{code}）",
+      "stock": "商品账（{code}）",
+      "cash": "资金账（{code}）"
+    }
+  },
+  "period": {
+    "month": "{n}月",
+    "quarter": "第{n}季度"
+  },
+  "groups": {
+    "g1": "第1组：10亿及以下",
+    "g2": "第2组：10亿以上至30亿",
+    "g3": "第3组：30亿以上至500亿",
+    "g4": "第4组：500亿以上"
+  },
+  "books": {
+    "formPeriod": "表样 {code} — {period}（{from} – {to}）",
+    "noRevenue": "本期无营业收入",
+    "stockNote": "表样 {code} — {period}。入库按进货价（含增值税）计价，出库按加权平均成本计价。",
+    "fundCash": "现金",
+    "fundBank": "银行存款",
+    "cashAllBranches": "资金账按全部门店计算"
+  },
+  "declaration": {
+    "taxCodeLabel": "税号：",
+    "pitLabel": "个人所得税：",
+    "vatLabel": "增值税：",
+    "pitByProfit": "按所得，{rate}%",
+    "pitByRevenue": "按收入，各行业税率",
+    "vatBySector": "按各行业税率计征应税收入",
+    "vatNotApplied": "不适用",
+    "group1Note": "第1组（年收入10亿及以下）：无需缴纳增值税和个人所得税 — 只需登记收入账（S1a-HKD）。",
+    "period": "期间",
+    "yearTotal": "{year}年合计",
+    "total": "合计",
+    "footnote": "营业收入 = 已完成销售单 − 客户退货（已扣折扣）。本年累计收入：{total}。数据为按2026年起个体工商户现行税务规定的估算值；请会计在税务门户申报前核对。",
+    "cols": {
+      "revenue": "营业收入",
+      "vatRevenue": "增值税应税收入",
+      "exemptRevenue": "增值税免税收入",
+      "vat": "增值税",
+      "cogs": "成本价",
+      "expenses": "其他费用",
+      "taxableIncome": "应纳税所得",
+      "pitBaseRevenue": "个税计税收入（超10亿部分）",
+      "pit": "个人所得税",
+      "totalDue": "应缴合计"
+    },
+    "sector": {
+      "title": "按行业明细 — {period}",
+      "name": "行业",
+      "rates": "增值税 / 个税税率",
+      "pitBase": "个税计税收入",
+      "allocationNote": "可扣除收入（每年10亿）按本期各行业收入占比分摊 — 请会计确认分摊方式。"
+    }
+  },
+  "profile": {
+    "declaring": "申报中",
+    "notDeclaring": "停止申报",
+    "manageTitle": "申报档案管理",
+    "manageDesc": "系统根据收入组别和计税方法，自动汇总各经营地点的会计账簿和申报表数据。",
+    "revenueGroup": "收入组别",
+    "pitMethod": "个人所得税计算方法",
+    "pitRevenue": "按收入计算",
+    "pitProfit": "按所得计算（收入 - 费用）",
+    "locations": "经营地点列表",
+    "addLocation": "添加经营地点",
+    "editLocation": "编辑经营地点",
+    "colCode": "地点编码",
+    "colName": "地点名称",
+    "colAddress": "地址",
+    "colBranches": "门店",
+    "colStartDate": "开始申报日期",
+    "colStatus": "状态",
+    "noLocations": "暂无经营地点 — 账簿将汇总所有门店的数据",
+    "confirmDeactivate": "停用该经营地点？\n自即日起，该地点所属门店的数据将不再计入会计账簿和申报表。已有数据不变。",
+    "deleteTitle": "删除税号",
+    "deleteDesc": "税号 {code} 的税务设置将被删除。销售数据不受影响。",
+    "confirmDelete": "删除税号 {code}？",
+    "saved": "设置已更新"
+  },
+  "location": {
+    "addTitle": "添加经营地点",
+    "editTitle": "编辑经营地点",
+    "name": "经营地点名称 *",
+    "namePlaceholder": "例：总部",
+    "code": "经营地点编码 *",
+    "province": "省/市",
+    "branches": "门店",
+    "startDate": "开始申报日期"
+  },
+  "sectors": {
+    "title": "经营行业与收入税率",
+    "name": "行业",
+    "vat": "增值税（%）",
+    "pit": "个税（%）",
+    "default": "默认",
+    "remove": "删除行业",
+    "add": "添加行业",
+    "newName": "新行业",
+    "cannotRemoveDefault": "不能删除默认行业 — 请先将其他行业设为默认。",
+    "categoriesTitle": "为商品分类指定行业",
+    "categoriesDesc": "商品收入按其分类所属行业计税。子分类留空则沿用父分类；未指定则使用默认行业。",
+    "noCategories": "暂无商品分类（在 设置 → 商品 中创建）。",
+    "followParent": "-- 沿用父分类 --",
+    "followDefault": "-- 默认行业 --",
+    "defaultTaxRate": "未设置税率商品的默认税率",
+    "note": "税率为 KCT / KKKNT 的商品不计增值税。疫苗和医疗服务通常免征增值税。默认税率依据2026年个体工商户税务规定 — 请会计确认。"
+  }
+}
