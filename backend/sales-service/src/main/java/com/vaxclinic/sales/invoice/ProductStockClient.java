@@ -1,0 +1,64 @@
+package com.vaxclinic.sales.invoice;
+
+import com.vaxclinic.common.error.ApiError;
+import com.vaxclinic.common.error.BusinessException;
+import com.vaxclinic.common.security.ServiceTokenProvider;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.ResourceAccessException;
+import org.springframework.web.client.RestClient;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.UUID;
+
+/**
+ * Gọi product-service /internal/stock-docs để trừ / hoàn kho. Idempotent theo (docId, docType) phía product-service,
+ * nên gọi lại sau lỗi mạng hoặc khi đồng bộ hóa đơn offline là an toàn.
+ */
+@Component
+public class ProductStockClient {
+
+    public record Line(UUID lineId, UUID productId, UUID unitId, BigDecimal quantity) {
+    }
+
+    public record Request(UUID docId, String docType, String docCode, UUID branchId, String partnerName, UUID userId,
+                          List<Line> lines) {
+    }
+
+    public record Allocation(String lotNumber, LocalDate expiryDate, BigDecimal baseQuantity) {
+    }
+
+    public record LineResult(UUID lineId, UUID productId, BigDecimal unitCost, BigDecimal conversionRate,
+                             List<Allocation> allocations) {
+    }
+
+    public record Result(UUID docId, String docType, List<LineResult> lines) {
+    }
+
+    private final RestClient http;
+    private final ServiceTokenProvider tokens;
+
+    public ProductStockClient(@Value("${app.product-url}") String productUrl, @Value("${app.jwt.secret}") String secret) {
+        this.http = RestClient.builder().baseUrl(productUrl).build();
+        this.tokens = new ServiceTokenProvider(secret, "sales-service");
+    }
+
+    public Result apply(Request req) {
+        try {
+            return http.post().uri("/internal/stock-docs").header("Authorization", "Bearer " + tokens.token())
+                    .body(req).retrieve().body(Result.class);
+        } catch (HttpClientErrorException e) {
+            // Lỗi nghiệp vụ từ product-service (thiếu tồn, hàng không tồn tại...) → chuyển nguyên thông báo cho người dùng
+            ApiError err = e.getResponseBodyAs(ApiError.class);
+            throw new BusinessException(HttpStatus.BAD_REQUEST, err == null ? "STOCK_ERROR" : err.code(),
+                    err == null ? "Lỗi cập nhật kho" : err.message());
+        } catch (ResourceAccessException e) {
+            throw new BusinessException(HttpStatus.SERVICE_UNAVAILABLE, "STOCK_SERVICE_DOWN",
+                    "Không kết nối được dịch vụ kho, vui lòng thử lại");
+        }
+    }
+}
