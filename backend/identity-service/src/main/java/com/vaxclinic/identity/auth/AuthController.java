@@ -2,6 +2,7 @@ package com.vaxclinic.identity.auth;
 
 import com.vaxclinic.identity.auth.AuthService.TokenPair;
 import com.vaxclinic.identity.user.UserDtos.UserResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import org.springframework.http.HttpStatus;
