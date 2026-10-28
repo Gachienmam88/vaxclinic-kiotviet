@@ -14,10 +14,18 @@ function NewReceipt() {
   const params = useSearchParams();
   const { data: me } = useCurrentUser();
   const [initial, setInitial] = useState<EditorState | null>(null);
+  const [reference, setReference] = useState<InputInvoice | undefined>();
   const source = params.get("edit") ?? params.get("copyFrom");
+  const fromInputInvoice = params.get("fromInputInvoice");
 
   useEffect(() => {
     if (!me) return;
+    if (fromInputInvoice) {
+      receiptEditorFromInputInvoice(fromInputInvoice, me.user.branches[0]?.id ?? "", me.user.id)
+        .then((r) => { setReference(r.reference); setInitial(r.state); })
+        .catch((e) => toast.error(errorMessage(e)));
+      return;
+    }
     if (!source) {
       setInitial(emptyEditor(me.user.branches[0]?.id ?? "", me.user.id));
       return;
