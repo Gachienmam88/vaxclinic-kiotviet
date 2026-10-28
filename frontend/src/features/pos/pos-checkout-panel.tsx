@@ -21,6 +21,7 @@ type Props = {
 /** Cột phải màn bán hàng: người bán, khách, tổng tiền, giảm giá, khách thanh toán, THANH TOÁN (F9). */
 export function PosCheckoutPanel({ draft, branchId, update, onPay, paying }: Props) {
   const { data: users = [] } = useUserLookup();
+  const [qr, setQr] = useState(false);
   const t = cartTotals(draft);
   const change = t.paid - t.total;
 
