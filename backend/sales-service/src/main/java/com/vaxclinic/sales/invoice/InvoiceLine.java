@@ -49,4 +49,6 @@ public class InvoiceLine {
     private BigDecimal cost = BigDecimal.ZERO;
     private String lots;
     private String note;
+    @Column(name = "tax_code")
+    private String taxCode;
 }
