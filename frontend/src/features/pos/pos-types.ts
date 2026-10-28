@@ -1,7 +1,9 @@
 /** Kiểu dữ liệu màn bán hàng (POS). */
 
 export type CatalogUnit = { id: string; code: string; barcode: string | null; unitName: string; conversionRate: number; price: number };
-export type CatalogProduct = { id: string; name: string; lotManaged: boolean; stock: number; units: CatalogUnit[] };
+export type CatalogProduct = {
+  id: string; name: string; lotManaged: boolean; stock: number; taxCode: string | null; units: CatalogUnit[];
+};
 
 export type CartLine = {
   key: string;
