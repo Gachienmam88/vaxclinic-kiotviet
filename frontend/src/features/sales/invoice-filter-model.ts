@@ -56,10 +56,13 @@ export const NATURE_OPTIONS = [["ORIGINAL", "Gốc"], ["ADJUST", "Điều chỉn
 
 export function invoiceListParams(f: InvoiceFilters, s: InvoiceSearch, page: number, size: number, ids?: string[]) {
   const p = new URLSearchParams({ page: String(page), size: String(size) });
-  if (f.time.mode !== "all") {
+  if (f.time.mode === "preset" || (f.time.mode === "custom" && f.time.from && f.time.to)) {
     const r = timeRange(f.time);
     p.set("from", r.from.toISOString());
     p.set("to", addDays(r.to, 1).toISOString());
+  } else if (f.time.mode === "custom") { // khoảng 1 đầu
+    if (f.time.from) p.set("from", new Date(`${f.time.from}T00:00:00`).toISOString());
+    if (f.time.to) p.set("to", addDays(new Date(`${f.time.to}T00:00:00`), 1).toISOString());
   }
   (Object.keys(s) as (keyof InvoiceSearch)[]).forEach((k) => { if (s[k].trim()) p.set(k, s[k].trim()); });
   f.states.forEach((v) => p.append("states", v));
