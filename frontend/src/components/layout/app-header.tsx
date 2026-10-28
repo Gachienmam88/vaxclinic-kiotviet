@@ -2,8 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LogOut, UserRound } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { LogOut, Settings, Syringe, UserRound } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel,
   DropdownMenuSeparator, DropdownMenuTrigger,
@@ -13,13 +12,13 @@ import { cn } from "@/lib/utils";
 
 const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME ?? "VaxClinic";
 
-/** Top-level modules. New modules are added here as their phases are delivered. */
+/** Module chính trên thanh menu xanh. Thêm dần khi từng phase hoàn thành. */
 const NAV: { href: string; label: string; perm?: string }[] = [
   { href: "/", label: "Tổng quan" },
-  { href: "/settings/users", label: "Người dùng", perm: "user.manage" },
-  { href: "/settings/branches", label: "Điểm tiêm" },
+  { href: "/products", label: "Hàng hóa", perm: "catalog.view" },
 ];
 
+/** Thanh trên (trắng): logo + cài đặt + tài khoản. Thanh dưới (xanh): menu module. */
 export function AppHeader() {
   const pathname = usePathname();
   const { data: me, can } = useCurrentUser();
@@ -30,26 +29,32 @@ export function AppHeader() {
   }
 
   return (
-    <header className="sticky top-0 z-40 bg-primary text-primary-foreground shadow">
-      <div className="flex h-12 items-center gap-6 px-4">
-        <Link href="/" className="text-lg font-bold">{APP_NAME}</Link>
-        <nav className="flex h-full items-stretch">
-          {NAV.filter((item) => !item.perm || can(item.perm)).map((item) => {
-            const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
-            return (
-              <Link key={item.href} href={item.href}
-                className={cn("flex items-center px-3 text-sm font-medium hover:bg-white/10",
-                  active && "bg-white/20")}>
-                {item.label}
-              </Link>
-            );
-          })}
-        </nav>
-        <div className="ml-auto">
+    <header className="sticky top-0 z-40 shadow-sm">
+      <div className="flex h-12 items-center gap-4 bg-background px-4 md:px-10">
+        <Link href="/" className="flex items-center gap-2 text-lg font-bold text-primary">
+          <Syringe className="size-6" /> {APP_NAME}
+        </Link>
+        <div className="ml-auto flex items-center gap-1">
           <DropdownMenu>
-            <DropdownMenuTrigger
-              render={<Button variant="ghost" size="sm" className="text-primary-foreground hover:bg-white/10" />}>
-              <UserRound className="size-4" /> {me?.user.fullName ?? "..."}
+            <DropdownMenuTrigger className="rounded-md p-2 hover:bg-muted" aria-label="Thiết lập">
+              <Settings className="size-5 text-muted-foreground" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuGroup>
+                <DropdownMenuLabel>Thiết lập</DropdownMenuLabel>
+                {can("user.manage") && (
+                  <DropdownMenuItem render={<Link href="/settings/users" />}>Người dùng</DropdownMenuItem>
+                )}
+                <DropdownMenuItem render={<Link href="/settings/branches" />}>Điểm tiêm (chi nhánh)</DropdownMenuItem>
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <DropdownMenu>
+            <DropdownMenuTrigger className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted">
+              <span className="flex size-7 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                <UserRound className="size-4" />
+              </span>
+              <span className="hidden sm:inline">{me?.user.fullName ?? "..."}</span>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuGroup>
@@ -63,6 +68,18 @@ export function AppHeader() {
           </DropdownMenu>
         </div>
       </div>
+      <nav className="flex h-10 items-center gap-1 bg-primary px-4 text-primary-foreground md:px-10">
+        {NAV.filter((item) => !item.perm || can(item.perm)).map((item) => {
+          const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+          return (
+            <Link key={item.href} href={item.href}
+              className={cn("rounded-md px-4 py-1.5 text-sm font-semibold hover:bg-black/10",
+                active && "bg-black/20")}>
+              {item.label}
+            </Link>
+          );
+        })}
+      </nav>
     </header>
   );
 }
