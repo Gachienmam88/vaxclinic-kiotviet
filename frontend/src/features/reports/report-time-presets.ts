@@ -3,18 +3,23 @@
  * API nhận Instant [from, to) với to = đầu ngày kế tiếp ngày cuối.
  */
 import { addDays, ymd } from "@/features/dashboard/dashboard-date-utils";
+import type { ReportsT } from "@/messages/reports";
 
 export type TimePreset =
   | "today" | "yesterday" | "thisWeek" | "lastWeek" | "last7" | "thisMonth" | "lastMonth" | "last30"
   | "thisQuarter" | "lastQuarter" | "thisYear" | "lastYear";
 
-/** Nhóm mốc theo cột như popup chọn thời gian của KiotViet. */
-export const PRESET_GROUPS: { title: string; items: TimePreset[] }[] = [
-  { title: "Theo ngày và tuần", items: ["today", "yesterday", "thisWeek", "lastWeek", "last7"] },
-  { title: "Theo tháng và quý", items: ["thisMonth", "lastMonth", "last30", "thisQuarter", "lastQuarter"] },
-  { title: "Theo năm", items: ["thisYear", "lastYear"] },
+/**
+ * Nhóm mốc theo cột như popup chọn thời gian của KiotViet. Màn báo cáo dịch bằng khóa reports "presetGroups.<id>";
+ * title (tiếng Việt) giữ lại cho nơi khác đang dùng (features/sales).
+ */
+export const PRESET_GROUPS: { id: "day" | "month" | "year"; title: string; items: TimePreset[] }[] = [
+  { id: "day", title: "Theo ngày và tuần", items: ["today", "yesterday", "thisWeek", "lastWeek", "last7"] },
+  { id: "month", title: "Theo tháng và quý", items: ["thisMonth", "lastMonth", "last30", "thisQuarter", "lastQuarter"] },
+  { id: "year", title: "Theo năm", items: ["thisYear", "lastYear"] },
 ];
 
+/** Nhãn tiếng Việt (nơi khác đang dùng); màn báo cáo dịch bằng khóa reports "presets.<mốc>". */
 export const PRESET_LABELS: Record<TimePreset, string> = {
   today: "Hôm nay", yesterday: "Hôm qua", thisWeek: "Tuần này", lastWeek: "Tuần trước", last7: "7 ngày qua",
   thisMonth: "Tháng này", lastMonth: "Tháng trước", last30: "30 ngày qua", thisQuarter: "Quý này", lastQuarter: "Quý trước",
@@ -54,9 +59,9 @@ export const parseYmd = (s: string) => {
 /** 28/10/2026 */
 export const dmy = (d: Date) => `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
 
-/** "Từ ngày 26/10/2026 đến ngày 28/10/2026" hoặc "Ngày 28/10/2026". */
-export const rangeText = (r: DateRange) =>
-  ymd(r.from) === ymd(r.to) ? `Ngày ${dmy(r.from)}` : `Từ ngày ${dmy(r.from)} đến ngày ${dmy(r.to)}`;
+/** "Từ ngày 26/10/2026 đến ngày 28/10/2026" hoặc "Ngày 28/10/2026" (câu theo ngôn ngữ, ngày luôn dd/MM/yyyy). */
+export const rangeText = (t: ReportsT, r: DateRange) =>
+  ymd(r.from) === ymd(r.to) ? t("range.single", { date: dmy(r.from) }) : t("range.between", { from: dmy(r.from), to: dmy(r.to) });
 
 /** Giá trị bộ lọc Thời gian: 1 mốc hoặc khoảng tùy chỉnh (yyyy-MM-dd). */
 export type TimeValue = { mode: "preset"; preset: TimePreset } | { mode: "custom"; from: string; to: string };
@@ -67,7 +72,9 @@ export function timeRange(v: TimeValue): DateRange {
   return to < from ? { from: to, to: from } : { from, to };
 }
 
-export const timeLabel = (v: TimeValue) => (v.mode === "preset" ? PRESET_LABELS[v.preset].toLowerCase() : rangeText(timeRange(v)).toLowerCase());
+/** Nhãn khoảng thời gian chèn trong câu (tiêu đề biểu đồ): "tuần này" / "this week"... */
+export const timeLabel = (t: ReportsT, v: TimeValue) =>
+  (v.mode === "preset" ? t(`presets.${v.preset}`) : rangeText(t, timeRange(v))).toLowerCase();
 
 /** Ngày dd của từng ngày trong khoảng (cột biểu đồ theo ngày), hoặc tháng MM/yyyy nếu khoảng > 62 ngày. */
 export function chartBuckets(r: DateRange): { key: string; label: string }[] {
