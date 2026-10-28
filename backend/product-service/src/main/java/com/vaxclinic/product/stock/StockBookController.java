@@ -34,6 +34,17 @@ public class StockBookController {
         this.jdbc = jdbc;
     }
 
+    public record ProductCategory(UUID productId, UUID categoryId) {
+    }
+
+    /** Nhóm hàng của mọi mặt hàng (kể cả đã xóa) — để xếp doanh thu vào ngành nghề theo nhóm hàng. */
+    @GetMapping("/api/accounting/stock/product-categories")
+    @PreAuthorize("hasAuthority('report.view') or hasAuthority('cashbook.manage')")
+    public List<ProductCategory> productCategories() {
+        return jdbc.query("select id, category_id from products",
+                (rs, i) -> new ProductCategory(rs.getObject("id", UUID.class), rs.getObject("category_id", UUID.class)));
+    }
+
     @GetMapping("/api/accounting/stock/summary")
     @PreAuthorize("hasAuthority('report.view') or hasAuthority('inventory.view')")
     public List<StockBookLine> summary(@RequestParam LocalDate from, @RequestParam LocalDate to,
@@ -41,14 +52,15 @@ public class StockBookController {
         var p = new MapSqlParameterSource()
                 .addValue("from", Timestamp.from(from.atStartOfDay(VN).toInstant()))
                 .addValue("to", Timestamp.from(to.plusDays(1).atStartOfDay(VN).toInstant()))
-                .addValue("branches", branchIds == null || branchIds.isEmpty() ? null : branchIds.toArray(new UUID[0]))
+                // Danh sách rỗng → "in ()" sai cú pháp: thay bằng 1 id giả, cờ allBranches bỏ qua điều kiện
+                .addValue("branches", branchIds == null || branchIds.isEmpty() ? List.of(new UUID(0, 0)) : branchIds)
                 .addValue("allBranches", branchIds == null || branchIds.isEmpty());
         return jdbc.query("""
                 with mv as (
                   select product_id, occurred_at, quantity,
                     round(quantity * case when doc_type in ('OPENING','PURCHASE','PURCHASE_CANCEL','PURCHASE_RETURN','PURCHASE_RETURN_CANCEL')
                                           then unit_price else cost end) val
-                  from stock_ledger where occurred_at < :to and (:allBranches or branch_id = any(:branches))
+                  from stock_ledger where occurred_at < :to and (:allBranches or branch_id in (:branches))
                 ), agg as (
                   select product_id,
                     sum(case when occurred_at < :from then quantity else 0 end) oq,
