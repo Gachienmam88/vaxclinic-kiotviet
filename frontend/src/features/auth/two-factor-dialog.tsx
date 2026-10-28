@@ -41,9 +41,15 @@ function EnableFlow({ onDone }: { onDone: () => void }) {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
+    // Mỗi lần gọi tạo khóa mới thay khóa cũ: bỏ kết quả của lần gọi đã hủy (StrictMode chạy effect 2 lần)
+    let cancelled = false;
     api<Setup>("/auth/2fa/setup", { method: "POST" })
-      .then(async (s) => { setSetup(s); setQr(await QRCode.toDataURL(s.otpauthUrl, { width: 200, margin: 1 })); })
-      .catch((e) => setError(errorMessage(e)));
+      .then(async (s) => {
+        const image = await QRCode.toDataURL(s.otpauthUrl, { width: 200, margin: 1 });
+        if (!cancelled) { setSetup(s); setQr(image); }
+      })
+      .catch((e) => !cancelled && setError(errorMessage(e)));
+    return () => { cancelled = true; };
   }, []);
 
   async function confirm() {
