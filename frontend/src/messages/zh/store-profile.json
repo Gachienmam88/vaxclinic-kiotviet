@@ -1,0 +1,291 @@
+{
+  "shell": {
+    "navLabel": "店铺档案",
+    "groups": {
+      "store": "店铺",
+      "einvoice": "电子发票与数字签名",
+      "other": "其他"
+    },
+    "items": {
+      "storeInfo": "店铺信息",
+      "einvoice": "电子发票",
+      "certificates": "数字签名管理",
+      "terms": "使用条款"
+    }
+  },
+  "info": {
+    "tabs": {
+      "general": "基本信息",
+      "history": "更新记录"
+    },
+    "history": {
+      "time": "时间",
+      "user": "操作人",
+      "content": "内容",
+      "empty": "暂无更新记录"
+    }
+  },
+  "general": {
+    "profileSection": "档案信息",
+    "storeSection": "店铺信息",
+    "fields": {
+      "businessType": "经营类型",
+      "birthDate": "出生日期",
+      "representative": "法定代表人",
+      "idNumber": "身份证/护照",
+      "phone": "电话",
+      "idIssueDate": "签发日期",
+      "email": "邮箱",
+      "gender": "性别",
+      "idIssuePlace": "签发地",
+      "address": "地址",
+      "accessCode": "店铺账号",
+      "storeName": "门店名称",
+      "industry": "行业",
+      "owner": "店主",
+      "branchCount": "门店数",
+      "status": "状态"
+    },
+    "statusPaused": "暂停营业至 {date}",
+    "statusInUse": "使用中",
+    "reopen": "恢复店铺",
+    "pause": "暂停店铺",
+    "pauseUsed": "该店铺已使用过唯一一次暂停机会",
+    "update": "更新",
+    "reopenedToast": "已恢复店铺"
+  },
+  "businessTypes": {
+    "PERSONAL": "个人",
+    "HOUSEHOLD": "个体工商户",
+    "ENTERPRISE": "企业"
+  },
+  "genders": {
+    "MALE": "男",
+    "FEMALE": "女"
+  },
+  "flow": {
+    "cancel": "取消",
+    "skip": "跳过",
+    "next": "继续",
+    "confirm": "确认",
+    "back": "返回"
+  },
+  "verify": {
+    "hintTotp": "为确认是您本人操作，请输入身份验证应用（Google Authenticator、Microsoft Authenticator 等）中显示的 6 位验证码。",
+    "hintPassword": "为确认是您本人操作，请输入您当前的登录密码。",
+    "noSms": "系统不通过短信发送 OTP 验证码。在账户菜单中开启两步验证后，可使用应用代替密码进行验证。",
+    "codePlaceholder": "6 位验证码",
+    "codeLabel": "验证码",
+    "password": "密码"
+  },
+  "updateChoice": {
+    "title": "您想更新哪些信息？",
+    "prompt": "请选择需要更新的信息：",
+    "ownerOnly": "仅店主可执行此操作。",
+    "options": {
+      "profile": {
+        "title": "更新档案信息",
+        "hint": "邮箱、身份证号、法定代表人、出生日期、地址等"
+      },
+      "phone": {
+        "title": "更新店主电话号码"
+      },
+      "rename": {
+        "title": "修改店铺账号",
+        "hint": "将更改系统访问地址"
+      },
+      "transfer": {
+        "title": "转让店铺",
+        "hint": "将店主权限转让给其他管理员。需要当前店主进行验证。"
+      }
+    }
+  },
+  "pause": {
+    "title": "什么是暂停店铺？",
+    "intro": "暂停店铺可在暂时不需要使用时锁定店铺，同时完整保留所有数据。暂停期间，所有员工都无法使用系统的任何功能。",
+    "termsTitle": "暂停期限说明：",
+    "term1": "暂停期限最长 2 个月。店铺将在您选择的恢复日期自动恢复。",
+    "term2": "店主可在暂停期满前主动恢复店铺。",
+    "term3": "暂停期间，数据、设置和账户均保持不变。",
+    "onceNote": "注意：在整个使用期间，店铺只能暂停一次。",
+    "dateLabel": "店铺自动恢复日期（自今天起最多 {days} 天）",
+    "dateError": "请选择明天至 {days} 天后之间的日期",
+    "submit": "暂停",
+    "toast": "已暂停店铺"
+  },
+  "transfer": {
+    "title": "转让店铺",
+    "steps": {
+      "pickRecipient": "选择受让人",
+      "verify": "验证"
+    },
+    "intro": "转让后，您将无法再修改店铺账号、暂停或转让店铺。受让人必须是在职的管理员。",
+    "noCandidates": "暂无其他管理员。请先在 设置 → 用户管理 中创建“系统管理员”角色的账户。",
+    "recipient": "受让人：",
+    "submit": "转让",
+    "toast": "已转让店铺"
+  },
+  "phone": {
+    "title": "申请更换电话号码",
+    "steps": {
+      "verify": "验证",
+      "newPhone": "输入新号码",
+      "confirm": "确认"
+    },
+    "current": "当前电话号码",
+    "none": "未设置",
+    "newLabel": "店主的新电话号码",
+    "placeholder": "例如：0912345678",
+    "invalid": "电话号码须为以 0 开头的 10 位数字，且与当前号码不同",
+    "confirmPrompt": "确认更换店主电话号码：",
+    "currentShort": "当前号码",
+    "newShort": "新号码",
+    "usageNote": "新号码将用于店铺信息和打印模板页眉。",
+    "toast": "已更新店主电话号码"
+  },
+  "profileUpdate": {
+    "title": "更新档案信息",
+    "pickGender": "选择性别",
+    "province": "省/市",
+    "addressRequired": "地址 *",
+    "verifyNote": "为完成更新，系统需要验证当前操作的账户所有者。点击“继续”进入验证步骤。",
+    "toast": "已更新档案信息"
+  },
+  "rename": {
+    "title": "修改店铺账号",
+    "steps": {
+      "notes": "注意事项",
+      "newName": "输入新名称",
+      "verify": "验证"
+    },
+    "intro": "修改店铺账号前，请充分了解将产生的影响。",
+    "warnings": {
+      "loggedOut": {
+        "title": "所有设备将立即退出登录",
+        "p1": "所有在网页端和收银机上登录的员工（包括您）都将被退出登录。",
+        "p2": "您需负责在修改前或修改后立即将新的店铺账号通知所有员工。"
+      },
+      "links": {
+        "title": "正在使用的链接将失效",
+        "p1": "包含旧名称的登录链接和浏览器书签将无法访问。请更新并通知新的链接。"
+      },
+      "oldName": {
+        "title": "修改后不保留旧名称",
+        "p1": "如需重新使用旧名称，必须再修改一次（所有设备将再次退出登录）。"
+      }
+    },
+    "agree": "我已阅读并充分了解修改店铺账号的影响",
+    "currentName": "当前名称：{name}",
+    "newLabel": "新的店铺账号（登录第一步输入的访问地址）",
+    "placeholder": "例如：vacxinso1yenlac",
+    "rule": "仅限不带声调的小写字母和数字，3–40 个字符，且与当前名称不同。",
+    "summary": "将店铺账号 {from} 修改为 {to}。",
+    "submit": "修改"
+  },
+  "certificates": {
+    "title": "数字签名列表",
+    "add": "添加数字签名",
+    "empty": "暂无数字签名",
+    "confirmDelete": "删除数字签名“{name}”？",
+    "fields": {
+      "subjectName": "主体名称",
+      "taxCode": "税号",
+      "representative": "法定代表人",
+      "activatedOn": "激活日期",
+      "expiresOn": "到期日期",
+      "certStatus": "证书状态",
+      "active": "启用状态",
+      "signatureType": "签名类型",
+      "provider": "服务商",
+      "serialNumber": "序列号",
+      "publicCert": "公钥证书",
+      "issuer": "签发机构（Issuer）"
+    },
+    "tabs": {
+      "general": "基本信息",
+      "cert": "数字证书"
+    },
+    "uploaded": "已上传（.cer）",
+    "notUploaded": "未上传 — 手动录入的信息",
+    "activeOn": "启用",
+    "activeOff": "停用",
+    "signatureTypes": {
+      "USB_TOKEN": "USB Token",
+      "HSM": "HSM",
+      "RMS": "RMS（远程签名）"
+    },
+    "certStatuses": {
+      "PENDING": "待审核",
+      "APPROVED": "已审核",
+      "REVOKED": "已吊销"
+    },
+    "form": {
+      "titleEdit": "编辑数字签名",
+      "titleAdd": "添加数字签名",
+      "savedCert": "已保存证书",
+      "uploadHint": "上传公钥证书（.cer、.crt）以自动填写信息",
+      "privateKeyWarning": "仅使用公钥证书文件。切勿上传私钥（.pfx、.p12、.key）。",
+      "pickFile": "选择文件",
+      "providerPlaceholder": "例如：IntrustCA、Viettel-CA、VNPT-CA",
+      "parseError": "无法读取证书",
+      "toast": "已保存数字签名列表"
+    }
+  },
+  "einvoice": {
+    "account": "账户：{account}",
+    "active": "使用中",
+    "notConnected": "未连接 — 设置 MISA meInvoice",
+    "viewInvoices": "查看发票列表",
+    "issuer": "开票服务商",
+    "totalQuantity": "总额度",
+    "published": "已开发票总数",
+    "remaining": "剩余",
+    "serviceExpiry": "服务到期日",
+    "packagesTitle": "发票套餐列表",
+    "addPackage": "添加套餐",
+    "cols": {
+      "name": "套餐名称",
+      "quantity": "电子发票总数",
+      "used": "已使用",
+      "remaining": "剩余",
+      "start": "开始日期",
+      "end": "到期日期",
+      "status": "状态"
+    },
+    "editPackage": "编辑套餐",
+    "deletePackage": "删除套餐",
+    "confirmDelete": "删除套餐“{name}”？",
+    "empty": "暂无发票套餐。点击“添加套餐”录入已购买的套餐。",
+    "note": "发票套餐根据与开票服务商的合同手动录入（系统尚未对接 MISA 额度 API）。“已使用”为系统已开具的发票数量，按开票日期分配到仍有效的套餐。",
+    "unallocated": "有 {amount} 张发票的开具时间超出已录入套餐的有效期或超出其数量。",
+    "statuses": {
+      "NOT_STARTED": "未生效",
+      "ACTIVE": "生效中",
+      "EXPIRED": "已过期"
+    },
+    "packageDialog": {
+      "titleEdit": "编辑发票套餐",
+      "titleAdd": "添加发票套餐",
+      "name": "套餐名称 *",
+      "namePlaceholder": "例如：2026 年 5,000 张发票套餐",
+      "quantity": "电子发票总数 *",
+      "start": "开始日期 *",
+      "end": "到期日期 *",
+      "toast": "已保存发票套餐"
+    }
+  },
+  "terms": {
+    "acceptedAt": "您已于 {time} 同意版本 {version}。",
+    "vietnameseOnlyNote": "使用条款仅提供越南语版本。",
+    "dialogLabel": "使用条款",
+    "agreeCheckbox": "我已阅读并同意使用条款",
+    "agreeButton": "我同意"
+  },
+  "paused": {
+    "title": "店铺已暂停",
+    "body": "店铺已临时锁定，数据完整保留。店铺将于 {date} 自动恢复。",
+    "ownerHint": "您是店主，可以提前恢复店铺。",
+    "staffHint": "如需提前恢复，请联系店主。",
+    "reopen": "恢复店铺"
+  }
+}
