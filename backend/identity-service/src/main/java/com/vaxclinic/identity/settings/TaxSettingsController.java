@@ -131,11 +131,11 @@ public class TaxSettingsController {
                 }
             }
         }
-        var saved = new TaxSettings(req.vatEnabled(), req.sector(), req.vatRate(), req.pitRate(), req.defaultTaxCode(), profiles);
+        var saved = new TaxSettings(req.vatEnabled(), sectors, req.defaultSector(), categorySectors, req.defaultTaxCode(), profiles);
         store.write("tax", saved, UUID.fromString(jwt.getSubject()));
         audit.record(UUID.fromString(jwt.getSubject()), jwt.getClaimAsString("name"), null, "Thuế & Kế toán", "Sửa", null,
-                "Thiết lập thuế: ngành " + req.sector() + ", GTGT " + req.vatRate() + "%, TNCN " + req.pitRate() + "%, "
-                        + profiles.size() + " mã số thuế");
+                "Thiết lập thuế: " + sectors.stream().map(s -> s.name() + " (GTGT " + s.vatRate() + "%, TNCN " + s.pitRate() + "%)").toList()
+                        + ", " + categorySectors.size() + " nhóm hàng gắn ngành, " + profiles.size() + " mã số thuế");
         return saved;
     }
 }
