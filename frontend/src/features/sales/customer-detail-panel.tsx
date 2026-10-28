@@ -75,6 +75,7 @@ function DebtTab({ c }: { c: Customer }) {
   const { data = [] } = useCustomerDebts(c.id);
   const { can } = useCurrentUser();
   const [dialog, setDialog] = useState<"payment" | "discount" | "adjust" | null>(null);
+  const [qr, setQr] = useState(false);
   return (
     <div className="space-y-3">
       <table className="w-full text-sm">
