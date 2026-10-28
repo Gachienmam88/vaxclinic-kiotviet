@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { QrCode } from "lucide-react";
+import { QrPaymentDialog } from "@/features/sales/qr-payment-dialog";
 import { Button } from "@/components/ui/button";
 import { NumberInput } from "@/components/number-input";
 import { useUserLookup } from "@/features/purchases/purchase-queries";
