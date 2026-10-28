@@ -74,6 +74,11 @@ export function PosCart({ lines, customerId, onChange }: Props) {
           </div>
         );
       })}
+      {dialog?.kind === "price" && (
+        <RecentPriceDialog productId={dialog.line.productId} productName={dialog.line.productName} customerId={customerId}
+          onApply={(price) => update(dialog.line.key, { unitPrice: price, discount: 0 })} onClose={() => setDialog(null)} />
+      )}
+      {dialog?.kind === "info" && <ProductInfoDialog productId={dialog.line.productId} onClose={() => setDialog(null)} />}
     </div>
   );
 }
