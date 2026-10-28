@@ -114,6 +114,21 @@ export function PosScreen() {
     if (d.lines.some((l) => l.quantity <= 0)) return toast.error("Số lượng phải lớn hơn 0");
     const sellerName = users.find((u) => u.id === d.sellerId)?.fullName;
     setPaying(true);
+    if (d.editOf) { // Lưu bản sửa hóa đơn (cần mạng; kho hoàn lô cũ + xuất lô mới trong 1 giao dịch)
+      try {
+        const inv = await api<{ code: string }>(`/invoices/${d.editOf.invoiceId}?revision=${d.editOf.revision}`,
+          { method: "PUT", body: { ...toBody(d, branchId, sellerName, false), soldAt: undefined } });
+        toast.success(`Đã cập nhật hóa đơn ${inv.code}`);
+        tabs.close(d.id);
+        void catalog.refresh();
+        SALES_KEYS.forEach((k) => qc.invalidateQueries({ queryKey: k }));
+      } catch (e) {
+        toast.error(isNetworkError(e) ? "Mất kết nối: sửa hóa đơn cần có mạng, vui lòng thử lại" : (e as Error).message);
+      } finally {
+        setPaying(false);
+      }
+      return;
+    }
     try {
       const inv = await api<{ code: string }>("/invoices", { method: "POST", body: toBody(d, branchId, sellerName, false) });
       toast.success(`Đã thanh toán hóa đơn ${inv.code}${t.paid > t.total ? ` — trả lại khách ${formatMoney(t.paid - t.total)}` : ""}`);
