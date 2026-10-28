@@ -22,7 +22,13 @@ import java.util.UUID;
 @RestController
 public class RevenueBookController {
 
-    public record DailyRevenue(LocalDate date, String taxCode, BigDecimal sales, BigDecimal returns, int invoiceCount) {
+    /** cogs: giá vốn hàng bán (đã trừ hàng trả lại). */
+    public record DailyRevenue(LocalDate date, String taxCode, BigDecimal sales, BigDecimal returns, BigDecimal cogs,
+                               int invoiceCount) {
+    }
+
+    /** Chi phí khác: phiếu chi hạch toán kết quả kinh doanh, KHÔNG gồm trả nhà cung cấp (đã nằm trong giá vốn). */
+    public record DailyExpense(LocalDate date, String category, BigDecimal amount) {
     }
 
     private final NamedParameterJdbcTemplate jdbc;
@@ -38,14 +44,15 @@ public class RevenueBookController {
         var p = new MapSqlParameterSource()
                 .addValue("from", Timestamp.from(from.atStartOfDay(ShopSettings.ZONE).toInstant()))
                 .addValue("to", Timestamp.from(to.plusDays(1).atStartOfDay(ShopSettings.ZONE).toInstant()))
-                .addValue("branches", branchIds == null || branchIds.isEmpty() ? null : branchIds.toArray(new UUID[0]))
+                // Danh sách rỗng → "in ()" sai cú pháp: thay bằng 1 id giả, cờ allBranches bỏ qua điều kiện
+                .addValue("branches", branchIds == null || branchIds.isEmpty() ? List.of(new UUID(0, 0)) : branchIds)
                 .addValue("allBranches", branchIds == null || branchIds.isEmpty());
         return jdbc.query("""
                 with inv as (
                   select i.id, (i.sold_at at time zone 'Asia/Ho_Chi_Minh')::date d, i.total, i.subtotal
                   from invoices i
                   where i.status = 'COMPLETED' and i.sold_at >= :from and i.sold_at < :to
-                    and (:allBranches or i.branch_id = any(:branches))
+                    and (:allBranches or i.branch_id in (:branches))
                 ), sale as (
                   select inv.d, coalesce(l.tax_code, '') tax_code, count(distinct inv.id) n,
                     sum(case when inv.subtotal = 0 then 0
@@ -55,7 +62,7 @@ public class RevenueBookController {
                   select r.id, (r.returned_at at time zone 'Asia/Ho_Chi_Minh')::date d, r.total, r.subtotal
                   from sales_returns r
                   where r.status = 'COMPLETED' and r.returned_at >= :from and r.returned_at < :to
-                    and (:allBranches or r.branch_id = any(:branches))
+                    and (:allBranches or r.branch_id in (:branches))
                 ), back as (
                   select ret.d, coalesce(il.tax_code, '') tax_code,
                     sum(case when ret.subtotal = 0 then 0
