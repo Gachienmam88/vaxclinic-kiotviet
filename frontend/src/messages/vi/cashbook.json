@@ -1,0 +1,99 @@
+{
+  "page": {
+    "title": {
+      "CASH": "Sổ quỹ tiền mặt",
+      "BANK": "Sổ quỹ ngân hàng",
+      "EWALLET": "Sổ quỹ ví điện tử",
+      "ALL": "Sổ quỹ tổng quỹ"
+    },
+    "searchPlaceholder": "Theo mã phiếu",
+    "newReceipt": "Phiếu thu",
+    "newPayment": "Phiếu chi",
+    "exportTitle": "Xuất các dòng đang hiển thị ra file CSV (tiêu đề cột tiếng Việt)",
+    "summary": { "opening": "Quỹ đầu kỳ", "receipts": "Tổng thu", "payments": "Tổng chi", "closing": "Tồn quỹ" },
+    "cols": { "code": "Mã phiếu", "time": "Thời gian", "category": "Loại thu chi", "partner": "Người nộp/nhận", "amount": "Giá trị" },
+    "emptyWhat": "phiếu thu chi",
+    "unit": "phiếu"
+  },
+  "enums": {
+    "status": { "PAID": "Đã thanh toán", "CANCELLED": "Đã hủy" },
+    "voucherType": { "RECEIPT": "Phiếu thu", "PAYMENT": "Phiếu chi" },
+    "partnerType": {
+      "CUSTOMER": "Khách hàng",
+      "SUPPLIER": "Nhà cung cấp",
+      "EMPLOYEE": "Nhân viên",
+      "DELIVERY_PARTNER": "Đối tác giao hàng",
+      "OTHER": "Khác"
+    }
+  },
+  "detail": {
+    "accounting": "Hạch toán",
+    "noAccounting": "Không hạch toán",
+    "createdBy": "Người tạo: {name}",
+    "collectorReceipt": "Người thu: {name}",
+    "collectorPayment": "Người chi: {name}",
+    "time": "Thời gian: {time}",
+    "sourceDoc": "Chứng từ gốc: {code}",
+    "amount": "Số tiền",
+    "categoryReceipt": "Loại thu",
+    "categoryPayment": "Loại chi",
+    "partnerTypeReceipt": "Đối tượng nộp",
+    "partnerTypePayment": "Đối tượng nhận",
+    "method": "Phương thức thanh toán",
+    "partnerReceipt": "Người nộp",
+    "partnerPayment": "Người nhận",
+    "linkedReceipt": "Phiếu thu được gắn với hóa đơn {invoices}",
+    "linkedReceiptAuto": "Phiếu thu tự động được gắn với hóa đơn {invoices}",
+    "linkedPayment": "Phiếu chi được gắn với hóa đơn {invoices}",
+    "linkedPaymentAuto": "Phiếu chi tự động được gắn với hóa đơn {invoices}",
+    "allocCols": { "code": "Mã phiếu", "time": "Thời gian", "voucherValue": "Giá trị phiếu", "collected": "Giá trị thu" },
+    "noNote": "Chưa có ghi chú",
+    "autoHint": {
+      "INVOICE": "Phiếu tự động — muốn hủy hãy hủy hóa đơn gốc.",
+      "DELIVERY": "Phiếu tự động — muốn hủy hãy hủy phiếu đối soát gốc ở Đối tác giao hàng.",
+      "PURCHASE": "Phiếu tự động — muốn hủy hãy hủy phiếu nhập gốc."
+    },
+    "cancel": "Hủy",
+    "confirmCancel": "Hủy phiếu {code}?",
+    "cancelled": "Đã hủy phiếu"
+  },
+  "dialog": {
+    "titleReceipt": "Tạo phiếu thu",
+    "titlePayment": "Tạo phiếu chi",
+    "time": "Thời gian",
+    "collectorReceipt": "Người thu",
+    "collectorPayment": "Người chi",
+    "fund": "Quỹ tiền",
+    "account": "Tài khoản",
+    "pickAccount": "Chọn tài khoản",
+    "categoryPlaceholderReceipt": "VD: Thu khác",
+    "categoryPlaceholderPayment": "VD: Chi phí điện nước",
+    "amount": "Số tiền",
+    "supplierHint": "Thu / chi với nhà cung cấp hãy tạo tại {link} → tab \"Nợ cần trả nhà cung cấp\" → Thanh toán, để công nợ nhà cung cấp và Sổ quỹ luôn khớp nhau.",
+    "supplierLink": "Mua hàng → Nhà cung cấp",
+    "partnerNameReceipt": "Tên người nộp",
+    "partnerNamePayment": "Tên người nhận",
+    "phone": "Số điện thoại",
+    "note": "Ghi chú",
+    "accountingCheck": "Hạch toán vào kết quả hoạt động kinh doanh",
+    "createdReceipt": "Đã tạo phiếu thu {code}",
+    "createdPayment": "Đã tạo phiếu chi {code}"
+  },
+  "filter": {
+    "fund": "Quỹ tiền",
+    "docType": "Loại chứng từ",
+    "category": "Loại thu chi",
+    "pickCategory": "Chọn loại thu chi",
+    "status": "Trạng thái",
+    "accounting": "Hạch toán kết quả kinh doanh",
+    "createdBy": "Người tạo",
+    "pickCreator": "Chọn người tạo",
+    "employee": "Nhân viên",
+    "employeeAria": "Nhân viên thu/chi",
+    "pickEmployee": "Chọn nhân viên",
+    "partner": "Người nộp/nhận",
+    "partnerTypeAria": "Loại người nộp/nhận",
+    "partnerPlaceholder": "Tên hoặc số điện thoại",
+    "partnerAria": "Tên hoặc số điện thoại người nộp/nhận"
+  }
+}
