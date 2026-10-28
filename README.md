@@ -30,6 +30,9 @@ Browser ──▶ Next.js (frontend, BFF giữ JWT trong cookie httpOnly)
 4. Frontend: tạo `frontend/.env.local` với `GATEWAY_URL=http://localhost:<GATEWAY_PORT>`, rồi `cd frontend; npm install; npm run dev`.
 5. Mở http://localhost:3000, đăng nhập `ADMIN_USERNAME` / `ADMIN_PASSWORD` (admin được tạo tự động lần đầu chạy).
 
+Triển khai trong mạng LAN không có HTTPS (truy cập `http://192.168.x.x`): đặt `COOKIE_SECURE=false` cho frontend,
+nếu không trình duyệt sẽ không lưu cookie đăng nhập. Khuyến nghị dùng HTTPS thay vì tắt cờ này.
+
 ## Quy ước
 - Lỗi API thống nhất: `{ code, message, details[], timestamp }` (message tiếng Việt để hiển thị).
 - Phân quyền: chuỗi permission trong JWT (`user.manage`, `screening.perform`…), định nghĩa tại `identity-service/.../role/Permissions.java`.
