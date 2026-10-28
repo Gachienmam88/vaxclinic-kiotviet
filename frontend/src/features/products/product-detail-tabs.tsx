@@ -6,57 +6,66 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useBranches } from "@/features/settings/settings-queries";
 import { formatDate, formatDateTime, formatMoney, formatNumber } from "@/lib/format";
 import { useProductLedger, useProductLots } from "./product-queries";
+import { SUB_TABLE_HEAD_ROW } from "./product-tab-styles";
 import { DOC_TYPE_LABEL, type ProductDetail } from "./product-types";
 
-function useBranchName() {
+function useBranchList() {
   const { data: branches = [] } = useBranches();
-  return (id: string) => branches.find((b) => b.id === id)?.name ?? "—";
+  return { count: branches.length, name: (id: string) => branches.find((b) => b.id === id)?.name ?? "—" };
 }
 
 const Empty = ({ cols, text }: { cols: number; text: string }) => (
-  <TableRow><TableCell colSpan={cols} className="py-6 text-center text-muted-foreground">{text}</TableCell></TableRow>
+  <TableRow className="hover:bg-transparent">
+    <TableCell colSpan={cols} className="py-6 text-center text-muted-foreground">{text}</TableCell>
+  </TableRow>
 );
 
-/** Thẻ kho: lịch sử biến động tồn (mới nhất trước). */
+const sum = (xs: number[]) => xs.reduce((s, x) => s + Number(x), 0);
+
+/** Thẻ kho: lịch sử biến động tồn (mới nhất trước). Cột điểm tiêm / lô chỉ hiện khi có dữ liệu tương ứng. */
 export function LedgerTab({ productId }: { productId: string }) {
   const [page, setPage] = useState(0);
   const { data, isLoading } = useProductLedger(productId, page);
-  const branchName = useBranchName();
+  const branches = useBranchList();
   const pages = data ? Math.max(1, Math.ceil(data.total / data.size)) : 1;
+  const showBranch = branches.count > 1;
+  const showLot = !!data?.items.some((l) => l.lotNumber);
+  const cols = 8 + Number(showBranch) + Number(showLot);
   return (
     <div className="space-y-2">
       <Table>
         <TableHeader>
-          <TableRow className="bg-muted/60">
+          <TableRow className={SUB_TABLE_HEAD_ROW}>
             <TableHead>Chứng từ</TableHead><TableHead>Thời gian</TableHead><TableHead>Loại giao dịch</TableHead>
-            <TableHead>Điểm tiêm</TableHead><TableHead>Lô</TableHead>
+            {showBranch && <TableHead>Điểm tiêm</TableHead>}
+            {showLot && <TableHead>Lô</TableHead>}
             <TableHead className="text-right">Giá GD</TableHead><TableHead className="text-right">Giá vốn</TableHead>
             <TableHead className="text-right">Số lượng</TableHead><TableHead className="text-right">Tồn cuối</TableHead>
             <TableHead>Đối tác</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {!isLoading && !data?.items.length && <Empty cols={10} text="Chưa có giao dịch kho" />}
+          {!isLoading && !data?.items.length && <Empty cols={cols} text="Chưa có giao dịch kho" />}
           {data?.items.map((l) => (
-            <TableRow key={l.id}>
-              <TableCell className="font-medium text-primary">{l.docCode}</TableCell>
+            <TableRow key={l.id} className="align-top [&>td]:py-3">
+              <TableCell className="text-primary">{l.docCode}</TableCell>
               <TableCell>{formatDateTime(l.occurredAt)}</TableCell>
               <TableCell>{DOC_TYPE_LABEL[l.docType] ?? l.docType}</TableCell>
-              <TableCell>{branchName(l.branchId)}</TableCell>
-              <TableCell>{l.lotNumber}</TableCell>
+              {showBranch && <TableCell>{branches.name(l.branchId)}</TableCell>}
+              {showLot && <TableCell>{l.lotNumber}</TableCell>}
               <TableCell className="text-right">{formatNumber(l.unitPrice)}</TableCell>
               <TableCell className="text-right">{formatNumber(l.cost)}</TableCell>
               <TableCell className="text-right">{formatNumber(l.quantity)}</TableCell>
               <TableCell className="text-right">{formatNumber(l.balanceAfter)}</TableCell>
-              <TableCell>{l.partnerName}</TableCell>
+              <TableCell className="max-w-36 whitespace-normal">{l.partnerName}</TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
       {pages > 1 && (
         <div className="flex justify-end gap-2">
-          <Button size="sm" variant="outline" disabled={page === 0} onClick={() => setPage(page - 1)}>Trước</Button>
-          <Button size="sm" variant="outline" disabled={page + 1 >= pages} onClick={() => setPage(page + 1)}>Sau</Button>
+          <Button size="sm" variant="outline" className="rounded-md" disabled={page === 0} onClick={() => setPage(page - 1)}>Trước</Button>
+          <Button size="sm" variant="outline" className="rounded-md" disabled={page + 1 >= pages} onClick={() => setPage(page + 1)}>Sau</Button>
         </div>
       )}
     </div>
@@ -65,30 +74,30 @@ export function LedgerTab({ productId }: { productId: string }) {
 
 /** Tồn kho theo điểm tiêm (+ theo lô nếu hàng quản lý lô). */
 export function StockTab({ product }: { product: ProductDetail }) {
-  const branchName = useBranchName();
+  const branches = useBranchList();
   const { data: lots = [] } = useProductLots(product.id, product.lotManaged);
-  const total = product.stocks.reduce((s, b) => s + Number(b.quantity), 0);
-  const reserved = product.stocks.reduce((s, b) => s + Number(b.reserved), 0);
   return (
     <div className="space-y-4">
       <Table>
         <TableHeader>
-          <TableRow className="bg-muted/60">
+          <TableRow className={SUB_TABLE_HEAD_ROW}>
             <TableHead>Điểm tiêm</TableHead><TableHead className="text-right">Tồn kho</TableHead>
-            <TableHead className="text-right">KH đặt</TableHead><TableHead>Trạng thái</TableHead>
+            <TableHead className="text-right">KH đặt</TableHead><TableHead className="w-48 pl-4">Trạng thái</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          <TableRow className="font-semibold">
-            <TableCell /><TableCell className="text-right">{formatNumber(total)}</TableCell>
-            <TableCell className="text-right">{formatNumber(reserved)}</TableCell><TableCell />
+          <TableRow className="hover:bg-transparent">
+            <TableCell /><TableCell className="text-right">{formatNumber(sum(product.stocks.map((s) => s.quantity)))}</TableCell>
+            <TableCell className="text-right">{formatNumber(sum(product.stocks.map((s) => s.reserved)))}</TableCell><TableCell />
           </TableRow>
           {product.stocks.map((s) => (
             <TableRow key={s.branchId}>
-              <TableCell>{branchName(s.branchId)}</TableCell>
+              <TableCell>{branches.name(s.branchId)}</TableCell>
               <TableCell className="text-right">{formatNumber(s.quantity)}</TableCell>
               <TableCell className="text-right">{formatNumber(s.reserved)}</TableCell>
-              <TableCell>{product.active ? "Đang kinh doanh" : "Ngừng kinh doanh"}</TableCell>
+              <TableCell className="pl-4">
+                <span className="rounded bg-[#eff0f3] px-1.5 py-0.5 text-xs">{product.active ? "Đang kinh doanh" : "Ngừng kinh doanh"}</span>
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>
@@ -96,7 +105,7 @@ export function StockTab({ product }: { product: ProductDetail }) {
       {product.lotManaged && (
         <Table>
           <TableHeader>
-            <TableRow className="bg-muted/60">
+            <TableRow className={SUB_TABLE_HEAD_ROW}>
               <TableHead>Lô</TableHead><TableHead>Hạn sử dụng</TableHead><TableHead>Điểm tiêm</TableHead>
               <TableHead className="text-right">Tồn</TableHead>
             </TableRow>
@@ -111,7 +120,7 @@ export function StockTab({ product }: { product: ProductDetail }) {
                   <TableCell className={days < 0 ? "text-destructive" : days < 90 ? "text-orange-600" : ""}>
                     {formatDate(l.expiryDate)}{days < 0 ? " (hết hạn)" : days < 90 ? " (cận hạn)" : ""}
                   </TableCell>
-                  <TableCell>{branchName(l.branchId)}</TableCell>
+                  <TableCell>{branches.name(l.branchId)}</TableCell>
                   <TableCell className="text-right">{formatNumber(l.quantity)}</TableCell>
                 </TableRow>
               );
@@ -123,30 +132,47 @@ export function StockTab({ product }: { product: ProductDetail }) {
   );
 }
 
-/** Hàng hóa cùng loại = các đơn vị tính (mỗi đơn vị 1 mã hàng); tồn quy đổi từ đơn vị cơ bản. */
+/** Hàng hóa cùng loại = các đơn vị tính (mỗi đơn vị 1 mã hàng); tồn / khách đặt quy đổi từ đơn vị cơ bản. */
 export function UnitsTab({ product }: { product: ProductDetail }) {
-  const total = product.stocks.reduce((s, b) => s + Number(b.quantity), 0);
+  const total = sum(product.stocks.map((s) => s.quantity));
+  const reserved = sum(product.stocks.map((s) => s.reserved));
+  const baseUnit = product.units.find((u) => u.base)?.unitName;
   return (
     <Table>
       <TableHeader>
-        <TableRow className="bg-muted/60">
-          <TableHead>Mã hàng</TableHead><TableHead>Đơn vị</TableHead><TableHead>Mã vạch</TableHead>
-          <TableHead className="text-right">Quy đổi</TableHead><TableHead className="text-right">Giá bán</TableHead>
-          <TableHead className="text-right">Giá vốn</TableHead><TableHead className="text-right">Tồn kho</TableHead>
+        <TableRow className={SUB_TABLE_HEAD_ROW}>
+          <TableHead>Mã hàng</TableHead><TableHead>Tên hàng</TableHead><TableHead>Tên hàng trên hóa đơn điện tử</TableHead>
+          <TableHead className="text-right">Giá bán</TableHead><TableHead className="text-right">VAT hàng bán (%)</TableHead>
+          <TableHead>Áp dụng giảm thuế</TableHead><TableHead className="text-right">Giá vốn</TableHead>
+          <TableHead className="text-right">Tồn kho</TableHead><TableHead className="text-right">Khách đặt</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
-        {product.units.map((u) => (
-          <TableRow key={u.id}>
-            <TableCell className="font-medium text-primary">{u.code}</TableCell>
-            <TableCell>{u.unitName}{u.base && " (cơ bản)"}</TableCell>
-            <TableCell>{u.barcode}</TableCell>
-            <TableCell className="text-right">{formatNumber(u.conversionRate)}</TableCell>
-            <TableCell className="text-right">{formatMoney(u.price)}</TableCell>
-            <TableCell className="text-right">{formatNumber(Number(product.cost) * Number(u.conversionRate))}</TableCell>
-            <TableCell className="text-right">{formatNumber(total / Number(u.conversionRate))}</TableCell>
-          </TableRow>
-        ))}
+        <TableRow className="hover:bg-transparent">
+          <TableCell colSpan={7} />
+          <TableCell className="text-right">{formatNumber(total)}</TableCell>
+          <TableCell className="text-right">{formatNumber(reserved)}</TableCell>
+        </TableRow>
+        {product.units.map((u) => {
+          const rate = Number(u.conversionRate);
+          return (
+            <TableRow key={u.id} className="align-top [&>td]:py-3">
+              <TableCell className="text-primary">{u.code}</TableCell>
+              <TableCell className="max-w-48 min-w-36 whitespace-normal">
+                {product.name} ({u.unitName})
+                {!u.base && <span className="text-muted-foreground"> = {formatNumber(rate)} {baseUnit}</span>}
+                {u.barcode && <div className="text-xs text-muted-foreground">Mã vạch: {u.barcode}</div>}
+              </TableCell>
+              <TableCell className="max-w-48 whitespace-normal">{product.einvoiceName}</TableCell>
+              <TableCell className="text-right">{formatMoney(u.price)}</TableCell>
+              <TableCell className="max-w-36 text-right whitespace-normal">{product.taxRateName}</TableCell>
+              <TableCell>{product.taxReduction ? "Có áp dụng" : "Không áp dụng"}</TableCell>
+              <TableCell className="text-right">{formatNumber(Number(product.cost) * rate)}</TableCell>
+              <TableCell className="text-right">{formatNumber(total / rate)}</TableCell>
+              <TableCell className="text-right">{formatNumber(reserved / rate)}</TableCell>
+            </TableRow>
+          );
+        })}
       </TableBody>
     </Table>
   );
