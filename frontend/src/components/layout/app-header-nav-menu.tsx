@@ -53,8 +53,15 @@ const NAV: NavItem[] = [
     ] }],
   },
   {
-    href: "/settings/users", label: "Nhân viên", perm: "user.manage",
-    groups: [{ links: [{ href: "/settings/users", label: "Danh sách nhân viên" }, { href: "/settings/audit-logs", label: "Lịch sử thao tác" }] }],
+    href: "/employees", label: "Nhân viên", perm: "hr.manage",
+    groups: [{ links: [
+      { href: "/employees", label: "Danh sách nhân viên" },
+      { href: "/employees/schedules", label: "Lịch làm việc" },
+      { href: "/employees/timesheets", label: "Bảng chấm công" },
+      { href: "/employees/payrolls", label: "Bảng lương" },
+      { href: "/employees/commissions", label: "Bảng hoa hồng" },
+      { href: "/employees/settings/start", label: "Thiết lập nhân viên" },
+    ] }],
   },
   { href: "/cashbook", label: "Sổ quỹ", perm: "cashbook.manage" },
   { href: "/accounting", label: "Thuế & Kế toán", perm: "report.view" },
