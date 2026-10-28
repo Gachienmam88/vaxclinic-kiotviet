@@ -20,8 +20,11 @@ const CONFIG = {
   return: { title: "Trả hàng nhập", endpoint: "/purchase-returns", listPath: "/purchases/returns", listKey: "purchase-returns" },
 } as const;
 
-/** Màn soạn phiếu nhập / trả hàng nhập (trang toàn màn hình như màn nhập hàng). */
-export function PurchaseEditor({ mode, initial }: { mode: EditorMode; initial: EditorState }) {
+/**
+ * Màn soạn phiếu nhập / trả hàng nhập (trang toàn màn hình như màn nhập hàng).
+ * reference: hóa đơn đầu vào đang lập phiếu → hiện dòng hàng để đối chiếu, lưu xong gắn "đã lập phiếu".
+ */
+export function PurchaseEditor({ mode, initial, reference }: { mode: EditorMode; initial: EditorState; reference?: InputInvoice }) {
   const cfg = CONFIG[mode];
   const router = useRouter();
   const qc = useQueryClient();
