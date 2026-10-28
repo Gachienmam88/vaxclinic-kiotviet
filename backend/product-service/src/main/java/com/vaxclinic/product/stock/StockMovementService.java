@@ -1,6 +1,7 @@
 package com.vaxclinic.product.stock;
 
 import com.vaxclinic.common.error.BusinessException;
+import com.vaxclinic.common.settings.ShopSettingsClient;
 import com.vaxclinic.product.product.Product;
 import com.vaxclinic.product.stock.StockLedgerEntry.DocType;
 import org.springframework.stereotype.Service;
@@ -29,13 +30,26 @@ public class StockMovementService {
     private final StockBalanceRepository balances;
     private final ProductLotRepository lots;
     private final StockLedgerRepository ledger;
+    private final ShopSettingsClient settings;
 
     public StockMovementService(StockBalanceRepository balances, ProductLotRepository lots,
-                                StockLedgerRepository ledger) {
+                                StockLedgerRepository ledger, ShopSettingsClient settings) {
         this.balances = balances;
         this.lots = lots;
         this.ledger = ledger;
+        this.settings = settings;
     }
+
+    /**
+     * Thiết lập "Cho phép giao dịch khi hết tồn kho": chỉ hàng KHÔNG theo lô, chỉ chứng từ xuất kho thông thường
+     * (bán, trả hàng nhập, ...). Hủy phiếu nhập không bao giờ được làm âm kho.
+     */
+    private boolean negativeAllowed(Product product, DocType type) {
+        return !product.isLotManaged() && NEGATIVE_OK.contains(type) && settings.get().sales().allowNegativeStock();
+    }
+
+    private static final java.util.Set<DocType> NEGATIVE_OK = java.util.EnumSet.of(DocType.SALE,
+            DocType.PURCHASE_RETURN, DocType.SALE_RETURN_CANCEL_OUT, DocType.TRANSFER_OUT, DocType.DAMAGE);
 
     @Transactional(propagation = Propagation.MANDATORY)
     public void apply(Product product, Movement m) {
@@ -47,7 +61,8 @@ public class StockMovementService {
                 .orElseGet(() -> balances.saveAndFlush(new StockBalance(product.getId(), m.branchId())));
         BigDecimal before = balance.getQuantity();
         BigDecimal after = before.add(m.quantity());
-        if (after.signum() < 0) {
+        // Chỉ chặn chiều XUẤT: tồn đang âm (bán khi hết tồn) thì nhập lại (trả hàng, hủy HĐ) vẫn phải được, dù sau đó còn âm.
+        if (m.quantity().signum() < 0 && after.signum() < 0 && !negativeAllowed(product, m.docType())) {
             throw BusinessException.badRequest("INSUFFICIENT_STOCK", "Không đủ tồn kho cho " + product.getName());
         }
 
