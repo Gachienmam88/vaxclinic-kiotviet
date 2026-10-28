@@ -20,6 +20,7 @@
         <module>common-lib</module>
         <module>gateway-service</module>
         <module>identity-service</module>
+        <module>product-service</module>
     </modules>
 
     <properties>
