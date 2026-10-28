@@ -98,8 +98,17 @@ export function InvoiceDetailPanel({ id }: { id: string }) {
                   onClick={() => confirm(`Hủy hóa đơn ${inv.code}? Hàng sẽ được hoàn lại kho.`) && cancel.mutate()}>
                   <Trash2 className="size-4" /> Hủy</Button>
               )}
-              <Button variant="outline" className="ml-auto" disabled={!edit || save.isPending} onClick={() => save.mutate()}>
+              <Button className="ml-auto" render={<Link href={`/pos?edit=${inv.id}`} />}><Pencil className="size-4" /> Chỉnh sửa</Button>
+              <Button variant="outline" disabled={!edit || save.isPending} onClick={() => save.mutate()}>
                 <Save className="size-4" /> Lưu</Button>
+              <Button variant="outline" render={<Link href={`/pos?return=${inv.id}`} />}><Undo2 className="size-4" /> Trả hàng</Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger className="rounded-md border px-2 hover:bg-muted" aria-label="Thêm"><Ellipsis className="size-4" /></DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem disabled={published} onClick={() => setTaxDialog(true)}>
+                    Sửa tỷ lệ thuế hàng hóa{published && " (đã phát hành HĐĐT)"}</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           )}
         </TabsContent>
