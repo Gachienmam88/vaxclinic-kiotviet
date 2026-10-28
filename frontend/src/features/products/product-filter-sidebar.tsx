@@ -1,10 +1,17 @@
 "use client";
 
-import { Checkbox } from "@/components/ui/checkbox";
+import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { errorMessage } from "@/lib/api-client";
+import { useCurrentUser } from "@/lib/use-current-user";
 import { cn } from "@/lib/utils";
-import { flattenCategoryTree, useCategories, useTaxRates, type ProductFilters } from "./product-queries";
+import { ProductFilterMultiSelect } from "./product-filter-multi-select";
+import {
+  flattenCategoryTree, promptCreateCategory, useCategories, useTaxRates, type ProductFilters,
+} from "./product-queries";
 import type { StockFilter } from "./product-types";
 
 const STOCK_OPTIONS: { value: StockFilter; label: string }[] = [
@@ -17,25 +24,28 @@ const STOCK_OPTIONS: { value: StockFilter; label: string }[] = [
 
 type Props = { filters: ProductFilters; onChange: (f: ProductFilters) => void };
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({ title, action, children }: { title: string; action?: React.ReactNode; children: React.ReactNode }) {
   return (
-    <section className="space-y-2 border-b pb-4 last:border-0">
-      <h3 className="text-sm font-semibold">{title}</h3>
+    <section className="space-y-2">
+      <div className="flex items-center justify-between">
+        <h3 className="text-[13px] font-bold">{title}</h3>
+        {action}
+      </div>
       {children}
     </section>
   );
 }
 
-/** Nhóm nút chọn 1 (Tất cả / Có / Không). */
+/** Nhóm nút chọn 1 dạng viên thuốc (Tất cả / Có / Không). */
 function Pills<T extends string>({ value, options, onChange }: {
   value: T; options: { value: T; label: string }[]; onChange: (v: T) => void;
 }) {
   return (
     <div className="flex flex-wrap gap-1.5">
       {options.map((o) => (
-        <button key={o.value} type="button" onClick={() => onChange(o.value)}
-          className={cn("rounded-full border px-3 py-1 text-sm",
-            value === o.value ? "border-primary bg-primary text-primary-foreground" : "bg-background hover:bg-muted")}>
+        <button key={o.value} type="button" aria-pressed={value === o.value} onClick={() => onChange(o.value)}
+          className={cn("h-7 rounded-full border px-2.5 text-[13px]",
+            value === o.value ? "border-primary bg-primary font-semibold text-primary-foreground" : "bg-background hover:bg-muted")}>
           {o.label}
         </button>
       ))}
@@ -43,58 +53,70 @@ function Pills<T extends string>({ value, options, onChange }: {
   );
 }
 
-const toggle = (list: string[], id: string, on: boolean) => (on ? [...list, id] : list.filter((x) => x !== id));
+function Radio({ checked, label, onSelect }: { checked: boolean; label: string; onSelect: () => void }) {
+  return (
+    <label className="flex h-8 cursor-pointer items-center gap-2 text-[13px]">
+      <input type="radio" className="size-4 accent-primary" checked={checked} onChange={onSelect} />
+      {label}
+    </label>
+  );
+}
 
 export function ProductFilterSidebar({ filters, onChange }: Props) {
+  const qc = useQueryClient();
+  const { can } = useCurrentUser();
   const { data: categories = [] } = useCategories();
   const { data: taxRates = [] } = useTaxRates();
   const set = (patch: Partial<ProductFilters>) => onChange({ ...filters, ...patch });
+  const [customTime, setCustomTime] = useState(!!(filters.createdFrom || filters.createdTo));
+
+  async function createCategory() {
+    try { await promptCreateCategory(qc); } catch (e) { toast.error(errorMessage(e)); }
+  }
 
   return (
-    <aside className="w-60 shrink-0 space-y-4 rounded-lg bg-background p-4">
-      <Section title="Nhóm hàng">
-        <div className="max-h-48 space-y-1 overflow-y-auto">
-          {flattenCategoryTree(categories).map((c) => (
-            <label key={c.id} className="flex items-center gap-2 text-sm" style={{ paddingLeft: c.depth * 14 }}>
-              <Checkbox checked={filters.categoryIds.includes(c.id)}
-                onCheckedChange={(v) => set({ categoryIds: toggle(filters.categoryIds, c.id, v === true) })} />
-              {c.name}
-            </label>
-          ))}
-        </div>
+    <aside className="w-[200px] shrink-0 space-y-4 rounded-lg bg-background p-2.5">
+      <Section title="Nhóm hàng" action={can("catalog.manage") && (
+        <button type="button" className="text-[13px] text-primary hover:underline" onClick={createCategory}>Tạo mới</button>
+      )}>
+        <ProductFilterMultiSelect placeholder="Chọn nhóm hàng" options={flattenCategoryTree(categories)}
+          value={filters.categoryIds} onChange={(categoryIds) => set({ categoryIds })} />
       </Section>
       <Section title="Tỷ lệ tính thuế">
-        <div className="max-h-40 space-y-1 overflow-y-auto">
-          {taxRates.map((t) => (
-            <label key={t.id} className="flex items-start gap-2 text-sm">
-              <Checkbox className="mt-0.5" checked={filters.taxRateIds.includes(t.id)}
-                onCheckedChange={(v) => set({ taxRateIds: toggle(filters.taxRateIds, t.id, v === true) })} />
-              {t.name}
-            </label>
-          ))}
-        </div>
+        <ProductFilterMultiSelect placeholder="Chọn thuế suất" options={taxRates}
+          value={filters.taxRateIds} onChange={(taxRateIds) => set({ taxRateIds })} />
       </Section>
       <Section title="Áp dụng giảm thuế">
         <Pills value={filters.taxReduction} onChange={(v) => set({ taxReduction: v })}
           options={[{ value: "all", label: "Tất cả" }, { value: "yes", label: "Có" }, { value: "no", label: "Không" }]} />
       </Section>
       <Section title="Tồn kho">
-        <Select value={filters.stock} items={STOCK_OPTIONS}
-          onValueChange={(v) => set({ stock: (v ?? "ALL") as StockFilter })}>
-          <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            {STOCK_OPTIONS.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
-          </SelectContent>
-        </Select>
+        <div className="space-y-1">
+          <div className="text-xs text-muted-foreground">Tiêu chí tồn</div>
+          <Select value={filters.stock} items={STOCK_OPTIONS}
+            onValueChange={(v) => set({ stock: (v ?? "ALL") as StockFilter })}>
+            <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {STOCK_OPTIONS.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
       </Section>
       <Section title="Thời gian tạo">
-        <div className="grid gap-1.5 text-sm">
-          <label className="grid gap-1">Từ ngày
-            <Input type="date" value={filters.createdFrom} onChange={(e) => set({ createdFrom: e.target.value })} />
-          </label>
-          <label className="grid gap-1">Đến ngày
-            <Input type="date" value={filters.createdTo} onChange={(e) => set({ createdTo: e.target.value })} />
-          </label>
+        <div>
+          <Radio label="Toàn thời gian" checked={!customTime}
+            onSelect={() => { setCustomTime(false); set({ createdFrom: "", createdTo: "" }); }} />
+          <Radio label="Tùy chỉnh" checked={customTime} onSelect={() => setCustomTime(true)} />
+          {customTime && (
+            <div className="mt-1 grid gap-1.5 text-xs text-muted-foreground">
+              <label className="grid gap-1">Từ ngày
+                <Input type="date" value={filters.createdFrom} onChange={(e) => set({ createdFrom: e.target.value })} />
+              </label>
+              <label className="grid gap-1">Đến ngày
+                <Input type="date" value={filters.createdTo} onChange={(e) => set({ createdTo: e.target.value })} />
+              </label>
+            </div>
+          )}
         </div>
       </Section>
       <Section title="Trạng thái hàng hóa">
