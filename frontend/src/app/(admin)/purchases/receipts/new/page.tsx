@@ -34,10 +34,10 @@ function NewReceipt() {
       .then((r) => editorFromReceipt(r, !params.get("edit")))
       .then(setInitial)
       .catch((e) => toast.error(errorMessage(e)));
-  }, [me, source, params]);
+  }, [me, source, params, fromInputInvoice]);
 
   if (!initial) return <div className="p-6 text-sm text-muted-foreground">Đang tải...</div>;
-  return <PurchaseEditor mode="receipt" initial={initial} />;
+  return <PurchaseEditor mode="receipt" initial={initial} reference={reference} />;
 }
 
 export default function NewReceiptPage() {
