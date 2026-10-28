@@ -1,8 +1,7 @@
 "use client";
 
+import { CalendarDays, ChevronRight } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import { NativeSelect } from "@/features/products/product-form-sections";
 import { useUserLookup, type PurchaseFilters } from "./purchase-queries";
 import type { DocStatus } from "./purchase-types";
 
@@ -14,18 +13,23 @@ type Props = {
   showInvoiceNo?: boolean;
 };
 
+/** Ô nhập / chọn trong bộ lọc: cao 30px, viền xám, bo 6px. */
+const FIELD = "h-[30px] w-full rounded-md border border-[#d1d5db] bg-background px-2.5 text-sm outline-none placeholder:text-muted-foreground focus-visible:border-primary";
+
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return <section className="space-y-2"><h3 className="text-sm font-semibold">{title}</h3>{children}</section>;
+  return <section className="space-y-2"><h3 className="text-[13px] font-bold">{title}</h3>{children}</section>;
 }
 
+/** Bộ lọc trái 200px (Trạng thái, Thời gian, Người tạo, Số HĐ đầu vào, Người nhập/trả). */
 export function PurchaseFilterSidebar({ filters, onChange, statusLabels, personLabel, showInvoiceNo }: Props) {
   const { data: users = [] } = useUserLookup();
   const set = (patch: Partial<PurchaseFilters>) => onChange({ ...filters, ...patch });
   const toggleStatus = (s: DocStatus, on: boolean) =>
     set({ statuses: on ? [...filters.statuses, s] : filters.statuses.filter((x) => x !== s) });
+  const custom = filters.period === "custom";
 
   return (
-    <aside className="w-60 shrink-0 space-y-5 rounded-lg bg-background p-4">
+    <aside className="w-[200px] space-y-4 rounded-lg bg-background p-2.5">
       <Section title="Trạng thái">
         {(Object.keys(statusLabels) as DocStatus[]).map((s) => (
           <label key={s} className="flex items-center gap-2 text-sm">
@@ -35,38 +39,40 @@ export function PurchaseFilterSidebar({ filters, onChange, statusLabels, personL
         ))}
       </Section>
       <Section title="Thời gian">
-        <label className="flex items-center gap-2 text-sm">
-          <input type="radio" className="accent-primary" checked={filters.period === "month"} onChange={() => set({ period: "month" })} />
-          Tháng này
+        <label className="flex items-center gap-2">
+          <input type="radio" name="purchase-period" className="size-4 shrink-0 accent-primary" checked={!custom}
+            onChange={() => set({ period: "month" })} />
+          <span className={`${FIELD} flex items-center justify-between`}>Tháng này <ChevronRight className="size-4 text-muted-foreground" /></span>
         </label>
-        <label className="flex items-center gap-2 text-sm">
-          <input type="radio" className="accent-primary" checked={filters.period === "custom"} onChange={() => set({ period: "custom" })} />
-          Tùy chỉnh
+        <label className="flex items-center gap-2">
+          <input type="radio" name="purchase-period" className="size-4 shrink-0 accent-primary" checked={custom}
+            onChange={() => set({ period: "custom" })} />
+          <span className={`${FIELD} flex items-center justify-between`}>Tùy chỉnh <CalendarDays className="size-4 text-muted-foreground" /></span>
         </label>
-        {filters.period === "custom" && (
-          <div className="grid gap-1.5 text-sm">
-            <Input type="date" value={filters.from} onChange={(e) => set({ from: e.target.value })} aria-label="Từ ngày" />
-            <Input type="date" value={filters.to} onChange={(e) => set({ to: e.target.value })} aria-label="Đến ngày" />
+        {custom && (
+          <div className="grid gap-1.5 pl-6">
+            <input type="date" className={FIELD} value={filters.from} onChange={(e) => set({ from: e.target.value })} aria-label="Từ ngày" />
+            <input type="date" className={FIELD} value={filters.to} onChange={(e) => set({ to: e.target.value })} aria-label="Đến ngày" />
           </div>
         )}
       </Section>
       <Section title="Người tạo">
-        <NativeSelect value={filters.createdBy} onChange={(e) => set({ createdBy: e.target.value })}>
+        <select className={FIELD} value={filters.createdBy} onChange={(e) => set({ createdBy: e.target.value })} aria-label="Người tạo">
           <option value="">Chọn người tạo</option>
           {users.map((u) => <option key={u.id} value={u.id}>{u.fullName}</option>)}
-        </NativeSelect>
+        </select>
       </Section>
       {showInvoiceNo && (
         <Section title="Số hóa đơn đầu vào">
-          <Input placeholder="Theo số hóa đơn đầu vào" value={filters.inputInvoiceNo}
-            onChange={(e) => set({ inputInvoiceNo: e.target.value })} />
+          <input className={FIELD} placeholder="Theo số hóa đơn đầu vào" value={filters.inputInvoiceNo}
+            aria-label="Số hóa đơn đầu vào" onChange={(e) => set({ inputInvoiceNo: e.target.value })} />
         </Section>
       )}
       <Section title={personLabel}>
-        <NativeSelect value={filters.personId} onChange={(e) => set({ personId: e.target.value })}>
+        <select className={FIELD} value={filters.personId} onChange={(e) => set({ personId: e.target.value })} aria-label={personLabel}>
           <option value="">Chọn {personLabel.toLowerCase()}</option>
           {users.map((u) => <option key={u.id} value={u.id}>{u.fullName}</option>)}
-        </NativeSelect>
+        </select>
       </Section>
     </aside>
   );
