@@ -19,6 +19,12 @@ spring:
               predicates:
                 - Path=/api/auth/**,/api/users/**,/api/roles/**,/api/branches/**,/api/settings/**,/api/print-templates/**,/api/audit-logs/**,/api/hr/**
             # product-service: hàng hóa, nhóm hàng, thuế, vị trí, tồn kho, thẻ kho
+            # Báo cáo kho / NCC (product-service) PHẢI khớp trước /api/reports/** của sales: order nhỏ hơn được xét trước
+            - id: product-reports
+              uri: ${PRODUCT_URL:http://localhost:8082}
+              order: -1
+              predicates:
+                - Path=/api/reports/inventory/**,/api/reports/suppliers/**
             - id: product
               uri: ${PRODUCT_URL:http://localhost:8082}
               predicates:
