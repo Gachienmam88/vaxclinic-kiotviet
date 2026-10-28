@@ -113,10 +113,7 @@ public class CashbookService {
         v.setSourceType(in.sourceType());
         v.setSourceId(in.sourceId());
         v.setNote(in.note());
-        try {
-            writer.save(v, List.of());
-        } catch (DataIntegrityViolationException duplicate) {
-            // gửi song song 2 lần: bản kia đã tạo xong
-        }
+        // 2 lần gửi song song: bản sau vi phạm unique(source) → rollback, outbox gửi lại và rơi vào nhánh "đã có" ở trên.
+        writer.save(v, List.of());
     }
 }
