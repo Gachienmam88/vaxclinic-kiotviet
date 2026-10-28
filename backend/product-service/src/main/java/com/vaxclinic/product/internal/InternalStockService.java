@@ -52,14 +52,17 @@ public class InternalStockService {
     private final ObjectMapper json;
     private final ProductRepository products;
     private final ProductLotRepository lots;
+    private final StockBalanceRepository balances;
     private final StockMovementService stock;
 
     public InternalStockService(JdbcTemplate jdbc, ObjectMapper json, ProductRepository products,
-                                ProductLotRepository lots, StockMovementService stock) {
+                                ProductLotRepository lots, StockBalanceRepository balances,
+                                StockMovementService stock) {
         this.jdbc = jdbc;
         this.json = json;
         this.products = products;
         this.lots = lots;
+        this.balances = balances;
         this.stock = stock;
     }
 
