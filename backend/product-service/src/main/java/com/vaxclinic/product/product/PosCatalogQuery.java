@@ -22,7 +22,8 @@ public class PosCatalogQuery {
                           BigDecimal price) {
     }
 
-    public record PosProduct(UUID id, String name, boolean lotManaged, BigDecimal stock, List<PosUnit> units) {
+    /** taxCode: mã tỷ lệ thuế (KCT, VAT5...) — lưu lên dòng hóa đơn để phát hành hóa đơn điện tử. */
+    public record PosProduct(UUID id, String name, boolean lotManaged, BigDecimal stock, String taxCode, List<PosUnit> units) {
     }
 
     private final NamedParameterJdbcTemplate jdbc;
