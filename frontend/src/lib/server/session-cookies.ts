@@ -15,7 +15,9 @@ export type TokenPair = { accessToken: string; refreshToken: string; expiresIn: 
 
 export async function saveTokens(tokens: TokenPair) {
   const jar = await cookies();
-  const secure = process.env.NODE_ENV === "production";
+  // Secure cookies need HTTPS (localhost is exempt in browsers). For an internal LAN server reached via
+  // plain http://192.168.x.x set COOKIE_SECURE=false — or better, put HTTPS in front.
+  const secure = process.env.NODE_ENV === "production" && process.env.COOKIE_SECURE !== "false";
   jar.set(ACCESS_COOKIE, tokens.accessToken, {
     httpOnly: true, sameSite: "lax", secure, path: "/", maxAge: tokens.expiresIn,
   });
