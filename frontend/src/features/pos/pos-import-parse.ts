@@ -84,9 +84,6 @@ export function parseImportSheets(sheets: RawSheet[]): { sheets: ImportSheet[]; 
       sheet.customer ??= parseCustomer(r);
     }
     if (sheet.customer && !sheet.customer.code && !sheet.customer.phone && !sheet.customer.name) sheet.customer = null;
-    if (sheet.customer && !sheet.customer.code && !sheet.customer.phone && sheet.customer.name) {
-      sheet.errors.push("Khách hàng mới cần Số điện thoại hoặc Mã khách hàng");
-    }
   }
   return { sheets: out, errors: [] };
 }
