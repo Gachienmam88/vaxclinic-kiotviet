@@ -58,7 +58,9 @@ public class PurchaseReceiptService {
         r.setNote(req.note());
         applyLines(r, req, complete);
         r.setUpdatedAt(Instant.now());
-        receipts.saveAndFlush(r);
+        // New entity with assigned UUID → Spring Data merges and returns a managed COPY; keep using that copy,
+        // otherwise later changes (status COMPLETED) are made on a detached object and silently lost.
+        r = receipts.saveAndFlush(r);
         if (complete) {
             complete(r);
         }
