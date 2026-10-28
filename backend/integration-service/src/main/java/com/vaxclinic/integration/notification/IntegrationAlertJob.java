@@ -104,6 +104,6 @@ public class IntegrationAlertJob {
     }
 
     private static String cut(String s, int max) {
-        return s == null || s.length() <= max ? String.valueOf(s) : s.substring(0, max) + "…";
+        return s == null ? "" : s.length() <= max ? s : s.substring(0, max) + "…";
     }
 }
