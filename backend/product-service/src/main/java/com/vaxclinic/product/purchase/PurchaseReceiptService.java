@@ -154,9 +154,9 @@ public class PurchaseReceiptService {
             line.setLotNumber(p.isLotManaged() ? lot : null);
             line.setExpiryDate(p.isLotManaged() ? in.expiryDate() : null);
             r.getLines().add(line);
-            raw = raw.add(PurchaseMath.lineAmount(in.quantity(), in.unitPrice(), disc));
+            amounts.add(PurchaseMath.lineAmount(in.quantity(), in.unitPrice(), disc));
         }
-        var t = PurchaseMath.totals(raw, req.discount() == null ? BigDecimal.ZERO : req.discount(), req.vatRate());
+        var t = PurchaseMath.totals(amounts, req.discount() == null ? BigDecimal.ZERO : req.discount(), req.vatRate());
         r.setSubtotal(t.subtotal());
         r.setDiscount(t.discount());
         r.setVatAmount(t.vatAmount());
