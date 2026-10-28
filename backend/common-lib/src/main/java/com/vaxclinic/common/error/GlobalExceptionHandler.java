@@ -31,6 +31,12 @@ public class GlobalExceptionHandler {
                 .body(new ApiError("VALIDATION_FAILED", "Dữ liệu không hợp lệ", details, Instant.now()));
     }
 
+    /** Malformed JSON body, wrong enum value, bad UUID in path/query → client error, not 500. */
+    @ExceptionHandler({HttpMessageNotReadableException.class, MethodArgumentTypeMismatchException.class})
+    public ResponseEntity<ApiError> handleUnreadable(Exception ex) {
+        return ResponseEntity.badRequest().body(ApiError.of("MALFORMED_REQUEST", "Dữ liệu gửi lên không đúng định dạng"));
+    }
+
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ApiError> handleDenied(AccessDeniedException ex) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
