@@ -101,6 +101,11 @@ export function AppHeader() {
           }
           return <Link key={item.href} href={item.href} className={navClass(active)}>{item.label}</Link>;
         })}
+        {can("sales.perform") && (
+          <Link href="/pos" className="ml-auto flex items-center gap-2 rounded-md bg-background px-4 py-1.5 text-sm font-semibold text-primary hover:bg-background/90">
+            <ShoppingCart className="size-4" /> Bán hàng
+          </Link>
+        )}
       </nav>
     </header>
   );
