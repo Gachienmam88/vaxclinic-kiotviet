@@ -3,14 +3,17 @@ package com.vaxclinic.sales.invoice;
 import com.vaxclinic.common.error.BusinessException;
 import com.vaxclinic.sales.cashbook.CashVoucherRepository;
 import com.vaxclinic.sales.common.Actor;
+import com.vaxclinic.sales.common.SalesRules;
 import com.vaxclinic.sales.customer.Customer;
 import com.vaxclinic.sales.customer.CustomerRepository;
 import com.vaxclinic.sales.invoice.InvoiceDtos.InvoiceRequest;
+import com.vaxclinic.sales.order.OrderDepositLedger;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.IntStream;
@@ -30,9 +33,14 @@ public class InvoiceService {
     private final InvoiceEditWriter editWriter;
     private final ProductStockClient stock;
     private final JdbcTemplate jdbc;
+    private final SalesRules rules;
+    private final com.vaxclinic.common.audit.AuditLogger audit;
+    private final OrderDepositLedger orderDeposits;
 
     public InvoiceService(InvoiceRepository invoices, CustomerRepository customers, CashVoucherRepository vouchers,
-                          InvoiceWriter writer, InvoiceEditWriter editWriter, ProductStockClient stock, JdbcTemplate jdbc) {
+                          InvoiceWriter writer, InvoiceEditWriter editWriter, ProductStockClient stock, JdbcTemplate jdbc,
+                          SalesRules rules, com.vaxclinic.common.audit.AuditLogger audit, OrderDepositLedger orderDeposits) {
+        this.orderDeposits = orderDeposits;
         this.invoices = invoices;
         this.customers = customers;
         this.vouchers = vouchers;
@@ -40,6 +48,8 @@ public class InvoiceService {
         this.editWriter = editWriter;
         this.stock = stock;
         this.jdbc = jdbc;
+        this.rules = rules;
+        this.audit = audit;
     }
 
     public UUID create(InvoiceRequest req, Actor actor) {
@@ -47,9 +57,15 @@ public class InvoiceService {
             return req.id();
         }
         actor.checkBranch(req.branchId());
+        // Hóa đơn offline đồng bộ muộn mang ngày bán cũ: rơi vào kỳ đã khóa sổ → bị từ chối, giữ lại trên máy chờ xử lý.
+        rules.checkNotLocked(req.branchId(), req.soldAt() == null ? Instant.now() : req.soldAt());
         Customer customer = customerOf(req.customerId());
         var totals = InvoiceMath.totals(req.lines(), req.discount());
         BigDecimal paid = paidOf(req, totals);
+        if (req.orderId() != null) { // từ đơn đặt hàng: tiền cọc trừ trước, khách chỉ trả phần còn lại
+            BigDecimal deposit = orderDeposits.depositForInvoice(req.orderId(), req.customerId(), req.branchId());
+            paid = paid.min(totals.total().subtract(deposit.min(totals.total())));
+        }
         if (customer == null && paid.compareTo(totals.total()) < 0) {
             throw BusinessException.badRequest("WALK_IN_DEBT", "Khách lẻ phải thanh toán đủ — chọn khách hàng để ghi nợ");
         }
@@ -60,7 +76,21 @@ public class InvoiceService {
                 .mapToObj(i -> UUID.nameUUIDFromBytes((req.id() + ":" + i).getBytes(StandardCharsets.UTF_8))).toList();
         var result = stock.apply(new ProductStockClient.Request(req.id(), "SALE", code, req.branchId(),
                 customer == null ? "Khách lẻ" : customer.getName(), actor.id(), null, stockLines(req, lineIds)));
-        return writer.persist(req, actor, customer, code, lineIds, result, totals, paid);
+        UUID id;
+        try {
+            id = writer.persist(req, actor, customer, code, lineIds, result, totals, paid);
+        } catch (RuntimeException e) {
+            // Cùng id đã được lưu bởi request song song (gửi lại) → chứng từ kho dùng chung, giữ nguyên.
+            if (invoices.existsById(req.id())) return req.id();
+            // Ngược lại (vd. đơn đặt hàng vừa được lập hóa đơn ở máy khác): hoàn kho đã xuất rồi báo lỗi.
+            stock.apply(new ProductStockClient.Request(req.id(), "SALE_CANCEL", code, req.branchId(),
+                    customer == null ? "Khách lẻ" : customer.getName(), actor.id(), null, List.of()));
+            throw e;
+        }
+        actor.audit(audit, req.branchId(), "Hóa đơn", "Tạo", code, "Tạo hóa đơn " + code + ", khách "
+                + (customer == null ? "Khách lẻ" : customer.getCode() + " " + customer.getName()) + ", tổng "
+                + Actor.money(totals.total()) + ", đã trả " + Actor.money(paid));
+        return id;
     }
 
     /**
@@ -79,13 +109,15 @@ public class InvoiceService {
             throw BusinessException.badRequest("INVOICE_HAS_RETURNS", "Hóa đơn đã có phiếu trả hàng, không sửa được");
         }
         actor.checkBranch(inv.getBranchId());
+        rules.checkNotLocked(inv.getBranchId(), inv.getSoldAt());
+        rules.checkEInvoiceNotPublished(id, "chỉnh sửa");
         Customer customer = customerOf(req.customerId());
         var totals = InvoiceMath.totals(req.lines(), req.discount());
         BigDecimal paid = paidOf(req, totals);
         if (customer == null && paid.compareTo(totals.total()) < 0) {
             throw BusinessException.badRequest("WALK_IN_DEBT", "Khách lẻ phải thanh toán đủ — chọn khách hàng để ghi nợ");
         }
-        BigDecimal debtPayments = inv.getPaid().subtract(autoPaid(id)); // phiếu thu nợ (PT) đã phân bổ vào HĐ
+        BigDecimal debtPayments = inv.getPaid().subtract(autoPaid(id)); // phiếu thu nợ (PT) + tiền cọc đơn đặt hàng
         if (debtPayments.signum() > 0 && (!java.util.Objects.equals(inv.getCustomerId(), req.customerId())
                 || totals.total().compareTo(debtPayments.add(paid)) < 0)) {
             throw BusinessException.badRequest("INVOICE_HAS_PAYMENTS",
@@ -107,8 +139,10 @@ public class InvoiceService {
             return;
         }
         actor.checkBranch(inv.getBranchId());
+        rules.checkNotLocked(inv.getBranchId(), inv.getSoldAt());
+        rules.checkEInvoiceNotPublished(id, "hủy");
         // Kiểm tra TRƯỚC khi hoàn kho: còn phiếu thu nợ / phiếu trả hàng thì không cho hủy.
-        if (inv.getPaid().compareTo(autoPaid(id)) > 0) {
+        if (inv.getPaid().compareTo(autoPaid(id).add(orderDeposits.allocatedTo(id))) > 0) { // tiền cọc đơn gỡ ra khi hủy
             throw BusinessException.badRequest("INVOICE_HAS_PAYMENTS",
                     "Hóa đơn đã có phiếu thu nợ phân bổ, hãy hủy các phiếu thu đó trước");
         }
@@ -118,6 +152,19 @@ public class InvoiceService {
         stock.apply(new ProductStockClient.Request(inv.getStockDocId(), "SALE_CANCEL", inv.getCode(), inv.getBranchId(),
                 inv.getCustomerName(), actor.id(), null, List.of()));
         writer.markCancelled(id);
+    }
+
+    /** Sửa người bán / thời gian / ghi chú. Thiết lập "Không cho phép thay đổi thời gian giao dịch" chặn đổi thời gian. */
+    public void updateInfo(UUID id, InvoiceDtos.InfoRequest req) {
+        Invoice inv = find(id);
+        rules.checkNotLocked(inv.getBranchId(), inv.getSoldAt());
+        if (req.soldAt() != null && !req.soldAt().equals(inv.getSoldAt())) {
+            if (rules.settings().sales().lockTransactionTime()) {
+                throw BusinessException.badRequest("TIME_CHANGE_BLOCKED", "Cửa hàng không cho phép thay đổi thời gian giao dịch");
+            }
+            rules.checkNotLocked(inv.getBranchId(), req.soldAt());
+        }
+        writer.updateInfo(id, req);
     }
 
     private Invoice find(UUID id) {
