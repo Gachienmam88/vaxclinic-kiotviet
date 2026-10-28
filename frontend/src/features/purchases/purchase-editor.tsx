@@ -73,6 +73,17 @@ export function PurchaseEditor({ mode, initial, reference }: { mode: EditorMode;
             <ProductPicker onPick={(p) => set({ lines: [...state.lines, lineFromProduct(p)] })} />
           )}
         </div>
+        {reference && (
+          <details open className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm">
+            <summary className="cursor-pointer font-medium">
+              Hóa đơn đầu vào {reference.series} số {reference.number} — {reference.sellerName} — {formatMoney(reference.total)} (đối chiếu để chọn hàng)
+            </summary>
+            <table className="mt-2 w-full"><tbody>{reference.lines.map((l, n) => (
+              <tr key={n} className="border-b border-primary/10"><td className="py-1">{l.name}</td><td>{l.unit}</td>
+                <td className="text-right">{formatNumber(l.quantity)}</td><td className="text-right">{formatNumber(l.unitPrice)}</td>
+                <td className="pl-3">{l.vatRate}</td><td className="text-right">{formatMoney(l.amount)}</td></tr>))}</tbody></table>
+          </details>
+        )}
         <div className="min-h-[60vh] overflow-x-auto rounded-lg bg-background">
           <PurchaseLineTable mode={mode} lines={state.lines} branchId={state.branchId} onChange={(lines) => set({ lines })} />
           {!state.lines.length && (
