@@ -61,6 +61,12 @@ public class ProductController {
                 createdFrom, createdTo, active, Math.max(page, 0), Math.min(Math.max(size, 1), 100)));
     }
 
+    /** Danh mục màn bán hàng (lưu cục bộ để bán khi mất mạng). Thu ngân có catalog.view. */
+    @GetMapping("/pos-catalog")
+    public List<PosCatalogQuery.PosProduct> posCatalog(@RequestParam UUID branchId) {
+        return posCatalog.load(branchId);
+    }
+
     @GetMapping("/{id}")
     public ProductDetail get(@PathVariable UUID id) {
         return detailQuery.get(id);
