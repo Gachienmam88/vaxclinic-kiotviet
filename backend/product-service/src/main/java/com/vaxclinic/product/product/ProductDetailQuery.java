@@ -53,8 +53,7 @@ public class ProductDetailQuery {
                 : taxRates.findById(p.getTaxRateId()).map(t -> t.getName()).orElse(null);
         String positionName = p.getPositionId() == null ? null
                 : positions.findById(p.getPositionId()).map(x -> x.getName()).orElse(null);
-        List<BranchStock> stocks = balances.findAll().stream()
-                .filter(b -> b.getId().getProductId().equals(id))
+        List<BranchStock> stocks = balances.findByIdProductId(id).stream()
                 .map(b -> new BranchStock(b.getId().getBranchId(), b.getQuantity(), b.getReserved()))
                 .toList();
         return new ProductDetail(p.getId(), p.getName(), p.getShortName(), p.getEinvoiceName(),
