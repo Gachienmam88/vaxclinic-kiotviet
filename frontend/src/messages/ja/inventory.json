@@ -1,0 +1,106 @@
+{
+  "status": {
+    "draft": "一時保存",
+    "balanced": "在庫調整済み",
+    "completed": "完了",
+    "cancelled": "取消済み"
+  },
+  "issue": {
+    "damage": {
+      "title": "廃棄",
+      "codeLabel": "廃棄番号",
+      "valueLabel": "廃棄金額合計",
+      "qtyLabel": "廃棄数",
+      "lineValueLabel": "廃棄金額",
+      "searchPlaceholder": "廃棄番号で検索",
+      "reasonPlaceholder": "例：使用期限切れ",
+      "cancelled": "廃棄伝票を取り消しました"
+    },
+    "internal": {
+      "title": "社内使用",
+      "codeLabel": "伝票番号",
+      "valueLabel": "金額合計",
+      "qtyLabel": "出庫数",
+      "lineValueLabel": "金額",
+      "searchPlaceholder": "伝票番号で検索",
+      "reasonPlaceholder": "例：接種室で使用",
+      "cancelled": "社内使用伝票を取り消しました"
+    }
+  },
+  "take": {
+    "listTitle": "棚卸伝票",
+    "create": "棚卸",
+    "searchPlaceholder": "棚卸番号で検索",
+    "editorTitle": "棚卸",
+    "cancelled": "棚卸伝票を取り消しました",
+    "confirmCancel": "棚卸伝票 {code} を取り消しますか？",
+    "tabs": {
+      "all": "すべて",
+      "match": "一致",
+      "diff": "差異",
+      "unchecked": "未棚卸"
+    },
+    "addNewLot": "{name} の新しいロットを追加",
+    "alreadyOnDoc": "{name} はすでに伝票にあります",
+    "clearToChangeBranch": "店舗を変更するには全行を削除してください",
+    "lotRequired": "{name}：ロット番号と使用期限を入力してください",
+    "noActual": "実数が入力された商品がありません",
+    "confirmBalance": "実数で在庫を調整しますか？調整済みの伝票は編集・取消できません。",
+    "confirmBalanceUnchecked": "実数で在庫を調整しますか？未棚卸の {unchecked} 行は在庫を変更しません。調整済みの伝票は編集・取消できません。",
+    "savedBalanced": "{code} の在庫を調整しました",
+    "lotBadge": "ロット {lot} — 期限 {expiry}"
+  },
+  "fields": {
+    "takeCode": "棚卸番号",
+    "time": "日時",
+    "balancedAt": "調整日",
+    "actualQty": "実数",
+    "actualTotal": "実数金額",
+    "totalActualQty": "実数合計",
+    "diffTotal": "差異金額合計",
+    "increaseQty": "増加数",
+    "decreaseQty": "減少数",
+    "productCode": "商品コード",
+    "productName": "商品名",
+    "unit": "単位",
+    "unitFull": "単位",
+    "lotExpiry": "ロット / 期限",
+    "lotNumber": "ロット番号",
+    "expiryDate": "使用期限",
+    "stock": "在庫",
+    "actual": "実数",
+    "diffQty": "差異数",
+    "diffValue": "差異金額",
+    "cost": "原価",
+    "reason": "理由",
+    "createdBy": "作成者",
+    "note": "メモ",
+    "status": "ステータス",
+    "branch": "店舗",
+    "totalQty": "数量合計",
+    "index": "No.",
+    "unchecked": "未棚卸"
+  },
+  "list": {
+    "unit": "件"
+  },
+  "detail": {
+    "cancel": "取消",
+    "openDoc": "伝票を開く",
+    "confirmCancel": "伝票 {code} を取り消しますか？",
+    "confirmCancelRestock": "伝票 {code} を取り消しますか？商品は在庫に戻されます。"
+  },
+  "editor": {
+    "back": "戻る",
+    "emptyHint": "商品コードまたは商品名で検索（F3）して伝票に追加",
+    "saveDraft": "一時保存",
+    "complete": "完了",
+    "autoCode": "自動採番",
+    "removeLine": "行を削除",
+    "noLines": "伝票に商品がありません",
+    "qtyPositive": "数量は0より大きくしてください",
+    "pickLot": "{name}：出庫するロットを選択してください",
+    "savedCompleted": "{code} を完了しました",
+    "savedDraft": "{code} を一時保存しました"
+  }
+}
