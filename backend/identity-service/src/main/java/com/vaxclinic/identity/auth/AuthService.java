@@ -41,8 +41,9 @@ public class AuthService {
 
     public AuthService(AppUserRepository users, RefreshTokenRepository refreshTokens, PasswordEncoder passwordEncoder,
                        TokenService tokenService, @Value("${app.jwt.refresh-ttl-days}") long refreshTtlDays,
-                       TwoFactorService twoFactor) {
+                       TwoFactorService twoFactor, LoginAttemptLimiter loginAttempts) {
         this.twoFactor = twoFactor;
+        this.loginAttempts = loginAttempts;
         this.users = users;
         this.refreshTokens = refreshTokens;
         this.passwordEncoder = passwordEncoder;
