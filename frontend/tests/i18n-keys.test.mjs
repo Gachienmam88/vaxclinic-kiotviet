@@ -69,6 +69,7 @@ test("translateKey: ngôn ngữ → tiếng Việt → khóa; số nhiều; chè
   assert.equal(t("nope"), "nope");
   assert.deepEqual(missing, ["only", "nope", "nope"]);
   assert.equal(t("items", { count: 2 }, vi), "2 mục");
-  assert.equal(t("a.b", { name: "An" }, undefined), "Xin chào An");
+  // namespace chưa tải xong (messages undefined) → tạm hiện tiếng Việt
+  assert.equal(translateKey({ key: "a.b", vars: { name: "An" }, htmlLang: "en", messages: undefined, fallback: vi }), "Xin chào An");
   assert.equal(interpolate("{x} và {y}", { x: 1 }), "1 và {y}");
 });
