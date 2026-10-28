@@ -17,6 +17,11 @@ export const TOOLBAR_BTN = "h-[30px] rounded-md border-primary bg-background px-
 export const DETAIL_BTN = "h-[30px] rounded-md px-2.5 font-semibold";
 /** Header bảng con trong panel chi tiết. */
 export const SUB_HEAD = "bg-[#eff0f3] text-left text-xs font-semibold [&_th]:h-[30px] [&_th]:px-2";
+/** Khung panel chi tiết mở dưới dòng: viền xanh 1px, nền trắng. */
+export const DETAIL_PANEL = "border border-primary bg-background text-[13px]";
+/** TabsList variant="line" + TabsTrigger kiểu KiotViet (gạch chân xanh, viền dưới). */
+export const DETAIL_TABS_LIST = "w-full justify-start gap-6 rounded-none border-b px-4 py-0 group-data-horizontal/tabs:h-10";
+export const DETAIL_TAB = "flex-none px-0 font-medium data-active:text-primary after:bg-primary group-data-horizontal/tabs:after:bottom-0";
 /** Ô input/select trong sidebar lọc. */
 export const FILTER_FIELD = "h-[30px] w-full rounded-md border bg-background px-2.5 text-sm outline-none placeholder:text-muted-foreground focus-visible:border-primary";
 
