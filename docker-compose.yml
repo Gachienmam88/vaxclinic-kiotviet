@@ -50,14 +50,26 @@ services:
     depends_on:
       postgres: { condition: service_healthy }
 
+  product-service:
+    profiles: [app]
+    build: { context: ./backend, args: { MODULE: product-service } }
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/product_db
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+    depends_on:
+      postgres: { condition: service_healthy }
+
   gateway-service:
     profiles: [app]
     build: { context: ./backend, args: { MODULE: gateway-service } }
     environment:
       JWT_SECRET: ${JWT_SECRET}
       IDENTITY_URL: http://identity-service:8081
-    ports: ["8080:8080"]
-    depends_on: [identity-service]
+      PRODUCT_URL: http://product-service:8082
+    ports: ["${GATEWAY_PORT:-8080}:8080"]
+    depends_on: [identity-service, product-service]
 
 volumes:
   pgdata:
