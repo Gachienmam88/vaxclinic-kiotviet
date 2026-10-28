@@ -73,10 +73,34 @@ public class RevenueBookController {
                   left join invoice_lines il on il.id = rl.invoice_line_id group by 1, 2
                 )
                 select coalesce(s.d, b.d) d, coalesce(s.tax_code, b.tax_code) tax_code, coalesce(s.amount, 0) sales,
-                  coalesce(b.amount, 0) returns, coalesce(s.n, 0) n
+                  coalesce(b.amount, 0) returns, coalesce(s.cogs, 0) - coalesce(b.cogs, 0) cogs, coalesce(s.n, 0) n
                 from sale s full join back b on b.d = s.d and b.tax_code = s.tax_code
-                order by 1, 2""", p,
+                order by 1, 2""", params(from, to, branchIds),
                 (rs, i) -> new DailyRevenue(rs.getObject("d", LocalDate.class), rs.getString("tax_code"),
-                        rs.getBigDecimal("sales"), rs.getBigDecimal("returns"), rs.getInt("n")));
+                        rs.getBigDecimal("sales"), rs.getBigDecimal("returns"), rs.getBigDecimal("cogs"), rs.getInt("n")));
+    }
+
+    @GetMapping("/api/accounting/revenue/expenses")
+    @PreAuthorize("hasAuthority('report.view') or hasAuthority('cashbook.manage')")
+    public List<DailyExpense> expenses(@RequestParam LocalDate from, @RequestParam LocalDate to,
+                                       @RequestParam(required = false) List<UUID> branchIds) {
+        return jdbc.query("""
+                select (occurred_at at time zone 'Asia/Ho_Chi_Minh')::date d, category, sum(amount) amount
+                from cash_vouchers
+                where voucher_type = 'PAYMENT' and status = 'PAID' and accounting
+                  and coalesce(partner_type, '') <> 'SUPPLIER' and coalesce(source_type, '') not in ('RETURN', 'PURCHASE')
+                  and occurred_at >= :from and occurred_at < :to and (:allBranches or branch_id in (:branches))
+                group by 1, 2 order by 1, 2""", params(from, to, branchIds),
+                (rs, i) -> new DailyExpense(rs.getObject("d", LocalDate.class), rs.getString("category"), rs.getBigDecimal("amount")));
+    }
+
+    private static MapSqlParameterSource params(LocalDate from, LocalDate to, List<UUID> branchIds) {
+        boolean all = branchIds == null || branchIds.isEmpty();
+        return new MapSqlParameterSource()
+                .addValue("from", Timestamp.from(from.atStartOfDay(ShopSettings.ZONE).toInstant()))
+                .addValue("to", Timestamp.from(to.plusDays(1).atStartOfDay(ShopSettings.ZONE).toInstant()))
+                // Danh sách rỗng → "in ()" sai cú pháp: thay bằng 1 id giả, cờ allBranches bỏ qua điều kiện
+                .addValue("branches", all ? List.of(new UUID(0, 0)) : branchIds)
+                .addValue("allBranches", all);
     }
 }
