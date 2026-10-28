@@ -93,7 +93,7 @@ export function SyncDialog({ connections, onClose }: { connections: TaxConnectio
               {captcha
                 // eslint-disable-next-line @next/next/no-img-element -- data URL captcha, nothing to optimize
                 ? <img alt="captcha" className="h-12 rounded border bg-white" src={`data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(captcha.svg)))}`} />
-                : <span className="text-sm text-muted-foreground">Bấm "Lấy mã" để hiện captcha</span>}
+                : <span className="text-sm text-muted-foreground">Bấm “Lấy mã” để hiện captcha</span>}
               <Button type="button" variant="outline" size="sm" disabled={!connectionId || loadCaptcha.isPending} onClick={() => loadCaptcha.mutate()}>
                 <RefreshCw className="size-3.5" /> Lấy mã</Button>
             </div>
