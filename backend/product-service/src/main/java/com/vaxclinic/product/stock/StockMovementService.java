@@ -55,11 +55,15 @@ public class StockMovementService {
             applyLot(product, m);
         }
 
-        // Moving-average cost: only incoming movements carrying a price change the cost.
-        if (m.quantity().signum() > 0 && m.unitPrice() != null && m.docType() != DocType.SALE_RETURN) {
-            BigDecimal totalBefore = product.getCost().multiply(before.max(BigDecimal.ZERO));
-            BigDecimal totalIn = m.unitPrice().multiply(m.quantity());
-            product.setCost(totalBefore.add(totalIn).divide(after, 4, RoundingMode.HALF_UP));
+        // Moving-average cost: (old value + qty × price) / new qty, for supplier-side documents only.
+        // Works both ways: +qty on receipt, -qty when a receipt is cancelled or goods are returned to the supplier.
+        // Sales never change cost. If stock reaches 0 or the result would go negative, keep the last cost.
+        if (m.docType().affectsCost() && m.unitPrice() != null && after.signum() > 0) {
+            BigDecimal value = product.getCost().multiply(before.max(BigDecimal.ZERO))
+                    .add(m.unitPrice().multiply(m.quantity()));
+            if (value.signum() >= 0) {
+                product.setCost(value.divide(after, 4, RoundingMode.HALF_UP));
+            }
         }
         balance.setQuantity(after);
 
