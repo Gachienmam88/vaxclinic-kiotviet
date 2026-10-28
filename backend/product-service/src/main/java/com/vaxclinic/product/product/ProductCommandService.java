@@ -117,7 +117,7 @@ public class ProductCommandService {
         p.setNote(req.note());
         p.setLoyaltyPoints(req.loyaltyPoints());
         // Giá vốn chỉ nhập tay khi tạo / khi chưa có giao dịch kho; sau đó do nhập hàng tính bình quân.
-        if (p.getCreatedAt() == null || !ledger.existsByProductId(p.getId())) {
+        if (!ledger.existsByProductId(p.getId())) {
             p.setCost(req.cost());
         }
     }
