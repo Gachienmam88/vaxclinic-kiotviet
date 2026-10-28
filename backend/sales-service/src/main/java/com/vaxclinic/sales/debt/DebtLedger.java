@@ -21,7 +21,8 @@ import java.util.UUID;
 @Component
 public class DebtLedger {
 
-    public enum DocType { SALE, SALE_CANCEL, PAYMENT, PAYMENT_CANCEL, ADJUST, DISCOUNT }
+    /** RETURN: khách trả hàng (giảm nợ); REFUND: tiền đã chi trả khách (tăng lại phần đã giảm). */
+    public enum DocType { SALE, SALE_CANCEL, PAYMENT, PAYMENT_CANCEL, ADJUST, DISCOUNT, RETURN, RETURN_CANCEL, REFUND, REFUND_CANCEL }
 
     private final JdbcTemplate jdbc;
     private final CustomerRepository customers;
