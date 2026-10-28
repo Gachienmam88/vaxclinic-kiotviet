@@ -1,0 +1,106 @@
+{
+  "status": {
+    "draft": "Draft",
+    "balanced": "Balanced",
+    "completed": "Completed",
+    "cancelled": "Cancelled"
+  },
+  "issue": {
+    "damage": {
+      "title": "Write-offs",
+      "codeLabel": "Write-off code",
+      "valueLabel": "Total write-off value",
+      "qtyLabel": "Write-off qty",
+      "lineValueLabel": "Write-off value",
+      "searchPlaceholder": "By write-off code",
+      "reasonPlaceholder": "E.g. Expired",
+      "cancelled": "Write-off cancelled"
+    },
+    "internal": {
+      "title": "Internal use",
+      "codeLabel": "Document code",
+      "valueLabel": "Total value",
+      "qtyLabel": "Issued qty",
+      "lineValueLabel": "Value",
+      "searchPlaceholder": "By document code",
+      "reasonPlaceholder": "E.g. Used in the vaccination room",
+      "cancelled": "Internal use document cancelled"
+    }
+  },
+  "take": {
+    "listTitle": "Stock takes",
+    "create": "Stock take",
+    "searchPlaceholder": "By stock take code",
+    "editorTitle": "Stock take",
+    "cancelled": "Stock take cancelled",
+    "confirmCancel": "Cancel stock take {code}?",
+    "tabs": {
+      "all": "All",
+      "match": "Matched",
+      "diff": "Difference",
+      "unchecked": "Not counted"
+    },
+    "addNewLot": "Add new lot for {name}",
+    "alreadyOnDoc": "{name} is already on this document",
+    "clearToChangeBranch": "Remove all lines to change the branch",
+    "lotRequired": "{name}: enter lot number and expiry date",
+    "noActual": "No actual quantity has been entered",
+    "confirmBalance": "Balance stock to the actual counts? A balanced stock take cannot be edited or cancelled.",
+    "confirmBalanceUnchecked": "Balance stock to the actual counts? {unchecked} uncounted lines will keep their current stock. A balanced stock take cannot be edited or cancelled.",
+    "savedBalanced": "Stock balanced for {code}",
+    "lotBadge": "Lot {lot} — Exp {expiry}"
+  },
+  "fields": {
+    "takeCode": "Stock take code",
+    "time": "Time",
+    "balancedAt": "Balanced on",
+    "actualQty": "Actual qty",
+    "actualTotal": "Actual total",
+    "totalActualQty": "Total actual qty",
+    "diffTotal": "Total difference",
+    "increaseQty": "Qty over",
+    "decreaseQty": "Qty short",
+    "productCode": "Product code",
+    "productName": "Product name",
+    "unit": "Unit",
+    "unitFull": "Unit of measure",
+    "lotExpiry": "Lot / Expiry",
+    "lotNumber": "Lot number",
+    "expiryDate": "Expiry date",
+    "stock": "On hand",
+    "actual": "Actual",
+    "diffQty": "Diff qty",
+    "diffValue": "Diff value",
+    "cost": "Cost",
+    "reason": "Reason",
+    "createdBy": "Created by",
+    "note": "Note",
+    "status": "Status",
+    "branch": "Branch",
+    "totalQty": "Total quantity",
+    "index": "No.",
+    "unchecked": "Not counted"
+  },
+  "list": {
+    "unit": "documents"
+  },
+  "detail": {
+    "cancel": "Cancel",
+    "openDoc": "Open",
+    "confirmCancel": "Cancel document {code}?",
+    "confirmCancelRestock": "Cancel document {code}? The goods will be returned to stock."
+  },
+  "editor": {
+    "back": "Back",
+    "emptyHint": "Search products by code or name (F3) to add them to this document",
+    "saveDraft": "Save draft",
+    "complete": "Complete",
+    "autoCode": "Auto-generated code",
+    "removeLine": "Remove line",
+    "noLines": "The document has no products",
+    "qtyPositive": "Quantity must be greater than 0",
+    "pickLot": "{name}: select a lot to issue",
+    "savedCompleted": "Completed {code}",
+    "savedDraft": "Saved draft {code}"
+  }
+}
