@@ -20,9 +20,21 @@ export type CartLine = {
 
 export type PosCustomer = { id: string; code: string; name: string; phone: string | null; debt?: number };
 
-/** 1 tab hóa đơn đang soạn. id = UUID gửi lên server (giữ nguyên khi đồng bộ offline). */
+/** 1 dòng trên tab trả hàng: số lượng trả tối đa = đã mua − đã trả. */
+export type ReturnLine = {
+  invoiceLineId: string; productCode: string; productName: string; unitName: string;
+  sold: number; returned: number; price: number; quantity: number;
+};
+
+/**
+ * 1 tab đang soạn. kind: SALE (bán mới), EDIT (sửa hóa đơn — "Update_HDxxx"), RETURN (trả hàng theo hóa đơn).
+ * id = UUID gửi lên server (bán mới / phiếu trả: giữ nguyên khi gửi lại → không tạo trùng).
+ */
 export type DraftInvoice = {
   id: string;
+  kind?: "SALE" | "EDIT" | "RETURN";
+  editOf?: { invoiceId: string; code: string; revision: number };
+  returnOf?: { invoiceId: string; code: string; lines: ReturnLine[]; fee: number; refund: number | null };
   label: string;
   mode: "QUICK" | "NORMAL";
   customer: PosCustomer | null;
