@@ -22,7 +22,7 @@ public final class InvoiceDtos {
                             @NotBlank String productName, @NotBlank String unitName,
                             @NotNull @DecimalMin(value = "0.001", message = "Số lượng phải > 0") BigDecimal quantity,
                             @NotNull @DecimalMin("0") BigDecimal unitPrice, @DecimalMin("0") BigDecimal discount,
-                            @Size(max = 500) String note) {
+                            @Size(max = 500) String note, @Size(max = 30) String taxCode) {
     }
 
     /** id: do máy bán hàng sinh (UUID) — gửi lại cùng id khi đồng bộ offline. */
