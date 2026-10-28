@@ -1,0 +1,77 @@
+{
+  "status": { "DRAFT": "草稿单", "CONFIRMED": "已确认", "COMPLETED": "已完成", "CANCELLED": "已取消" },
+  "list": {
+    "title": "预订单",
+    "searchPlaceholder": "按预订单号、客户名称/编码/电话",
+    "newOrder": "预订",
+    "newOrderHint": "打开销售界面，点击标签栏上的“添加预订单”图标",
+    "exportHint": "将当前显示的行导出为 CSV 文件",
+    "emptyWhat": "预订单",
+    "unit": "张预订单"
+  },
+  "cols": {
+    "code": "预订单号",
+    "time": "时间",
+    "customerCode": "客户编码",
+    "customer": "客户",
+    "subtotal": "商品总额",
+    "discount": "折扣",
+    "total": "应付金额",
+    "paid": "已付金额",
+    "status": "状态",
+    "invoice": "销售单",
+    "productCode": "商品编码",
+    "productName": "商品名称",
+    "unit": "单位",
+    "quantity": "数量",
+    "unitPrice": "单价",
+    "price": "售价",
+    "amount": "金额"
+  },
+  "csv": { "listFile": "orders", "detailFile": "order-{code}" },
+  "filter": { "status": "状态", "createdBy": "创建人", "pickCreator": "选择创建人" },
+  "detail": {
+    "tabInfo": "信息",
+    "tabPayments": "付款记录",
+    "invoiceBadge": "销售单 {code}",
+    "creditKept": "定金 {amount} 保留为余额",
+    "createdBy": "创建人:",
+    "seller": "销售员:",
+    "orderedAt": "预订日期:",
+    "noNote": "暂无备注",
+    "cancel": "取消",
+    "createInvoice": "创建销售单",
+    "edit": "编辑",
+    "confirm": "确认",
+    "confirmed": "预订单已确认"
+  },
+  "totals": {
+    "subtotal": "商品总额 ({qty})",
+    "discount": "预订单折扣",
+    "total": "应付金额",
+    "paid": "已付金额"
+  },
+  "payments": {
+    "code": "单号",
+    "time": "时间",
+    "createdBy": "创建人",
+    "type": "单据类型",
+    "method": "方式",
+    "status": "状态",
+    "amount": "收/付金额",
+    "emptyWhat": "收付款单",
+    "depositReceipt": "定金收款单",
+    "depositRefund": "定金退款单",
+    "paid": "已付款",
+    "cancelled": "已取消"
+  },
+  "cancel": {
+    "title": "取消预订单 {code}",
+    "depositBody": "客户已付定金 {amount}。定金处理方式:",
+    "confirmBody": "确定要取消此预订单吗？",
+    "submit": "取消订单",
+    "done": "预订单已取消",
+    "doneCredit": "已取消订单，{amount} 保留为客户预付款",
+    "doneRefund": "已取消订单，已退还客户 {amount}（付款单 {voucher}）"
+  }
+}
