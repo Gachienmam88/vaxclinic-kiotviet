@@ -114,6 +114,7 @@ export function InvoiceDetailPanel({ id }: { id: string }) {
               </DropdownMenu>
             </div>
           )}
+          {taxDialog && <InvoiceTaxDialog invoice={inv} onClose={() => setTaxDialog(false)} />}
         </TabsContent>
         <TabsContent value="payments" className="pt-3">
           <table className="w-full">
