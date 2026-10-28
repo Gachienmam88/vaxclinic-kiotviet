@@ -84,13 +84,19 @@ export function AppHeader() {
       <nav className="flex h-10 items-center gap-1 bg-primary px-4 text-primary-foreground md:px-10">
         {NAV.filter((item) => !item.perm || can(item.perm)).map((item) => {
           const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
-          return (
-            <Link key={item.href} href={item.href}
-              className={cn("rounded-md px-4 py-1.5 text-sm font-semibold hover:bg-black/10",
-                active && "bg-black/20")}>
-              {item.label}
-            </Link>
-          );
+          if (item.children) {
+            return (
+              <DropdownMenu key={item.href}>
+                <DropdownMenuTrigger className={navClass(active)}>{item.label}</DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                  {item.children.map((c) => (
+                    <DropdownMenuItem key={c.href} render={<Link href={c.href} />}>{c.label}</DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            );
+          }
+          return <Link key={item.href} href={item.href} className={navClass(active)}>{item.label}</Link>;
         })}
       </nav>
     </header>
