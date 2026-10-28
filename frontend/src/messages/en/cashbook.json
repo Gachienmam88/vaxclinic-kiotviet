@@ -1,0 +1,99 @@
+{
+  "page": {
+    "title": {
+      "CASH": "Cash flow: Cash",
+      "BANK": "Cash flow: Bank",
+      "EWALLET": "Cash flow: E-wallet",
+      "ALL": "Cash flow: All funds"
+    },
+    "searchPlaceholder": "By voucher code",
+    "newReceipt": "Receipt",
+    "newPayment": "Payment",
+    "exportTitle": "Export the rows shown to a CSV file (column headers in Vietnamese)",
+    "summary": { "opening": "Opening balance", "receipts": "Total receipts", "payments": "Total payments", "closing": "Closing balance" },
+    "cols": { "code": "Voucher code", "time": "Time", "category": "Category", "partner": "Payer/Payee", "amount": "Amount" },
+    "emptyWhat": "receipts or payments",
+    "unit": "vouchers"
+  },
+  "enums": {
+    "status": { "PAID": "Paid", "CANCELLED": "Cancelled" },
+    "voucherType": { "RECEIPT": "Receipt", "PAYMENT": "Payment" },
+    "partnerType": {
+      "CUSTOMER": "Customer",
+      "SUPPLIER": "Supplier",
+      "EMPLOYEE": "Employee",
+      "DELIVERY_PARTNER": "Delivery partner",
+      "OTHER": "Other"
+    }
+  },
+  "detail": {
+    "accounting": "Posted to P&L",
+    "noAccounting": "Not posted to P&L",
+    "createdBy": "Created by: {name}",
+    "collectorReceipt": "Collected by: {name}",
+    "collectorPayment": "Paid by: {name}",
+    "time": "Time: {time}",
+    "sourceDoc": "Source document: {code}",
+    "amount": "Amount",
+    "categoryReceipt": "Receipt category",
+    "categoryPayment": "Payment category",
+    "partnerTypeReceipt": "Payer type",
+    "partnerTypePayment": "Payee type",
+    "method": "Payment method",
+    "partnerReceipt": "Payer",
+    "partnerPayment": "Payee",
+    "linkedReceipt": "This receipt is linked to invoice {invoices}",
+    "linkedReceiptAuto": "This automatic receipt is linked to invoice {invoices}",
+    "linkedPayment": "This payment is linked to invoice {invoices}",
+    "linkedPaymentAuto": "This automatic payment is linked to invoice {invoices}",
+    "allocCols": { "code": "Voucher code", "time": "Time", "voucherValue": "Document value", "collected": "Amount collected" },
+    "noNote": "No notes",
+    "autoHint": {
+      "INVOICE": "Automatic voucher — to cancel it, cancel the source invoice.",
+      "DELIVERY": "Automatic voucher — to cancel it, cancel the source reconciliation under Delivery partners.",
+      "PURCHASE": "Automatic voucher — to cancel it, cancel the source goods receipt."
+    },
+    "cancel": "Cancel voucher",
+    "confirmCancel": "Cancel voucher {code}?",
+    "cancelled": "Voucher cancelled"
+  },
+  "dialog": {
+    "titleReceipt": "Create receipt",
+    "titlePayment": "Create payment",
+    "time": "Time",
+    "collectorReceipt": "Collected by",
+    "collectorPayment": "Paid by",
+    "fund": "Fund",
+    "account": "Account",
+    "pickAccount": "Select account",
+    "categoryPlaceholderReceipt": "e.g. Other income",
+    "categoryPlaceholderPayment": "e.g. Utilities",
+    "amount": "Amount",
+    "supplierHint": "Create supplier receipts/payments under {link} → \"Payables to supplier\" tab → Payment, so supplier debt and Cash flow always match.",
+    "supplierLink": "Purchasing → Suppliers",
+    "partnerNameReceipt": "Payer name",
+    "partnerNamePayment": "Payee name",
+    "phone": "Phone",
+    "note": "Note",
+    "accountingCheck": "Post to business results (P&L)",
+    "createdReceipt": "Receipt {code} created",
+    "createdPayment": "Payment {code} created"
+  },
+  "filter": {
+    "fund": "Fund",
+    "docType": "Voucher type",
+    "category": "Category",
+    "pickCategory": "Select category",
+    "status": "Status",
+    "accounting": "Posted to P&L",
+    "createdBy": "Created by",
+    "pickCreator": "Select creator",
+    "employee": "Employee",
+    "employeeAria": "Collecting/paying employee",
+    "pickEmployee": "Select employee",
+    "partner": "Payer/Payee",
+    "partnerTypeAria": "Payer/payee type",
+    "partnerPlaceholder": "Name or phone",
+    "partnerAria": "Payer/payee name or phone"
+  }
+}
