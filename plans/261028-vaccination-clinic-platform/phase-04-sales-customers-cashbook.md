@@ -18,8 +18,13 @@ Priority: P0 | Status: in progress — đợt 1 xong 2026-10-28
 - [x] POS: Bán nhanh / Bán thường, nhiều tab, F3/F4/F9, quét mã, khách + thêm khách, offline + đồng bộ
 - [x] Test: InvoiceMath (4 unit), E2E 22 kịch bản + mô phỏng đồng bộ offline song song
 
-## Đợt 2
-- [ ] Bán giao hàng + COD + đối tác giao hàng, địa chỉ nhận hàng
-- [ ] Trả hàng / đổi hàng; "Chỉnh sửa" hóa đơn → về màn bán hàng
-- [ ] Mẫu in (K80/A4), xem trước HĐĐT, QR VietQR, sửa tỷ lệ thuế hàng hóa
-- [ ] Xem giá bán gần nhất, xem chi tiết hàng trong giỏ; tạo khách khi offline
+## Đợt 2 (2026-10-28)
+- [x] Trả hàng: hoàn đúng lô đã bán (invoice_line_lots), phí trả hàng, chi trả khách (PC+mã) / trừ công nợ, hủy phiếu trả
+- [x] Chỉnh sửa hóa đơn → tab Update_HD trên POS; kho SALE_REPLACE 1 transaction; revision chống sửa đè
+- [x] QR VietQR (EMVCo/NAPAS, CRC kiểm bằng vector chuẩn) + quản lý tài khoản ngân hàng; QR ở POS + công nợ khách
+- [x] Sửa tỷ lệ thuế dòng hóa đơn (khóa khi đã phát hành HĐĐT); xem giá bán gần nhất; xem chi tiết hàng trong giỏ
+- [x] E2E 18 kịch bản sửa/trả/QR; lỗi tìm ra: FK dòng phiếu trả đã hủy chặn sửa HĐ (đã sửa, kiểm chứng tự lành)
+- [ ] Bán giao hàng + COD — CHỜ user xác nhận có giao vắc xin không
+- [ ] Đổi hàng trong cùng 1 thao tác (hiện: trả hàng rồi bán hóa đơn mới)
+- [ ] Mẫu in (chờ mẫu từ user)
+- Quyết định: KHÔNG tạo khách khi offline (user chốt)
