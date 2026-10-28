@@ -2,7 +2,13 @@
 
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Save, Trash2 } from "lucide-react";
+import Link from "next/link";
+import { Ellipsis, Pencil, Save, Trash2, Undo2 } from "lucide-react";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useEInvoiceRecords } from "@/features/integrations/integration-queries";
+import { InvoiceTaxDialog } from "./invoice-tax-dialog";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
