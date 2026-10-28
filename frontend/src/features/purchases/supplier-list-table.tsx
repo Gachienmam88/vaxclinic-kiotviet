@@ -1,0 +1,73 @@
+"use client";
+
+import { Fragment } from "react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ListEmptyState } from "@/components/ui/list-empty-state";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { formatMoney } from "@/lib/format";
+import { cn } from "@/lib/utils";
+import { LIST_HEADER_ROW } from "./purchase-list-chrome";
+import { SupplierDetailPanel } from "./supplier-detail-panel";
+import { SUPPLIER_COLUMNS } from "./supplier-list-columns";
+import type { SupplierPage } from "./supplier-types";
+
+type Props = {
+  data: SupplierPage | undefined; loading: boolean; columns: string[]; expanded: string | null; onExpand: (id: string | null) => void;
+  selected: string[]; onSelect: (ids: string[]) => void;
+};
+
+/**
+ * Bảng NCC: ô chọn, các cột đang bật, dòng tổng (Nợ cần trả hiện tại, Tổng mua). Bấm dòng → mở chi tiết; bấm lại → đóng.
+ * Dòng đang mở + panel chi tiết có viền xanh 1px bao quanh như KiotViet.
+ */
+export function SupplierListTable({ data, loading, columns, expanded, onExpand, selected, onSelect }: Props) {
+  const cols = SUPPLIER_COLUMNS.filter((c) => columns.includes(c.key));
+  const span = cols.length + 1;
+  const pageIds = data?.items.map((s) => s.id) ?? [];
+  const allChecked = pageIds.length > 0 && pageIds.every((id) => selected.includes(id));
+  const sums = { debt: data?.sumDebt ?? 0, totalBuy: data?.sumTotalBuy ?? 0 };
+  return (
+    <div className="overflow-hidden rounded-lg bg-white">
+      <Table>
+        <TableHeader><TableRow className={LIST_HEADER_ROW}>
+          <TableHead className="w-10 pl-3"><Checkbox aria-label="Chọn tất cả" checked={allChecked}
+            onCheckedChange={(on) => onSelect(on ? [...new Set([...selected, ...pageIds])] : selected.filter((id) => !pageIds.includes(id)))} /></TableHead>
+          {cols.map((c, i) => <TableHead key={c.key} className={cn(c.align === "right" && "text-right", i === cols.length - 1 && "pr-4")}>{c.label}</TableHead>)}
+        </TableRow></TableHeader>
+        <TableBody>
+          <TableRow className="font-bold hover:bg-transparent">
+            <TableCell />
+            {cols.map((c, i) => <TableCell key={c.key} className={cn("text-right", i === cols.length - 1 && "pr-4")}>{c.sum ? formatMoney(sums[c.sum]) : ""}</TableCell>)}
+          </TableRow>
+          {loading && !data && <TableRow><TableCell colSpan={span} className="py-8 text-center text-muted-foreground">Đang tải...</TableCell></TableRow>}
+          {data && !data.items.length && (
+            <TableRow className="hover:bg-transparent"><TableCell colSpan={span} className="whitespace-normal"><ListEmptyState what="nhà cung cấp" /></TableCell></TableRow>
+          )}
+          {data?.items.map((s) => {
+            const open = expanded === s.id;
+            const edge = open ? "border-t border-primary first:border-l last:border-r" : "";
+            return (
+              <Fragment key={s.id}>
+                <TableRow aria-expanded={open} onClick={() => onExpand(open ? null : s.id)}
+                  className={cn("cursor-pointer", open && "bg-[#e3f0fc] font-semibold hover:bg-[#e3f0fc]", !s.active && "text-muted-foreground")}>
+                  <TableCell className={cn("pl-3", edge)} onClick={(e) => e.stopPropagation()}>
+                    <Checkbox aria-label={`Chọn ${s.code}`} checked={selected.includes(s.id)}
+                      onCheckedChange={(on) => onSelect(on ? [...selected, s.id] : selected.filter((id) => id !== s.id))} /></TableCell>
+                  {cols.map((c, i) => (
+                    <TableCell key={c.key} className={cn(edge, c.align === "right" && "text-right", c.key === "name" && "max-w-[320px] whitespace-normal",
+                      i === cols.length - 1 && "pr-4")}>{c.value(s)}</TableCell>
+                  ))}
+                </TableRow>
+                {open && (
+                  <TableRow className="hover:bg-transparent">
+                    <TableCell colSpan={span} className="p-0 whitespace-normal"><SupplierDetailPanel id={s.id} onClose={() => onExpand(null)} /></TableCell>
+                  </TableRow>
+                )}
+              </Fragment>
+            );
+          })}
+        </TableBody>
+      </Table>
+    </div>
+  );
+}
