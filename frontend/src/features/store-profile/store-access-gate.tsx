@@ -69,11 +69,14 @@ function TermsPrompt() {
  */
 export function StoreAccessGate() {
   const pathname = usePathname();
-  const active = !PUBLIC_PATHS.some((p) => pathname.startsWith(p));
+  // Trang công khai: không gọi API nào (api() gặp 401 sẽ chuyển về /login → vòng lặp tải lại trên chính trang đăng nhập)
+  return PUBLIC_PATHS.some((p) => pathname.startsWith(p)) ? null : <SignedInGate pathname={pathname} />;
+}
+
+function SignedInGate({ pathname }: { pathname: string }) {
   const status = useStoreStatus();
-  const terms = useTermsStatus(active);
+  const terms = useTermsStatus();
   const { data: me } = useCurrentUser();
-  if (!active) return null;
   if (status.data?.paused && !pathname.startsWith("/store-profile")) {
     return <PausedNotice reopenOn={status.data.reopenOn} isOwner={!!me?.storeOwner} />;
   }
