@@ -22,11 +22,17 @@ import java.util.UUID;
 @Component
 public class ProductStockClient {
 
-    public record Line(UUID lineId, UUID productId, UUID unitId, BigDecimal quantity) {
+    /** Bán: unitId + quantity. Trả hàng: lotNumber + baseQuantity (đơn vị cơ bản). */
+    public record Line(UUID lineId, UUID productId, UUID unitId, BigDecimal quantity, String lotNumber,
+                       BigDecimal baseQuantity) {
+        public static Line sale(UUID lineId, UUID productId, UUID unitId, BigDecimal quantity) {
+            return new Line(lineId, productId, unitId, quantity, null, null);
+        }
     }
 
+    /** previousDocId: chỉ dùng cho SALE_REPLACE (sửa hóa đơn) — chứng từ kho đang hiệu lực cần hoàn lại. */
     public record Request(UUID docId, String docType, String docCode, UUID branchId, String partnerName, UUID userId,
-                          List<Line> lines) {
+                          UUID previousDocId, List<Line> lines) {
     }
 
     public record Allocation(String lotNumber, LocalDate expiryDate, BigDecimal baseQuantity) {
