@@ -8,6 +8,8 @@ import { useCurrentUser } from "@/lib/use-current-user";
 import { PurchaseEditor } from "@/features/purchases/purchase-editor";
 import { editorFromReceipt, emptyEditor, type EditorState } from "@/features/purchases/purchase-editor-state";
 import type { Receipt } from "@/features/purchases/purchase-types";
+import type { InputInvoice } from "@/features/integrations/integration-queries";
+import { receiptEditorFromInputInvoice } from "@/features/integrations/receipt-from-input-invoice";
 
 /** /purchases/receipts/new — phiếu mới; ?copyFrom=<id> = sao chép; ?edit=<id> = mở phiếu tạm để sửa. */
 function NewReceipt() {
