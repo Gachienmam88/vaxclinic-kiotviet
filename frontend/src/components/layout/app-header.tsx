@@ -63,6 +63,9 @@ export function AppHeader() {
                   <DropdownMenuItem render={<Link href="/settings/users" />}>Người dùng</DropdownMenuItem>
                 )}
                 <DropdownMenuItem render={<Link href="/settings/branches" />}>Điểm tiêm (chi nhánh)</DropdownMenuItem>
+                {can("user.manage") && (
+                  <DropdownMenuItem render={<Link href="/settings/einvoice" />}>Hóa đơn điện tử (MISA)</DropdownMenuItem>
+                )}
               </DropdownMenuGroup>
             </DropdownMenuContent>
           </DropdownMenu>
