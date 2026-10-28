@@ -38,6 +38,7 @@ public class AuthService {
     private final TokenService tokenService;
     private final Duration refreshTtl;
     private final TwoFactorService twoFactor;
+    private final LoginAttemptLimiter loginAttempts;
 
     public AuthService(AppUserRepository users, RefreshTokenRepository refreshTokens, PasswordEncoder passwordEncoder,
                        TokenService tokenService, @Value("${app.jwt.refresh-ttl-days}") long refreshTtlDays,
