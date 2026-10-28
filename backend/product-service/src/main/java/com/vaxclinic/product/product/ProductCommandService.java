@@ -48,7 +48,7 @@ public class ProductCommandService {
         apply(p, req);
         p.setLotManaged(req.lotManaged());
         unitSync.sync(p, req.units());
-        products.saveAndFlush(p);
+        p = products.saveAndFlush(p); // assigned UUID → merge returns the managed copy; use it from here on
         if (req.openingStock() != null) {
             applyOpeningStock(p, req, req.openingStock(), userId, allowedBranches);
         }
