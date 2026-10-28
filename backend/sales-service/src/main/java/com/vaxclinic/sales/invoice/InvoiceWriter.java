@@ -28,14 +28,16 @@ public class InvoiceWriter {
     private final CashVoucherRepository vouchers;
     private final CashbookWriter cashbook;
     private final DebtLedger debt;
+    private final InvoiceLineBuilder lineBuilder;
 
     public InvoiceWriter(InvoiceRepository invoices, CustomerRepository customers, CashVoucherRepository vouchers,
-                         CashbookWriter cashbook, DebtLedger debt) {
+                         CashbookWriter cashbook, DebtLedger debt, InvoiceLineBuilder lineBuilder) {
         this.invoices = invoices;
         this.customers = customers;
         this.vouchers = vouchers;
         this.cashbook = cashbook;
         this.debt = debt;
+        this.lineBuilder = lineBuilder;
     }
 
     @Transactional
