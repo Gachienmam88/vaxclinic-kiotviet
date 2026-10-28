@@ -83,6 +83,33 @@ public class InputInvoiceController {
         return new Page(items, ((Number) agg.get("cnt")).longValue(), (BigDecimal) agg.get("tot"));
     }
 
+    @GetMapping("/api/input-invoices/{id}")
+    public Item get(@PathVariable UUID id) {
+        var page = list(null, null, null, null, null, null, 0, 1); // reuse mapping
+        var rows = jdbc.query("select id from input_invoices where id = :id", new MapSqlParameterSource("id", id),
+                (rs, n) -> rs.getObject("id", UUID.class));
+        if (rows.isEmpty()) {
+            throw BusinessException.notFound("INPUT_INVOICE_NOT_FOUND", "Không tìm thấy hóa đơn đầu vào");
+        }
+        return byId(id);
+    }
+
+    private Item byId(UUID id) {
+        return jdbc.query("select * from input_invoices where id = :id", new MapSqlParameterSource("id", id), (rs, n) -> {
+            JsonNode lines;
+            try {
+                lines = rs.getString("lines") == null ? json.createArrayNode() : json.readTree(rs.getString("lines"));
+            } catch (IOException e) {
+                lines = json.createArrayNode();
+            }
+            return new Item(rs.getObject("id", UUID.class), rs.getString("buyer_tax_code"), rs.getString("seller_tax_code"),
+                    rs.getString("seller_name"), rs.getString("template_no"), rs.getString("series"), rs.getString("number"),
+                    rs.getDate("issued_at").toLocalDate(), rs.getBigDecimal("total_before_tax"), rs.getBigDecimal("vat_amount"),
+                    rs.getBigDecimal("total"), rs.getString("nature"), rs.getString("source"),
+                    rs.getObject("receipt_id", UUID.class), rs.getString("receipt_code"), lines);
+        }).get(0);
+    }
+
     @GetMapping("/api/input-invoices/buyer-tax-codes")
     public List<String> buyerTaxCodes() {
         return jdbc.getJdbcTemplate().queryForList("select distinct buyer_tax_code from input_invoices order by 1", String.class);
