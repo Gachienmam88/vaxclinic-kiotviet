@@ -1,26 +1,36 @@
 import type { PartyConfig } from "./party-report";
 
-/** Cấu hình Báo cáo khách hàng / nhân viên / kênh bán hàng (dùng chung PartyReport). */
+/** Cấu hình Báo cáo khách hàng / nhân viên / kênh bán hàng (dùng chung PartyReport). Chữ hiển thị: text(t) theo ngôn ngữ. */
 
 export const CUSTOMER_REPORT: PartyConfig = {
-  page: "bao-cao-khach-hang", title: "Báo cáo khách hàng", noun: "khách hàng", groupBy: "CUSTOMER", productsBy: "CUSTOMER",
-  concerns: [["sales", "Bán hàng"], ["products", "Hàng bán theo khách"], ["debt", "Công nợ"], ["profit", "Lợi nhuận"]],
-  titles: { sales: "Báo cáo bán hàng theo khách hàng", products: "Báo cáo hàng bán theo khách", debt: "Báo cáo công nợ khách hàng", profit: "Báo cáo lợi nhuận theo khách hàng" },
-  chartTitle: "Top 10 khách hàng mua nhiều nhất (đã trừ trả hàng)", firstCol: "Tên khách hàng", codeCol: "Mã khách hàng", filters: ["customer"],
+  page: "bao-cao-khach-hang", groupBy: "CUSTOMER", productsBy: "CUSTOMER", filters: ["customer"],
+  text: (t) => ({
+    title: t("party.customer.title"), noun: t("party.customer.noun"),
+    concerns: [["sales", t("party.customer.concerns.sales")], ["products", t("party.customer.concerns.products")],
+      ["debt", t("party.customer.concerns.debt")], ["profit", t("party.customer.concerns.profit")]],
+    titles: { sales: t("party.customer.titles.sales"), products: t("party.customer.titles.products"), debt: t("party.customer.titles.debt"),
+      profit: t("party.customer.titles.profit") },
+    chartTitle: t("party.customer.chartTitle"), firstCol: t("cols.customerName"), codeCol: t("cols.customerCode"),
+  }),
 };
 
 export const EMPLOYEE_REPORT: PartyConfig = {
-  page: "bao-cao-nhan-vien", title: "Báo cáo nhân viên", noun: "nhân viên", groupBy: "SELLER", productsBy: "SELLER",
-  concerns: [["sales", "Bán hàng"], ["profit", "Lợi nhuận"], ["products", "Hàng bán theo nhân viên"]],
-  titles: { sales: "Báo cáo bán hàng theo nhân viên", profit: "Báo cáo lợi nhuận theo nhân viên", products: "Báo cáo hàng bán theo nhân viên" },
-  chartTitle: "Top 10 người bán nhiều nhất", firstCol: "Người bán", filters: ["seller", "channel"],
-  note: "(Người bán = nhân viên bán trên hóa đơn, chưa chọn thì là người tạo)",
+  page: "bao-cao-nhan-vien", groupBy: "SELLER", productsBy: "SELLER", filters: ["seller", "channel"],
+  text: (t) => ({
+    title: t("party.employee.title"), noun: t("party.employee.noun"),
+    concerns: [["sales", t("party.employee.concerns.sales")], ["profit", t("party.employee.concerns.profit")],
+      ["products", t("party.employee.concerns.products")]],
+    titles: { sales: t("party.employee.titles.sales"), profit: t("party.employee.titles.profit"), products: t("party.employee.titles.products") },
+    chartTitle: t("party.employee.chartTitle"), firstCol: t("cols.seller"), note: t("party.employee.note"),
+  }),
 };
 
 export const CHANNEL_REPORT: PartyConfig = {
-  page: "bao-cao-kenh-ban", title: "Báo cáo kênh bán hàng", noun: "kênh bán", groupBy: "CHANNEL",
-  concerns: [["sales", "Bán hàng"], ["profit", "Lợi nhuận"]],
-  titles: { sales: "Báo cáo bán hàng theo kênh bán", profit: "Báo cáo lợi nhuận theo kênh bán" },
-  chartTitle: "Doanh thu kênh bán hàng", pie: true, firstCol: "Kênh bán", filters: ["seller", "channel"],
-  note: "(Ứng dụng chưa có kênh bán online: mọi hóa đơn tính là Bán trực tiếp)",
+  page: "bao-cao-kenh-ban", groupBy: "CHANNEL", pie: true, filters: ["seller", "channel"],
+  text: (t) => ({
+    title: t("party.channel.title"), noun: t("party.channel.noun"),
+    concerns: [["sales", t("party.channel.concerns.sales")], ["profit", t("party.channel.concerns.profit")]],
+    titles: { sales: t("party.channel.titles.sales"), profit: t("party.channel.titles.profit") },
+    chartTitle: t("party.channel.chartTitle"), firstCol: t("cols.channel"), note: t("party.channel.note"),
+  }),
 };
