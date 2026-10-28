@@ -649,5 +649,20 @@
     "basePaid": "実入金額",
     "allowancePlaceholder": "例：昼食、ガソリン代",
     "deductionPlaceholder": "例：遅刻、規則違反"
+  },
+  "employeeForm": {
+    "toastUpdated": "従業員を更新しました",
+    "toastAdded": "従業員を追加しました",
+    "editTitle": "従業員を編集",
+    "addTitle": "従業員を追加",
+    "tabInfo": "情報",
+    "tabSalary": "給与設定",
+    "autoCode": "自動採番",
+    "machineCode": "タイムレコーダー上のコード",
+    "pickGender": "性別を選択",
+    "payBranch": "給与支払店舗",
+    "loginAccount": "ログインアカウント",
+    "notLinked": "連携なし",
+    "linkHint": "ログインアカウントを連携すると、スマホで打刻でき、販売した請求書に応じてコミッションを受け取れます。"
   }
 }

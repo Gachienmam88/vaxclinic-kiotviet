@@ -649,5 +649,20 @@
     "basePaid": "实收",
     "allowancePlaceholder": "例如：午餐、油费",
     "deductionPlaceholder": "例如：迟到、违反规章"
+  },
+  "employeeForm": {
+    "toastUpdated": "已更新员工",
+    "toastAdded": "已添加员工",
+    "editTitle": "编辑员工",
+    "addTitle": "新增员工",
+    "tabInfo": "信息",
+    "tabSalary": "工资设置",
+    "autoCode": "自动编码",
+    "machineCode": "考勤机上的编码",
+    "pickGender": "选择性别",
+    "payBranch": "发薪门店",
+    "loginAccount": "登录账号",
+    "notLinked": "未关联",
+    "linkHint": "关联登录账号后，员工可用手机打卡，并按其销售的发票获得提成。"
   }
 }

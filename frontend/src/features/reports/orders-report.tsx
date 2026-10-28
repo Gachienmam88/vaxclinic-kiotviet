@@ -6,7 +6,7 @@ import { ymd } from "@/features/dashboard/dashboard-date-utils";
 import { ORDER_STATUS_KEY, ORDER_STATUS_OPTIONS, type OrderStatus } from "@/features/orders/order-types";
 import { useT } from "@/lib/i18n";
 import { ordersNs } from "@/messages/orders";
-import { reportsNs } from "@/messages/reports";
+import { reportsNs, type ReportsT } from "@/messages/reports";
 import { BarChart, ChartCard, EmptyChart } from "./report-charts";
 import { DELIVERY_PRESETS, deliverySpan } from "./report-filter-options";
 import { spanOf, sumOf, useReport, type OrderProductRow, type OrderRow } from "./report-api";

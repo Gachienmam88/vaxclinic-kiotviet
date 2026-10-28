@@ -259,7 +259,13 @@
     "label": "Bảng giá",
     "missing": "Bảng giá không còn tồn tại — chuyển về Bảng giá chung",
     "notApplicable": "Bảng giá \"{name}\" không áp dụng cho khách / người bán này — chuyển về Bảng giá chung",
-    "removedFromCart": "đã bỏ khỏi giỏ"
+    "removedFromCart": "đã bỏ khỏi giỏ",
+    "warnings": {
+      "bookMissing": "Bảng giá không còn tồn tại — dùng giá chung",
+      "bookNotApplicable": "Bảng giá \"{name}\" không áp dụng cho hóa đơn này — dùng giá chung",
+      "notInBook": "Hàng không có trong bảng giá \"{name}\" — dùng giá chung",
+      "notInBookBlocked": "Hàng không có trong bảng giá \"{name}\""
+    }
   },
   "print": {
     "autoPrint": "Tự động in hóa đơn",

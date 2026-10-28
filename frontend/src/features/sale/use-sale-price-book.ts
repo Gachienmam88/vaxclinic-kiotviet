@@ -25,7 +25,7 @@ export function useSalePriceBook(tabs: SaleTabs, books: CatalogPriceBook[], bran
 
   const select = (bookId: string | null) => {
     if (!usable) return;
-    const r = repriceLines(d.lines, books, draftPriceContext(d, branchId), bookId, t("priceBook.removedFromCart"));
+    const r = repriceLines(d.lines, books, draftPriceContext(d, branchId), bookId, t);
     // Bảng giá "Không cho phép hàng ngoài bảng giá" sẽ bỏ bớt dòng khỏi giỏ → hỏi trước
     const removed = d.lines.filter((l) => !r.lines.some((x) => x.key === l.key));
     if (removed.length && !window.confirm(t("priceBook.confirmRemove", { names: removed.map((l) => l.productName).join(", ") }))) return;

@@ -262,7 +262,13 @@
     "label": "Price book",
     "missing": "Price book no longer exists — switched to the general price book",
     "notApplicable": "Price book \"{name}\" does not apply to this customer / seller — switched to the general price book",
-    "removedFromCart": "removed from cart"
+    "removedFromCart": "removed from cart",
+    "warnings": {
+      "bookMissing": "Price book no longer exists — using the general price",
+      "bookNotApplicable": "Price book \"{name}\" does not apply to this invoice — using the general price",
+      "notInBook": "Item is not in price book \"{name}\" — using the general price",
+      "notInBookBlocked": "Item is not in price book \"{name}\""
+    }
   },
   "print": {
     "autoPrint": "Auto-print invoice",

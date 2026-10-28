@@ -14,7 +14,8 @@ import { api, type PageResponse } from "@/lib/api-client";
 import { formatDateTime } from "@/lib/format";
 import { DatePicker } from "@/components/ui/date-picker";
 import { DocCodeLink } from "@/components/ui/doc-code-link";
-import { useT } from "@/lib/i18n";
+import { useLocale, useT } from "@/lib/i18n";
+import { auditActionLabel, auditFeatureLabel } from "@/lib/i18n/audit-labels";
 import { commonNs } from "@/messages/common";
 import { settingsNs } from "@/messages/settings";
 
@@ -36,6 +37,7 @@ export default function AuditLogsPage() {
   const { data: users = [] } = useUserLookup();
   const t = useT(settingsNs);
   const tc = useT(commonNs);
+  const locale = useLocale();
   const { data: features = [] } = useQuery({ queryKey: ["audit-features"], queryFn: () => api<string[]>("/audit-logs/features") });
   const [f, setF] = useState({ userId: "", feature: "", from: "", to: "", q: "" });
   const [page, setPage] = useState(0);
@@ -67,7 +69,7 @@ export default function AuditLogsPage() {
           <div className="w-44"><NativeSelect aria-label={t("auditLogs.employee")} value={f.userId} onChange={(e) => set("userId", e.target.value)}>
             <option value="">{t("auditLogs.allEmployees")}</option>{users.map((u) => <option key={u.id} value={u.id}>{u.fullName}</option>)}</NativeSelect></div>
           <div className="w-44"><NativeSelect aria-label={t("auditLogs.feature")} value={f.feature} onChange={(e) => set("feature", e.target.value)}>
-            <option value="">{t("auditLogs.allFeatures")}</option>{features.map((x) => <option key={x}>{x}</option>)}</NativeSelect></div>
+            <option value="">{t("auditLogs.allFeatures")}</option>{features.map((x) => <option key={x} value={x}>{auditFeatureLabel(x, locale)}</option>)}</NativeSelect></div>
           <DatePicker className="h-8 w-36" value={f.from} onChange={(v) => set("from", v)} title={t("auditLogs.from")} aria-label={t("auditLogs.from")} />
           <DatePicker className="h-8 w-36" value={f.to} onChange={(v) => set("to", v)} title={t("auditLogs.to")} aria-label={t("auditLogs.to")} />
           <Input className="h-8 w-56" placeholder={t("auditLogs.searchPlaceholder")} value={f.q} onChange={(e) => set("q", e.target.value)} aria-label={t("auditLogs.searchLabel")} />
@@ -83,7 +85,7 @@ export default function AuditLogsPage() {
               {data?.items.map((l) => (
                 <tr key={l.id} className={T.row}>
                   <td>{l.userName}</td>
-                  <td>{l.feature}<span className="block text-xs text-muted-foreground">{l.action}</span></td>
+                  <td>{auditFeatureLabel(l.feature, locale)}<span className="block text-xs text-muted-foreground">{auditActionLabel(l.action, locale)}</span></td>
                   <td>{formatDateTime(l.occurredAt)}</td>
                   <td className="whitespace-normal"><AuditDetail log={l} /></td>
                 </tr>

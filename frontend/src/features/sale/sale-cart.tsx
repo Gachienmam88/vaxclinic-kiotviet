@@ -9,6 +9,7 @@ import { SaleCartLine } from "./sale-cart-line";
 import { SaleProductDetailDrawer } from "./sale-product-detail-drawer";
 import { SaleQuickReturnLot } from "./sale-quick-return-lot";
 import { RecentPriceDialog } from "./sale-recent-price-dialog";
+import { priceWarningText } from "./sale-price-book-pricing";
 import { newId } from "./sale-storage";
 import { useSaleLastPrices } from "./use-sale-last-prices";
 import { useSaleSettings } from "./use-sale-settings";
@@ -59,7 +60,7 @@ export function SaleCart({ lines, customerId, onChange, resolveUnit, products, b
   function addLine(l: CartLine) {
     const unit = l.units.find((u) => u.id === l.unitId) ?? l.units[0];
     const r = resolveUnit(unit);
-    if (!r.allowed) { toast.warning(`${l.productName}: ${r.warning ?? t("cart.notInPriceBook")}`); return; }
+    if (!r.allowed) { toast.warning(`${l.productName}: ${r.warning ? priceWarningText(t, r.warning) : t("cart.notInPriceBook")}`); return; }
     onChange((all) => [{ ...l, key: newId(), quantity: 1, unitPrice: r.price, discount: 0, note: "", priceEdited: false, lotNumber: null, lotExpiry: null }, ...all]);
   }
 

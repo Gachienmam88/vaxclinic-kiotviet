@@ -176,7 +176,7 @@
     "edit": "Edit"
   },
   "branches": {
-    "hint": "Each branch (vaccination site) has its own stock, cash book and users. Assign users to branches in User management.",
+    "hint": "Each branch has its own stock, cash book and users. Assign users to branches in User management.",
     "title": "Branch management",
     "description": "Manage branch details, users and addresses.",
     "create": "Create branch",

@@ -259,7 +259,13 @@
     "label": "価格表",
     "missing": "価格表が存在しません — 標準価格表に切替えました",
     "notApplicable": "価格表「{name}」はこの顧客／販売担当には適用されません — 標準価格表に切替えました",
-    "removedFromCart": "カートから削除"
+    "removedFromCart": "カートから削除",
+    "warnings": {
+      "bookMissing": "価格表が存在しません — 標準価格を使用",
+      "bookNotApplicable": "価格表「{name}」はこの請求書に適用されません — 標準価格を使用",
+      "notInBook": "商品は価格表「{name}」にありません — 標準価格を使用",
+      "notInBookBlocked": "商品は価格表「{name}」にありません"
+    }
   },
   "print": {
     "autoPrint": "請求書を自動印刷",

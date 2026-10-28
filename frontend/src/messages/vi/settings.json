@@ -173,7 +173,7 @@
     "edit": "Sửa"
   },
   "branches": {
-    "hint": "Mỗi chi nhánh (điểm tiêm) có tồn kho, sổ quỹ và người dùng riêng. Gán người dùng vào chi nhánh trong Quản lý người dùng.",
+    "hint": "Mỗi chi nhánh có tồn kho, sổ quỹ và người dùng riêng. Gán người dùng vào chi nhánh trong Quản lý người dùng.",
     "title": "Quản lý chi nhánh",
     "description": "Quản lý thông tin, người dùng và địa chỉ của các chi nhánh.",
     "create": "Tạo chi nhánh",

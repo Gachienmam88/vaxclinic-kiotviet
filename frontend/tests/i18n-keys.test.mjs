@@ -73,3 +73,9 @@ test("translateKey: ngôn ngữ → tiếng Việt → khóa; số nhiều; chè
   assert.equal(translateKey({ key: "a.b", vars: { name: "An" }, htmlLang: "en", messages: undefined, fallback: vi }), "Xin chào An");
   assert.equal(interpolate("{x} và {y}", { x: 1 }), "1 và {y}");
 });
+
+test("ALL_NAMESPACES (gửi sẵn ở khung quản lý / màn bán hàng) khớp đúng các file message", async () => {
+  const { ALL_NAMESPACES } = await import("../src/lib/i18n/all-namespaces.ts");
+  const files = namespaces.map((f) => f.replace(/\.json$/, "")).sort();
+  assert.deepEqual([...ALL_NAMESPACES].sort(), files);
+});

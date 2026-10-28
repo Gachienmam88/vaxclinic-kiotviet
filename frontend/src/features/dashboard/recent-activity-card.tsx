@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { FileText } from "lucide-react";
 import { DocCodeLink } from "@/components/ui/doc-code-link";
-import { useT } from "@/lib/i18n";
+import { useLocale, useT } from "@/lib/i18n";
+import { auditActionLabel, auditFeatureLabel } from "@/lib/i18n/audit-labels";
 import { renderRichText } from "@/lib/i18n/render-rich-text";
 import { commonNs } from "@/messages/common";
 import { dashboardNs } from "@/messages/dashboard";
@@ -14,6 +15,7 @@ import type { AuditLog } from "./dashboard-queries";
 export function RecentActivityCard({ items, isLoading }: { items: AuditLog[]; isLoading: boolean }) {
   const t = useT(dashboardNs);
   const tc = useT(commonNs);
+  const locale = useLocale();
   return (
     <section className="rounded-lg bg-background px-3.5 py-4" aria-labelledby="activity-title">
       <div className="mb-3 flex items-center">
@@ -29,10 +31,12 @@ export function RecentActivityCard({ items, isLoading }: { items: AuditLog[]; is
               <FileText className="size-3.5 text-foreground/60" />
             </span>
             <div className="min-w-0 text-[13px] leading-[18px]">
-              {/* Hành động / chức năng là dữ liệu nhật ký từ server (tiếng Việt) — chỉ dịch khung câu. */}
+              {/* Hành động / chức năng là chuỗi tiếng Việt từ nhật ký → dịch qua bảng audit-labels (chuỗi lạ giữ nguyên). */}
               <p>{renderRichText(t("activity.line"), {
                 user: <span className="text-primary">{l.userName ?? t("activity.system")}</span>,
-                action: <span className="text-primary">{l.action.toLowerCase()} {l.feature.toLowerCase()}</span>,
+                action: <span className="text-primary">
+                  {auditActionLabel(l.action, locale).toLowerCase()} {auditFeatureLabel(l.feature, locale).toLowerCase()}
+                </span>,
                 doc: l.docCode ? <> <DocCodeLink code={l.docCode} className="font-semibold" /></> : null,
               })}</p>
               {l.detail && <p className="line-clamp-2 text-xs text-muted-foreground">{l.detail}</p>}

@@ -660,5 +660,20 @@
     "basePaid": "Amount collected",
     "allowancePlaceholder": "E.g. Lunch, Fuel",
     "deductionPlaceholder": "E.g. Late arrival, Rule violation"
+  },
+  "employeeForm": {
+    "toastUpdated": "Employee updated",
+    "toastAdded": "Employee added",
+    "editTitle": "Edit employee",
+    "addTitle": "New employee",
+    "tabInfo": "Information",
+    "tabSalary": "Salary settings",
+    "autoCode": "Auto-generated",
+    "machineCode": "Code on the time clock",
+    "pickGender": "Select gender",
+    "payBranch": "Payroll branch",
+    "loginAccount": "Login account",
+    "notLinked": "Not linked",
+    "linkHint": "Link a login account so the employee can clock in by phone and earn commission on invoices they sell."
   }
 }

@@ -649,5 +649,20 @@
     "basePaid": "Thực thu",
     "allowancePlaceholder": "VD: Ăn trưa, Xăng xe",
     "deductionPlaceholder": "VD: Đi muộn, Vi phạm nội quy"
+  },
+  "employeeForm": {
+    "toastUpdated": "Đã cập nhật nhân viên",
+    "toastAdded": "Đã thêm nhân viên",
+    "editTitle": "Sửa nhân viên",
+    "addTitle": "Thêm mới nhân viên",
+    "tabInfo": "Thông tin",
+    "tabSalary": "Thiết lập lương",
+    "autoCode": "Mã tự động",
+    "machineCode": "Mã trên máy chấm công",
+    "pickGender": "Chọn giới tính",
+    "payBranch": "Chi nhánh trả lương",
+    "loginAccount": "Tài khoản đăng nhập",
+    "notLinked": "Không liên kết",
+    "linkHint": "Liên kết tài khoản đăng nhập để nhân viên chấm công trên điện thoại và nhận hoa hồng theo hóa đơn họ bán."
   }
 }

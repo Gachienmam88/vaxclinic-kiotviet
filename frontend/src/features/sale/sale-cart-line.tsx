@@ -12,6 +12,7 @@ import type { PriceResolution } from "@/features/products/price-book-resolver";
 import { formatMoney, formatNumber } from "@/lib/format";
 import { useT } from "@/lib/i18n";
 import { saleNs } from "@/messages/sale";
+import { priceWarningText } from "./sale-price-book-pricing";
 import { underlineInput } from "./sale-ui-parts";
 import type { SaleSettings } from "./sale-settings";
 import type { CartLine, CatalogUnit } from "./sale-types";
@@ -73,8 +74,8 @@ export function SaleCartLine({ line: l, index, settings: s, selected, stock, las
               onChange={(e) => {
                 const u = l.units.find((x) => x.id === e.target.value)!;
                 const r = resolveUnit(u);
-                if (!r.allowed) { toast.warning(`${l.productName} (${u.unitName}): ${r.warning}`); return; }
-                if (r.warning) toast.warning(`${l.productName} (${u.unitName}): ${r.warning}`);
+                if (!r.allowed) { toast.warning(`${l.productName} (${u.unitName}): ${priceWarningText(t, r.warning)}`); return; }
+                if (r.warning) toast.warning(`${l.productName} (${u.unitName}): ${priceWarningText(t, r.warning)}`);
                 update({ unitId: u.id, unitPrice: r.price, discount: 0, priceEdited: false });
               }}>
               {l.units.map((u) => <option key={u.id} value={u.id}>{u.unitName}</option>)}

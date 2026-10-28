@@ -17,14 +17,14 @@ export const TERMS_INTRO =
 
 export const TERMS_SECTIONS: TermsSection[] = [
   { title: "1. Phạm vi áp dụng", paragraphs: [
-    "Áp dụng cho mọi tài khoản truy cập hệ thống qua trình duyệt, máy bán hàng tại quầy và màn hình chấm công, tại tất cả điểm tiêm của doanh nghiệp.",
+    "Áp dụng cho mọi tài khoản truy cập hệ thống qua trình duyệt, máy bán hàng tại quầy và màn hình chấm công, tại tất cả chi nhánh của doanh nghiệp.",
     "Hệ thống chỉ dùng cho công việc của doanh nghiệp. Không cung cấp cho khách hàng hay bên thứ ba truy cập trực tiếp.",
   ] },
   { title: "2. Tài khoản, mật khẩu và xác thực 2 lớp", bullets: [
     "Mỗi người dùng chỉ dùng tài khoản được cấp cho mình. Không cho mượn, chia sẻ hay dùng chung tài khoản.",
     "Mật khẩu tối thiểu 8 ký tự, không dùng lại mật khẩu của dịch vụ khác. Nghi ngờ lộ mật khẩu phải đổi ngay và báo quản trị viên.",
     "Chủ gian hàng và quản trị viên được khuyến nghị bật xác thực 2 lớp bằng ứng dụng Authenticator. Mã khôi phục phải được cất giữ an toàn, mỗi mã chỉ dùng một lần.",
-    "Quyền truy cập được cấp theo vai trò công việc và điểm tiêm. Khi đổi vị trí hoặc nghỉ việc, quản trị viên khóa hoặc điều chỉnh quyền ngay.",
+    "Quyền truy cập được cấp theo vai trò công việc và chi nhánh. Khi đổi vị trí hoặc nghỉ việc, quản trị viên khóa hoặc điều chỉnh quyền ngay.",
     "Mọi thao tác thực hiện bằng tài khoản được coi là do chủ tài khoản thực hiện, trừ khi đã báo mất quyền kiểm soát tài khoản trước đó.",
   ] },
   { title: "3. Quyền và nghĩa vụ của người dùng (nhân viên)", bullets: [

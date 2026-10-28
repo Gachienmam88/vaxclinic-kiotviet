@@ -259,7 +259,13 @@
     "label": "价格表",
     "missing": "价格表已不存在 — 已切换为通用价格表",
     "notApplicable": "价格表“{name}”不适用于该客户/销售员 — 已切换为通用价格表",
-    "removedFromCart": "已移出购物车"
+    "removedFromCart": "已移出购物车",
+    "warnings": {
+      "bookMissing": "价格表已不存在 — 使用通用价格",
+      "bookNotApplicable": "价格表“{name}”不适用于此发票 — 使用通用价格",
+      "notInBook": "商品不在价格表“{name}”中 — 使用通用价格",
+      "notInBookBlocked": "商品不在价格表“{name}”中"
+    }
   },
   "print": {
     "autoPrint": "自动打印发票",

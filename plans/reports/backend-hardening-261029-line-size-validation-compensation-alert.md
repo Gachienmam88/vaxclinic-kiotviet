@@ -34,11 +34,13 @@ Column lengths checked in the sales migrations: `invoice_lines` (V1), `customer_
   - New `InvoiceLineInputValidationTest` (2): 50/250/50 accepted; 51/251/51 rejected with the 3 Vietnamese messages.
   - Other sales tests: all pass.
 - e2e (services restarted with `scripts/start-all-local.ps1`):
-  - `e2e_hardening.py`: RESULT_PLACEHOLDER. The persist failure is now forced by a temporary trigger `e2e_fail_invoice_{tag}`: BEFORE INSERT on `invoices`, it raises only when note = `E2E_FORCE_PERSIST_FAIL_{tag}`, so no other invoice is affected. The test creates it via psql in docker and drops it at exit (cleanup prints the remaining count). Retries send `note: null`. New checks:
+  - `e2e_hardening.py`: **25/25** (full run, reconciler wait included; A1–A8 + new A0, A5b). The persist failure is now forced by a temporary trigger `e2e_fail_invoice_{tag}`: BEFORE INSERT on `invoices`, it raises only when note = `E2E_FORCE_PERSIST_FAIL_{tag}`, so no other invoice is affected. The test creates it via psql in docker and drops it at exit (cleanup prints the remaining count). Retries send `note: null`. New checks:
     - A0: oversize code/name/unit returns 400 VALIDATION_FAILED, stock is unchanged and no attempt row is created.
     - A5b: exactly one `CHECKOUT_COMPENSATED` notification with sales.perform, the branch and the expected body.
     - Cleanup also deletes the test notifications.
   - `e2e_sales.py` 22/22, `e2e_sale_backend.py` 57/57, `e2e_notifications.py` ALL PASSED.
+
+- Cleanup was verified: 0 test notifications, 0 e2e triggers/functions, 0 test checkout_attempts. `e2e_sales.py` left 1 orphan FAILED attempt (insufficient-stock case, it does not use the kit cleanup). I deleted it by hand; the script still needs fixing.
 
 ## Files
 - M `backend/sales-service/src/main/java/com/vaxclinic/sales/invoice/InvoiceDtos.java`
@@ -50,4 +52,5 @@ Column lengths checked in the sales migrations: `invoice_lines` (V1), `customer_
 
 ## Concerns / open questions
 1. The alert is best-effort: if identity is down at that moment, it is lost (only logged), while the attempt stays COMPENSATED. A `notified_at` column with retries would fix this. Not done (YAGNI).
-2. The alert has no link. Linking to a product stock card would need the attempt to store its product ids (only a text `summary` is kept today).
+2. `e2e_sales.py` does not delete its `checkout_attempts` row (FAILED, insufficient-stock test), so each run leaves 1 orphan. It needs a cleanup line like the one in `e2e_delivery_kit.cleanup`.
+3. The alert has no link. Linking to a product stock card would need the attempt to store its product ids (only a text `summary` is kept today).

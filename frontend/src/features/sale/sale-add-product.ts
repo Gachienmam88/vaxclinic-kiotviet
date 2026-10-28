@@ -1,6 +1,7 @@
 import { toast } from "sonner";
 import type { PriceResolution } from "@/features/products/price-book-resolver";
 import type { SaleT } from "@/messages/sale";
+import { priceWarningText } from "./sale-price-book-pricing";
 import { newId } from "./sale-storage";
 import type { CatalogProduct, CatalogUnit } from "./sale-types";
 import type { SaleTabs } from "./use-sale-tabs";
@@ -33,8 +34,8 @@ export function addProductToTab(t: SaleT, tabs: SaleTabs, p: CatalogProduct, uni
     return existing.key;
   }
   const r = resolve(unit);
-  if (!r.allowed) { toast.warning(`${p.name}: ${r.warning ?? t("cart.notInPriceBook")}`); return null; }
-  if (r.warning) toast.warning(`${p.name}: ${r.warning}`);
+  if (!r.allowed) { toast.warning(`${p.name}: ${r.warning ? priceWarningText(t, r.warning) : t("cart.notInPriceBook")}`); return null; }
+  if (r.warning) toast.warning(`${p.name}: ${priceWarningText(t, r.warning)}`);
   const key = newId();
   tabs.setLines((lines) => [{ key, productId: p.id, productName: p.name, unitId: unit.id, units: p.units, quantity: 1,
     unitPrice: r.price, discount: 0, note: "", taxCode: p.taxCode, priceEdited: false }, ...lines]);

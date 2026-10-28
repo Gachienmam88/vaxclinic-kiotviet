@@ -49,9 +49,9 @@ export function CommissionProductGrid({ products, tables, rates, codeQ, nameQ, o
   codeQ: string; nameQ: string; onCodeQ: (v: string) => void; onNameQ: (v: string) => void;
   checked: string[]; onChecked: (ids: string[]) => void;
 }) {
+  const t = useT(hrNs);
   const save = useHrMutation(({ tableId, items }: { tableId: string; items: RuleItem[] }) =>
     api(`/hr/commission-tables/${tableId}/rules`, { method: "PUT", body: { items } }), t("commissionGrid.toastSaved"));
-  const t = useT(hrNs);
   const th = "h-[34px] px-2 text-[12px] font-semibold whitespace-nowrap";
   const allChecked = products.length > 0 && products.every((p) => checked.includes(p.id));
   return (

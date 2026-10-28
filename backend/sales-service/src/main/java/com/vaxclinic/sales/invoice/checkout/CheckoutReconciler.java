@@ -28,11 +28,14 @@ public class CheckoutReconciler {
     private final CheckoutAttemptRepository attempts;
     private final ProductStockClient stock;
     private final TransactionTemplate tx;
+    private final CheckoutCompensationNotifier notifier;
 
-    public CheckoutReconciler(CheckoutAttemptRepository attempts, ProductStockClient stock, TransactionTemplate tx) {
+    public CheckoutReconciler(CheckoutAttemptRepository attempts, ProductStockClient stock, TransactionTemplate tx,
+                              CheckoutCompensationNotifier notifier) {
         this.attempts = attempts;
         this.stock = stock;
         this.tx = tx;
+        this.notifier = notifier;
     }
 
     /** 1 lượt đối soát; trả số lần thanh toán đã hoàn kho. */
@@ -57,6 +60,7 @@ public class CheckoutReconciler {
         if (claimed == null) {
             return false;
         }
+        boolean reversed = true;
         try {
             stock.apply(new ProductStockClient.Request(claimed.stockDocId(), "SALE_CANCEL", claimed.docCode(),
                     claimed.branchId(), claimed.partnerName(), claimed.userId(), null, List.of()));
@@ -68,10 +72,14 @@ public class CheckoutReconciler {
                 return false;
             }
             // Kho chưa từng trừ cho chứng từ này (lỗi trước khi tới product-service) → không có gì để hoàn.
+            reversed = false;
         }
         tx.executeWithoutResult(s -> attempts.markCompensated(id, claimed.stockDocId()));
-        log.warn("Checkout {} ({}) had no invoice after {} -> stock reversed (SALE_CANCEL {})", id, claimed.docCode(),
-                CheckoutAttemptRules.STALE_AFTER, claimed.stockDocId());
+        if (reversed) {
+            log.warn("Checkout {} ({}) had no invoice after {} -> stock reversed (SALE_CANCEL {})", id, claimed.docCode(),
+                    CheckoutAttemptRules.STALE_AFTER, claimed.stockDocId());
+            notifier.compensated(claimed); // chỉ báo khi kho thực sự được hoàn; lỗi gửi chỉ log
+        }
         return true;
     }
 

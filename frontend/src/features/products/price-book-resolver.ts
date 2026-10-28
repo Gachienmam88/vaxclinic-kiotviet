@@ -24,11 +24,19 @@ export type PriceContext = {
   date?: Date;
 };
 
+/**
+ * Cảnh báo dạng mã (giao diện tự dịch, VD màn bán hàng: sale "priceBook.warnings.<code>"); book = tên bảng giá.
+ * BOOK_MISSING: bảng giá không còn · BOOK_NOT_APPLICABLE: ngoài hiệu lực / phạm vi → giá chung ·
+ * NOT_IN_BOOK_BLOCKED: hàng ngoài bảng, bị chặn · NOT_IN_BOOK: hàng ngoài bảng → giá chung.
+ */
+export type PriceWarningCode = "BOOK_MISSING" | "BOOK_NOT_APPLICABLE" | "NOT_IN_BOOK_BLOCKED" | "NOT_IN_BOOK";
+export type PriceWarning = { code: PriceWarningCode; book?: string };
+
 /** allowed = false: bảng giá chặn hàng không có trong bảng (không được thêm vào hóa đơn). */
 export type PriceResolution = {
   price: number;
   allowed: boolean;
-  warning: string | null;
+  warning: PriceWarning | null;
   source: "BOOK" | "BASE";
 };
 
@@ -58,17 +66,17 @@ export function resolvePrice(books: CatalogPriceBook[], ctx: PriceContext & { bo
   const base: PriceResolution = { price: basePrice, allowed: true, warning: null, source: "BASE" };
   if (!ctx.bookId) return base;
   const book = books.find((b) => b.id === ctx.bookId);
-  if (!book) return { ...base, warning: "Bảng giá không còn tồn tại — dùng giá chung" };
+  if (!book) return { ...base, warning: { code: "BOOK_MISSING" } };
   if (!isPriceBookApplicable(book, ctx)) {
-    return { ...base, warning: `Bảng giá "${book.name}" không áp dụng cho hóa đơn này — dùng giá chung` };
+    return { ...base, warning: { code: "BOOK_NOT_APPLICABLE", book: book.name } };
   }
   const price = book.prices[productUnitId];
   if (price != null) return { price: Number(price), allowed: true, warning: null, source: "BOOK" };
   if (book.missingPolicy === "BLOCK") {
-    return { ...base, allowed: false, warning: `Hàng không có trong bảng giá "${book.name}"` };
+    return { ...base, allowed: false, warning: { code: "NOT_IN_BOOK_BLOCKED", book: book.name } };
   }
   if (book.missingPolicy === "WARN") {
-    return { ...base, warning: `Hàng không có trong bảng giá "${book.name}" — dùng giá chung` };
+    return { ...base, warning: { code: "NOT_IN_BOOK", book: book.name } };
   }
   return base;
 }
