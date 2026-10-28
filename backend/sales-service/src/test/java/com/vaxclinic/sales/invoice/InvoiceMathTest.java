@@ -16,7 +16,7 @@ class InvoiceMathTest {
 
     private static LineInput line(String qty, String price, String discount) {
         return new LineInput(UUID.randomUUID(), UUID.randomUUID(), "SP", "Vắc xin", "Liều", new BigDecimal(qty),
-                new BigDecimal(price), discount == null ? null : new BigDecimal(discount), null);
+                new BigDecimal(price), discount == null ? null : new BigDecimal(discount), null, "KCT");
     }
 
     @Test
