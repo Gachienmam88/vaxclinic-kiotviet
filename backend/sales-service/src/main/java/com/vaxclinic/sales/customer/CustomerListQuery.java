@@ -1,0 +1,70 @@
+package com.vaxclinic.sales.customer;
+
+import com.vaxclinic.sales.customer.CustomerDtos.CustomerListItem;
+import com.vaxclinic.sales.customer.CustomerDtos.CustomerListResponse;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.stereotype.Component;
+
+import java.math.BigDecimal;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.UUID;
+
+/** Danh sách khách hàng + bộ lọc trái (nhóm, ngày tạo, người tạo, loại khách, giới tính) + dòng tổng. */
+@Component
+public class CustomerListQuery {
+
+    public record Filter(String q, String groupName, Instant createdFrom, Instant createdTo, UUID createdBy,
+                         String customerType, String gender, int page, int size) {
+    }
+
+    private final NamedParameterJdbcTemplate jdbc;
+
+    public CustomerListQuery(NamedParameterJdbcTemplate jdbc) {
+        this.jdbc = jdbc;
+    }
+
+    public CustomerListResponse search(Filter f) {
+        var p = new MapSqlParameterSource();
+        var w = new StringBuilder(" from customers c where c.active");
+        if (f.q() != null && !f.q().isBlank()) {
+            w.append(" and (c.code ilike :q or c.name ilike :q or c.phone ilike :q or c.phone2 ilike :q)");
+            p.addValue("q", "%" + f.q().trim() + "%");
+        }
+        if (f.groupName() != null && !f.groupName().isBlank()) {
+            w.append(" and c.group_name = :groupName");
+            p.addValue("groupName", f.groupName());
+        }
+        if (f.createdFrom() != null) {
+            w.append(" and c.created_at >= :from");
+            p.addValue("from", Timestamp.from(f.createdFrom()));
+        }
+        if (f.createdTo() != null) {
+            w.append(" and c.created_at < :to");
+            p.addValue("to", Timestamp.from(f.createdTo()));
+        }
+        if (f.createdBy() != null) {
+            w.append(" and c.created_by = :createdBy");
+            p.addValue("createdBy", f.createdBy());
+        }
+        if (f.customerType() != null) {
+            w.append(" and c.customer_type = :type");
+            p.addValue("type", f.customerType());
+        }
+        if (f.gender() != null) {
+            w.append(" and c.gender = :gender");
+            p.addValue("gender", f.gender());
+        }
+        var agg = jdbc.queryForMap("select count(*) cnt, coalesce(sum(c.debt),0) debt, coalesce(sum(c.total_sales),0) sales,"
+                + " coalesce(sum(c.total_sales - c.total_returns),0) net" + w, p);
+        p.addValue("limit", f.size()).addValue("offset", (long) f.page() * f.size());
+        var items = jdbc.query("select c.*" + w + " order by c.created_at desc limit :limit offset :offset", p,
+                (rs, i) -> new CustomerListItem(rs.getObject("id", UUID.class), rs.getString("code"), rs.getString("name"),
+                        rs.getString("phone"), rs.getString("group_name"), rs.getBigDecimal("debt"),
+                        rs.getBigDecimal("total_sales"),
+                        rs.getBigDecimal("total_sales").subtract(rs.getBigDecimal("total_returns"))));
+        return new CustomerListResponse(items, ((Number) agg.get("cnt")).longValue(), f.page(), f.size(),
+                (BigDecimal) agg.get("debt"), (BigDecimal) agg.get("sales"), (BigDecimal) agg.get("net"));
+    }
+}
