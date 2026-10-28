@@ -42,7 +42,7 @@ public class CashbookWriter {
         if (allocated.compareTo(v.getAmount()) > 0) {
             throw BusinessException.badRequest("ALLOCATION_EXCEEDS", "Tổng phân bổ lớn hơn số tiền phiếu");
         }
-        vouchers.saveAndFlush(v);
+        v = vouchers.saveAndFlush(v); // assigned UUID → merge returns the managed copy; keep using it
         for (var a : allocations) {
             if (a.amount().signum() <= 0) {
                 continue;
