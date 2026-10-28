@@ -7,6 +7,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { formatMoney } from "@/lib/format";
+import { ProductInfoDialog, RecentPriceDialog } from "./pos-line-dialogs";
 import type { CartLine } from "./pos-types";
 
 type Props = { lines: CartLine[]; customerId: string | null; onChange: (fn: (lines: CartLine[]) => CartLine[]) => void };
