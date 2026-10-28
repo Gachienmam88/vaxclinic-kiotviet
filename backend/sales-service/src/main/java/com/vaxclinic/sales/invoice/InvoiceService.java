@@ -76,17 +76,7 @@ public class InvoiceService {
                 .mapToObj(i -> UUID.nameUUIDFromBytes((req.id() + ":" + i).getBytes(StandardCharsets.UTF_8))).toList();
         var result = stock.apply(new ProductStockClient.Request(req.id(), "SALE", code, req.branchId(),
                 customer == null ? "Khách lẻ" : customer.getName(), actor.id(), null, stockLines(req, lineIds)));
-        UUID id;
-        try {
-            id = writer.persist(req, actor, customer, code, lineIds, result, totals, paid);
-        } catch (RuntimeException e) {
-            // Cùng id đã được lưu bởi request song song (gửi lại) → chứng từ kho dùng chung, giữ nguyên.
-            if (invoices.existsById(req.id())) return req.id();
-            // Ngược lại (vd. đơn đặt hàng vừa được lập hóa đơn ở máy khác): hoàn kho đã xuất rồi báo lỗi.
-            stock.apply(new ProductStockClient.Request(req.id(), "SALE_CANCEL", code, req.branchId(),
-                    customer == null ? "Khách lẻ" : customer.getName(), actor.id(), null, List.of()));
-            throw e;
-        }
+        UUID id = writer.persist(req, actor, customer, code, lineIds, result, totals, paid);
         actor.audit(audit, req.branchId(), "Hóa đơn", "Tạo", code, "Tạo hóa đơn " + code + ", khách "
                 + (customer == null ? "Khách lẻ" : customer.getCode() + " " + customer.getName()) + ", tổng "
                 + Actor.money(totals.total()) + ", đã trả " + Actor.money(paid));
