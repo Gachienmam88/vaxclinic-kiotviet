@@ -1,0 +1,192 @@
+{
+  "list": {
+    "title": "Customers",
+    "searchPlaceholder": "By code, name, phone",
+    "searchAria": "Search customers",
+    "addButton": "Customer",
+    "emptyWhat": "customers",
+    "pagerSummary": "{total} customers · Page {page}/{pages}",
+    "cols": {
+      "code": "Customer code",
+      "name": "Customer name",
+      "phone": "Phone",
+      "debt": "Current debt",
+      "totalSales": "Total sales",
+      "netSales": "Net sales (after returns)"
+    }
+  },
+  "filter": {
+    "group": "Customer group",
+    "allGroups": "All groups",
+    "createdAt": "Created date",
+    "createdBy": "Created by",
+    "pickCreator": "Select creator",
+    "type": "Customer type",
+    "gender": "Gender"
+  },
+  "enums": {
+    "customerType": { "PERSONAL": "Individual", "COMPANY": "Company" },
+    "gender": { "MALE": "Male", "FEMALE": "Female" },
+    "debtType": {
+      "SALE": "Sale",
+      "SALE_CANCEL": "Invoice cancelled",
+      "PAYMENT": "Payment",
+      "PAYMENT_CANCEL": "Receipt cancelled",
+      "ADJUST": "Adjustment",
+      "DISCOUNT": "Payment discount"
+    },
+    "invoiceStatus": { "COMPLETED": "Completed", "CANCELLED": "Cancelled" }
+  },
+  "groups": {
+    "title": "Customer groups",
+    "addButton": "Customer group",
+    "emptyWhat": "customer groups",
+    "cols": { "name": "Group name", "discount": "Discount", "count": "Customers", "note": "Note" },
+    "editAria": "Edit group {name}",
+    "deleteAria": "Delete group {name}",
+    "confirmDelete": "Delete group \"{name}\"?",
+    "confirmDeleteWithCustomers_one": "Delete group \"{name}\"? {count} customer in this group will become ungrouped.",
+    "confirmDeleteWithCustomers_other": "Delete group \"{name}\"? {count} customers in this group will become ungrouped.",
+    "deleted": "Customer group deleted",
+    "deletedUnlinked_one": "Customer group deleted, {count} customer ungrouped",
+    "deletedUnlinked_other": "Customer group deleted, {count} customers ungrouped"
+  },
+  "groupDialog": {
+    "titleAdd": "Add customer group",
+    "titleEdit": "Edit customer group",
+    "name": "Group name",
+    "discount": "Discount",
+    "discountAria": "Group discount",
+    "currencyUnit": "VND",
+    "discountHint": "Pre-filled as the invoice discount when a customer in this group is selected on the sales screen (still editable).",
+    "note": "Note",
+    "added": "Customer group added",
+    "updated": "Customer group updated"
+  },
+  "detail": {
+    "tabSales": "Sales/return history",
+    "tabDebt": "Receivables",
+    "edit": "Edit"
+  },
+  "info": {
+    "empty": "None",
+    "createdBy": "Created by: {value}",
+    "createdAt": "Created: {value}",
+    "group": "Group: {value}",
+    "phone": "Phone",
+    "birthday": "Birthday",
+    "gender": "Gender",
+    "email": "Email",
+    "facebook": "Facebook",
+    "address": "Address",
+    "invoiceInfo": "Invoicing details",
+    "noNote": "No notes"
+  },
+  "debtTab": {
+    "filterAria": "Filter by transaction type",
+    "allTypes": "All transactions",
+    "emptyWhat": "transactions",
+    "cols": { "code": "Voucher code", "time": "Time", "type": "Type", "amount": "Amount", "balance": "Customer balance" },
+    "exportDebt": "Export debt",
+    "pay": "Payment",
+    "adjust": "Adjust",
+    "discount": "Payment discount",
+    "createQr": "Create QR"
+  },
+  "salesTab": {
+    "emptyWhat": "transactions",
+    "cols": { "code": "Invoice code", "time": "Time", "seller": "Seller", "total": "Total", "status": "Status" }
+  },
+  "allocation": {
+    "cols": {
+      "code": "Invoice code",
+      "time": "Time",
+      "invoiceValue": "Invoice total",
+      "paidBefore": "Already collected",
+      "remaining": "Outstanding",
+      "collect": "Amount collected"
+    },
+    "empty": "No matching records found",
+    "collectAria": "Amount collected for {code}",
+    "unallocated": "Unallocated amount:"
+  },
+  "debtDialog": {
+    "title": { "payment": "Payment", "discount": "Payment discount", "adjust": "Debt adjustment" },
+    "created": {
+      "payment": "Payment voucher created",
+      "discount": "Payment discount voucher created",
+      "adjust": "Adjustment voucher created"
+    },
+    "currentDebt": "Current debt: {amount}",
+    "currentDebtLabel": "Current receivable",
+    "adjustDate": "Adjustment date",
+    "adjustValue": "Adjusted debt",
+    "description": "Description",
+    "time": "Time",
+    "collector": "Collected by",
+    "performer": "Performed by",
+    "method": "Payment method",
+    "amount": "Amount",
+    "discountAmount": "Discount for customer",
+    "remainingAfterPayment": "Remaining debt: {amount}",
+    "remainingAfterDiscount": "Remaining debt: {amount}",
+    "note": "Note",
+    "notePlaceholder": "Enter a note",
+    "allocate": "Allocate to invoices",
+    "createAndPrint": "Create receipt & print",
+    "createReceipt": "Create receipt",
+    "createVoucher": "Create voucher",
+    "printFailed": "Voucher {code} was created but could not be printed — reprint it from Cash flow"
+  },
+  "form": {
+    "titleAdd": "Add customer",
+    "titleEdit": "Edit customer",
+    "branch": "Created at branch: {name}",
+    "tabGeneral": "General",
+    "tabInvoice": "Invoicing details",
+    "added": "Customer {code} added",
+    "updated": "Customer updated",
+    "code": "Customer code",
+    "codePlaceholder": "Auto-generated",
+    "name": "Customer name",
+    "phone": "Phone",
+    "phone2": "Phone 2",
+    "address": "Address",
+    "addressPlaceholder": "House no., building, alley, street",
+    "area": "Area",
+    "ward": "Ward",
+    "group": "Group",
+    "groupAria": "Customer group",
+    "pickGroup": "Select customer group",
+    "birthday": "Date of birth",
+    "email": "Email",
+    "facebook": "Facebook",
+    "note": "Note",
+    "invoice": {
+      "customerType": "Customer type",
+      "personal": "Individual / Household business",
+      "company": "Company",
+      "buyerName": "Buyer name",
+      "buyerNamePlaceholder": "Enter buyer name",
+      "taxCode": "Tax code",
+      "taxCodePlaceholder": "Enter tax code",
+      "address": "Address",
+      "addressAria": "Invoicing address",
+      "province": "Province/City",
+      "ward": "Ward/Commune",
+      "companyName": "Company name",
+      "companyNamePlaceholder": "Enter company name",
+      "idNumber": "ID card no.",
+      "idNumberPlaceholder": "Enter ID card number",
+      "passport": "Passport no.",
+      "passportPlaceholder": "Enter passport number",
+      "email": "Email",
+      "phone": "Phone",
+      "phonePlaceholder": "Enter phone number",
+      "bankName": "Bank name",
+      "bankNamePlaceholder": "Enter bank name",
+      "bankAccount": "Bank account no.",
+      "bankAccountPlaceholder": "Enter account number"
+    }
+  }
+}
