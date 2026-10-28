@@ -10,7 +10,7 @@ type NavItem = { href: string; label: string; perm?: string; groups?: NavGroup[]
 
 /**
  * Menu xanh theo KiotViet: rê chuột vào mục có nhóm con → bảng xổ xuống chia cột, mỗi cột có tiêu đề nhóm.
- * Chỉ liệt kê màn đã làm thật (chưa có: Giao hàng — vận đơn, đối tác giao hàng).
+ * Chỉ liệt kê màn đã làm thật.
  */
 const NAV: NavItem[] = [
   { href: "/", label: "Tổng quan" },
