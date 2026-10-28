@@ -29,13 +29,15 @@ public class PurchaseReceiptService {
     private final PurchaseReturnRepository returns;
     private final PurchaseLineSupport support;
     private final StockMovementService stock;
+    private final CashflowOutbox cashflows;
 
     public PurchaseReceiptService(PurchaseReceiptRepository receipts, PurchaseReturnRepository returns,
-                                  PurchaseLineSupport support, StockMovementService stock) {
+                                  PurchaseLineSupport support, StockMovementService stock, CashflowOutbox cashflows) {
         this.receipts = receipts;
         this.returns = returns;
         this.support = support;
         this.stock = stock;
+        this.cashflows = cashflows;
     }
 
     /** Tạo mới (id = null) hoặc sửa phiếu tạm; complete = true thì nhập kho luôn. */
