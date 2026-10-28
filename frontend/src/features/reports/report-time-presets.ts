@@ -58,9 +58,6 @@ export const dmy = (d: Date) => `${String(d.getDate()).padStart(2, "0")}/${Strin
 export const rangeText = (r: DateRange) =>
   ymd(r.from) === ymd(r.to) ? `Ngày ${dmy(r.from)}` : `Từ ngày ${dmy(r.from)} đến ngày ${dmy(r.to)}`;
 
-/** Tham số from/to (Instant) cho API báo cáo. */
-export const apiRange = (r: DateRange) => ({ from: r.from.toISOString(), to: addDays(r.to, 1).toISOString() });
-
 /** Giá trị bộ lọc Thời gian: 1 mốc hoặc khoảng tùy chỉnh (yyyy-MM-dd). */
 export type TimeValue = { mode: "preset"; preset: TimePreset } | { mode: "custom"; from: string; to: string };
 
