@@ -45,6 +45,12 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
+    public java.util.List<UserController.UserLookup> lookup() {
+        return users.findAll(Sort.by("fullName")).stream().filter(AppUser::isActive)
+                .map(u -> new UserController.UserLookup(u.getId(), u.getFullName())).toList();
+    }
+
+    @Transactional(readOnly = true)
     public UserResponse get(UUID id) {
         return UserResponse.of(find(id));
     }
