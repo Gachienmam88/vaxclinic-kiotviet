@@ -3,28 +3,31 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
-import { Ellipsis, Pencil, Save, Trash2, Undo2 } from "lucide-react";
+import { Ellipsis, FileOutput, Pencil, Save, Trash2, Undo2 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useEInvoiceRecords } from "@/features/integrations/integration-queries";
 import { InvoiceTaxDialog } from "./invoice-tax-dialog";
 import { toast } from "sonner";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Textarea } from "@/components/ui/textarea";
-import { NativeSelect } from "@/features/products/product-form-sections";
 import { fromLocalInput, toLocalInput } from "@/features/purchases/purchase-line-form";
 import { useUserLookup } from "@/features/purchases/purchase-queries";
 import { useBranches } from "@/features/settings/settings-queries";
 import { api, errorMessage } from "@/lib/api-client";
-import { formatDateTime, formatMoney, formatNumber } from "@/lib/format";
+import { formatDateTime, formatNumber } from "@/lib/format";
 import { useCurrentUser } from "@/lib/use-current-user";
+import { cn } from "@/lib/utils";
 import { EInvoiceStatus } from "@/features/integrations/einvoice-status";
 import { SALES_KEYS, useInvoice } from "./sales-queries";
-import { FUND_LABEL } from "./sales-types";
+import { invoiceData } from "@/features/print/print-data";
+import { PrintButton } from "@/features/print/print-button";
+import { InvoiceLinesTable, InvoicePaymentHistory, InvoiceTotals } from "./invoice-detail-sections";
+import { DETAIL_BTN, DETAIL_PANEL, DETAIL_TAB, DETAIL_TABS_LIST, StatusBadge } from "./invoice-list-kit";
+import { downloadCsv } from "./invoice-list-pager";
+
+const FIELD = "h-[30px] w-full rounded-md border bg-background px-2 text-[13px] outline-none focus-visible:border-primary disabled:bg-muted/40";
 
 /** Chi tiết hóa đơn mở dưới dòng: Thông tin (sửa người bán / ngày bán / ghi chú, hủy) + Lịch sử thanh toán. */
 export function InvoiceDetailPanel({ id }: { id: string }) {
@@ -51,96 +54,73 @@ export function InvoiceDetailPanel({ id }: { id: string }) {
     onError: (e) => toast.error(errorMessage(e)),
   });
 
-  if (!inv) return <div className="p-6 text-sm text-muted-foreground">Đang tải...</div>;
+  if (!inv) return <div className={cn(DETAIL_PANEL, "p-6 text-muted-foreground")}>Đang tải...</div>;
   const f = edit ?? { sellerId: inv.sellerId ?? "", at: toLocalInput(inv.soldAt), note: inv.note ?? "" };
   const set = (p: Partial<typeof f>) => setEdit({ ...f, ...p });
   const active = inv.status === "COMPLETED";
-  const qty = inv.lines.reduce((s, l) => s + Number(l.quantity), 0);
+  const exportLines = () => downloadCsv(`hoa-don-${inv.code}`, ["Mã hàng", "Tên hàng", "ĐVT", "Số lượng", "Đơn giá", "Giảm giá", "Giá bán", "Thành tiền"],
+    inv.lines.map((l) => [l.productCode, l.productName, l.unitName, formatNumber(l.quantity), l.unitPrice, l.discount, l.price, l.amount]));
 
   return (
-    <div className="border-x-2 border-b-2 border-primary/40 bg-background p-4 text-sm">
-      <Tabs defaultValue="info">
-        <TabsList variant="line"><TabsTrigger value="info">Thông tin</TabsTrigger><TabsTrigger value="payments">Lịch sử thanh toán</TabsTrigger></TabsList>
-        <TabsContent value="info" className="space-y-4 pt-3">
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="text-lg font-bold">{inv.customerCode ? `${inv.customerCode} - ` : ""}{inv.customerName}</span>
-            <span>{inv.code}</span>
-            <Badge variant={active ? "default" : "destructive"}>{active ? "Hoàn thành" : "Đã hủy"}</Badge>
-            {inv.offline && <Badge variant="outline">Bán offline</Badge>}
-            <span className="ml-auto text-muted-foreground">{branches.find((b) => b.id === inv.branchId)?.name}</span>
-          </div>
-          <div className="grid grid-cols-1 gap-x-8 gap-y-2 md:grid-cols-3">
-            <div className="flex items-center gap-2"><span className="w-20 text-muted-foreground">Người tạo:</span>{inv.createdByName}</div>
-            <div className="flex items-center gap-2"><span className="w-20 text-muted-foreground">Người bán:</span>
-              <NativeSelect value={f.sellerId} disabled={!active} onChange={(e) => set({ sellerId: e.target.value })}>
-                {users.map((u) => <option key={u.id} value={u.id}>{u.fullName}</option>)}</NativeSelect></div>
-            <div className="flex items-center gap-2"><span className="w-20 text-muted-foreground">Ngày bán:</span>
-              <Input type="datetime-local" value={f.at} disabled={!active} onChange={(e) => set({ at: e.target.value })} /></div>
-          </div>
-          <table className="w-full">
-            <thead className="bg-muted/60 text-left"><tr><th className="px-2 py-2">Mã hàng</th><th className="px-2">Tên hàng</th>
-              <th className="px-2 text-right">Số lượng</th><th className="px-2 text-right">Đơn giá</th><th className="px-2 text-right">Giảm giá</th>
-              <th className="px-2 text-right">Giá bán</th><th className="px-2 text-right">Thành tiền</th></tr></thead>
-            <tbody>{inv.lines.map((l) => (
-              <tr key={l.id} className="border-b align-top">
-                <td className="px-2 py-2 text-primary">{l.productCode}</td>
-                <td className="px-2 py-2">{l.productName} ({l.unitName}){l.lots && <div className="text-xs text-muted-foreground">Lô: {l.lots}</div>}
-                  {l.note && <div className="text-xs italic text-muted-foreground">{l.note}</div>}</td>
-                <td className="px-2 py-2 text-right">{formatNumber(l.quantity)}</td><td className="px-2 py-2 text-right">{formatMoney(l.unitPrice)}</td>
-                <td className="px-2 py-2 text-right">{Number(l.discount) ? formatMoney(l.discount) : ""}</td>
-                <td className="px-2 py-2 text-right">{formatMoney(l.price)}</td><td className="px-2 py-2 text-right font-semibold">{formatMoney(l.amount)}</td>
-              </tr>))}</tbody>
-          </table>
-          <div className="flex gap-6">
-            <Textarea className="max-w-xl" placeholder="Ghi chú..." value={f.note} disabled={!active} onChange={(e) => set({ note: e.target.value })} />
-            <div className="ml-auto w-72 space-y-1.5">
-              {([[`Tổng tiền hàng (${formatNumber(qty)})`, inv.subtotal], ["Giảm giá hóa đơn", inv.discount], ["Khách cần trả", inv.total]] as const)
-                .map(([k, v]) => <div key={k} className="flex justify-between"><span>{k}</span><span>{formatMoney(v)}</span></div>)}
-              <div className="flex justify-between font-semibold"><span>Khách đã trả</span><span>{formatMoney(inv.paid)}</span></div>
+    <div className={DETAIL_PANEL}>
+      <Tabs defaultValue="info" className="gap-0">
+        <TabsList variant="line" className={DETAIL_TABS_LIST}>
+          <TabsTrigger value="info" className={DETAIL_TAB}>Thông tin</TabsTrigger>
+          <TabsTrigger value="payments" className={DETAIL_TAB}>Lịch sử thanh toán</TabsTrigger>
+        </TabsList>
+        <TabsContent value="info">
+          <div className="space-y-4 p-4">
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="text-base font-bold">{inv.customerCode ? `${inv.customerCode} - ` : ""}{inv.customerName}</span>
+              <span>{inv.code}</span>
+              <StatusBadge tone={active ? "green" : "red"}>{active ? "Hoàn thành" : "Đã hủy"}</StatusBadge>
+              {inv.offline && <StatusBadge tone="gray">Bán offline</StatusBadge>}
+              <span className="ml-auto">{branches.find((b) => b.id === inv.branchId)?.name}</span>
             </div>
+            <div className="grid grid-cols-1 gap-x-8 gap-y-2 text-xs md:grid-cols-3">
+              <div className="flex h-[30px] items-center gap-2"><span className="w-20 shrink-0">Người tạo:</span>{inv.createdByName}</div>
+              <div className="flex items-center gap-2"><span className="w-20 shrink-0">Người bán:</span>
+                <select className={FIELD} aria-label="Người bán" value={f.sellerId} disabled={!active} onChange={(e) => set({ sellerId: e.target.value })}>
+                  {users.map((u) => <option key={u.id} value={u.id}>{u.fullName}</option>)}</select></div>
+              <div className="flex items-center gap-2"><span className="w-20 shrink-0">Ngày bán:</span>
+                <input type="datetime-local" aria-label="Ngày bán" className={FIELD} value={f.at} disabled={!active} onChange={(e) => set({ at: e.target.value })} /></div>
+            </div>
+            <InvoiceLinesTable inv={inv} />
+            <div className="flex flex-col-reverse gap-4 md:flex-row md:items-start">
+              <textarea className="mt-6 min-h-24 w-full max-w-[750px] rounded-md border px-3 py-2 outline-none placeholder:text-muted-foreground focus-visible:border-primary disabled:bg-muted/40"
+                placeholder="Ghi chú..." aria-label="Ghi chú" value={f.note} disabled={!active} onChange={(e) => set({ note: e.target.value })} />
+              <div className="md:ml-auto"><InvoiceTotals inv={inv} /></div>
+            </div>
+            <EInvoiceStatus invoiceId={inv.id} active={active} />
           </div>
-          <div className="border-t pt-3"><EInvoiceStatus invoiceId={inv.id} active={active} /></div>
-          {active && (
-            <div className="flex gap-2 border-t pt-3">
-              {can("sales.cancel") && (
-                <Button variant="ghost" className="text-destructive" disabled={cancel.isPending}
-                  onClick={() => confirm(`Hủy hóa đơn ${inv.code}? Hàng sẽ được hoàn lại kho.`) && cancel.mutate()}>
-                  <Trash2 className="size-4" /> Hủy</Button>
-              )}
-              <Button className="ml-auto" render={<Link href={`/pos?edit=${inv.id}`} />}><Pencil className="size-4" /> Chỉnh sửa</Button>
-              <Button variant="outline" disabled={!edit || save.isPending} onClick={() => save.mutate()}>
+          <div className="flex flex-wrap items-center gap-2 border-t px-4 py-2.5">
+            {active && can("sales.cancel") && (
+              <Button variant="ghost" className={DETAIL_BTN} disabled={cancel.isPending}
+                onClick={() => confirm(`Hủy hóa đơn ${inv.code}? Hàng sẽ được hoàn lại kho.`) && cancel.mutate()}>
+                <Trash2 className="size-4" /> Hủy</Button>)}
+            <Button variant="ghost" className={DETAIL_BTN} onClick={exportLines}><FileOutput className="size-4" /> Xuất file</Button>
+            {active && <>
+              <Button className={cn(DETAIL_BTN, "ml-auto")} render={<Link href={`/pos?edit=${inv.id}`} />}><Pencil className="size-4" /> Chỉnh sửa</Button>
+              <Button variant="outline" className={DETAIL_BTN} disabled={!edit || save.isPending} onClick={() => save.mutate()}>
                 <Save className="size-4" /> Lưu</Button>
-              <Button variant="outline" render={<Link href={`/pos?return=${inv.id}`} />}><Undo2 className="size-4" /> Trả hàng</Button>
+              <Button variant="outline" className={DETAIL_BTN} render={<Link href={`/pos?return=${inv.id}`} />}><Undo2 className="size-4" /> Trả hàng</Button>
+            </>}
+            <span className={cn(!active && "ml-auto")}><PrintButton type="INVOICE" data={invoiceData(inv)} branchId={inv.branchId} /></span>
+            {active && (
               <DropdownMenu>
-                <DropdownMenuTrigger className="rounded-md border px-2 hover:bg-muted" aria-label="Thêm"><Ellipsis className="size-4" /></DropdownMenuTrigger>
+                <DropdownMenuTrigger className="inline-flex size-[30px] items-center justify-center rounded-md border hover:bg-muted" aria-label="Thêm thao tác">
+                  <Ellipsis className="size-4" /></DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem disabled={published} onClick={() => setTaxDialog(true)}>
                     Sửa tỷ lệ thuế hàng hóa{published && " (đã phát hành HĐĐT)"}</DropdownMenuItem>
                 </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          )}
+              </DropdownMenu>)}
+          </div>
           {taxDialog && <InvoiceTaxDialog invoice={inv} onClose={() => setTaxDialog(false)} />}
         </TabsContent>
-        <TabsContent value="payments" className="pt-3">
-          <table className="w-full">
-            <thead className="bg-muted/60 text-left"><tr><th className="px-2 py-2">Mã phiếu</th><th className="px-2">Thời gian</th>
-              <th className="px-2">Người tạo</th><th className="px-2 text-right">Giá trị phiếu</th><th className="px-2">Phương thức</th>
-              <th className="px-2">Trạng thái</th><th className="px-2 text-right">Tiền thu/chi</th></tr></thead>
-            <tbody>
-              {!inv.payments.length && <tr><td colSpan={7} className="py-6 text-center text-muted-foreground">Chưa có thanh toán</td></tr>}
-              {inv.payments.map((p) => (
-                <tr key={p.voucherId} className="border-b">
-                  <td className="px-2 py-2 text-primary">{p.code}</td><td className="px-2">{formatDateTime(p.occurredAt)}</td>
-                  <td className="px-2">{p.createdByName}</td><td className="px-2 text-right">{formatMoney(p.voucherAmount)}</td>
-                  <td className="px-2">{FUND_LABEL[p.fund]}</td>
-                  <td className="px-2"><Badge variant={p.status === "PAID" ? "default" : "destructive"}>{p.status === "PAID" ? "Đã thanh toán" : "Đã hủy"}</Badge></td>
-                  <td className="px-2 text-right">{formatMoney(p.allocated)}</td>
-                </tr>))}
-            </tbody>
-          </table>
-        </TabsContent>
+        <TabsContent value="payments"><InvoicePaymentHistory inv={inv} /></TabsContent>
       </Tabs>
+      <p className="sr-only">Cập nhật {formatDateTime(inv.soldAt)}</p>
     </div>
   );
 }
