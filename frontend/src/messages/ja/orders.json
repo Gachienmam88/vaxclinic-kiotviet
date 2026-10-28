@@ -1,0 +1,77 @@
+{
+  "status": { "DRAFT": "仮伝票", "CONFIRMED": "確定済み", "COMPLETED": "完了", "CANCELLED": "キャンセル済み" },
+  "list": {
+    "title": "受注",
+    "searchPlaceholder": "受注コード、顧客名・コード・電話番号",
+    "newOrder": "受注",
+    "newOrderHint": "販売画面を開き、タブバーの「受注追加」アイコンを押します",
+    "exportHint": "表示中の行をCSVに出力",
+    "emptyWhat": "受注",
+    "unit": "件"
+  },
+  "cols": {
+    "code": "受注コード",
+    "time": "日時",
+    "customerCode": "顧客コード",
+    "customer": "顧客",
+    "subtotal": "商品合計",
+    "discount": "値引き",
+    "total": "請求額",
+    "paid": "入金額",
+    "status": "ステータス",
+    "invoice": "売上伝票",
+    "productCode": "商品コード",
+    "productName": "商品名",
+    "unit": "単位",
+    "quantity": "数量",
+    "unitPrice": "単価",
+    "price": "販売価格",
+    "amount": "金額"
+  },
+  "csv": { "listFile": "orders", "detailFile": "order-{code}" },
+  "filter": { "status": "ステータス", "createdBy": "作成者", "pickCreator": "作成者を選択" },
+  "detail": {
+    "tabInfo": "情報",
+    "tabPayments": "支払履歴",
+    "invoiceBadge": "売上伝票 {code}",
+    "creditKept": "前受金 {amount} を残高として保持",
+    "createdBy": "作成者:",
+    "seller": "販売者:",
+    "orderedAt": "受注日:",
+    "noNote": "備考なし",
+    "cancel": "キャンセル",
+    "createInvoice": "売上伝票作成",
+    "edit": "編集",
+    "confirm": "確定",
+    "confirmed": "受注を確定しました"
+  },
+  "totals": {
+    "subtotal": "商品合計 ({qty})",
+    "discount": "受注値引き",
+    "total": "請求額",
+    "paid": "入金額"
+  },
+  "payments": {
+    "code": "伝票コード",
+    "time": "日時",
+    "createdBy": "作成者",
+    "type": "伝票種別",
+    "method": "支払方法",
+    "status": "ステータス",
+    "amount": "入金/出金",
+    "emptyWhat": "入出金伝票",
+    "depositReceipt": "前受金入金伝票",
+    "depositRefund": "前受金返金伝票",
+    "paid": "支払済み",
+    "cancelled": "キャンセル済み"
+  },
+  "cancel": {
+    "title": "受注 {code} をキャンセル",
+    "depositBody": "前受金 {amount} を受領済みです。前受金の処理:",
+    "confirmBody": "この受注をキャンセルしますか？",
+    "submit": "受注キャンセル",
+    "done": "受注をキャンセルしました",
+    "doneCredit": "受注をキャンセルし、{amount} を前受金として保持しました",
+    "doneRefund": "受注をキャンセルし、{amount} を返金しました（出金伝票 {voucher}）"
+  }
+}
