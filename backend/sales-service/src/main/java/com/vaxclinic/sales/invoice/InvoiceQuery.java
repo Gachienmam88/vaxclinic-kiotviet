@@ -99,6 +99,19 @@ public class InvoiceQuery {
                 inv.getRevision(), lines, payments);
     }
 
+    /** 10 lần bán gần nhất của 1 hàng; có khách thì lấy giá đã bán cho khách đó trước. */
+    public List<InvoiceDtos.RecentPrice> recentPrices(UUID productId, UUID customerId) {
+        var p = new MapSqlParameterSource("productId", productId).addValue("customerId", customerId);
+        return jdbc.query("""
+                select i.code, i.sold_at, i.customer_name, l.quantity, l.unit_price - l.discount price
+                from invoice_lines l join invoices i on i.id = l.invoice_id
+                where l.product_id = :productId and i.status = 'COMPLETED'
+                order by (case when i.customer_id = cast(:customerId as uuid) then 0 else 1 end), i.sold_at desc
+                limit 10""", p, (rs, n) -> new InvoiceDtos.RecentPrice(rs.getString("code"),
+                rs.getTimestamp("sold_at").toInstant(), rs.getString("customer_name"), rs.getBigDecimal("quantity"),
+                rs.getBigDecimal("price")));
+    }
+
     private static void add(StringBuilder w, MapSqlParameterSource p, boolean when, String sql, String name, Object value) {
         if (when) {
             w.append(sql);
