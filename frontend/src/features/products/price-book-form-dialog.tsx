@@ -20,8 +20,10 @@ const day = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart
 
 function initialForm(book?: PriceBook): PriceBookRequest {
   if (book) {
-    const { id: _id, itemCount: _n, createdByName: _c, createdAt: _t, ...rest } = book;
-    return rest;
+    const { name, validFrom, validTo, active, branchIds, customerGroupIds, sellerIds, missingPolicy, autoUpdate, autoOp,
+      autoValue, autoPercent } = book;
+    return { name, validFrom, validTo, active, branchIds, customerGroupIds, sellerIds, missingPolicy, autoUpdate, autoOp,
+      autoValue: Number(autoValue), autoPercent };
   }
   const now = new Date();
   const next = new Date(now);
@@ -114,16 +116,16 @@ export function PriceBookFormDialog({ book, onClose, onSaved }: {
             {form.autoUpdate && (
               <div className="flex items-center gap-2 pl-6 text-[13px]">
                 <span>Giá bán = Giá chung</span>
-                <NativeSelect aria-label="Phép tính" className="w-16" value={form.autoOp}
+                <div className="w-16"><NativeSelect aria-label="Phép tính" value={form.autoOp}
                   onChange={(e) => set({ autoOp: e.target.value as "PLUS" | "MINUS" })}>
                   <option value="PLUS">+</option><option value="MINUS">−</option>
-                </NativeSelect>
+                </NativeSelect></div>
                 <Input aria-label="Giá trị" type="number" min={0} className="h-8 w-28 text-right" value={form.autoValue}
                   onChange={(e) => set({ autoValue: Math.max(0, Number(e.target.value)) })} />
-                <NativeSelect aria-label="Đơn vị" value={form.autoPercent ? "%" : "VND"}
+                <div className="w-20"><NativeSelect aria-label="Đơn vị" value={form.autoPercent ? "%" : "VND"}
                   onChange={(e) => set({ autoPercent: e.target.value === "%" })}>
                   <option value="VND">VNĐ</option><option value="%">%</option>
-                </NativeSelect>
+                </NativeSelect></div>
               </div>
             )}
           </div>
