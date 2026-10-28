@@ -6,14 +6,18 @@ import { api, errorMessage } from "@/lib/api-client";
 import { refreshDelivery } from "./delivery-queries";
 import { shipmentStatusLabel, type ShipmentStatus, type StatusResult } from "./delivery-types";
 
-/** Hỏi xác nhận các bước có hệ quả tiền / kho trước khi đổi trạng thái. */
+/** Tham số "Đã chuyển hoàn": cách hoàn tiền khách đã trả + phí cửa hàng chịu (chỉ khi 1 vận đơn). */
+export type ReturnedOptions = {
+  refundMethod: "CASH" | "TRANSFER" | "CREDIT"; bankAccountId: string | null; shippingFee?: number; returnFee?: number;
+};
+
+/** Hỏi xác nhận các bước có hệ quả tiền / kho trước khi đổi trạng thái (Đã chuyển hoàn dùng hộp thoại riêng). */
 export function confirmStatus(to: ShipmentStatus, count: number) {
   const what = count > 1 ? `${count} vận đơn` : "vận đơn";
   const extra: Partial<Record<ShipmentStatus, string>> = {
     DELIVERED: "Tiền thu hộ được ghi nhận khách đã trả, đối tác giao hàng nợ cửa hàng số tiền này.",
-    RETURNING: "Hệ thống tạo phiếu trả hàng (hàng nhập lại kho) và hoàn tiền khách đã trả trước.",
-    RETURNED: "Nếu chưa có phiếu trả hàng, hệ thống tạo phiếu trả hàng (hàng nhập lại kho).",
-    CANCELLED: "Hóa đơn của vận đơn sẽ bị hủy, hàng nhập lại kho.",
+    RETURNING: "Đối tác đang chuyển hàng về, chưa nhập kho. Khi cửa hàng nhận lại hàng, chọn \"Đã chuyển hoàn\".",
+    CANCELLED: "Chỉ hủy vận đơn, hóa đơn giữ nguyên (khách còn nợ phần chưa trả); tạo vận đơn mới ở chi tiết hóa đơn. Muốn hủy bán thì hủy hóa đơn.",
   };
   return window.confirm(`Chuyển ${what} sang "${shipmentStatusLabel(to)}"?${extra[to] ? `\n${extra[to]}` : ""}`);
 }
@@ -22,8 +26,8 @@ export function confirmStatus(to: ShipmentStatus, count: number) {
 export function useShipmentStatus(onDone?: () => void) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ ids, status, note }: { ids: string[]; status: ShipmentStatus; note?: string }) =>
-      api<StatusResult[]>("/shipments/status", { method: "POST", body: { ids, status, note: note || null } }),
+    mutationFn: ({ ids, status, note, opts }: { ids: string[]; status: ShipmentStatus; note?: string; opts?: ReturnedOptions }) =>
+      api<StatusResult[]>("/shipments/status", { method: "POST", body: { ids, status, note: note || null, ...opts } }),
     onSuccess: (res, v) => {
       const ok = res.filter((r) => r.ok).length;
       const bad = res.filter((r) => !r.ok);
