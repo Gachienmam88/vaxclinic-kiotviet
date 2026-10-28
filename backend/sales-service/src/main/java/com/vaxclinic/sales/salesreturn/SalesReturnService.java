@@ -48,7 +48,7 @@ public class SalesReturnService {
         if (writer.exists(req.id())) {
             return req.id();
         }
-        Invoice inv = invoices.findById(req.invoiceId())
+        Invoice inv = invoices.findWithLines(req.invoiceId())
                 .orElseThrow(() -> BusinessException.notFound("INVOICE_NOT_FOUND", "Không tìm thấy hóa đơn"));
         if (!"COMPLETED".equals(inv.getStatus())) {
             throw BusinessException.badRequest("INVOICE_NOT_RETURNABLE", "Hóa đơn đã hủy, không trả hàng được");
