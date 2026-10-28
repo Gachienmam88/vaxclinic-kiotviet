@@ -27,7 +27,10 @@ const NAV: NavItem[] = [
       { href: "/purchases/input-invoices", label: "Hóa đơn đầu vào" },
     ],
   },
-  { href: "/invoices", label: "Đơn hàng", perm: "sales.perform", children: [{ href: "/invoices", label: "Hóa đơn" }] },
+  {
+    href: "/invoices", label: "Đơn hàng", perm: "sales.perform",
+    children: [{ href: "/invoices", label: "Hóa đơn" }, { href: "/returns", label: "Trả hàng" }],
+  },
   { href: "/customers", label: "Khách hàng", perm: "patient.view" },
   { href: "/cashbook", label: "Sổ quỹ", perm: "cashbook.manage" },
 ];
