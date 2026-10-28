@@ -95,6 +95,23 @@ public class TaxSettingsController {
     @PreAuthorize("hasAuthority('settings.manage')")
     public TaxSettings save(@Valid @RequestBody TaxSettings req, @AuthenticationPrincipal Jwt jwt) {
         List<TaxProfile> profiles = req.profiles() == null ? List.of() : req.profiles();
+        List<Sector> sectors = req.sectors() == null ? List.of() : req.sectors();
+        if (sectors.isEmpty()) {
+            throw BusinessException.badRequest("SECTOR_REQUIRED", "Cần ít nhất 1 ngành nghề");
+        }
+        var sectorCodes = new HashSet<String>();
+        for (Sector s : sectors) {
+            if (!sectorCodes.add(s.code())) {
+                throw BusinessException.badRequest("SECTOR_DUPLICATED", "Mã ngành nghề " + s.code() + " bị trùng");
+            }
+        }
+        if (!sectorCodes.contains(req.defaultSector())) {
+            throw BusinessException.badRequest("SECTOR_NOT_FOUND", "Ngành nghề mặc định không có trong danh sách");
+        }
+        Map<UUID, String> categorySectors = req.categorySectors() == null ? Map.of() : req.categorySectors();
+        if (!sectorCodes.containsAll(categorySectors.values())) {
+            throw BusinessException.badRequest("SECTOR_NOT_FOUND", "Nhóm hàng đang gắn với ngành nghề đã bị xóa");
+        }
         var taxCodes = new HashSet<String>();
         var branches = new HashSet<UUID>();
         for (TaxProfile p : profiles) {
