@@ -1,0 +1,73 @@
+package com.vaxclinic.sales.accounting;
+
+import com.vaxclinic.common.settings.ShopSettings;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.math.BigDecimal;
+import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.UUID;
+
+/**
+ * Số liệu cho Sổ doanh thu bán hàng hóa, dịch vụ (S1a/S2a/S2b-HKD) và tờ khai thuế hộ kinh doanh.
+ * Doanh thu theo NGÀY (giờ Việt Nam) và theo MÃ THUẾ của dòng hàng: hóa đơn hoàn thành − hàng khách trả.
+ * Giảm giá cả hóa đơn được phân bổ vào từng dòng theo tỷ lệ tiền hàng. Phí trả hàng khách chịu tính vào doanh thu.
+ */
+@RestController
+public class RevenueBookController {
+
+    public record DailyRevenue(LocalDate date, String taxCode, BigDecimal sales, BigDecimal returns, int invoiceCount) {
+    }
+
+    private final NamedParameterJdbcTemplate jdbc;
+
+    public RevenueBookController(NamedParameterJdbcTemplate jdbc) {
+        this.jdbc = jdbc;
+    }
+
+    @GetMapping("/api/accounting/revenue/daily")
+    @PreAuthorize("hasAuthority('report.view') or hasAuthority('cashbook.manage')")
+    public List<DailyRevenue> daily(@RequestParam LocalDate from, @RequestParam LocalDate to,
+                                    @RequestParam(required = false) List<UUID> branchIds) {
+        var p = new MapSqlParameterSource()
+                .addValue("from", Timestamp.from(from.atStartOfDay(ShopSettings.ZONE).toInstant()))
+                .addValue("to", Timestamp.from(to.plusDays(1).atStartOfDay(ShopSettings.ZONE).toInstant()))
+                .addValue("branches", branchIds == null || branchIds.isEmpty() ? null : branchIds.toArray(new UUID[0]))
+                .addValue("allBranches", branchIds == null || branchIds.isEmpty());
+        return jdbc.query("""
+                with inv as (
+                  select i.id, (i.sold_at at time zone 'Asia/Ho_Chi_Minh')::date d, i.total, i.subtotal
+                  from invoices i
+                  where i.status = 'COMPLETED' and i.sold_at >= :from and i.sold_at < :to
+                    and (:allBranches or i.branch_id = any(:branches))
+                ), sale as (
+                  select inv.d, coalesce(l.tax_code, '') tax_code, count(distinct inv.id) n,
+                    sum(case when inv.subtotal = 0 then 0
+                             else round(inv.total * l.quantity * (l.unit_price - l.discount) / inv.subtotal) end) amount
+                  from inv join invoice_lines l on l.invoice_id = inv.id group by 1, 2
+                ), ret as (
+                  select r.id, (r.returned_at at time zone 'Asia/Ho_Chi_Minh')::date d, r.total, r.subtotal
+                  from sales_returns r
+                  where r.status = 'COMPLETED' and r.returned_at >= :from and r.returned_at < :to
+                    and (:allBranches or r.branch_id = any(:branches))
+                ), back as (
+                  select ret.d, coalesce(il.tax_code, '') tax_code,
+                    sum(case when ret.subtotal = 0 then 0
+                             else round(ret.total * rl.quantity * rl.unit_price / ret.subtotal) end) amount
+                  from ret join sales_return_lines rl on rl.return_id = ret.id
+                  left join invoice_lines il on il.id = rl.invoice_line_id group by 1, 2
+                )
+                select coalesce(s.d, b.d) d, coalesce(s.tax_code, b.tax_code) tax_code, coalesce(s.amount, 0) sales,
+                  coalesce(b.amount, 0) returns, coalesce(s.n, 0) n
+                from sale s full join back b on b.d = s.d and b.tax_code = s.tax_code
+                order by 1, 2""", p,
+                (rs, i) -> new DailyRevenue(rs.getObject("d", LocalDate.class), rs.getString("tax_code"),
+                        rs.getBigDecimal("sales"), rs.getBigDecimal("returns"), rs.getInt("n")));
+    }
+}
