@@ -94,6 +94,9 @@ public class InternalStockService {
             BigDecimal unitCost = p.getCost().multiply(unit.getConversionRate()).setScale(4, RoundingMode.HALF_UP);
             var allocations = new ArrayList<Allocation>();
             if (p.isLotManaged()) {
+                // Lock the (product, branch) balance row BEFORE reading lots: concurrent sales of the same item
+                // at the same branch then read lot quantities strictly one after another (no double allocation).
+                balances.findForUpdate(new StockBalance.Key(p.getId(), req.branchId()));
                 BigDecimal remaining = baseQty;
                 for (ProductLot lot : usableLots(p.getId(), req.branchId())) {
                     if (remaining.signum() <= 0) {
