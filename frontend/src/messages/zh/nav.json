@@ -1,0 +1,83 @@
+{
+  "menu": {
+    "overview": "概览",
+    "products": "商品",
+    "purchases": "采购",
+    "orders": "订单",
+    "customers": "客户",
+    "employees": "员工",
+    "cashbook": "收支",
+    "reports": "报表",
+    "accounting": "税务与会计",
+    "sale": "销售"
+  },
+  "groups": {
+    "products": "商品",
+    "warehouse": "仓库",
+    "suppliers": "供应商",
+    "purchasing": "采购",
+    "orders": "订单",
+    "delivery": "配送",
+    "customers": "客户",
+    "reports": "报表"
+  },
+  "links": {
+    "productList": "商品列表",
+    "priceBooks": "价格设置",
+    "stockTakes": "盘点",
+    "internalUse": "内部领用出库",
+    "damages": "报损出库",
+    "suppliers": "供应商",
+    "inputInvoices": "进项发票",
+    "receipts": "进货",
+    "purchaseReturns": "采购退货",
+    "orderBooking": "预订单",
+    "invoices": "销售单",
+    "returns": "退货",
+    "shipments": "运单",
+    "deliveryManagement": "配送管理",
+    "deliveryPartners": "配送合作方",
+    "customers": "客户",
+    "customerGroups": "客户分组",
+    "employeeList": "员工列表",
+    "schedules": "排班",
+    "timesheets": "考勤表",
+    "payrolls": "工资表",
+    "commissions": "提成表",
+    "employeeSettings": "员工设置",
+    "reportEndOfDay": "日结",
+    "reportSales": "销售",
+    "reportOrders": "预订单",
+    "reportProducts": "商品",
+    "reportCustomers": "客户",
+    "reportSuppliers": "供应商",
+    "reportEmployees": "员工",
+    "reportChannels": "销售渠道",
+    "reportFinance": "财务"
+  },
+  "header": {
+    "settings": "设置",
+    "account": "账户"
+  },
+  "account": {
+    "twoFactorOn": "已开启两步验证",
+    "twoFactorOff": "未开启两步验证",
+    "storeProfile": "店铺资料",
+    "theme": "主题",
+    "language": "语言",
+    "chooseLanguage": "选择语言",
+    "beta": "测试版",
+    "betaHint": "测试版翻译，部分内容可能仍为越南语。打印单据和法律文件仍使用越南语。"
+  },
+  "accents": {
+    "blue": "蓝色",
+    "slate": "石板蓝",
+    "green": "绿色",
+    "purple": "紫色",
+    "red": "红色",
+    "sage": "灰绿",
+    "teal": "青绿",
+    "orange": "橙色",
+    "pink": "粉色"
+  }
+}
