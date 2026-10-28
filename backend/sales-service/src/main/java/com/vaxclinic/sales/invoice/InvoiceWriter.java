@@ -123,6 +123,17 @@ public class InvoiceWriter {
     }
 
     @Transactional
+    public void updateTaxCodes(UUID id, List<InvoiceDtos.TaxCodeChange> changes) {
+        Invoice inv = invoices.findById(id)
+                .orElseThrow(() -> BusinessException.notFound("INVOICE_NOT_FOUND", "Không tìm thấy hóa đơn"));
+        for (var c : changes) {
+            inv.getLines().stream().filter(l -> l.getId().equals(c.lineId())).findFirst()
+                    .orElseThrow(() -> BusinessException.badRequest("LINE_NOT_FOUND", "Dòng hàng không thuộc hóa đơn"))
+                    .setTaxCode(c.taxCode());
+        }
+    }
+
+    @Transactional
     public void updateInfo(UUID id, InfoRequest req) {
         Invoice inv = invoices.findById(id)
                 .orElseThrow(() -> BusinessException.notFound("INVOICE_NOT_FOUND", "Không tìm thấy hóa đơn"));
