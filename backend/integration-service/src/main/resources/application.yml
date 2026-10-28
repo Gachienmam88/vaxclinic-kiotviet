@@ -1,0 +1,40 @@
+server:
+  port: 8088
+
+spring:
+  application:
+    name: integration-service
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/integration_db}
+    username: ${DB_USER:vaxclinic}
+    password: ${DB_PASSWORD}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 50MB
+
+app:
+  jwt:
+    secret: ${JWT_SECRET}
+  # AES-256 key (base64, 32 bytes) encrypting stored passwords of tax portal / MISA accounts
+  encryption-key: ${ENCRYPTION_KEY}
+  sales-url: ${SALES_URL:http://localhost:8086}
+  # Cổng hóa đơn điện tử của Tổng cục Thuế (không có API chính thức — xem GdtPortalClient)
+  gdt-portal-url: ${GDT_PORTAL_URL:https://hoadondientu.gdt.gov.vn:30000}
+  misa:
+    test-url: https://testapi.meinvoice.vn
+    prod-url: https://api.meinvoice.vn
+    token-path: ${MISA_TOKEN_PATH:/api/v3/auth/token}
+    publish-path: ${MISA_PUBLISH_PATH:/api/v3/code/itg/invoice-calculating/invoiceandpublish}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
