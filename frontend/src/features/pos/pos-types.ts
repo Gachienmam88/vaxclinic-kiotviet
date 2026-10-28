@@ -15,6 +15,7 @@ export type CartLine = {
   unitPrice: number;
   discount: number; // giảm giá / 1 đơn vị
   note: string;
+  taxCode: string | null; // mã thuế suất lúc bán → phát hành hóa đơn điện tử
 };
 
 export type PosCustomer = { id: string; code: string; name: string; phone: string | null; debt?: number };
