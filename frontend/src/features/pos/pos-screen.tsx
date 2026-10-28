@@ -175,13 +175,21 @@ export function PosScreen() {
       </header>
       <main className="flex min-h-0 flex-1 gap-3 p-3">
         <section className="flex min-w-0 flex-1 flex-col gap-3">
-          <div className={`overflow-y-auto ${d.mode === "NORMAL" ? "h-1/2" : "flex-1"}`}>
-            <PosCart lines={d.lines} onChange={tabs.setLines} />
-          </div>
-          {d.mode === "NORMAL" && <PosProductGrid products={catalog.products} onPick={addProduct} />}
+          {d.returnOf ? (
+            <div className="flex-1 overflow-y-auto"><ReturnLines draft={d} update={tabs.update} /></div>
+          ) : (
+            <>
+              <div className={`overflow-y-auto ${d.mode === "NORMAL" ? "h-1/2" : "flex-1"}`}>
+                <PosCart lines={d.lines} customerId={d.customer?.id ?? null} onChange={tabs.setLines} />
+              </div>
+              {d.mode === "NORMAL" && <PosProductGrid products={catalog.products} onPick={addProduct} />}
+            </>
+          )}
         </section>
         <aside className="w-96 shrink-0 rounded-lg bg-background p-4">
-          <PosCheckoutPanel draft={d} branchId={branchId} update={tabs.update} onPay={pay} paying={paying} />
+          {d.returnOf
+            ? <ReturnCheckout draft={d} update={tabs.update} onSubmit={submitReturn} busy={paying} />
+            : <PosCheckoutPanel draft={d} branchId={branchId} update={tabs.update} onPay={pay} paying={paying} />}
         </aside>
       </main>
       <footer className="flex h-11 shrink-0 items-center gap-1 bg-background px-3 text-sm">
