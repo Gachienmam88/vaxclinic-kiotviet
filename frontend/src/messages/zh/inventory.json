@@ -1,0 +1,106 @@
+{
+  "status": {
+    "draft": "草稿",
+    "balanced": "已平衡库存",
+    "completed": "已完成",
+    "cancelled": "已作废"
+  },
+  "issue": {
+    "damage": {
+      "title": "报损",
+      "codeLabel": "报损单号",
+      "valueLabel": "报损总金额",
+      "qtyLabel": "报损数量",
+      "lineValueLabel": "报损金额",
+      "searchPlaceholder": "按报损单号",
+      "reasonPlaceholder": "例：已过有效期",
+      "cancelled": "已作废报损单"
+    },
+    "internal": {
+      "title": "内部领用",
+      "codeLabel": "单号",
+      "valueLabel": "总金额",
+      "qtyLabel": "出库数量",
+      "lineValueLabel": "金额",
+      "searchPlaceholder": "按单号",
+      "reasonPlaceholder": "例：接种室使用",
+      "cancelled": "已作废内部领用单"
+    }
+  },
+  "take": {
+    "listTitle": "盘点单",
+    "create": "盘点",
+    "searchPlaceholder": "按盘点单号",
+    "editorTitle": "盘点",
+    "cancelled": "已作废盘点单",
+    "confirmCancel": "作废盘点单 {code}？",
+    "tabs": {
+      "all": "全部",
+      "match": "一致",
+      "diff": "有差异",
+      "unchecked": "未盘点"
+    },
+    "addNewLot": "为 {name} 添加新批次",
+    "alreadyOnDoc": "{name} 已在单据中",
+    "clearToChangeBranch": "删除所有行后才能更换门店",
+    "lotRequired": "{name}：请输入批号和有效期",
+    "noActual": "尚未录入任何商品的实际数量",
+    "confirmBalance": "按实际数量平衡库存？已平衡的盘点单不能修改或作废。",
+    "confirmBalanceUnchecked": "按实际数量平衡库存？{unchecked} 行未盘点将保持原库存。已平衡的盘点单不能修改或作废。",
+    "savedBalanced": "已平衡库存 {code}",
+    "lotBadge": "批次 {lot} — 有效期 {expiry}"
+  },
+  "fields": {
+    "takeCode": "盘点单号",
+    "time": "时间",
+    "balancedAt": "平衡日期",
+    "actualQty": "实际数量",
+    "actualTotal": "实际金额",
+    "totalActualQty": "实际总数量",
+    "diffTotal": "差异总额",
+    "increaseQty": "盘盈数量",
+    "decreaseQty": "盘亏数量",
+    "productCode": "商品编码",
+    "productName": "商品名称",
+    "unit": "单位",
+    "unitFull": "计量单位",
+    "lotExpiry": "批次 / 有效期",
+    "lotNumber": "批号",
+    "expiryDate": "有效期",
+    "stock": "库存",
+    "actual": "实际",
+    "diffQty": "差异数量",
+    "diffValue": "差异金额",
+    "cost": "成本价",
+    "reason": "原因",
+    "createdBy": "创建人",
+    "note": "备注",
+    "status": "状态",
+    "branch": "门店",
+    "totalQty": "总数量",
+    "index": "序号",
+    "unchecked": "未盘点"
+  },
+  "list": {
+    "unit": "张单据"
+  },
+  "detail": {
+    "cancel": "作废",
+    "openDoc": "打开单据",
+    "confirmCancel": "作废单据 {code}？",
+    "confirmCancelRestock": "作废单据 {code}？商品将退回库存。"
+  },
+  "editor": {
+    "back": "返回",
+    "emptyHint": "按编码或名称搜索商品（F3）添加到单据",
+    "saveDraft": "暂存",
+    "complete": "完成",
+    "autoCode": "自动生成单号",
+    "removeLine": "删除行",
+    "noLines": "单据中没有商品",
+    "qtyPositive": "数量必须大于 0",
+    "pickLot": "{name}：请选择出库批次",
+    "savedCompleted": "已完成单据 {code}",
+    "savedDraft": "已暂存单据 {code}"
+  }
+}
