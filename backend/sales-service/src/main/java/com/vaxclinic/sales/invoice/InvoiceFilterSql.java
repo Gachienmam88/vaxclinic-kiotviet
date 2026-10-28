@@ -79,7 +79,7 @@ final class InvoiceFilterSql {
                 var all = ids.values().stream().flatMap(List::stream).toList();
                 parts.add(all.isEmpty() ? "true" : "i.id not in (:ei_all)");
                 p.addValue("ei_all", all);
-            } else if (ids.containsKey(st) || List.of("PUBLISHED", "ACCEPTED", "FAILED").contains(st)) {
+            } else if (EINVOICE_STATES.contains(st)) {
                 var list = ids.getOrDefault(st, List.of());
                 String name = "ei_" + st.toLowerCase();
                 parts.add(list.isEmpty() ? "false" : "i.id in (:" + name + ")");
