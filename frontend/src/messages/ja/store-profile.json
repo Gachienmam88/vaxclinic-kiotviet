@@ -1,0 +1,291 @@
+{
+  "shell": {
+    "navLabel": "ストアプロフィール",
+    "groups": {
+      "store": "ストア",
+      "einvoice": "電子請求書・電子署名",
+      "other": "その他"
+    },
+    "items": {
+      "storeInfo": "ストア情報",
+      "einvoice": "電子請求書",
+      "certificates": "電子署名の管理",
+      "terms": "利用規約"
+    }
+  },
+  "info": {
+    "tabs": {
+      "general": "基本情報",
+      "history": "更新履歴"
+    },
+    "history": {
+      "time": "日時",
+      "user": "実行者",
+      "content": "内容",
+      "empty": "更新履歴はありません"
+    }
+  },
+  "general": {
+    "profileSection": "プロフィール情報",
+    "storeSection": "ストア情報",
+    "fields": {
+      "businessType": "事業形態",
+      "birthDate": "生年月日",
+      "representative": "代表者",
+      "idNumber": "身分証/パスポート",
+      "phone": "電話番号",
+      "idIssueDate": "発行日",
+      "email": "メール",
+      "gender": "性別",
+      "idIssuePlace": "発行場所",
+      "address": "住所",
+      "accessCode": "ストアID",
+      "storeName": "店舗名",
+      "industry": "業種",
+      "owner": "ストアオーナー",
+      "branchCount": "店舗数",
+      "status": "状態"
+    },
+    "statusPaused": "{date} まで休止中",
+    "statusInUse": "利用中",
+    "reopen": "ストアを再開",
+    "pause": "ストアを休止",
+    "pauseUsed": "このストアは1回限りの休止をすでに利用しています",
+    "update": "更新",
+    "reopenedToast": "ストアを再開しました"
+  },
+  "businessTypes": {
+    "PERSONAL": "個人",
+    "HOUSEHOLD": "個人事業",
+    "ENTERPRISE": "法人"
+  },
+  "genders": {
+    "MALE": "男性",
+    "FEMALE": "女性"
+  },
+  "flow": {
+    "cancel": "キャンセル",
+    "skip": "スキップ",
+    "next": "次へ",
+    "confirm": "確認",
+    "back": "戻る"
+  },
+  "verify": {
+    "hintTotp": "ご本人確認のため、認証アプリ（Google Authenticator、Microsoft Authenticator など）に表示されている6桁のコードを入力してください。",
+    "hintPassword": "ご本人確認のため、現在のログインパスワードを入力してください。",
+    "noSms": "本システムはSMSでOTPコードを送信しません。アカウントメニューで2段階認証を有効にすると、パスワードの代わりにアプリで認証できます。",
+    "codePlaceholder": "6桁の認証コード",
+    "codeLabel": "認証コード",
+    "password": "パスワード"
+  },
+  "updateChoice": {
+    "title": "どの情報を更新しますか？",
+    "prompt": "更新する情報を選択してください：",
+    "ownerOnly": "ストアオーナーのみ実行できます。",
+    "options": {
+      "profile": {
+        "title": "プロフィール情報の更新",
+        "hint": "メール、身分証番号、代表者、生年月日、住所など"
+      },
+      "phone": {
+        "title": "ストアオーナーの電話番号の更新"
+      },
+      "rename": {
+        "title": "ストア名の変更",
+        "hint": "システムのアクセスアドレスが変わります"
+      },
+      "transfer": {
+        "title": "ストアの譲渡",
+        "hint": "ストアオーナーの権限を他の管理者に譲渡します。現在のオーナーの認証が必要です。"
+      }
+    }
+  },
+  "pause": {
+    "title": "ストアの休止とは？",
+    "intro": "ストアの休止は、利用しない期間にデータをそのまま保持したままストアを一時的にロックする機能です。休止期間中は、すべての従業員がシステムの機能を利用できません。",
+    "termsTitle": "休止期間について：",
+    "term1": "休止期間は最長2か月です。選択した再開日にストアは自動的に再開されます。",
+    "term2": "ストアオーナーは休止期間の終了前に自分でストアを再開できます。",
+    "term3": "休止期間中もデータ、設定、アカウントはそのまま保持されます。",
+    "onceNote": "注意：ストアの休止は利用期間を通じて1回のみ可能です。",
+    "dateLabel": "ストアの自動再開日（今日から最長{days}日）",
+    "dateError": "明日から{days}日後までの日付を選択してください",
+    "submit": "休止する",
+    "toast": "ストアを休止しました"
+  },
+  "transfer": {
+    "title": "ストアの譲渡",
+    "steps": {
+      "pickRecipient": "譲渡先を選択",
+      "verify": "認証"
+    },
+    "intro": "譲渡後は、ストア名の変更・休止・譲渡ができなくなります。譲渡先は有効な管理者である必要があります。",
+    "noCandidates": "他の管理者がいません。先に 設定 → ユーザー管理 で「システム管理者」ロールのアカウントを作成してください。",
+    "recipient": "譲渡先：",
+    "submit": "譲渡する",
+    "toast": "ストアを譲渡しました"
+  },
+  "phone": {
+    "title": "電話番号の変更申請",
+    "steps": {
+      "verify": "認証",
+      "newPhone": "新しい番号",
+      "confirm": "確認"
+    },
+    "current": "現在の電話番号",
+    "none": "未登録",
+    "newLabel": "ストアオーナーの新しい電話番号",
+    "placeholder": "例：0912345678",
+    "invalid": "電話番号は0から始まる10桁で、現在の番号と異なる必要があります",
+    "confirmPrompt": "ストアオーナーの電話番号の変更を確認してください：",
+    "currentShort": "現在の番号",
+    "newShort": "新しい番号",
+    "usageNote": "新しい番号はストア情報と印刷テンプレートのヘッダーに使用されます。",
+    "toast": "ストアオーナーの電話番号を更新しました"
+  },
+  "profileUpdate": {
+    "title": "プロフィール情報の更新",
+    "pickGender": "性別を選択",
+    "province": "省・市",
+    "addressRequired": "住所 *",
+    "verifyNote": "更新を完了するには、操作中のアカウント所有者の認証が必要です。「次へ」を押して認証に進んでください。",
+    "toast": "プロフィール情報を更新しました"
+  },
+  "rename": {
+    "title": "ストア名の変更",
+    "steps": {
+      "notes": "注意事項",
+      "newName": "新しい名前",
+      "verify": "認証"
+    },
+    "intro": "ストア名を変更する前に、発生する影響をよくご確認ください。",
+    "warnings": {
+      "loggedOut": {
+        "title": "すべての端末が直ちにログアウトされます",
+        "p1": "Web およびレジ端末でログイン中の全従業員が、あなたを含めてログアウトされます。",
+        "p2": "変更前または変更直後に、新しいストア名を全従業員に通知してください。"
+      },
+      "links": {
+        "title": "使用中のリンクは無効になります",
+        "p1": "旧名を含むログインリンクやブラウザのブックマークは使用できなくなります。新しいリンクに更新して通知してください。"
+      },
+      "oldName": {
+        "title": "変更後、旧名は保持されません",
+        "p1": "旧名に戻すにはもう一度名前を変更する必要があります（再びすべての端末がログアウトされます）。"
+      }
+    },
+    "agree": "ストア名変更による影響を読み、理解しました",
+    "currentName": "現在の名前：{name}",
+    "newLabel": "新しいストア名（ログインの最初のステップで入力するアクセスアドレス）",
+    "placeholder": "例：vacxinso1yenlac",
+    "rule": "アクセント記号なしの小文字と数字のみ、3～40文字、現在の名前と異なること。",
+    "summary": "ストア名を {from} から {to} に変更します。",
+    "submit": "名前を変更"
+  },
+  "certificates": {
+    "title": "電子署名一覧",
+    "add": "電子署名を追加",
+    "empty": "電子署名はまだありません",
+    "confirmDelete": "電子署名「{name}」を削除しますか？",
+    "fields": {
+      "subjectName": "主体者名",
+      "taxCode": "税番号",
+      "representative": "代表者",
+      "activatedOn": "有効化日",
+      "expiresOn": "有効期限",
+      "certStatus": "証明書の状態",
+      "active": "稼働状態",
+      "signatureType": "署名の種類",
+      "provider": "提供事業者",
+      "serialNumber": "シリアル番号",
+      "publicCert": "公開証明書",
+      "issuer": "発行機関（Issuer）"
+    },
+    "tabs": {
+      "general": "基本情報",
+      "cert": "証明書"
+    },
+    "uploaded": "アップロード済み（.cer）",
+    "notUploaded": "未アップロード — 手入力の情報",
+    "activeOn": "稼働中",
+    "activeOff": "停止中",
+    "signatureTypes": {
+      "USB_TOKEN": "USB トークン",
+      "HSM": "HSM",
+      "RMS": "RMS（リモート署名）"
+    },
+    "certStatuses": {
+      "PENDING": "承認待ち",
+      "APPROVED": "承認済み",
+      "REVOKED": "失効"
+    },
+    "form": {
+      "titleEdit": "電子署名の編集",
+      "titleAdd": "電子署名の追加",
+      "savedCert": "証明書は保存済みです",
+      "uploadHint": "公開証明書（.cer、.crt）をアップロードすると情報が自動入力されます",
+      "privateKeyWarning": "公開証明書ファイルのみ使用してください。秘密鍵（.pfx、.p12、.key）は絶対にアップロードしないでください。",
+      "pickFile": "ファイルを選択",
+      "providerPlaceholder": "例：IntrustCA、Viettel-CA、VNPT-CA",
+      "parseError": "証明書を読み取れませんでした",
+      "toast": "電子署名一覧を保存しました"
+    }
+  },
+  "einvoice": {
+    "account": "アカウント：{account}",
+    "active": "稼働中",
+    "notConnected": "未接続 — MISA meInvoice を設定",
+    "viewInvoices": "請求書一覧を見る",
+    "issuer": "発行事業者",
+    "totalQuantity": "総発行枠",
+    "published": "発行済み請求書数",
+    "remaining": "残り",
+    "serviceExpiry": "サービス有効期限",
+    "packagesTitle": "請求書パッケージ一覧",
+    "addPackage": "パッケージを追加",
+    "cols": {
+      "name": "パッケージ名",
+      "quantity": "電子請求書の総数",
+      "used": "使用済み",
+      "remaining": "残り",
+      "start": "開始日",
+      "end": "有効期限",
+      "status": "状態"
+    },
+    "editPackage": "パッケージを編集",
+    "deletePackage": "パッケージを削除",
+    "confirmDelete": "パッケージ「{name}」を削除しますか？",
+    "empty": "請求書パッケージはまだありません。「パッケージを追加」を押して購入済みのパッケージを入力してください。",
+    "note": "請求書パッケージは発行事業者との契約に基づき手入力します（MISA の発行枠 API には未接続です）。「使用済み」はシステムから発行された請求書数で、発行日に応じて有効なパッケージに割り当てられます。",
+    "unallocated": "{amount} 件の請求書が、入力済みパッケージの有効期間外または数量超過で発行されています。",
+    "statuses": {
+      "NOT_STARTED": "未開始",
+      "ACTIVE": "有効",
+      "EXPIRED": "期限切れ"
+    },
+    "packageDialog": {
+      "titleEdit": "請求書パッケージの編集",
+      "titleAdd": "請求書パッケージの追加",
+      "name": "パッケージ名 *",
+      "namePlaceholder": "例：2026年 5,000件パッケージ",
+      "quantity": "電子請求書の総数 *",
+      "start": "開始日 *",
+      "end": "有効期限 *",
+      "toast": "請求書パッケージを保存しました"
+    }
+  },
+  "terms": {
+    "acceptedAt": "{time} にバージョン {version} に同意しました。",
+    "vietnameseOnlyNote": "利用規約はベトナム語のみで提供されています。",
+    "dialogLabel": "利用規約",
+    "agreeCheckbox": "利用規約を読み、同意します",
+    "agreeButton": "同意する"
+  },
+  "paused": {
+    "title": "ストアは休止中です",
+    "body": "ストアは一時的にロックされており、データは保持されています。{date} に自動的に再開されます。",
+    "ownerHint": "あなたはストアオーナーのため、期限前に再開できます。",
+    "staffHint": "期限前の再開が必要な場合はストアオーナーにご連絡ください。",
+    "reopen": "ストアを再開"
+  }
+}
