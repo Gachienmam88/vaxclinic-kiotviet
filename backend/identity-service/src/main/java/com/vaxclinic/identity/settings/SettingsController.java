@@ -1,5 +1,6 @@
 package com.vaxclinic.identity.settings;
 
+import com.vaxclinic.common.audit.AuditLogger;
 import com.vaxclinic.common.error.BusinessException;
 import com.vaxclinic.common.settings.ShopSettings;
 import jakarta.validation.Valid;
@@ -30,11 +31,16 @@ public class SettingsController {
 
     private static final Set<String> CUSTOMER_FIELDS = Set.of("phone", "email", "gender", "birthday", "address", "facebook", "group");
 
-    /** Thông tin cửa hàng: dùng cho đầu mẫu in. logo: ảnh data URL đã thu nhỏ phía trình duyệt. */
+    /**
+     * Thông tin cửa hàng: dùng cho đầu mẫu in và màn đăng nhập. logo: ảnh data URL đã thu nhỏ phía trình duyệt.
+     * accessCode: "địa chỉ truy cập cửa hàng" nhập ở bước đầu đăng nhập (chữ thường, số); trống → tự sinh từ tên cửa hàng.
+     */
     public record StoreInfo(@NotBlank @Size(max = 200) String name, @Size(max = 20) String phone,
                             @Email @Size(max = 150) String email, @Size(max = 500) String address,
                             @Size(max = 100) String province, @Size(max = 100) String ward,
-                            @Size(max = 20) String taxCode, @Size(max = 400_000) String logo) {
+                            @Size(max = 20) String taxCode, @Size(max = 400_000) String logo,
+                            @jakarta.validation.constraints.Pattern(regexp = "[a-z0-9]{3,40}",
+                                    message = "Địa chỉ truy cập gồm 3–40 chữ thường không dấu hoặc số") String accessCode) {
     }
 
     public record SalesRequest(boolean allowNegativeStock, boolean blockEditPublishedEInvoice,
@@ -52,9 +58,16 @@ public class SettingsController {
     }
 
     private final SettingsStore store;
+    private final AuditLogger audit;
 
-    public SettingsController(SettingsStore store) {
+    public SettingsController(SettingsStore store, AuditLogger audit) {
         this.store = store;
+        this.audit = audit;
+    }
+
+    /** Ghi lịch sử thao tác (tính năng "Thiết lập cửa hàng" / "Người dùng"). */
+    private void log(Jwt jwt, String feature, String action, String detail) {
+        audit.record(UUID.fromString(jwt.getSubject()), jwt.getClaimAsString("name"), null, feature, action, null, detail);
     }
 
     @GetMapping("/api/settings")
@@ -76,6 +89,7 @@ public class SettingsController {
             throw BusinessException.badRequest("INVALID_LOGO", "Ảnh đại diện không hợp lệ");
         }
         store.write("store", req, userId(jwt));
+        log(jwt, "Thiết lập cửa hàng", "Sửa", "Cập nhật thông tin cửa hàng: " + req.name());
         return all();
     }
 
@@ -84,6 +98,10 @@ public class SettingsController {
     public AllSettings saveSales(@Valid @RequestBody SalesRequest req, @AuthenticationPrincipal Jwt jwt) {
         store.write("sales", new ShopSettings.Sales(req.allowNegativeStock(), req.blockEditPublishedEInvoice(),
                 req.lockTransactionTime(), req.returnLimitDays()), userId(jwt));
+        log(jwt, "Thiết lập cửa hàng", "Sửa", "Thiết lập đơn hàng: bán khi hết tồn " + yes(req.allowNegativeStock())
+                + ", chặn sửa/hủy HĐ đã phát hành HĐĐT " + yes(req.blockEditPublishedEInvoice())
+                + ", khóa thời gian giao dịch " + yes(req.lockTransactionTime())
+                + ", giới hạn trả hàng " + (req.returnLimitDays() == null ? "Không" : req.returnLimitDays() + " ngày"));
         return all();
     }
 
@@ -98,6 +116,8 @@ public class SettingsController {
             throw BusinessException.badRequest("INVALID_DEBT_LIMIT", "Mức nợ cảnh báo không được âm");
         }
         store.write("customer", new ShopSettings.CustomerRules(fields, req.debtLimit()), userId(jwt));
+        log(jwt, "Thiết lập cửa hàng", "Sửa", "Thiết lập khách hàng: bắt buộc " + fields
+                + ", cảnh báo nợ " + (req.debtLimit() == null ? "Không" : req.debtLimit().toPlainString()));
         return all();
     }
 
@@ -109,7 +129,12 @@ public class SettingsController {
             throw BusinessException.badRequest("INVALID_LOCK_DATE", "Ngày khóa sổ không được sau ngày hôm nay");
         }
         store.write("lock", new ShopSettings.BookLock(req.enabled(), branches), userId(jwt));
+        log(jwt, "Thiết lập cửa hàng", "Sửa", "Khóa sổ: " + (req.enabled() ? "Bật " + branches : "Tắt"));
         return all();
+    }
+
+    private static String yes(boolean v) {
+        return v ? "Có" : "Không";
     }
 
     private static UUID userId(Jwt jwt) {
