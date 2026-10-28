@@ -1,0 +1,83 @@
+{
+  "menu": {
+    "overview": "ダッシュボード",
+    "products": "商品",
+    "purchases": "仕入れ",
+    "orders": "注文",
+    "customers": "顧客",
+    "employees": "従業員",
+    "cashbook": "入出金",
+    "reports": "レポート",
+    "accounting": "税務・会計",
+    "sale": "販売"
+  },
+  "groups": {
+    "products": "商品",
+    "warehouse": "在庫",
+    "suppliers": "仕入先",
+    "purchasing": "仕入れ",
+    "orders": "注文",
+    "delivery": "配送",
+    "customers": "顧客",
+    "reports": "レポート"
+  },
+  "links": {
+    "productList": "商品一覧",
+    "priceBooks": "価格設定",
+    "stockTakes": "棚卸",
+    "internalUse": "社内使用出庫",
+    "damages": "廃棄出庫",
+    "suppliers": "仕入先",
+    "inputInvoices": "仕入請求書",
+    "receipts": "入荷",
+    "purchaseReturns": "仕入返品",
+    "orderBooking": "受注",
+    "invoices": "売上伝票",
+    "returns": "返品",
+    "shipments": "配送伝票",
+    "deliveryManagement": "配送管理",
+    "deliveryPartners": "配送業者",
+    "customers": "顧客",
+    "customerGroups": "顧客グループ",
+    "employeeList": "従業員一覧",
+    "schedules": "勤務スケジュール",
+    "timesheets": "勤怠表",
+    "payrolls": "給与表",
+    "commissions": "歩合表",
+    "employeeSettings": "従業員設定",
+    "reportEndOfDay": "日次締め",
+    "reportSales": "売上",
+    "reportOrders": "受注",
+    "reportProducts": "商品",
+    "reportCustomers": "顧客",
+    "reportSuppliers": "仕入先",
+    "reportEmployees": "従業員",
+    "reportChannels": "販売チャネル",
+    "reportFinance": "財務"
+  },
+  "header": {
+    "settings": "設定",
+    "account": "アカウント"
+  },
+  "account": {
+    "twoFactorOn": "二段階認証: 有効",
+    "twoFactorOff": "二段階認証: 未設定",
+    "storeProfile": "店舗プロフィール",
+    "theme": "テーマ",
+    "language": "言語",
+    "chooseLanguage": "言語を選択",
+    "beta": "ベータ版",
+    "betaHint": "ベータ版の翻訳です。一部ベトナム語のままの箇所があります。印刷帳票・法定書類はベトナム語のままです。"
+  },
+  "accents": {
+    "blue": "ブルー",
+    "slate": "スレート",
+    "green": "グリーン",
+    "purple": "パープル",
+    "red": "レッド",
+    "sage": "セージ",
+    "teal": "ティール",
+    "orange": "オレンジ",
+    "pink": "ピンク"
+  }
+}
