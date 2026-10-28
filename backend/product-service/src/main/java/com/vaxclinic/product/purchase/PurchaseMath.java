@@ -31,11 +31,18 @@ public final class PurchaseMath {
         return qty.multiply(unitPrice.subtract(unitDiscount));
     }
 
-    public static Totals totals(BigDecimal rawSubtotal, BigDecimal discount, BigDecimal vatRate) {
-        BigDecimal subtotal = money(rawSubtotal);
+    /** @param lineAmounts thành tiền từng dòng (chưa làm tròn) */
+    public static Totals totals(List<BigDecimal> lineAmounts, BigDecimal discount, BigDecimal vatRate) {
+        BigDecimal raw = lineAmounts.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal subtotal = money(raw);
         BigDecimal disc = money(discount.min(subtotal));
-        BigDecimal vat = vatRate == null ? BigDecimal.ZERO
-                : money(subtotal.subtract(disc).multiply(vatRate).divide(HUNDRED, 6, RoundingMode.HALF_UP));
+        BigDecimal vat = BigDecimal.ZERO;
+        if (vatRate != null && raw.signum() > 0) {
+            BigDecimal keepRatio = BigDecimal.ONE.subtract(disc.divide(raw, 10, RoundingMode.HALF_UP));
+            for (BigDecimal amount : lineAmounts) {
+                vat = vat.add(money(amount.multiply(keepRatio).multiply(vatRate).divide(HUNDRED, 6, RoundingMode.HALF_UP)));
+            }
+        }
         return new Totals(subtotal, disc, vat, subtotal.subtract(disc).add(vat));
     }
 
