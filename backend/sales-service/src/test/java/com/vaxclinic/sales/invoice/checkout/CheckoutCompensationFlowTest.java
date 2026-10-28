@@ -3,6 +3,8 @@ package com.vaxclinic.sales.invoice.checkout;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.vaxclinic.common.error.BusinessException;
+import com.vaxclinic.common.notification.NotificationClient;
+import com.vaxclinic.common.notification.NotificationClient.Item;
 import com.vaxclinic.sales.common.Actor;
 import com.vaxclinic.sales.invoice.InvoiceDtos.InvoiceRequest;
 import com.vaxclinic.sales.invoice.InvoiceDtos.LineInput;
@@ -17,6 +19,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import java.math.BigDecimal;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -36,13 +39,22 @@ class CheckoutCompensationFlowTest {
     private FakeStock stock;
     private CheckoutAttemptService service;
     private CheckoutReconciler reconciler;
+    private final List<Item> published = new ArrayList<>();
 
     @BeforeEach
     void setUp() {
         attempts = new FakeCheckoutAttemptRepository();
         stock = new FakeStock(10);
         service = new CheckoutAttemptService(attempts, new ObjectMapper().registerModule(new JavaTimeModule()));
-        reconciler = new CheckoutReconciler(attempts, stock, new TransactionTemplate(new NoOpTransactionManager()));
+        NotificationClient inbox = new NotificationClient(null, null) {
+            @Override
+            public boolean publish(List<Item> items) {
+                published.addAll(items);
+                return true;
+            }
+        };
+        reconciler = new CheckoutReconciler(attempts, stock, new TransactionTemplate(new NoOpTransactionManager()),
+                new CheckoutCompensationNotifier(inbox));
     }
 
     @Test
@@ -62,6 +74,16 @@ class CheckoutCompensationFlowTest {
         assertThat(reconciler.run()).isEqualTo(1);
         assertThat(stock.quantity).isEqualTo(10);
         assertThat(attempts.get(req.id()).status()).isEqualTo(CheckoutAttempt.COMPENSATED);
+        assertThat(published).singleElement().satisfies(it -> {
+            assertThat(it.type()).isEqualTo("CHECKOUT_COMPENSATED");
+            assertThat(it.dedupeKey()).isEqualTo("checkout_compensated:" + req.id() + ":1");
+            assertThat(it.branchId()).isEqualTo(BRANCH);
+            assertThat(it.permission()).isEqualTo("sales.perform");
+            assertThat(it.docCode()).isNull();
+            assertThat(it.body()).startsWith("Lần thanh toán " + req.id().toString().substring(0, 8) + " lúc ")
+                    .endsWith(" không lưu được hóa đơn — đã hoàn kho tự động. Kiểm tra lại với thu ngân.")
+                    .matches("Lần thanh toán [0-9a-f]{8} lúc [0-9]{2}:[0-9]{2} [0-9]{2}/[0-9]{2}/[0-9]{4} .*");
+        });
 
         // Lý do phải đổi chứng từ kho: gửi lại SALE cùng doc1 bị product-service coi là trùng → KHÔNG trừ kho
         stock.apply(sale(doc1));
@@ -115,6 +137,17 @@ class CheckoutCompensationFlowTest {
         attempts.age(other.id(), Duration.ofHours(1));
         assertThat(reconciler.run()).isZero();
         assertThat(stock.quantity).isEqualTo(10);
+        assertThat(published).hasSize(1); // chỉ lần hoàn kho thật của req; FAILED không báo
+    }
+
+    @Test
+    void nothingDeductedIsClosedWithoutInboxAlert() {
+        InvoiceRequest req = request();
+        service.begin(req, "HD000007", "Khách lẻ", ACTOR, BigDecimal.TEN); // lỗi trước khi tới product-service
+        attempts.age(req.id(), Duration.ofMinutes(6));
+        assertThat(reconciler.run()).isEqualTo(1);
+        assertThat(attempts.get(req.id()).status()).isEqualTo(CheckoutAttempt.COMPENSATED);
+        assertThat(published).isEmpty();
     }
 
     private static InvoiceRequest request() {
