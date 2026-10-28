@@ -45,7 +45,7 @@ public class StockMovementService {
      * (bán, trả hàng nhập, ...). Hủy phiếu nhập không bao giờ được làm âm kho.
      */
     private boolean negativeAllowed(Product product, DocType type) {
-        return !product.isLotManaged() && NEGATIVE_OK.contains(type) && settings.get().sales().allowNegativeStock();
+        return !product.isLotManaged() && NEGATIVE_OK.contains(type) && settings.cached().sales().allowNegativeStock();
     }
 
     private static final java.util.Set<DocType> NEGATIVE_OK = java.util.EnumSet.of(DocType.SALE,

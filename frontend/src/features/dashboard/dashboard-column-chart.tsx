@@ -1,6 +1,8 @@
 "use client";
 
+import { useT } from "@/lib/i18n";
 import { formatMoney } from "@/lib/format";
+import { dashboardNs } from "@/messages/dashboard";
 import { shortMoney } from "./dashboard-date-utils";
 
 /** Bước chia trục "đẹp" (1, 2, 2.5, 5 × 10^n) sao cho có ~ticks vạch. */
@@ -19,6 +21,7 @@ export type Column = { label: string; value: number; title: string };
  * Giá trị âm (trả hàng > bán) vẽ bằng 0 nhưng vẫn hiện trong tooltip.
  */
 export function DashboardColumnChart({ columns, height = 300 }: { columns: Column[]; height?: number }) {
+  const t = useT(dashboardNs);
   const max = Math.max(0, ...columns.map((c) => c.value));
   const step = niceStep(max);
   const top = Math.max(step, Math.ceil(max / step) * step);
@@ -28,12 +31,12 @@ export function DashboardColumnChart({ columns, height = 300 }: { columns: Colum
     <div className="flex gap-2 text-[11px] text-muted-foreground" role="img"
       aria-label={columns.map((c) => `${c.title}: ${formatMoney(c.value)}`).join("; ")}>
       <div className="flex shrink-0 flex-col justify-between text-right" style={{ height }} aria-hidden>
-        {ticks.map((t) => <span key={t} className="-my-1.5 leading-3">{shortMoney(t)}</span>)}
+        {ticks.map((v) => <span key={v} className="-my-1.5 leading-3">{shortMoney(v, t)}</span>)}
       </div>
       <div className="min-w-0 flex-1" aria-hidden>
         <div className="relative" style={{ height }}>
-          {ticks.map((t, i) => (
-            <div key={t} className="absolute inset-x-0 border-t border-[#e8eaee]" style={{ top: `${(i / (ticks.length - 1)) * 100}%` }} />
+          {ticks.map((v, i) => (
+            <div key={v} className="absolute inset-x-0 border-t border-[#e8eaee]" style={{ top: `${(i / (ticks.length - 1)) * 100}%` }} />
           ))}
           <div className="absolute inset-0 flex items-end justify-around">
             {columns.map((c) => (

@@ -5,18 +5,9 @@ export type MissingPolicy = "ALLOW" | "BLOCK" | "WARN";
 export type FormulaOp = "PLUS" | "MINUS";
 export type FormulaBase = "BASE_PRICE" | "COST" | "LAST_PURCHASE" | "BOOK";
 
-export const MISSING_POLICY_LABEL: Record<MissingPolicy, string> = {
-  ALLOW: "Cho phép (dùng giá chung)",
-  BLOCK: "Không cho phép",
-  WARN: "Cho phép kèm cảnh báo",
-};
-
-export const FORMULA_BASE_LABEL: Record<FormulaBase, string> = {
-  BASE_PRICE: "Giá chung",
-  COST: "Giá vốn",
-  LAST_PURCHASE: "Giá nhập cuối",
-  BOOK: "Bảng giá khác",
-};
+/** Nhãn: t(`missingPolicy.${k}`) / t(`formulaBase.${k}`) (namespace products). */
+export const MISSING_POLICIES: MissingPolicy[] = ["ALLOW", "BLOCK", "WARN"];
+export const FORMULA_BASES: FormulaBase[] = ["BASE_PRICE", "COST", "LAST_PURCHASE", "BOOK"];
 
 /** Phạm vi null = tất cả. */
 export type PriceBook = {

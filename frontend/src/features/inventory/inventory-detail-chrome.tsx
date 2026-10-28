@@ -6,6 +6,9 @@ import { Button } from "@/components/ui/button";
 import { DetailSingleTab } from "@/components/ui/detail-tabs-list";
 import { DocStatusBadge } from "@/features/purchases/purchase-list-chrome";
 import { useBranches } from "@/features/settings/settings-queries";
+import { useT } from "@/lib/i18n";
+import { commonNs } from "@/messages/common";
+import { inventoryNs } from "@/messages/inventory";
 
 /** Dòng nhãn: giá trị trong khối thông tin của panel chi tiết. */
 export function Info({ label, children }: { label: string; children: React.ReactNode }) {
@@ -45,19 +48,21 @@ export function InventoryDetailActions({ canManage, canCancel, cancelText, onCan
   editHref?: string; onExport: () => void;
 }) {
   const router = useRouter();
+  const t = useT(inventoryNs);
+  const tc = useT(commonNs);
   return (
     <>
       {canManage && canCancel && (
         <Button variant="ghost" disabled={cancelling} onClick={() => confirm(cancelText) && onCancel()}>
-          <Trash2 className="size-4" /> Hủy</Button>
+          <Trash2 className="size-4" /> {t("detail.cancel")}</Button>
       )}
       <div className="ml-auto flex gap-2">
         {canManage && editHref && (
           <Button className="h-[30px] rounded-md px-3" onClick={() => router.push(editHref)}>
-            <ExternalLink className="size-4" /> Mở phiếu</Button>
+            <ExternalLink className="size-4" /> {t("detail.openDoc")}</Button>
         )}
         <Button variant="outline" className="h-[30px] rounded-md px-3" onClick={onExport}>
-          <FileOutput className="size-4" /> Xuất file</Button>
+          <FileOutput className="size-4" /> {tc("actions.export")}</Button>
       </div>
     </>
   );

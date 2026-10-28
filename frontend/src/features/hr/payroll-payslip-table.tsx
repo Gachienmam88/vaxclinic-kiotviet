@@ -10,21 +10,26 @@ import { salaryTypeLabel, type Payslip, type PayrollDetail } from "./hr-types";
 import { PayslipDetailPanel, unitLabel } from "./payroll-ui-parts";
 import { DocCodeLink } from "@/components/ui/doc-code-link";
 import { ListEmptyRow } from "@/components/ui/list-empty-state";
+import { useT } from "@/lib/i18n";
+import { hrNs } from "@/messages/hr";
 
-const MONEY_COLS: [keyof Payslip, string][] = [
-  ["baseAmount", "Lương chính"], ["overtimeAmount", "Làm thêm"], ["holidayAmount", "Ngày lễ"], ["allowance", "Phụ cấp"],
-  ["commission", "Hoa hồng"], ["bonus", "Thưởng"], ["deduction", "Giảm trừ"], ["insurance", "BHXH"], ["tax", "Thuế TNCN"],
-  ["total", "Tổng lương"], ["paid", "Đã trả"],
-];
+/** Cột tiền của phiếu lương: [trường, khóa nhãn hr] (dùng chung cho bảng và file xuất). */
+export const MONEY_COLS = [
+  ["baseAmount", "payslipCols.base"], ["overtimeAmount", "payslipCols.overtime"], ["holidayAmount", "payslipCols.holiday"],
+  ["allowance", "payslipCols.allowance"], ["commission", "payslipCols.commission"], ["bonus", "payslipCols.bonus"],
+  ["deduction", "payslipCols.deduction"], ["insurance", "payslipCols.insurance"], ["tax", "payslipCols.tax"],
+  ["total", "payslipCols.total"], ["paid", "payslipCols.paid"],
+] as const satisfies readonly (readonly [keyof Payslip, string])[];
 
 /** Ô "Thưởng" sửa được khi bảng lương Tạm tính: rời ô → lưu và tính lại bảng lương. */
 function BonusInput({ payrollId, slip }: { payrollId: string; slip: Payslip }) {
+  const t = useT(hrNs);
   const [v, setV] = useState(formatMoney(slip.bonus));
   const save = useHrMutation((bonus: number) => api<PayrollDetail>(`/hr/payrolls/${payrollId}/payslips/${slip.id}`, {
     method: "PUT", body: { bonus },
-  }), "Đã cập nhật thưởng");
+  }), t("payslipCols.toastBonus"));
   return (
-    <input aria-label={`Thưởng ${slip.employeeName}`} value={v} inputMode="numeric"
+    <input aria-label={t("payslipCols.bonusAria", { name: slip.employeeName })} value={v} inputMode="numeric"
       className="h-6 w-20 rounded border border-[#d9dbe0] px-1 text-right outline-none focus:border-primary"
       onClick={(e) => e.stopPropagation()}
       onChange={(e) => setV(e.target.value.replace(/[^\d,]/g, ""))}
@@ -34,6 +39,7 @@ function BonusInput({ payrollId, slip }: { payrollId: string; slip: Payslip }) {
 
 /** Bảng phiếu lương của bảng lương: dòng tổng, mỗi nhân viên 1 dòng, bấm dòng xem diễn giải. */
 export function PayrollPayslipTable({ detail }: { detail: PayrollDetail }) {
+  const t = useT(hrNs);
   const [open, setOpen] = useState<string | null>(null);
   const editable = detail.payroll.status === "TEMP";
   const slips = detail.payslips;
@@ -43,10 +49,10 @@ export function PayrollPayslipTable({ detail }: { detail: PayrollDetail }) {
     <div className="overflow-x-auto rounded-lg bg-white">
       <table className="w-full text-[13px]">
         <thead><tr className="bg-primary-tint text-left">
-          <th className={cn(th, "w-6")} /><th className={th}>Mã NV</th><th className={th}>Tên nhân viên</th><th className={th}>Loại lương</th>
-          <th className={cn(th, "text-right")}>Số công</th>
-          {MONEY_COLS.map(([k, l]) => <th key={k} className={cn(th, "text-right")}>{l}</th>)}
-          <th className={cn(th, "pr-3 text-right")}>Còn cần trả</th>
+          <th className={cn(th, "w-6")} /><th className={th}>{t("payslipCols.code")}</th><th className={th}>{t("employee.name")}</th><th className={th}>{t("salaryTab.salaryType")}</th>
+          <th className={cn(th, "text-right")}>{t("payslipCols.workUnits")}</th>
+          {MONEY_COLS.map(([k, l]) => <th key={k} className={cn(th, "text-right")}>{t(l)}</th>)}
+          <th className={cn(th, "pr-3 text-right")}>{t("payslipCols.remaining")}</th>
         </tr></thead>
         <tbody>
           {!!slips.length && <tr className="border-b font-bold">
@@ -54,7 +60,7 @@ export function PayrollPayslipTable({ detail }: { detail: PayrollDetail }) {
             {MONEY_COLS.map(([k]) => <td key={k} className="px-2 py-2 text-right">{formatMoney(sum(k))}</td>)}
             <td className="px-2 pr-3 text-right">{formatMoney(sum("total") - sum("paid"))}</td>
           </tr>}
-          {!slips.length && <ListEmptyRow cols={17} what="phiếu lương" compact />}
+          {!slips.length && <ListEmptyRow cols={17} what={t("payslipCols.emptyWhat")} compact />}
           {slips.map((s) => {
             const expanded = open === s.id;
             return (
@@ -63,8 +69,8 @@ export function PayrollPayslipTable({ detail }: { detail: PayrollDetail }) {
                   onClick={() => setOpen(expanded ? null : s.id)}>
                   <td className="px-2">{expanded ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5" />}</td>
                   <td className="px-2 py-2.5"><DocCodeLink code={s.employeeCode} /></td><td className="px-2">{s.employeeName}</td>
-                  <td className="px-2 whitespace-nowrap">{salaryTypeLabel(s.salaryType)}</td>
-                  <td className="px-2 text-right whitespace-nowrap">{formatNumber(s.workUnits)} {unitLabel(s.salaryType)}</td>
+                  <td className="px-2 whitespace-nowrap">{salaryTypeLabel(t, s.salaryType)}</td>
+                  <td className="px-2 text-right whitespace-nowrap">{formatNumber(s.workUnits)} {unitLabel(t, s.salaryType)}</td>
                   {MONEY_COLS.map(([k]) => (
                     <td key={k} className="px-2 text-right">
                       {k === "bonus" && editable ? <BonusInput payrollId={detail.payroll.id} slip={s} /> : formatMoney(Number(s[k] ?? 0))}

@@ -1,0 +1,74 @@
+{
+  "page": {
+    "hello": "Hello, {name}",
+    "role": "Role: {role}",
+    "branches": "Working branches: {branches}",
+    "noRevenuePermission": "This account is not allowed to view revenue reports.",
+    "loadingRevenue": "Loading revenue..."
+  },
+  "period": {
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "last7": "Last 7 days",
+    "thisMonth": "This month",
+    "lastMonth": "Last month"
+  },
+  "today": {
+    "title": "Today's sales",
+    "revenue": "Revenue",
+    "invoiceCount_one": "{count} invoice",
+    "invoiceCount_other": "{count} invoices",
+    "returns": "Returns",
+    "netRevenue": "Net revenue",
+    "vsYesterday": "vs. yesterday",
+    "vsLastMonth": "vs. same day last month"
+  },
+  "revenue": {
+    "title": "Net revenue",
+    "periodLabel": "Revenue period",
+    "chartType": "Chart type",
+    "byDay": "By day",
+    "byHour": "By hour",
+    "byWeekday": "By weekday",
+    "needInvoicePermission": "Permission to view invoices is required for hourly statistics.",
+    "loadFailed": "Could not load invoice data.",
+    "tooMany": "More than {max} invoices — choose a shorter period to view by hour.",
+    "hourlyNote": "By hour: invoice totals ({period}), before returns."
+  },
+  "weekday": {
+    "mon": "Mon",
+    "tue": "Tue",
+    "wed": "Wed",
+    "thu": "Thu",
+    "fri": "Fri",
+    "sat": "Sat",
+    "sun": "Sun"
+  },
+  "top": {
+    "title": "Top 10 best sellers",
+    "byNet": "By net revenue",
+    "periodLabel": "Best sellers period",
+    "empty": "No sales data yet"
+  },
+  "activity": {
+    "title": "Recent activity",
+    "viewAll": "View all",
+    "empty": "No activity yet",
+    "system": "System",
+    "line": "{user}: {action}{doc}"
+  },
+  "timeAgo": {
+    "justNow": "just now",
+    "minutes_one": "{count} minute ago",
+    "minutes_other": "{count} minutes ago",
+    "hours_one": "{count} hour ago",
+    "hours_other": "{count} hours ago",
+    "days_one": "a day ago",
+    "days_other": "{count} days ago"
+  },
+  "short": {
+    "thousand": "{n}K",
+    "million": "{n}M",
+    "billion": "{n}B"
+  }
+}

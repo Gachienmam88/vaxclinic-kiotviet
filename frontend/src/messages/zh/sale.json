@@ -1,0 +1,459 @@
+{
+  "cart": {
+    "empty": "暂无商品 — 搜索(F3)或扫描条码",
+    "emptyQuickReturn": "快速退货：搜索(F3)或扫码添加退回商品",
+    "notInInvoice": "{name} 不在发票 {code} 中",
+    "notInPriceBook": "不在此价格表中销售",
+    "returnMax": "{name}：最多还可退 {max}"
+  },
+  "channel": {
+    "label": "销售渠道"
+  },
+  "checkout": {
+    "alreadyPaid": "已付款",
+    "change": "找零",
+    "cod": "代收货款 (COD)",
+    "deliveryTime": "送货时间",
+    "deposited": "已付定金",
+    "discount": "折扣",
+    "discountPercent": "折扣 ({percent}%)",
+    "due": "应付金额",
+    "invoiceDiscount": "整单折扣",
+    "invoiceFromOrder": "由订单生成发票",
+    "orderNote": "订单备注",
+    "orderRef": "订单",
+    "paid": "客户付款",
+    "pay": "结账",
+    "payOnDelivery": "收货时待付",
+    "placeOrder": "下单",
+    "saveOrder": "保存订单",
+    "speakPaid": "顾客付款{amount}越南盾",
+    "subtotal": "商品总额",
+    "toDebt": "计入欠款"
+  },
+  "common": {
+    "walkIn": "散客"
+  },
+  "customer": {
+    "add": "新增客户",
+    "addOffline": "已断网：无法新增客户，请以散客或已有客户销售",
+    "clear": "取消选择客户",
+    "debt": "欠款 {amount}",
+    "noResults": "未找到客户",
+    "overLimit": "欠款超限 {amount}",
+    "search": "搜索客户 (F4)"
+  },
+  "delivery": {
+    "address": "地址",
+    "errors": {
+      "noPartner": "未选择配送伙伴",
+      "receiverRequired": "请填写收件人姓名、电话和地址"
+    },
+    "fee": "运费",
+    "feePayer": {
+      "label": "运费支付方"
+    },
+    "noPartners": "暂无伙伴 — 请在配送伙伴中添加",
+    "note": "配送备注",
+    "partner": "配送伙伴",
+    "pickPartner": "选择配送伙伴",
+    "receiverName": "收件人姓名",
+    "receiverPhone": "电话",
+    "title": "配送信息",
+    "weight": "重量（克）"
+  },
+  "detail": {
+    "category": "商品分类",
+    "lotLine": "{lot} — 有效期 {expiry} — 库存 {qty}",
+    "lots": "有货批次（先到期先出）：",
+    "noDesc": "暂无描述",
+    "position": "位置",
+    "price": "售价：",
+    "qty": "数量：",
+    "qtyAria": "行数量",
+    "stock": "库存：{qty}",
+    "tabs": {
+      "desc": "详细描述",
+      "info": "基本信息"
+    },
+    "taxRate": "税率"
+  },
+  "dialogs": {
+    "cols": {
+      "customer": "客户",
+      "total": "合计"
+    },
+    "filters": {
+      "productCode": "按商品编码",
+      "productName": "按商品名称"
+    },
+    "fromDate": "开始日期",
+    "noData": "暂无数据",
+    "noResults": "没有匹配的结果",
+    "time": "时间",
+    "toDate": "结束日期"
+  },
+  "einvoice": {
+    "box": "电子发票信息",
+    "details": "详情",
+    "emailInvalid": "邮箱无效",
+    "fields": {
+      "address": "地址",
+      "buyerName": "购买人姓名",
+      "companyName": "单位名称",
+      "email": "邮箱",
+      "phone": "电话",
+      "taxCode": "税号 (MST)"
+    },
+    "title": "电子发票购买方信息"
+  },
+  "footer": {
+    "catalogUpdated": "目录更新于 {time}",
+    "modes": {
+      "delivery": "配送销售",
+      "normal": "普通销售",
+      "quick": "快速销售"
+    }
+  },
+  "grid": {
+    "filter": "按名称筛选商品"
+  },
+  "header": {
+    "offline": "已断网 — 单据保存在本机",
+    "sync": "同步单据",
+    "syncPending_other": "同步单据 — {count} 张待同步"
+  },
+  "import": {
+    "chooseFile": "选择文件",
+    "downloadTemplate": "下载模板",
+    "errors": {
+      "areaNotFound": "未找到 \"Khu vực\" \"{area}\"（2025 年 34 个省市目录）",
+      "badDiscount": "第 {row} 行：\"Giảm giá\" 无效",
+      "badDiscountPercent": "第 {row} 行：\"Giảm giá (%)\" 须在 0 到 100 之间",
+      "badPrice": "第 {row} 行：\"Đơn giá\" 无效",
+      "badQty": "第 {row} 行：\"Số lượng\" 必须大于 0",
+      "customer": "客户：{message}",
+      "customerCodeNotFound": "未找到客户编码 {code}",
+      "customerPhoneNotFound": "未找到电话为 {phone} 的客户，且缺少 \"Tên khách hàng\" 无法新建",
+      "emptyFile": "文件没有数据",
+      "header": "第 {col} 列标题错误：应为 \"{name}\"（请使用模板）",
+      "missingCode": "第 {row} 行：缺少 \"Mã hàng\"",
+      "noLines": "没有商品行",
+      "productNotFound": "第 {row} 行：未找到商品编码 {code}",
+      "tooManyRows": "共 {rows} 行，每个工作表最多 {max} 行",
+      "tooManySheets": "文件有 {sheets} 个工作表，最多 {max} 个",
+      "wardNotFound": "在 {province} 未找到 \"Phường xã\" \"{ward}\""
+    },
+    "headersVietnamese": "请保持模板中的越南语列标题不变。",
+    "importedSheets_other": "已导入 {count} 个工作表。",
+    "imported_other": "已从 {file} 导入 {count} 张发票",
+    "note": "每次导入最多 {sheets} 个工作表，每个工作表为一笔交易，最多 {rows} 行。",
+    "noteTitle": "注意：",
+    "processData": "处理数据（{template}）",
+    "readFailed": "无法读取文件：{message}",
+    "sheetRejected": "工作表“{sheet}”未导入：",
+    "title": "从 Excel 导入发票"
+  },
+  "invoice": {
+    "change": "找零 {amount}",
+    "editNeedsNetwork": "已断网：修改发票需要联网，请重试",
+    "fromOrderNeedsNetwork": "已断网：由订单生成发票需要联网，请重试",
+    "paid": "发票 {code} 已结账",
+    "print": "打印发票",
+    "savedOffline": "已断网：发票已保存在本机，联网后自动同步",
+    "shipment": "运单 {code}",
+    "updated": "已更新发票 {code}"
+  },
+  "line": {
+    "actions": "行操作",
+    "addLine": "添加行",
+    "addLineHint": "添加同一商品的新行",
+    "amount": "金额",
+    "applyLastPrice": "应用该客户最近售价",
+    "detail": "查看详情",
+    "discount": "折扣",
+    "discountAria": "每单位折扣",
+    "discountPerUnit": "折扣 / {unit}",
+    "discountPercentAria": "每单位折扣(%)",
+    "lastPrice": "最近价：{price}",
+    "note": "备注",
+    "noteAria": "行备注",
+    "notePlaceholder": "备注...",
+    "price": "单价",
+    "qty": "数量",
+    "remove": "删除行",
+    "stock": "库存：{qty}",
+    "unit": "单位",
+    "viewLastPrices": "查看最近售价"
+  },
+  "lot": {
+    "enterNew": "+ 输入新批次",
+    "exists": "批次 {lot} 已在本门店（有效期 {expiry}）— 将退回该批次。",
+    "expired": "批次已过期：退回的过期商品应在收回后报废。",
+    "expiry": "有效期：",
+    "expiryMismatch": "批次 {lot} 已存在，有效期 {expiry} — 输入的有效期不一致。",
+    "lot": "批次：",
+    "lotNumber": "批次号",
+    "newLot": "新批次：",
+    "newLotExpiry": "新批次有效期",
+    "newLotNumber": "新批次号",
+    "offline": "已断网：无法加载批次",
+    "option": "{lot} · 有效期 {expiry} · 库存 {qty}",
+    "pick": "-- 选择批次 --",
+    "pickExisting": "选择已有批次",
+    "returnLot": "退货批次"
+  },
+  "menu": {
+    "endOfDay": "日结报表",
+    "import": "导入文件",
+    "label": "菜单",
+    "logout": "退出登录",
+    "manage": "管理",
+    "orders": "处理订单",
+    "receipt": "新建收款单",
+    "return": "选择退货发票",
+    "settings": "设置与显示",
+    "shortcuts": "快捷键"
+  },
+  "open": {
+    "copyLabel": "复制 {code}",
+    "invoiceCancelled": "发票已作废",
+    "invoiceFromOrderLabel": "发票 / {code}",
+    "orderCancelled": "订单 {code} 已取消",
+    "orderInvoiced": "订单 {code} 已生成发票 {invoice}",
+    "returnLabel": "退货 / {code}"
+  },
+  "order": {
+    "created": "已创建订单 {code}",
+    "customerRequired": "下单必须选择客户 (F4)",
+    "editNeedsNetwork": "已断网：修改订单需要联网，请重试",
+    "savedOffline": "已断网：订单已保存在本机，联网后自动同步",
+    "updated": "已更新订单 {code}",
+    "withDeposit": "{message} — 收取定金 {amount}"
+  },
+  "orderPicker": {
+    "cols": {
+      "code": "订单编号"
+    },
+    "filters": {
+      "code": "按订单编号",
+      "customer": "按客户",
+      "note": "按订单备注"
+    },
+    "offline": "已断网：处理订单需要联网"
+  },
+  "payment": {
+    "method": "付款方式",
+    "methods": {
+      "ewalletShort": "钱包"
+    },
+    "mixed": {
+      "nonCashOverDue": "转账/刷卡/钱包不得超过应付金额",
+      "title": "多种方式付款"
+    },
+    "qr": "扫码付款"
+  },
+  "priceBook": {
+    "confirmRemove": "新价格表不包含：{names}。\n这些商品将从购物车移除。仍要更换价格表吗？",
+    "general": "通用价格表",
+    "label": "价格表",
+    "missing": "价格表已不存在 — 已切换为通用价格表",
+    "notApplicable": "价格表“{name}”不适用于该客户/销售员 — 已切换为通用价格表",
+    "removedFromCart": "已移出购物车"
+  },
+  "print": {
+    "autoPrint": "自动打印发票",
+    "copies": "打印份数",
+    "copiesAria": "打印份数",
+    "mergeLines": "合并相同商品",
+    "template": "选择打印模板",
+    "templateDefault": "默认发票模板",
+    "templateInvoice": "A. 发票模板",
+    "templateStore": "门店发票模板",
+    "title": "打印设置"
+  },
+  "receipt": {
+    "amount": "向客户收款",
+    "amountLabel": "向客户收款：",
+    "amountRequired": "请输入收款金额",
+    "create": "创建收款单",
+    "createPrint": "创建并打印",
+    "created": "已创建收款单 {code} — {amount}",
+    "customerRequired": "请选择客户 (F4)",
+    "debtAfter": "收款后欠款：",
+    "method": "收款方式",
+    "offline": "已断网：新建收款单需要联网",
+    "toDebt": "抵扣欠款",
+    "toInvoices": "冲抵发票合计："
+  },
+  "recentPrice": {
+    "apply": "应用价格"
+  },
+  "returnPicker": {
+    "cols": {
+      "code": "发票编号",
+      "employee": "员工"
+    },
+    "filters": {
+      "code": "按发票编号",
+      "customer": "按客户或电话",
+      "lot": "按批次/有效期",
+      "shipmentCode": "按运单号"
+    },
+    "offline": "已断网：选择退货发票需要联网",
+    "quickReturn": "快速退货"
+  },
+  "returns": {
+    "created": "已创建退货单 {code}",
+    "createdWithRefund": "已创建退货单 {code} — 退还客户 {amount}",
+    "due": "应退客户",
+    "errors": {
+      "expiryRequired": "{name}：请输入新批次的有效期",
+      "lotRequired": "{name}：请选择退货批次或输入新批次",
+      "noItems": "未选择退货商品",
+      "walkInRefundFull": "散客：须全额退款"
+    },
+    "fee": "退货费",
+    "original": "原购买总额",
+    "qtyOf": "退货数量 {name}",
+    "quickTitle": "快速退货（无发票）",
+    "refund": "实退客户",
+    "returnedQty": "已退 {qty}",
+    "savedOffline": "已断网：退货单已保存在本机，联网后自动同步",
+    "submit": "退货",
+    "subtotal": "退货商品总额",
+    "title": "退货",
+    "toDebt": "抵扣客户欠款"
+  },
+  "screen": {
+    "autoPrintOff": "自动打印发票：关",
+    "autoPrintOn": "自动打印发票：开",
+    "loading": "正在加载销售界面...",
+    "openFailed": "无法打开{what}：{message}",
+    "qtyModeOff": "添加商品：光标保留在商品搜索框",
+    "qtyModeOn": "添加商品：光标移至数量框",
+    "qtyPositive": "数量必须大于0",
+    "syncedOffline": "离线单据已同步 → {code}",
+    "walkInMustPayFull": "散客须全额付款 — 如需记账请选择客户",
+    "what": {
+      "invoice": "发票",
+      "order": "订单"
+    }
+  },
+  "search": {
+    "addToOrder": "加入订单",
+    "multiSelect": "多选模式",
+    "noResults": "未找到商品",
+    "off": "关",
+    "on": "开",
+    "placeholder": "搜索商品 (F3)",
+    "scanQuickAdd": "扫码快速添加商品",
+    "selected": "已选 {count}"
+  },
+  "seller": {
+    "label": "销售员",
+    "search": "搜索销售员"
+  },
+  "settings": {
+    "display": "显示",
+    "goods": {
+      "addLineTip": "在行上显示(+)按钮以添加同一商品的新行",
+      "dragDrop": "拖放商品",
+      "dragDropTip": "拖动行以调整顺序（按序号排序时）",
+      "image": "商品图片",
+      "imageTip": "商品暂无图片",
+      "lineNote": "商品备注",
+      "lineNoteTip": "每行下方始终显示备注框",
+      "merge": "合并相同商品",
+      "mergeTip": "添加已在订单中的商品时增加数量而非新增一行",
+      "scanTip": "扫描/输入完整编码即添加，无需回车",
+      "sortBy": "商品排序依据",
+      "sortOrder": "商品显示顺序",
+      "stock": "库存",
+      "stockTip": "在商品名下显示库存（按销售单位）",
+      "suggestPaid": "推荐付款金额"
+    },
+    "groups": "设置分组",
+    "options": "设置",
+    "payment": {
+      "autoCompleteQr": "扫码付款成功后自动完成订单",
+      "autoCompleteQrTip": "通过二维码(SePay)收到全款 → 自动结账",
+      "defaultMethod": "默认付款方式",
+      "paidEqualsDue": "客户付款默认等于应付金额",
+      "paidEqualsDueTip": "关闭：新发票客户付款为0",
+      "speakPaid": "语音播报客户付款金额",
+      "speakPaidTip": "结账后朗读付款金额（无对应语言语音时用越南语）"
+    },
+    "price": {
+      "discountTip": "行折扣的默认输入方式",
+      "editAmount": "修改金额",
+      "editAmountTip": "修改行金额将自动重算单价",
+      "lastPrice": "最近售价",
+      "lastPriceTip": "最近卖给所选客户的价格，点击应用",
+      "price": "售价"
+    },
+    "sort": {
+      "asc": "升序",
+      "code": "商品编码",
+      "desc": "降序",
+      "index": "序号",
+      "name": "商品名称"
+    },
+    "tabs": {
+      "goods": "商品",
+      "payment": "付款",
+      "price": "价格"
+    }
+  },
+  "shortcuts": {
+    "help": {
+      "autoPrint": "开/关自动打印",
+      "customerPaid": "客户付款",
+      "editQty": "修改商品数量",
+      "findCustomer": "搜索客户",
+      "findProduct": "搜索商品",
+      "fullscreen": "全屏",
+      "newInvoice": "新建发票",
+      "nextLine": "移至下一个商品",
+      "pay": "结账",
+      "prevLine": "移至上一个商品",
+      "qtyDown": "减少数量",
+      "qtyMode": "切换数量输入模式",
+      "qtyUp": "增加数量"
+    },
+    "title": "功能快捷键"
+  },
+  "sync": {
+    "code": "单据编号",
+    "confirmRemove": "从本机删除此单据？该单据将不会被记录。",
+    "connection": "连接状态：",
+    "error": "错误：{error}",
+    "kind": "单据类型",
+    "kinds": {
+      "all": "--全部--",
+      "invoice": "发票",
+      "order": "订单",
+      "return": "退货"
+    },
+    "offline": "已断网",
+    "online": "已联网",
+    "pending": "等待同步",
+    "remove": "从本机删除",
+    "retry": "重新发送",
+    "syncAll": "全部同步",
+    "value": "金额"
+  },
+  "tabs": {
+    "addInvoice": "新建发票",
+    "addMenu": "新建发票/订单",
+    "addOrder": "新建订单",
+    "close": "关闭 {label}",
+    "confirmClose": "关闭 {label}？购物车将被清空。",
+    "invoiceN": "发票 {n}",
+    "label": "正在编辑的发票",
+    "orderN": "订单 {n}",
+    "returnN": "退货 {n}",
+    "scrollLeft": "标签向左滚动",
+    "scrollRight": "标签向右滚动"
+  }
+}

@@ -10,6 +10,8 @@ import { useBranches } from "@/features/settings/settings-queries";
 import { api, errorMessage } from "@/lib/api-client";
 import { formatMoney, formatNumber } from "@/lib/format";
 import { useCurrentUser } from "@/lib/use-current-user";
+import { useT } from "@/lib/i18n";
+import { inventoryNs } from "@/messages/inventory";
 import { cn } from "@/lib/utils";
 import { InventoryEditorShell, PANEL_FIELD, PanelRow } from "./inventory-editor-shell";
 import { ISSUE_CONFIG } from "./inventory-types";
@@ -20,6 +22,7 @@ import { DateTimePicker } from "@/components/ui/date-time-picker";
 /** Màn soạn phiếu xuất hủy / xuất dùng nội bộ (toàn trang như Nhập hàng). Hoàn thành = trừ kho theo giá vốn. */
 export function StockIssueEditor({ initial }: { initial: IssueEditorState }) {
   const cfg = ISSUE_CONFIG[initial.type];
+  const t = useT(inventoryNs);
   const router = useRouter();
   const qc = useQueryClient();
   const { data: me } = useCurrentUser();
@@ -37,7 +40,7 @@ export function StockIssueEditor({ initial }: { initial: IssueEditorState }) {
         { method: state.id ? "PUT" : "POST", body: issueRequest(state) });
     },
     onSuccess: (doc, complete) => {
-      toast.success(`${complete ? "Đã hoàn thành" : "Đã lưu tạm"} phiếu ${doc.code}`);
+      toast.success(t(complete ? "editor.savedCompleted" : "editor.savedDraft", { code: doc.code }));
       qc.invalidateQueries({ queryKey: ["stock-issues", state.type] });
       qc.invalidateQueries({ queryKey: ["stock-issue", doc.id] });
       qc.invalidateQueries({ queryKey: ["products"] });
@@ -47,40 +50,40 @@ export function StockIssueEditor({ initial }: { initial: IssueEditorState }) {
   });
 
   function submit(complete: boolean) {
-    if (!state.lines.length) return toast.error("Phiếu chưa có hàng hóa");
-    if (state.lines.some((l) => l.quantity <= 0)) return toast.error("Số lượng phải lớn hơn 0");
+    if (!state.lines.length) return toast.error(t("editor.noLines"));
+    if (state.lines.some((l) => l.quantity <= 0)) return toast.error(t("editor.qtyPositive"));
     if (complete) {
       const missing = state.lines.find((l) => l.lotManaged && !l.lotNumber);
-      if (missing) return toast.error(`${missing.productName}: chọn lô xuất`);
+      if (missing) return toast.error(t("editor.pickLot", { name: missing.productName }));
     }
     save.mutate(complete);
   }
 
   return (
-    <InventoryEditorShell title={cfg.title} listPath={cfg.listPath} empty={!state.lines.length} saving={save.isPending}
+    <InventoryEditorShell title={t(`issue.${cfg.msg}.title`)} listPath={cfg.listPath} empty={!state.lines.length} saving={save.isPending}
       onSave={submit} onPick={(p) => set({ lines: [...state.lines, lineFromProduct(p)] })}
       panel={(
         <div className="space-y-1.5">
-          <DateTimePicker aria-label="Thời gian" className={cn(PANEL_FIELD, "mb-2.5")} value={state.at}
+          <DateTimePicker aria-label={t("fields.time")} className={cn(PANEL_FIELD, "mb-2.5")} value={state.at}
             onChange={(v) => set({ at: v })} />
           {myBranches.length > 1 && (
-            <select aria-label="Chi nhánh" className={cn(PANEL_FIELD, "mb-2.5")} value={state.branchId}
+            <select aria-label={t("fields.branch")} className={cn(PANEL_FIELD, "mb-2.5")} value={state.branchId}
               disabled={state.lines.some((l) => l.lotNumber)} onChange={(e) => set({ branchId: e.target.value })}>
               {myBranches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
             </select>
           )}
-          <PanelRow label={cfg.codeLabel}>
-            <div className={cn(PANEL_FIELD, "flex items-center text-left", !state.code && "text-muted-foreground")}>{state.code ?? "Mã phiếu tự động"}</div>
+          <PanelRow label={t(`issue.${cfg.msg}.codeLabel`)}>
+            <div className={cn(PANEL_FIELD, "flex items-center text-left", !state.code && "text-muted-foreground")}>{state.code ?? t("editor.autoCode")}</div>
           </PanelRow>
-          <PanelRow label="Trạng thái"><span className="block text-left">Phiếu tạm</span></PanelRow>
-          <PanelRow label="Lý do">
-            <input aria-label="Lý do" className={PANEL_FIELD} maxLength={250} value={state.reason}
-              placeholder={state.type === "DAMAGE" ? "VD: Hết hạn sử dụng" : "VD: Dùng tại phòng tiêm"}
+          <PanelRow label={t("fields.status")}><span className="block text-left">{t("status.draft")}</span></PanelRow>
+          <PanelRow label={t("fields.reason")}>
+            <input aria-label={t("fields.reason")} className={PANEL_FIELD} maxLength={250} value={state.reason}
+              placeholder={t(`issue.${cfg.msg}.reasonPlaceholder`)}
               onChange={(e) => set({ reason: e.target.value })} />
           </PanelRow>
-          <PanelRow label="Tổng số lượng">{formatNumber(qty)}</PanelRow>
-          <PanelRow label={cfg.valueLabel} strong><span className="font-bold text-primary">{formatMoney(value)}</span></PanelRow>
-          <Textarea aria-label="Ghi chú" className="mt-2.5 min-h-[58px] rounded-md" placeholder="Ghi chú" value={state.note}
+          <PanelRow label={t("fields.totalQty")}>{formatNumber(qty)}</PanelRow>
+          <PanelRow label={t(`issue.${cfg.msg}.valueLabel`)} strong><span className="font-bold text-primary">{formatMoney(value)}</span></PanelRow>
+          <Textarea aria-label={t("fields.note")} className="mt-2.5 min-h-[58px] rounded-md" placeholder={t("fields.note")} value={state.note}
             onChange={(e) => set({ note: e.target.value })} />
         </div>
       )}>

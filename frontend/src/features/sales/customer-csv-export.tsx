@@ -1,6 +1,8 @@
 "use client";
 
 import { FileOutput } from "lucide-react";
+import { useT } from "@/lib/i18n";
+import { commonNs } from "@/messages/common";
 
 type Cell = string | number | null | undefined;
 
@@ -19,11 +21,12 @@ export function downloadCsv(filename: string, header: string[], rows: Cell[][]) 
 }
 
 /** Nút chữ "Xuất file" kiểu KiotViet (không viền, icon bên trái). */
-export function CsvExportButton({ label = "Xuất file", disabled, onClick }: { label?: string; disabled?: boolean; onClick: () => void }) {
+export function CsvExportButton({ label, disabled, onClick }: { label?: string; disabled?: boolean; onClick: () => void }) {
+  const tc = useT(commonNs);
   return (
     <button type="button" disabled={disabled} onClick={onClick}
       className="flex h-8 items-center gap-1.5 rounded-md px-2 text-[13px] font-semibold text-foreground hover:bg-[#edeef0] disabled:opacity-40">
-      <FileOutput className="size-4" /> {label}
+      <FileOutput className="size-4" /> {label ?? tc("actions.export")}
     </button>
   );
 }

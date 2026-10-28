@@ -11,6 +11,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { api, errorMessage } from "@/lib/api-client";
 import { useCurrentUser, type User } from "@/lib/use-current-user";
+import { useT } from "@/lib/i18n";
+import { commonNs } from "@/messages/common";
+import { settingsNs } from "@/messages/settings";
 import { ResetTwoFactorDialog } from "./reset-two-factor-dialog";
 import { useBranches, useRoles } from "./settings-queries";
 
@@ -20,6 +23,8 @@ type Props = { open: boolean; onOpenChange: (open: boolean) => void; user?: User
 export function UserFormDialog({ open, onOpenChange, user }: Props) {
   const qc = useQueryClient();
   const { data: me } = useCurrentUser();
+  const t = useT(settingsNs);
+  const tc = useT(commonNs);
   const [resetting2fa, setResetting2fa] = useState(false);
   // Không tự đặt lại cho mình (Tài khoản → Xác thực 2 lớp); 2FA của chủ gian hàng chỉ chủ gian hàng tự xử lý.
   const canReset2fa = !!user?.twoFactorEnabled && !user.owner && user.id !== me?.user.id;
@@ -43,7 +48,7 @@ export function UserFormDialog({ open, onOpenChange, user }: Props) {
       if (password) await api(`/users/${user.id}/reset-password`, { method: "POST", body: { password } });
     },
     onSuccess: () => {
-      toast.success(user ? "Đã cập nhật người dùng" : "Đã thêm người dùng");
+      toast.success(user ? t("userForm.updated") : t("userForm.added"));
       qc.invalidateQueries({ queryKey: ["users"] });
       onOpenChange(false);
     },
@@ -60,40 +65,40 @@ export function UserFormDialog({ open, onOpenChange, user }: Props) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{user ? "Sửa người dùng" : "Thêm người dùng"}</DialogTitle>
+          <DialogTitle>{user ? t("userForm.editTitle") : t("userForm.addTitle")}</DialogTitle>
         </DialogHeader>
         <form id="user-form" className="grid grid-cols-2 gap-3"
           onSubmit={(e) => { e.preventDefault(); save.mutate(); }}>
           <div className="grid gap-1.5">
-            <Label htmlFor="u-username">Tên đăng nhập</Label>
+            <Label htmlFor="u-username">{t("userForm.username")}</Label>
             <Input id="u-username" required disabled={!!user} value={form.username} onChange={set("username")} />
           </div>
           <div className="grid gap-1.5">
-            <Label htmlFor="u-password">{user ? "Mật khẩu mới (bỏ trống nếu giữ)" : "Mật khẩu"}</Label>
+            <Label htmlFor="u-password">{user ? t("userForm.newPassword") : t("userForm.password")}</Label>
             <Input id="u-password" type="password" required={!user} minLength={8} autoComplete="new-password"
               value={form.password} onChange={set("password")} />
           </div>
           <div className="grid gap-1.5">
-            <Label htmlFor="u-fullname">Họ tên</Label>
+            <Label htmlFor="u-fullname">{t("userForm.fullName")}</Label>
             <Input id="u-fullname" required value={form.fullName} onChange={set("fullName")} />
           </div>
           <div className="grid gap-1.5">
-            <Label htmlFor="u-phone">Điện thoại</Label>
+            <Label htmlFor="u-phone">{t("userForm.phone")}</Label>
             <Input id="u-phone" value={form.phone} onChange={set("phone")} />
           </div>
           <div className="col-span-2 grid gap-1.5">
-            <Label>Vai trò</Label>
+            <Label>{t("userForm.role")}</Label>
             <Select value={form.roleId || null}
               items={roles.map((r) => ({ value: r.id, label: r.name }))}
               onValueChange={(v) => setForm((f) => ({ ...f, roleId: v ?? "" }))}>
-              <SelectTrigger className="w-full"><SelectValue placeholder="Chọn vai trò" /></SelectTrigger>
+              <SelectTrigger className="w-full"><SelectValue placeholder={t("userForm.pickRole")} /></SelectTrigger>
               <SelectContent>
                 {roles.map((r) => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
           <div className="col-span-2 grid gap-1.5">
-            <Label>Chi nhánh được làm việc</Label>
+            <Label>{t("userForm.branches")}</Label>
             <div className="grid grid-cols-2 gap-2 rounded-md border p-2">
               {branches.map((b) => (
                 <label key={b.id} className="flex items-center gap-2 text-sm">
@@ -107,16 +112,16 @@ export function UserFormDialog({ open, onOpenChange, user }: Props) {
           {user && (
             <label className="col-span-2 flex items-center gap-2 text-sm">
               <Checkbox checked={form.active} onCheckedChange={(v) => setForm((f) => ({ ...f, active: v === true }))} />
-              Đang hoạt động (bỏ chọn để khóa tài khoản)
+              {t("userForm.active")}
             </label>
           )}
         </form>
         <DialogFooter>
           {canReset2fa && (
-            <Button variant="ghost" className="mr-auto text-primary" onClick={() => setResetting2fa(true)}>Đặt lại xác thực 2 lớp</Button>
+            <Button variant="ghost" className="mr-auto text-primary" onClick={() => setResetting2fa(true)}>{t("userForm.reset2fa")}</Button>
           )}
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Bỏ qua</Button>
-          <Button type="submit" form="user-form" disabled={save.isPending || !form.roleId}>Lưu</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>{tc("actions.skip")}</Button>
+          <Button type="submit" form="user-form" disabled={save.isPending || !form.roleId}>{tc("actions.save")}</Button>
         </DialogFooter>
         {resetting2fa && user && (
           <ResetTwoFactorDialog user={user} onOpenChange={setResetting2fa} onDone={() => onOpenChange(false)} />

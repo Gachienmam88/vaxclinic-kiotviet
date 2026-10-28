@@ -1,5 +1,6 @@
 package com.vaxclinic.sales.invoice;
 
+import com.vaxclinic.common.search.AccentInsensitiveSql;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 
 import java.sql.Timestamp;
@@ -42,8 +43,8 @@ final class InvoiceFilterSql {
      */
     static String where(InvoiceQuery.Filter f, MapSqlParameterSource p, Map<String, List<UUID>> einvoices) {
         var w = new StringBuilder(FROM);
-        like(w, p, f.q(), "q", " and (i.code ilike :q or i.customer_name ilike :q or c.code ilike :q or c.phone ilike :q)");
-        like(w, p, f.customerQ(), "customerQ", " and (i.customer_name ilike :customerQ or c.code ilike :customerQ or c.phone ilike :customerQ)");
+        like(w, p, f.q(), "q", " and (i.code ilike :q or " + AccentInsensitiveSql.like("i.customer_name", ":q") + " or c.code ilike :q or c.phone ilike :q)");
+        like(w, p, f.customerQ(), "customerQ", " and (" + AccentInsensitiveSql.like("i.customer_name", ":customerQ") + " or c.code ilike :customerQ or c.phone ilike :customerQ)");
         like(w, p, f.productQ(), "productQ", " and exists (select 1 from invoice_lines l where l.invoice_id = i.id"
                 + " and (l.product_code ilike :productQ or l.product_name ilike :productQ))");
         like(w, p, f.noteQ(), "noteQ", " and i.note ilike :noteQ");

@@ -4,8 +4,10 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowDown, ArrowUp, Info } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
-import { PAYMENT_METHODS } from "@/features/sales/sales-types";
 import { api } from "@/lib/api-client";
+import { useT } from "@/lib/i18n";
+import { saleNs } from "@/messages/sale";
+import { usePaymentMethodLabel, SALE_PAYMENT_METHODS } from "./sale-ui-parts";
 import type { SaleSettings, SaleSortField } from "./sale-settings";
 
 type TabProps = { s: SaleSettings; set: (p: Partial<SaleSettings>) => void };
@@ -35,40 +37,41 @@ export const Section = ({ title, children }: { title: string; children: React.Re
   <div className="border-b border-[#e5e7eb] pb-3 last:border-0 [&+&]:pt-3"><p className="mb-1.5 text-xs font-bold">{title}</p>{children}</div>
 );
 
-const FIELDS: [SaleSortField, string][] = [["INDEX", "Số thứ tự"], ["CODE", "Mã hàng"], ["NAME", "Tên hàng"]];
+const FIELDS = [["INDEX", "settings.sort.index"], ["CODE", "settings.sort.code"], ["NAME", "settings.sort.name"]] as const;
 
 /** Hàng hóa: hiển thị cột / thông tin dòng hàng + cách thêm, sắp xếp hàng trong giỏ. */
 export function GoodsTab({ s, set }: TabProps) {
+  const t = useT(saleNs);
   const dir = (desc: boolean) => `grid size-7 place-items-center rounded ${s.sortDesc === desc ? "bg-primary text-white" : "bg-[#eef0f3]"}`;
   return (
     <>
-      <Section title="Hiển thị">
+      <Section title={t("settings.display")}>
         <div className="grid grid-cols-2 gap-x-4">
-          <Check s={s} set={set} label="Ảnh hàng hóa" disabled tip="Hàng hóa chưa có ảnh" />
-          <Check s={s} set={set} k="showCode" label="Mã hàng" />
-          <Check s={s} set={set} k="showStock" label="Tồn kho" tip="Hiện số tồn dưới tên hàng (theo đơn vị đang bán)" />
-          <Check s={s} set={set} k="showLineNote" label="Ghi chú hàng hóa" tip="Luôn hiện ô ghi chú dưới mỗi dòng hàng" />
+          <Check s={s} set={set} label={t("settings.goods.image")} disabled tip={t("settings.goods.imageTip")} />
+          <Check s={s} set={set} k="showCode" label={t("settings.sort.code")} />
+          <Check s={s} set={set} k="showStock" label={t("settings.goods.stock")} tip={t("settings.goods.stockTip")} />
+          <Check s={s} set={set} k="showLineNote" label={t("settings.goods.lineNote")} tip={t("settings.goods.lineNoteTip")} />
         </div>
       </Section>
-      <Section title="Cài đặt">
-        <Toggle s={s} set={set} k="mergeSameItems" label="Gộp hàng hóa liên quan" tip="Thêm hàng đã có trong đơn → tăng số lượng thay vì thêm dòng mới" />
-        <Toggle s={s} set={set} k="addLine" label="Thêm dòng" tip="Hiện nút (+) trên dòng để thêm 1 dòng mới cùng hàng hóa" />
-        <label className="flex h-9 items-center justify-between gap-4">Sắp xếp hàng hóa theo
-          <select aria-label="Sắp xếp hàng hóa theo" value={s.sortField} onChange={(e) => set({ sortField: e.target.value as SaleSortField })}
+      <Section title={t("settings.options")}>
+        <Toggle s={s} set={set} k="mergeSameItems" label={t("settings.goods.merge")} tip={t("settings.goods.mergeTip")} />
+        <Toggle s={s} set={set} k="addLine" label={t("line.addLine")} tip={t("settings.goods.addLineTip")} />
+        <label className="flex h-9 items-center justify-between gap-4">{t("settings.goods.sortBy")}
+          <select aria-label={t("settings.goods.sortBy")} value={s.sortField} onChange={(e) => set({ sortField: e.target.value as SaleSortField })}
             className="h-8 min-w-[134px] rounded bg-[#eef0f3] px-2 outline-none">
-            {FIELDS.map(([v, l]) => <option key={v} value={v}>{l}: {s.sortDesc ? "Giảm dần" : "Tăng dần"}</option>)}
+            {FIELDS.map(([v, l]) => <option key={v} value={v}>{t(l)}: {t(s.sortDesc ? "settings.sort.desc" : "settings.sort.asc")}</option>)}
           </select></label>
-        <Toggle s={s} set={set} k="dragDrop" label="Kéo thả hàng hóa" tip="Kéo thả dòng hàng để đổi thứ tự (khi sắp xếp theo số thứ tự)" />
-        <Toggle s={s} set={set} k="multiSelect" label="Chế độ chọn nhiều hàng hóa" />
-        <Toggle s={s} set={set} k="scanQuickAdd" label="Quét mã để thêm hàng hóa nhanh" tip="Quét / gõ đúng mã hàng là thêm ngay, không cần Enter" />
-        <Toggle s={s} set={set} k="showIndex" label="Số thứ tự" />
-        <div className="flex h-9 items-center justify-between">Sắp xếp thứ tự hàng hóa
+        <Toggle s={s} set={set} k="dragDrop" label={t("settings.goods.dragDrop")} tip={t("settings.goods.dragDropTip")} />
+        <Toggle s={s} set={set} k="multiSelect" label={t("search.multiSelect")} />
+        <Toggle s={s} set={set} k="scanQuickAdd" label={t("search.scanQuickAdd")} tip={t("settings.goods.scanTip")} />
+        <Toggle s={s} set={set} k="showIndex" label={t("settings.sort.index")} />
+        <div className="flex h-9 items-center justify-between">{t("settings.goods.sortOrder")}
           <span className="flex gap-1.5">
-            <button type="button" aria-label="Tăng dần" aria-pressed={!s.sortDesc} className={dir(false)} onClick={() => set({ sortDesc: false })}><ArrowUp className="size-4" /></button>
-            <button type="button" aria-label="Giảm dần" aria-pressed={s.sortDesc} className={dir(true)} onClick={() => set({ sortDesc: true })}><ArrowDown className="size-4" /></button>
+            <button type="button" aria-label={t("settings.sort.asc")} aria-pressed={!s.sortDesc} className={dir(false)} onClick={() => set({ sortDesc: false })}><ArrowUp className="size-4" /></button>
+            <button type="button" aria-label={t("settings.sort.desc")} aria-pressed={s.sortDesc} className={dir(true)} onClick={() => set({ sortDesc: true })}><ArrowDown className="size-4" /></button>
           </span></div>
-        <Toggle s={s} set={set} k="showAmount" label="Thành tiền" />
-        <Toggle s={s} set={set} k="suggestPaid" label="Gợi ý khách thanh toán" />
+        <Toggle s={s} set={set} k="showAmount" label={t("line.amount")} />
+        <Toggle s={s} set={set} k="suggestPaid" label={t("settings.goods.suggestPaid")} />
       </Section>
     </>
   );
@@ -76,23 +79,24 @@ export function GoodsTab({ s, set }: TabProps) {
 
 /** Giá tiền: cột giá bán, giá bán gần nhất của khách, kiểu giảm giá mặc định, sửa thành tiền. */
 export function PriceTab({ s, set }: TabProps) {
+  const t = useT(saleNs);
   const pill = (on: boolean) => `h-6 rounded px-2 text-xs font-bold ${on ? "bg-primary text-white" : "bg-[#eef0f3]"}`;
   return (
     <>
-      <Section title="Hiển thị">
+      <Section title={t("settings.display")}>
         <div className="grid grid-cols-2 gap-x-4">
-          <Check s={s} set={set} k="showPrice" label="Giá bán" />
-          <Check s={s} set={set} k="showLastPrice" label="Giá bán gần nhất" tip="Giá đã bán gần nhất cho khách đang chọn, bấm để áp dụng" />
+          <Check s={s} set={set} k="showPrice" label={t("settings.price.price")} />
+          <Check s={s} set={set} k="showLastPrice" label={t("settings.price.lastPrice")} tip={t("settings.price.lastPriceTip")} />
         </div>
       </Section>
-      <Section title="Cài đặt">
+      <Section title={t("settings.options")}>
         <div className="flex h-9 items-center justify-between">
-          <span className="flex items-center gap-1.5">Giảm giá <Tip text="Kiểu nhập giảm giá mặc định của dòng hàng" /></span>
+          <span className="flex items-center gap-1.5">{t("line.discount")} <Tip text={t("settings.price.discountTip")} /></span>
           <span className="flex gap-1">
             <button type="button" className={pill(s.discountType === "VND")} onClick={() => set({ discountType: "VND" })}>VND</button>
             <button type="button" className={pill(s.discountType === "PERCENT")} onClick={() => set({ discountType: "PERCENT" })}>%</button>
           </span></div>
-        <Toggle s={s} set={set} k="editAmount" label="Chỉnh sửa thành tiền" tip="Sửa thành tiền của dòng → tự tính lại đơn giá" />
+        <Toggle s={s} set={set} k="editAmount" label={t("settings.price.editAmount")} tip={t("settings.price.editAmountTip")} />
       </Section>
     </>
   );
@@ -100,19 +104,21 @@ export function PriceTab({ s, set }: TabProps) {
 
 /** Thanh toán: phương thức mặc định, tiền khách trả mặc định, tự hoàn thành khi nhận tiền QR (khi bật SePay), đọc số tiền. */
 export function PaymentTab({ s, set }: TabProps) {
+  const t = useT(saleNs);
+  const methodLabel = usePaymentMethodLabel();
   const { data: sepay } = useQuery({ queryKey: ["sepay-settings"], queryFn: () => api<{ enabled: boolean }>("/payments/sepay/settings"), retry: false });
   return (
-    <Section title="Cài đặt">
-      <label className="flex min-h-9 items-center justify-between gap-4">Phương thức thanh toán mặc định
-        <select aria-label="Phương thức thanh toán mặc định" value={s.defaultPaymentMethod}
+    <Section title={t("settings.options")}>
+      <label className="flex min-h-9 items-center justify-between gap-4">{t("settings.payment.defaultMethod")}
+        <select aria-label={t("settings.payment.defaultMethod")} value={s.defaultPaymentMethod}
           onChange={(e) => set({ defaultPaymentMethod: e.target.value as SaleSettings["defaultPaymentMethod"] })}
           className="h-8 w-[134px] rounded bg-[#eef0f3] px-2 outline-none">
-          {PAYMENT_METHODS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
+          {SALE_PAYMENT_METHODS.map((m) => <option key={m} value={m}>{methodLabel(m)}</option>)}
         </select></label>
-      <Toggle s={s} set={set} k="paidEqualsDue" label="Tiền khách thanh toán bằng khách cần trả" tip="Tắt: hóa đơn mới để Khách thanh toán = 0" />
-      {sepay?.enabled && <Toggle s={s} set={set} k="autoCompleteQr" label="Tự động hoàn thành đơn hàng khi quét QR thành công"
-        tip="Nhận đủ tiền chuyển khoản qua QR (SePay) → tự thanh toán hóa đơn" />}
-      <Toggle s={s} set={set} k="speakPaid" label="Phát loa số tiền khách thanh toán" tip="Đọc số tiền khách thanh toán khi thanh toán xong" />
+      <Toggle s={s} set={set} k="paidEqualsDue" label={t("settings.payment.paidEqualsDue")} tip={t("settings.payment.paidEqualsDueTip")} />
+      {sepay?.enabled && <Toggle s={s} set={set} k="autoCompleteQr" label={t("settings.payment.autoCompleteQr")}
+        tip={t("settings.payment.autoCompleteQrTip")} />}
+      <Toggle s={s} set={set} k="speakPaid" label={t("settings.payment.speakPaid")} tip={t("settings.payment.speakPaidTip")} />
     </Section>
   );
 }

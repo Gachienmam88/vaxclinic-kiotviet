@@ -15,10 +15,14 @@ import { SupplierDocOpener, type OpenDoc } from "./supplier-doc-opener";
 import { SupplierMiniPager } from "./supplier-mini-pager";
 import { SupplierPaymentDialog } from "./supplier-payment-dialog";
 import { useSupplierDebts } from "./supplier-queries";
-import { SUPPLIER_DEBT_TYPE_LABEL, type SupplierLedgerRow, type SupplierRow } from "./supplier-types";
+import { SUPPLIER_DEBT_TYPE_KEY, SUPPLIER_DEBT_TYPE_LABEL, type SupplierLedgerRow, type SupplierRow } from "./supplier-types";
+import { useT } from "@/lib/i18n";
+import { commonNs } from "@/messages/common";
+import { purchasesNs } from "@/messages/purchases";
 
 const PAGE = 5;
 const actionBtn = "h-8 rounded-md px-3 text-[13px] font-semibold";
+/** CSV sổ công nợ (đối chiếu kế toán với NCC): tiêu đề + tên loại giữ tiếng Việt ở mọi ngôn ngữ. */
 const header = ["Mã phiếu", "Thời gian", "Loại", "Giá trị", "Nợ cần trả nhà cung cấp"];
 const csvRow = (d: SupplierLedgerRow) => [d.docCode, formatDateTime(d.occurredAt), SUPPLIER_DEBT_TYPE_LABEL[d.docType], d.amount, d.balance];
 
@@ -26,6 +30,8 @@ const csvRow = (d: SupplierLedgerRow) => [d.docCode, formatDateTime(d.occurredAt
 export function SupplierDetailDebtTab({ s, docCode }: { s: SupplierRow; docCode?: string | null }) {
   const { data } = useSupplierDebts(s.id);
   const { can } = useCurrentUser();
+  const t = useT(purchasesNs);
+  const tc = useT(commonNs);
   const [type, setType] = useState("");
   // link sâu ?code=<mã phiếu>: chưa thao tác (undefined) → trang chứa phiếu đó + mở sẵn phiếu khi sổ nợ về
   const [pageState, setPage] = useState<number | undefined>(docCode ? undefined : 0);
@@ -40,23 +46,23 @@ export function SupplierDetailDebtTab({ s, docCode }: { s: SupplierRow; docCode?
   return (
     <div className="space-y-3">
       <div className="flex justify-end">
-        <select aria-label="Lọc loại giao dịch" value={type} onChange={(e) => { setType(e.target.value); setPage(0); }}
+        <select aria-label={t("suppliers.debt.filterType")} value={type} onChange={(e) => { setType(e.target.value); setPage(0); }}
           className="h-8 w-[170px] rounded-md border border-[#d9dbe0] bg-white px-2.5 text-[13px] outline-none focus:border-primary">
-          <option value="">Tất cả giao dịch</option>
-          {Object.entries(SUPPLIER_DEBT_TYPE_LABEL).map(([v, label]) => <option key={v} value={v}>{label}</option>)}
+          <option value="">{t("suppliers.debt.allTypes")}</option>
+          {Object.entries(SUPPLIER_DEBT_TYPE_KEY).map(([v, key]) => <option key={v} value={v}>{t(key)}</option>)}
         </select>
       </div>
       <div>
         <table className={kvSubTable}>
-          <thead className={kvSubHead}><tr><th>Mã phiếu</th><th>Thời gian</th><th>Loại</th>
-            <th className="text-right">Giá trị</th><th className="text-right">Nợ cần trả nhà cung cấp</th></tr></thead>
+          <thead className={kvSubHead}><tr><th>{t("suppliers.history.docCode")}</th><th>{t("receipts.cols.time")}</th><th>{t("suppliers.debt.type")}</th>
+            <th className="text-right">{t("suppliers.debt.amount")}</th><th className="text-right">{t("suppliers.tabs.debt")}</th></tr></thead>
           <tbody>
-            {!data && <tr className={kvSubRow}><td colSpan={5} className="text-center text-muted-foreground">Đang tải...</td></tr>}
-            {data && !rows.length && <tr><td colSpan={5}><ListEmptyState compact what="giao dịch" /></td></tr>}
+            {!data && <tr className={kvSubRow}><td colSpan={5} className="text-center text-muted-foreground">{tc("status.loading")}</td></tr>}
+            {data && !rows.length && <tr><td colSpan={5}><ListEmptyState compact what={t("suppliers.debt.emptyWhat")} /></td></tr>}
             {shown.map((d) => (
               <tr key={`${d.docType}-${d.docId}`} className={kvSubRow}>
                 <td><button type="button" className={DOC_CODE_LINK_CLASS} onClick={() => setOpen({ type: d.docType, id: d.docId })}>{d.docCode}</button></td>
-                <td>{formatDateTime(d.occurredAt)}</td><td>{SUPPLIER_DEBT_TYPE_LABEL[d.docType]}</td>
+                <td>{formatDateTime(d.occurredAt)}</td><td>{t(SUPPLIER_DEBT_TYPE_KEY[d.docType])}</td>
                 <td className="text-right">{formatMoney(d.amount)}</td><td className="text-right">{formatMoney(d.balance)}</td>
               </tr>
             ))}
@@ -65,14 +71,14 @@ export function SupplierDetailDebtTab({ s, docCode }: { s: SupplierRow; docCode?
         <SupplierMiniPager page={page} size={PAGE} total={rows.length} onPage={setPage} />
       </div>
       <div className="flex flex-wrap items-center gap-2 border-t pt-3">
-        <CsvExportButton label="Xuất file công nợ" disabled={!all.length}
+        <CsvExportButton label={t("suppliers.debt.exportDebt")} disabled={!all.length}
           onClick={() => downloadCsv(`cong-no-${s.code}.csv`, header, all.map(csvRow))} />
         <CsvExportButton disabled={!rows.length} onClick={() => downloadCsv(`giao-dich-${s.code}.csv`, header, rows.map(csvRow))} />
         {can("inventory.manage") && (
           <div className="ml-auto flex flex-wrap gap-2">
-            <Button className={actionBtn} onClick={() => setDialog("payment")}><CircleDollarSign className="size-4" /> Thanh toán</Button>
-            <Button variant="outline" className={actionBtn} onClick={() => setDialog("adjust")}><PencilLine className="size-4" /> Điều chỉnh</Button>
-            <Button variant="outline" className={actionBtn} onClick={() => setDialog("discount")}><Percent className="size-4" /> Chiết khấu thanh toán</Button>
+            <Button className={actionBtn} onClick={() => setDialog("payment")}><CircleDollarSign className="size-4" /> {t("suppliers.debt.pay")}</Button>
+            <Button variant="outline" className={actionBtn} onClick={() => setDialog("adjust")}><PencilLine className="size-4" /> {t("suppliers.debt.adjust")}</Button>
+            <Button variant="outline" className={actionBtn} onClick={() => setDialog("discount")}><Percent className="size-4" /> {t("suppliers.debt.discount")}</Button>
           </div>
         )}
       </div>

@@ -3,11 +3,12 @@
 import { useState } from "react";
 import { EllipsisVertical, QrCode } from "lucide-react";
 import { NumberInput } from "@/components/number-input";
-import { methodLabel } from "@/features/sales/sales-types";
+import { useT } from "@/lib/i18n";
 import { formatMoney } from "@/lib/format";
+import { saleNs } from "@/messages/sale";
 import { SaleMixedPaymentDialog } from "./sale-mixed-payment-dialog";
 import { suggestedAmounts } from "./sale-suggested-amounts";
-import { PaymentMethodRadios, SummaryRow, underlineInput } from "./sale-ui-parts";
+import { PaymentMethodRadios, usePaymentMethodLabel, SummaryRow, underlineInput } from "./sale-ui-parts";
 import type { DraftInvoice } from "./sale-types";
 
 type Props = {
@@ -20,20 +21,22 @@ type Props = {
  * phương thức, và các ô gợi ý số tiền khách đưa. Sửa tay số tiền / đổi phương thức → bỏ chia nhiều phương thức.
  */
 export function SalePaidSection({ draft, paid, due, allowMixed, suggest, update, onQr }: Props) {
+  const t = useT(saleNs);
+  const methodLabel = usePaymentMethodLabel();
   const [mixed, setMixed] = useState(false);
   const extras = draft.extraPayments ?? [];
   const chips = suggest ? suggestedAmounts(due) : [];
   return (
     <>
-      <SummaryRow bold label={<>Khách thanh toán
-        <button type="button" title="Thanh toán qua mã QR" aria-label="Thanh toán qua mã QR" className="text-[#4b5563] hover:text-primary"
+      <SummaryRow bold label={<>{t("checkout.paid")}
+        <button type="button" title={t("payment.qr")} aria-label={t("payment.qr")} className="text-[#4b5563] hover:text-primary"
           onClick={onQr}><QrCode className="size-4" /></button></>}>
-        <NumberInput aria-label="Khách thanh toán" id="sale-paid" className={`${underlineInput} w-[104px] font-normal`} value={paid}
+        <NumberInput aria-label={t("checkout.paid")} id="sale-paid" className={`${underlineInput} w-[104px] font-normal`} value={paid}
           onValueChange={(v) => update({ paid: v, extraPayments: [] })} />
       </SummaryRow>
       <div className="flex items-center gap-1">
         <div className="flex-1"><PaymentMethodRadios value={draft.paymentMethod} onChange={(paymentMethod) => update({ paymentMethod, extraPayments: [] })} /></div>
-        {allowMixed && <button type="button" aria-label="Thanh toán nhiều phương thức" title="Thanh toán nhiều phương thức"
+        {allowMixed && <button type="button" aria-label={t("payment.mixed.title")} title={t("payment.mixed.title")}
           className="grid size-7 place-items-center rounded bg-[#eef0f3] hover:bg-[#e2e5e9]" onClick={() => setMixed(true)}>
           <EllipsisVertical className="size-4" /></button>}
       </div>

@@ -11,6 +11,9 @@ import { VnAddressFields } from "@/components/ui/vn-address-fields";
 import { SettingsCard, SettingsPage } from "@/features/settings/settings-shell";
 import { useSaveSettings, useShopSettings, type StoreInfo } from "@/features/settings/settings-queries";
 import { useCurrentUser } from "@/lib/use-current-user";
+import { useT } from "@/lib/i18n";
+import { commonNs } from "@/messages/common";
+import { settingsNs } from "@/messages/settings";
 
 const EMPTY: StoreInfo = { name: "", phone: null, email: null, address: null, province: null, ward: null, taxCode: null, logo: null, accessCode: null };
 
@@ -33,41 +36,44 @@ async function shrinkImage(file: File): Promise<string> {
 }
 
 function Field({ label, value, accent }: { label: string; value: string | null; accent?: boolean }) {
+  const t = useT(settingsNs);
   return (
     <div className="border-b border-[#e3e6ea] pb-2">
       <div className="mb-1 text-[11px] text-muted-foreground">{label}</div>
-      <div className={accent ? "text-[13px] text-primary" : "text-[13px]"}>{value || <span className="text-muted-foreground">Chưa có</span>}</div>
+      <div className={accent ? "text-[13px] text-primary" : "text-[13px]"}>{value || <span className="text-muted-foreground">{t("store.notSet")}</span>}</div>
     </div>
   );
 }
 
 function StoreDialog({ store, accessCode, onClose }: { store: StoreInfo; accessCode: string; onClose: () => void }) {
   const save = useSaveSettings<StoreInfo>("store");
+  const t = useT(settingsNs);
+  const tc = useT(commonNs);
   const [f, setF] = useState({ ...store, accessCode: store.accessCode ?? accessCode });
   const bind = (k: keyof StoreInfo) => ({ value: f[k] ?? "", onChange: (e: React.ChangeEvent<HTMLInputElement>) => setF({ ...f, [k]: e.target.value }) });
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="sm:max-w-2xl">
-        <DialogHeader><DialogTitle>Sửa thông tin cửa hàng</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{t("store.dialogTitle")}</DialogTitle></DialogHeader>
         <div className="grid grid-cols-1 gap-3 text-[13px] md:grid-cols-3">
-          <div className="grid gap-1.5 md:col-span-3"><Label>Địa chỉ truy cập (nhập ở bước đầu khi đăng nhập)</Label>
+          <div className="grid gap-1.5 md:col-span-3"><Label>{t("store.accessCodeLabel")}</Label>
             <Input value={f.accessCode ?? ""} readOnly disabled />
-            <span className="text-xs text-muted-foreground">Chỉ chủ gian hàng đổi được tại Hồ sơ cửa hàng → Cập nhật → Đổi tên gian hàng (mọi thiết bị sẽ bị đăng xuất).</span></div>
-          <div className="grid gap-1.5 md:col-span-2"><Label>Tên cửa hàng *</Label><Input {...bind("name")} /></div>
-          <div className="grid gap-1.5"><Label>Điện thoại</Label><Input {...bind("phone")} /></div>
-          <div className="grid gap-1.5"><Label>Email</Label><Input {...bind("email")} /></div>
-          <div className="grid gap-1.5"><Label>Mã số thuế</Label><Input {...bind("taxCode")} /></div>
+            <span className="text-xs text-muted-foreground">{t("store.accessCodeNote")}</span></div>
+          <div className="grid gap-1.5 md:col-span-2"><Label>{t("store.nameRequired")}</Label><Input {...bind("name")} /></div>
+          <div className="grid gap-1.5"><Label>{t("store.phone")}</Label><Input {...bind("phone")} /></div>
+          <div className="grid gap-1.5"><Label>{t("store.email")}</Label><Input {...bind("email")} /></div>
+          <div className="grid gap-1.5"><Label>{t("store.taxCode")}</Label><Input {...bind("taxCode")} /></div>
           <VnAddressFields idPrefix="store" fieldClassName="grid gap-1.5" labelClassName="text-sm font-medium leading-none"
-            labels={{ province: "Tỉnh/Thành phố" }}
+            labels={{ province: t("store.province") }}
             value={{ address: f.address ?? "", provinceCode: f.provinceCode ?? "", provinceName: f.province ?? "",
               wardCode: f.wardCode ?? "", wardName: f.ward ?? "" }}
             onChange={(v) => setF({ ...f, address: v.address, province: v.provinceName || null, ward: v.wardName || null,
               provinceCode: v.provinceCode || null, wardCode: v.wardCode || null })} />
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Bỏ qua</Button>
+          <Button variant="outline" onClick={onClose}>{tc("actions.skip")}</Button>
           <Button disabled={!f.name.trim() || (!!f.accessCode && f.accessCode.length < 3) || save.isPending}
-            onClick={() => save.mutate({ ...f, accessCode: f.accessCode || null }, { onSuccess: onClose })}>Lưu</Button>
+            onClick={() => save.mutate({ ...f, accessCode: f.accessCode || null }, { onSuccess: onClose })}>{tc("actions.save")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -79,26 +85,28 @@ export default function StoreInfoPage() {
   const { data } = useShopSettings();
   const { can } = useCurrentUser();
   const save = useSaveSettings<StoreInfo>("store");
+  const t = useT(settingsNs);
+  const tc = useT(commonNs);
   const [editing, setEditing] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
-  if (!data) return <div className="p-6 text-[13px] text-muted-foreground">Đang tải...</div>;
+  if (!data) return <div className="p-6 text-[13px] text-muted-foreground">{tc("status.loading")}</div>;
   const s = data.store ?? { ...EMPTY, name: process.env.NEXT_PUBLIC_APP_NAME ?? "" };
   const editable = can("settings.manage");
 
   async function pickLogo(file: File | undefined) {
     if (!file) return;
-    if (file.size > 2 * 1024 * 1024) { toast.error("Ảnh không quá 2MB"); return; }
+    if (file.size > 2 * 1024 * 1024) { toast.error(t("store.logoTooLarge")); return; }
     try {
       save.mutate({ ...s, logo: await shrinkImage(file) });
     } catch {
-      toast.error("Không đọc được ảnh");
+      toast.error(t("store.logoUnreadable"));
     }
   }
 
   return (
-    <SettingsPage toc={[{ id: "store", label: "Thông tin cửa hàng" }]}>
-      <SettingsCard id="store" title="Thông tin cửa hàng"
-        action={editable && <Button variant="outline" size="sm" onClick={() => setEditing(true)}>Chỉnh sửa</Button>}>
+    <SettingsPage toc={[{ id: "store", label: t("store.title") }]}>
+      <SettingsCard id="store" title={t("store.title")}
+        action={editable && <Button variant="outline" size="sm" onClick={() => setEditing(true)}>{t("store.edit")}</Button>}>
         <div className="space-y-5 p-5">
           <div className="flex items-center gap-4">
             <div className="flex size-16 items-center justify-center overflow-hidden rounded-md border bg-muted/40">
@@ -107,21 +115,21 @@ export default function StoreInfoPage() {
             {editable && (
               <div>
                 <Button variant="outline" size="sm" disabled={save.isPending} onClick={() => fileRef.current?.click()}>
-                  <ImageUp className="size-4" /> Chọn ảnh đại diện</Button>
-                {s.logo && <Button variant="ghost" size="sm" className="text-destructive" onClick={() => save.mutate({ ...s, logo: null })}>Xóa ảnh</Button>}
-                <p className="mt-1 text-xs text-muted-foreground">Lưu ý: Ảnh không quá 2MB. Ảnh được in ở đầu hóa đơn.</p>
+                  <ImageUp className="size-4" /> {t("store.pickLogo")}</Button>
+                {s.logo && <Button variant="ghost" size="sm" className="text-destructive" onClick={() => save.mutate({ ...s, logo: null })}>{t("store.removeLogo")}</Button>}
+                <p className="mt-1 text-xs text-muted-foreground">{t("store.logoNote")}</p>
                 <input ref={fileRef} type="file" accept="image/*" hidden onChange={(e) => { pickLogo(e.target.files?.[0]); e.target.value = ""; }} />
               </div>
             )}
           </div>
           <div className="grid grid-cols-1 gap-x-4 gap-y-3 md:grid-cols-3">
-            <Field label="Địa chỉ truy cập" value={data.accessCode} accent />
-            <Field label="Tên cửa hàng" value={s.name} />
-            <Field label="Điện thoại" value={s.phone} />
-            <Field label="Email" value={s.email} />
-            <Field label="Mã số thuế" value={s.taxCode} />
-            <Field label="Quốc gia" value="Việt Nam" />
-            <Field label="Địa chỉ" value={[s.address, s.ward, s.province].filter(Boolean).join(", ")} />
+            <Field label={t("store.accessCode")} value={data.accessCode} accent />
+            <Field label={t("store.name")} value={s.name} />
+            <Field label={t("store.phone")} value={s.phone} />
+            <Field label={t("store.email")} value={s.email} />
+            <Field label={t("store.taxCode")} value={s.taxCode} />
+            <Field label={t("store.country")} value={t("store.countryVietnam")} />
+            <Field label={t("store.address")} value={[s.address, s.ward, s.province].filter(Boolean).join(", ")} />
           </div>
         </div>
       </SettingsCard>

@@ -5,9 +5,12 @@ import { CheckOption, FILTER_FIELD, FilterSection, FilterSidebar, PeriodFilter, 
 import type { DeepLink } from "@/components/ui/deep-link-route";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { periodParams, type Period } from "@/features/sales/sales-queries";
+import { useT } from "@/lib/i18n";
 import { useVnAdmin } from "@/lib/vn-admin-data";
+import { commonNs } from "@/messages/common";
+import { deliveryNs } from "@/messages/delivery";
 import { usePartnerOptions } from "./delivery-queries";
-import { SHIPMENT_STATUSES } from "./delivery-types";
+import { SHIPMENT_STATUS_KEY, SHIPMENT_STATUSES } from "./delivery-types";
 
 /** province: mã tỉnh + tên rút gọn (khớp vận đơn cũ chưa có mã theo tên khu vực). */
 export type ShipmentFilters = {
@@ -50,29 +53,31 @@ export function useShipmentListState(defaultStatuses: string[] = [], link?: Deep
 export function ShipmentFilterSidebar({ value, onChange, showStatuses }: {
   value: ShipmentFilters; onChange: (f: ShipmentFilters) => void; showStatuses?: boolean;
 }) {
+  const t = useT(deliveryNs);
+  const tc = useT(commonNs);
   const { data: partners = [] } = usePartnerOptions();
   const vn = useVnAdmin();
   const set = (p: Partial<ShipmentFilters>) => onChange({ ...value, ...p });
   return (
     <FilterSidebar>
       {showStatuses && (
-        <FilterSection title="Trạng thái giao hàng">
-          {SHIPMENT_STATUSES.map(([v, l]) => (
-            <CheckOption key={v} checked={value.statuses.includes(v)} onChange={(on) => set({ statuses: toggle(value.statuses, v, on) })}>{l}</CheckOption>))}
+        <FilterSection title={t("filter.deliveryStatus")}>
+          {SHIPMENT_STATUSES.map(([v]) => (
+            <CheckOption key={v} checked={value.statuses.includes(v)} onChange={(on) => set({ statuses: toggle(value.statuses, v, on) })}>{t(SHIPMENT_STATUS_KEY[v])}</CheckOption>))}
         </FilterSection>)}
       <PeriodFilter value={value.period} onChange={(period) => set({ period })} allowAll />
-      <FilterSection title="Đối tác giao hàng">
-        <select className={FILTER_FIELD} aria-label="Đối tác giao hàng" value={value.partnerId} onChange={(e) => set({ partnerId: e.target.value })}>
-          <option value="">Tất cả đối tác</option>{partners.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select>
+      <FilterSection title={t("fields.partner")}>
+        <select className={FILTER_FIELD} aria-label={t("fields.partner")} value={value.partnerId} onChange={(e) => set({ partnerId: e.target.value })}>
+          <option value="">{t("filter.allPartners")}</option>{partners.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select>
       </FilterSection>
-      <FilterSection title="Khu vực giao hàng">
-        <SearchableSelect aria-label="Khu vực giao hàng" className={FILTER_FIELD} options={vn?.provinces ?? []}
-          value={value.provinceCode} placeholder="Tất cả Tỉnh/Thành phố" searchPlaceholder="Tìm Tỉnh/Thành phố"
+      <FilterSection title={t("filter.area")}>
+        <SearchableSelect aria-label={t("filter.area")} className={FILTER_FIELD} options={vn?.provinces ?? []}
+          value={value.provinceCode} placeholder={t("filter.allProvinces")} searchPlaceholder={t("filter.searchProvince")}
           onChange={(p) => set({ provinceCode: p?.code ?? "",
             provinceShortName: p ? p.name.replace(new RegExp(`^${p.type} `), "") : "" })} />
       </FilterSection>
-      <FilterSection title="Đối soát">
-        {([["", "Tất cả"], ["false", "Chưa đối soát"], ["true", "Đã đối soát"]] as const).map(([v, l]) => (
+      <FilterSection title={t("fields.reconcile")}>
+        {([["", tc("status.all")], ["false", t("filter.notReconciled")], ["true", t("filter.reconciled")]] as const).map(([v, l]) => (
           <RadioOption key={v} checked={value.reconciled === v} onSelect={() => set({ reconciled: v })}>{l}</RadioOption>))}
       </FilterSection>
     </FilterSidebar>

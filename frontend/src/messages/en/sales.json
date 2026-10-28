@@ -1,0 +1,242 @@
+{
+  "enums": {
+    "paymentMethod": {
+      "CASH": "Cash",
+      "TRANSFER": "Bank transfer",
+      "CARD": "Card",
+      "EWALLET": "E-wallet"
+    },
+    "fund": {
+      "CASH": "Cash",
+      "BANK": "Bank",
+      "EWALLET": "E-wallet",
+      "ALL": "All funds"
+    },
+    "invoiceState": {
+      "PROCESSING": "Processing",
+      "COMPLETED": "Completed",
+      "FAILED_DELIVERY": "Delivery failed",
+      "CANCELLED": "Cancelled"
+    },
+    "einvoiceState": {
+      "NONE": "Not issued",
+      "PUBLISHED": "Issued",
+      "ACCEPTED": "Accepted by tax authority",
+      "FAILED": "Issue failed"
+    },
+    "einvoiceNature": {
+      "ORIGINAL": "Original",
+      "ADJUST": "Adjustment",
+      "REPLACE": "Replacement"
+    },
+    "voucherStatus": {
+      "PAID": "Paid",
+      "CANCELLED": "Cancelled"
+    },
+    "returnStatus": {
+      "COMPLETED": "Returned",
+      "CANCELLED": "Cancelled"
+    },
+    "refundMethod": {
+      "CASH": "Refund in cash",
+      "TRANSFER": "Refund by bank transfer",
+      "CREDIT": "Keep as customer credit (prepayment)"
+    }
+  },
+  "listKit": {
+    "time": "Time",
+    "thisMonth": "This month",
+    "allTime": "All time"
+  },
+  "pager": {
+    "rangeWithUnit": "{from} - {to} of {total} {unit}",
+    "rows_one": "{count} row",
+    "rows_other": "{count} rows"
+  },
+  "invoices": {
+    "title": "Invoices",
+    "unit": "invoices",
+    "emptyWhat": "invoices",
+    "filter": {
+      "delivery": "Delivery",
+      "noDelivery": "No delivery",
+      "withDelivery": "With delivery",
+      "invoiceState": "Invoice status",
+      "returnState": "Return status",
+      "noReturn": "No returns",
+      "hasReturn": "Has returns",
+      "einvoiceStatus": "E-invoice status",
+      "nature": "Invoice type",
+      "pickStatus": "Select status",
+      "paymentMethod": "Payment method",
+      "createdBy": "Created by",
+      "pickCreator": "Select creator",
+      "seller": "Seller",
+      "pickSeller": "Select seller",
+      "pickPreset": "Select period"
+    },
+    "columns": {
+      "code": "Invoice no.",
+      "soldAt": "Time",
+      "returnCodes": "Return no.",
+      "customerCode": "Customer code",
+      "customerName": "Customer",
+      "sellerName": "Seller",
+      "subtotal": "Subtotal",
+      "discount": "Discount",
+      "total": "Amount due",
+      "paid": "Customer paid",
+      "paymentMethod": "Payment",
+      "state": "Status"
+    },
+    "table": {
+      "showAll": "Show all invoices",
+      "favOnly": "Show starred invoices only",
+      "mark": "Star",
+      "unmark": "Unstar"
+    },
+    "toolbar": {
+      "searchCode": "By invoice no.",
+      "searchProduct": "By product code, name",
+      "searchCustomer": "By customer code, name, phone",
+      "searchNote": "By note",
+      "advanced": "Advanced search",
+      "clearFilter": "Clear filters",
+      "create": "Create",
+      "newInvoice": "Invoice",
+      "exportSummary": "Export summary",
+      "exportDetail": "Export details",
+      "columns": "Choose columns",
+      "orderSettings": "Order settings",
+      "exportVietnameseNote": "Exported files keep Vietnamese column headers (for accounting/tax use)."
+    },
+    "detail": {
+      "tabPayments": "Payment history",
+      "saved": "Invoice saved",
+      "cancelled": "Invoice cancelled; items returned to stock",
+      "notePlaceholder": "Note..."
+    },
+    "header": {
+      "openCustomer": "Open customer in new tab",
+      "offline": "Sold offline",
+      "fromOrder": "From order {code}",
+      "createdBy": "Created by:",
+      "seller": "Seller:",
+      "soldAt": "Sale date:",
+      "timeLocked": "The store does not allow changing the transaction time (Settings → Orders)",
+      "channel": "Channel:",
+      "priceBook": "Price book:",
+      "defaultPriceBook": "Default price book"
+    },
+    "lines": {
+      "productCode": "Product code",
+      "productName": "Product name",
+      "quantity": "Quantity",
+      "unitPrice": "Unit price",
+      "discount": "Discount",
+      "price": "Sale price",
+      "amount": "Amount",
+      "lots": "Lot: {lots}"
+    },
+    "totals": {
+      "subtotal": "Subtotal ({qty})",
+      "invoiceDiscount": "Invoice discount",
+      "taxCut": "Tax reduction",
+      "total": "Amount due",
+      "paid": "Customer paid"
+    },
+    "payments": {
+      "code": "Voucher no.",
+      "time": "Time",
+      "createdBy": "Created by",
+      "voucherAmount": "Voucher amount",
+      "method": "Method",
+      "status": "Status",
+      "allocated": "Amount applied",
+      "emptyWhat": "payment vouchers"
+    },
+    "footer": {
+      "cancel": "Cancel",
+      "confirmCancel": "Cancel invoice {code}? Items will be returned to stock.",
+      "copy": "Copy",
+      "edit": "Edit",
+      "return": "Return",
+      "more": "More actions",
+      "editTax": "Edit product tax rates",
+      "editTaxPublished": "{label} (e-invoice already issued)"
+    },
+    "einvoice": {
+      "title": "E-invoice",
+      "number": "Invoice:",
+      "lookup": "Look up e-invoice",
+      "lookupTitle": "Look up (code {code})",
+      "issuedAt": "Issue date:",
+      "buyer": "Buyer:",
+      "nature": "Invoice type:",
+      "taxAuthorityCode": "Tax authority code (Mã CQT):"
+    },
+    "taxDialog": {
+      "title": "Edit product tax rates",
+      "vat": "VAT (%)",
+      "taxRate": "Tax rate",
+      "taxRateOf": "Tax rate for {code}",
+      "notChosen": "-- Not selected --",
+      "saved": "Tax rates saved"
+    }
+  },
+  "refund": {
+    "account": "Paying account",
+    "none": "-- None --"
+  },
+  "qr": {
+    "title": "Pay by QR code",
+    "noBank": "No bank account yet — add one in Settings → Bank accounts.",
+    "account": "Account",
+    "amount": "Amount",
+    "imageAlt": "Bank transfer QR code",
+    "generating": "Generating...",
+    "received": "Payment received",
+    "waiting": "Waiting for the customer's transfer (reference {code})",
+    "receivedToast": "Received {amount}đ by bank transfer",
+    "download": "Download QR",
+    "or": "or",
+    "copy": "Copy QR",
+    "copied": "QR code copied",
+    "autoHint": "QR payment notifications are on. The system confirms automatically when the transfer arrives."
+  },
+  "returns": {
+    "title": "Returns",
+    "unit": "returns",
+    "emptyWhat": "returns",
+    "status": "Status",
+    "searchPlaceholder": "By return no., invoice no., customer name",
+    "exportTitle": "Export the rows shown to CSV (Vietnamese headers)",
+    "columns": {
+      "code": "Return no.",
+      "time": "Time",
+      "invoiceCode": "Invoice no.",
+      "customer": "Customer",
+      "subtotal": "Subtotal",
+      "fee": "Return fee",
+      "total": "Refund due",
+      "refunded": "Refunded",
+      "status": "Status"
+    },
+    "detail": {
+      "cancelled": "Return cancelled",
+      "createdBy": "Created by:",
+      "time": "Time:",
+      "invoiceCode": "Invoice no.:",
+      "lotsBack": "Restocked lot",
+      "returnPrice": "Return price",
+      "noNote": "No note",
+      "subtotal": "Returned subtotal",
+      "discount": "Discount",
+      "fee": "Return fee",
+      "total": "Refund due",
+      "refunded": "Refunded",
+      "cancel": "Cancel",
+      "confirmCancel": "Cancel return {code}? Items will be taken out of stock again."
+    }
+  }
+}

@@ -3,6 +3,8 @@
 import { useMemo, useState } from "react";
 import { ListChecks, ScanLine, Search } from "lucide-react";
 import { formatMoney, formatNumber } from "@/lib/format";
+import { useT } from "@/lib/i18n";
+import { saleNs } from "@/messages/sale";
 import { normalize, searchCatalog } from "./use-sale-catalog";
 import { useSaleSettings } from "./use-sale-settings";
 import type { CatalogProduct } from "./sale-types";
@@ -20,6 +22,8 @@ const exactIndex = (results: Hit[], q: string) =>
  */
 export function SaleProductSearch({ products, onPick }: Props) {
   const { settings: s, set } = useSaleSettings();
+  const t = useT(saleNs);
+  const onOff = (on: boolean) => t(on ? "search.on" : "search.off");
   const [text, setText] = useState("");
   const [open, setOpen] = useState(false);
   const [cursor, setCursor] = useState(0);
@@ -62,17 +66,17 @@ export function SaleProductSearch({ products, onPick }: Props) {
     <div className="flex shrink-0 items-center gap-1">
       <div className="relative w-[330px]">
         <Search className="absolute top-2 left-2.5 size-4 text-[#6b7280]" />
-        <input id="sale-product-search" autoFocus value={text} placeholder="Tìm hàng hóa (F3)" aria-label="Tìm hàng hóa (F3)"
+        <input id="sale-product-search" autoFocus value={text} placeholder={t("search.placeholder")} aria-label={t("search.placeholder")}
           className="h-8 w-full rounded-md bg-background pr-9 pl-8 text-[13px] text-foreground outline-none placeholder:text-[#6b7280]"
           onChange={(e) => onChange(e.target.value)} onFocus={() => setOpen(true)}
           onBlur={() => setTimeout(() => setOpen(false), 150)} onKeyDown={onKeyDown} />
-        <button type="button" aria-pressed={s.multiSelect} title={`Chế độ chọn nhiều hàng hóa: ${s.multiSelect ? "đang bật" : "đang tắt"}`}
-          aria-label="Chế độ chọn nhiều hàng hóa" onClick={() => set({ multiSelect: !s.multiSelect })}
+        <button type="button" aria-pressed={s.multiSelect} title={`${t("search.multiSelect")}: ${onOff(s.multiSelect)}`}
+          aria-label={t("search.multiSelect")} onClick={() => set({ multiSelect: !s.multiSelect })}
           className={`absolute top-1 right-1 grid size-6 place-items-center rounded ${s.multiSelect ? "bg-primary/15 text-primary" : "text-[#4b5563] hover:text-primary"}`}>
           <ListChecks className="size-4" /></button>
         {open && text && (
           <div className="absolute z-50 mt-1 max-h-[26rem] w-[34rem] overflow-y-auto rounded-md border bg-popover text-popover-foreground shadow-lg">
-            {!results.length && <div className="p-3 text-sm text-muted-foreground">Không tìm thấy hàng hóa</div>}
+            {!results.length && <div className="p-3 text-sm text-muted-foreground">{t("search.noResults")}</div>}
             {results.map((r, i) => {
               const unit = r.product.units.find((u) => u.id === r.unitId)!;
               const id = idOf(r);
@@ -84,23 +88,23 @@ export function SaleProductSearch({ products, onPick }: Props) {
                     <span className="block text-xs text-muted-foreground">{unit.code} · {unit.unitName}</span></span>
                   <span className="shrink-0 text-right text-xs">
                     <span className="font-semibold text-primary">{formatMoney(unit.price)}</span><br />
-                    Tồn: {formatNumber(r.product.stock / unit.conversionRate)}
+                    {t("line.stock", { qty: formatNumber(r.product.stock / unit.conversionRate) })}
                   </span>
                 </button>
               );
             })}
             {s.multiSelect && results.length > 0 && (
               <div className="sticky bottom-0 flex items-center justify-between bg-popover px-3 py-2 text-[13px] shadow-[0_-1px_0_#eef0f3]">
-                <span>Đã chọn {checked.size}</span>
+                <span>{t("search.selected", { count: checked.size })}</span>
                 <button type="button" disabled={!checked.size} onMouseDown={(e) => e.preventDefault()} onClick={addChecked}
-                  className="h-7 rounded-md bg-primary px-3 font-semibold text-white disabled:opacity-50">Thêm vào đơn</button>
+                  className="h-7 rounded-md bg-primary px-3 font-semibold text-white disabled:opacity-50">{t("search.addToOrder")}</button>
               </div>
             )}
           </div>
         )}
       </div>
-      <button type="button" aria-pressed={s.scanQuickAdd} aria-label="Quét mã để thêm hàng hóa nhanh"
-        title={`Quét mã để thêm hàng hóa nhanh: ${s.scanQuickAdd ? "đang bật" : "đang tắt"}`}
+      <button type="button" aria-pressed={s.scanQuickAdd} aria-label={t("search.scanQuickAdd")}
+        title={`${t("search.scanQuickAdd")}: ${onOff(s.scanQuickAdd)}`}
         className={iconBtn(s.scanQuickAdd)} onClick={() => set({ scanQuickAdd: !s.scanQuickAdd })}><ScanLine className="size-5" /></button>
     </div>
   );

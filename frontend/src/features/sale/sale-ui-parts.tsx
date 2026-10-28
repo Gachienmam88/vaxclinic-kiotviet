@@ -1,7 +1,10 @@
 "use client";
 
 import { Pencil } from "lucide-react";
-import { PAYMENT_METHODS } from "@/features/sales/sales-types";
+import { useT } from "@/lib/i18n";
+import { saleNs } from "@/messages/sale";
+import { enumLabel } from "@/features/sales/i18n-enum-label";
+import { salesNs } from "@/messages/sales";
 import type { DraftInvoice } from "./sale-types";
 
 /** Ô nhập số kiểu gạch chân (giảm giá, khách thanh toán, SL, đơn giá) — 13px, viền dưới xám, focus viền xanh. */
@@ -31,17 +34,28 @@ export function SaleDateTime() {
   );
 }
 
+type Method = DraftInvoice["paymentMethod"];
+
+/** Phương thức thanh toán của màn bán hàng (thứ tự hiển thị) + khóa nhãn đầy đủ / nhãn ngắn (radio 1 dòng). */
+export const SALE_PAYMENT_METHODS: readonly Method[] = ["CASH", "TRANSFER", "CARD", "EWALLET"];
+
+/** Tên phương thức thanh toán theo ngôn ngữ giao diện (khóa dùng chung sales "enums.paymentMethod.<m>"). */
+export function usePaymentMethodLabel() {
+  const ts = useT(salesNs);
+  return (m: Method) => enumLabel(ts, salesNs, "enums.paymentMethod", m);
+}
+
 /** Chọn phương thức thanh toán dạng radio, nhãn ngắn như KiotViet để vừa 1 dòng: Tiền mặt / Chuyển khoản / Thẻ / Ví. */
-export function PaymentMethodRadios({ value, onChange }: {
-  value: DraftInvoice["paymentMethod"]; onChange: (v: DraftInvoice["paymentMethod"]) => void;
-}) {
+export function PaymentMethodRadios({ value, onChange }: { value: Method; onChange: (v: Method) => void }) {
+  const t = useT(saleNs);
+  const label = usePaymentMethodLabel();
   return (
-    <div role="radiogroup" aria-label="Phương thức thanh toán" className="flex flex-nowrap gap-x-4 py-1">
-      {PAYMENT_METHODS.map((m) => (
-        <label key={m.value} className="flex cursor-pointer items-center gap-1.5 whitespace-nowrap">
-          <input type="radio" name="sale-payment-method" className="size-4 accent-primary" checked={value === m.value}
-            onChange={() => onChange(m.value)} />
-          {m.value === "EWALLET" ? "Ví" : m.label}
+    <div role="radiogroup" aria-label={t("payment.method")} className="flex flex-nowrap gap-x-4 py-1">
+      {SALE_PAYMENT_METHODS.map((m) => (
+        <label key={m} className="flex cursor-pointer items-center gap-1.5 whitespace-nowrap">
+          <input type="radio" name="sale-payment-method" className="size-4 accent-primary" checked={value === m}
+            onChange={() => onChange(m)} />
+          {m === "EWALLET" ? t("payment.methods.ewalletShort") : label(m)}
         </label>
       ))}
     </div>
@@ -50,11 +64,12 @@ export function PaymentMethodRadios({ value, onChange }: {
 
 /** Thanh "Ghi chú đơn hàng" trắng bo góc ở đáy cột trái (cả bán hàng và trả hàng). */
 export function SaleOrderNote({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const t = useT(saleNs);
   return (
     <label className="flex h-[46px] items-center gap-2.5 rounded-lg bg-background px-5 shadow-[0_1px_2px_rgba(0,0,0,0.06)]">
       <Pencil className="size-4 shrink-0 text-[#6b7280]" />
       <input className="h-full min-w-0 flex-1 bg-transparent text-[13px] outline-none placeholder:text-[#6b7280]"
-        placeholder="Ghi chú đơn hàng" aria-label="Ghi chú đơn hàng" value={value} onChange={(e) => onChange(e.target.value)} />
+        placeholder={t("checkout.orderNote")} aria-label={t("checkout.orderNote")} value={value} onChange={(e) => onChange(e.target.value)} />
     </label>
   );
 }

@@ -2,6 +2,7 @@ package com.vaxclinic.product.internal;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.vaxclinic.common.http.InternalRestClientFactory;
 import com.vaxclinic.common.security.ServiceTokenProvider;
 import com.vaxclinic.product.purchase.PurchaseReceipt;
 import com.vaxclinic.product.purchase.Supplier;
@@ -34,11 +35,11 @@ public class CashflowOutbox {
     private final RestClient http;
     private final ServiceTokenProvider tokens;
 
-    public CashflowOutbox(JdbcTemplate jdbc, ObjectMapper json, @Value("${app.sales-url}") String salesUrl,
+    public CashflowOutbox(InternalRestClientFactory httpFactory, JdbcTemplate jdbc, ObjectMapper json, @Value("${app.sales-url}") String salesUrl,
                           @Value("${app.jwt.secret}") String secret) {
         this.jdbc = jdbc;
         this.json = json;
-        this.http = RestClient.builder().baseUrl(salesUrl).build();
+        this.http = httpFactory.create(salesUrl);
         this.tokens = new ServiceTokenProvider(secret, "product-service");
     }
 

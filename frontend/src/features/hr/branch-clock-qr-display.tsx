@@ -4,6 +4,9 @@ import { useEffect, useState } from "react";
 import QRCode from "qrcode";
 import { Maximize2, X } from "lucide-react";
 import { api, errorMessage } from "@/lib/api-client";
+import { useT } from "@/lib/i18n";
+import { commonNs } from "@/messages/common";
+import { hrNs } from "@/messages/hr";
 
 type QrToken = { token: string; branchId: string; branchName: string; expiresAt: string; refreshSeconds: number };
 
@@ -12,6 +15,8 @@ type QrToken = { token: string; branchId: string; branchName: string; expiresAt:
  * nhân viên quét bằng camera điện thoại → mở /cham-cong?t=... đã đăng nhập → bấm Vào ca / Ra ca.
  */
 export function BranchClockQrDisplay({ branchId, onClose }: { branchId: string; onClose: () => void }) {
+  const t = useT(hrNs);
+  const tc = useT(commonNs);
   const [qr, setQr] = useState<QrToken | null>(null);
   const [image, setImage] = useState("");
   const [left, setLeft] = useState(0);
@@ -45,15 +50,15 @@ export function BranchClockQrDisplay({ branchId, onClose }: { branchId: string; 
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-white p-6 text-center">
-      <button type="button" aria-label="Đóng" onClick={onClose} className="absolute top-4 right-4 rounded-full p-2 hover:bg-muted"><X className="size-6" /></button>
-      <button type="button" aria-label="Toàn màn hình" onClick={() => document.documentElement.requestFullscreen?.().catch(() => undefined)}
+      <button type="button" aria-label={tc("actions.close")} onClick={onClose} className="absolute top-4 right-4 rounded-full p-2 hover:bg-muted"><X className="size-6" /></button>
+      <button type="button" aria-label={t("clockQr.fullscreen")} onClick={() => document.documentElement.requestFullscreen?.().catch(() => undefined)}
         className="absolute top-4 right-16 rounded-full p-2 hover:bg-muted"><Maximize2 className="size-5" /></button>
-      <p className="text-2xl font-bold">Quét mã để chấm công</p>
+      <p className="text-2xl font-bold">{t("clockQr.title")}</p>
       <p className="mt-1 text-lg text-muted-foreground">{qr?.branchName ?? ""}</p>
       {/* eslint-disable-next-line @next/next/no-img-element -- ảnh QR dạng data URL sinh tại trình duyệt */}
-      {image && <img src={image} alt="Mã QR chấm công chi nhánh" className="mt-6 size-[min(70vh,420px)]" />}
+      {image && <img src={image} alt={t("clockQr.alt")} className="mt-6 size-[min(70vh,420px)]" />}
       {error && <p className="mt-6 text-destructive">{error}</p>}
-      <p className="mt-4 text-sm text-muted-foreground">Mã tự đổi sau {left} giây · Mở camera điện thoại, quét mã rồi bấm Vào ca / Ra ca</p>
+      <p className="mt-4 text-sm text-muted-foreground">{t("clockQr.hint", { seconds: left })}</p>
     </div>
   );
 }

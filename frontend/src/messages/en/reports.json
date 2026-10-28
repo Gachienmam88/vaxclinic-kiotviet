@@ -110,12 +110,6 @@
     "thisMonth": "This month",
     "overdue": "Overdue"
   },
-  "orderStatus": {
-    "DRAFT": "Draft",
-    "CONFIRMED": "Confirmed",
-    "COMPLETED": "Completed",
-    "CANCELLED": "Cancelled"
-  },
   "viewer": {
     "undo": "Undo",
     "redo": "Redo",
@@ -314,7 +308,7 @@
     "orderCount": "Orders: {n}"
   },
   "party": {
-    "countOf": "{noun}: {n}",
+    "countOf": "Number of {noun}: {n}",
     "customerCount": "Customers: {n}",
     "chartDebt": "Top 10 customers by debt",
     "chartProfit": "Top 10 {noun} by profit",
@@ -322,7 +316,7 @@
     "debtBranchMeta": "Branch: All (customer debt ledger)",
     "customer": {
       "title": "Customer report",
-      "noun": "Customers",
+      "noun": "customers",
       "concerns": {
         "sales": "Sales",
         "products": "Products by customer",
@@ -339,7 +333,7 @@
     },
     "employee": {
       "title": "Employee report",
-      "noun": "Employees",
+      "noun": "employees",
       "concerns": {
         "sales": "Sales",
         "profit": "Profit",
@@ -355,7 +349,7 @@
     },
     "channel": {
       "title": "Sales channel report",
-      "noun": "Channels",
+      "noun": "channels",
       "concerns": {
         "sales": "Sales",
         "profit": "Profit"

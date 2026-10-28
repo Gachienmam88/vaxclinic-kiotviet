@@ -105,7 +105,8 @@
   },
   "returned": {
     "titleOne": "Mark {code} as returned",
-    "titleMany": "Mark {count} shipments as returned",
+    "titleMany_one": "Mark {count} shipment as returned",
+    "titleMany_other": "Mark {count} shipments as returned",
     "intro": "The store has received the goods back: a return is created and the goods are restocked.",
     "prepaidOne": "Customer prepaid: {amount}",
     "prepaidMany": "Customer prepaid amount (applies to all shipments)",

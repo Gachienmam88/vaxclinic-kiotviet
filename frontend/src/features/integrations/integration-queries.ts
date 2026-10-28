@@ -26,7 +26,12 @@ export type EInvoiceRecord = {
   inv_code: string | null; inv_date: string | null; transaction_id: string | null; error: string | null;
 };
 
+/** Tên tiếng Việt cố định (file CSV hóa đơn đầu vào — dữ liệu thuế, giữ tiếng Việt mọi ngôn ngữ). */
 export const NATURE_LABEL = { ORIGINAL: "Hóa đơn gốc", REPLACE: "Hóa đơn thay thế", ADJUST: "Hóa đơn điều chỉnh" } as const;
+/** Nhãn trên màn hình (khóa namespace "purchases"). */
+export const NATURE_KEY = {
+  ORIGINAL: "inputInvoices.nature.original", REPLACE: "inputInvoices.nature.replace", ADJUST: "inputInvoices.nature.adjust",
+} as const;
 
 export const useTaxConnections = () =>
   useQuery({ queryKey: ["tax-connections"], queryFn: () => api<TaxConnection[]>("/tax-connections") });

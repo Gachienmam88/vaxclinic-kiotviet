@@ -12,11 +12,16 @@ import { CustomerGeneralFields, CustomerInvoiceFields, TEXT_FIELDS, type Custome
 import { kvDialog, kvDialogFooter, kvDialogHeader, kvTabsList, kvTabsTrigger } from "./customer-ui-primitives";
 import { useCustomerGroups } from "./sales-queries";
 import type { Customer } from "./sales-types";
+import { useT } from "@/lib/i18n";
+import { commonNs } from "@/messages/common";
+import { customersNs } from "@/messages/customers";
 
 type Props = { customer?: Customer; branchId: string; onClose: () => void; onSaved?: (c: Customer) => void };
 
 /** Thêm / sửa khách hàng: tab Thông tin chung + tab Thông tin xuất hóa đơn. */
 export function CustomerFormDialog({ customer, branchId, onClose, onSaved }: Props) {
+  const t = useT(customersNs);
+  const tc = useT(commonNs);
   const qc = useQueryClient();
   const { data: groups = [] } = useCustomerGroups();
   const { data: branches = [] } = useBranches();
@@ -39,7 +44,7 @@ export function CustomerFormDialog({ customer, branchId, onClose, onSaved }: Pro
         : api<Customer>("/customers", { method: "POST", body });
     },
     onSuccess: (c) => {
-      toast.success(customer ? "Đã cập nhật khách hàng" : `Đã thêm khách hàng ${c.code}`);
+      toast.success(customer ? t("form.updated") : t("form.added", { code: c.code }));
       qc.invalidateQueries({ queryKey: ["customers"] });
       qc.invalidateQueries({ queryKey: ["customer", c.id] });
       qc.invalidateQueries({ queryKey: ["customer-groups"] });
@@ -56,24 +61,24 @@ export function CustomerFormDialog({ customer, branchId, onClose, onSaved }: Pro
       <DialogContent className={`${kvDialog} sm:max-w-[964px]`}>
         <DialogHeader className={`${kvDialogHeader} pt-5`}>
           <DialogTitle className="flex items-center gap-2 text-[16px] font-bold">
-            {customer ? "Sửa khách hàng" : "Thêm khách hàng"}
+            {customer ? t("form.titleEdit") : t("form.titleAdd")}
             {branchName && <span className="flex items-center gap-2 text-[13px] font-normal text-foreground/70">
-              <span className="h-3 w-px bg-[#d9dbe0]" />Chi nhánh tạo: {branchName}</span>}
+              <span className="h-3 w-px bg-[#d9dbe0]" />{t("form.branch", { name: branchName })}</span>}
           </DialogTitle>
         </DialogHeader>
         <form id="customer-form" onSubmit={(e) => { e.preventDefault(); save.mutate(); }}>
           <Tabs defaultValue="general">
             <TabsList variant="line" className={`${kvTabsList} gap-10 px-[42px]`}>
-              <TabsTrigger value="general" className={kvTabsTrigger}>Thông tin chung</TabsTrigger>
-              <TabsTrigger value="invoice" className={kvTabsTrigger}>Thông tin xuất hóa đơn</TabsTrigger>
+              <TabsTrigger value="general" className={kvTabsTrigger}>{t("form.tabGeneral")}</TabsTrigger>
+              <TabsTrigger value="invoice" className={kvTabsTrigger}>{t("form.tabInvoice")}</TabsTrigger>
             </TabsList>
             <TabsContent value="general" className="px-7 pt-5 pb-2"><CustomerGeneralFields {...fields} /></TabsContent>
             <TabsContent value="invoice" className="px-7 pt-5 pb-2"><CustomerInvoiceFields {...fields} /></TabsContent>
           </Tabs>
         </form>
         <DialogFooter className={`${kvDialogFooter} gap-3 border-t-0 pt-4 pb-5`}>
-          <Button variant="outline" className="h-9 w-[92px] rounded-md border-primary text-[13px] font-semibold text-primary hover:bg-primary/5 hover:text-primary" onClick={onClose}>Bỏ qua</Button>
-          <Button type="submit" form="customer-form" className="h-9 w-[92px] rounded-md text-[13px] font-semibold" disabled={save.isPending}>Lưu</Button>
+          <Button variant="outline" className="h-9 w-[92px] rounded-md border-primary text-[13px] font-semibold text-primary hover:bg-primary/5 hover:text-primary" onClick={onClose}>{tc("actions.skip")}</Button>
+          <Button type="submit" form="customer-form" className="h-9 w-[92px] rounded-md text-[13px] font-semibold" disabled={save.isPending}>{tc("actions.save")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

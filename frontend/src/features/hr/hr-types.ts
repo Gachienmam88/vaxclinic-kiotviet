@@ -1,15 +1,20 @@
 /** Kiểu dữ liệu module Nhân viên — khớp DTO identity-service (package com.vaxclinic.identity.hr). Tiền là số VNĐ. */
+import type { HrT } from "@/messages/hr";
 
 export type SalaryType = "SHIFT" | "HOUR" | "STANDARD_DAY" | "FIXED";
 
-export const SALARY_TYPES: [SalaryType, string, string][] = [
-  ["SHIFT", "Theo ca", "/ca"],
-  ["HOUR", "Theo giờ", "/giờ"],
-  ["STANDARD_DAY", "Theo ngày công chuẩn", "/kỳ lương"],
-  ["FIXED", "Cố định hàng tháng", "/kỳ lương"],
-];
+/** [loại, khóa nhãn, khóa đơn vị] — dịch lúc hiển thị bằng t (namespace hr). */
+export const SALARY_TYPES = [
+  ["SHIFT", "salaryType.shift", "salaryType.perShift"],
+  ["HOUR", "salaryType.hour", "salaryType.perHour"],
+  ["STANDARD_DAY", "salaryType.standardDay", "salaryType.perPeriod"],
+  ["FIXED", "salaryType.fixed", "salaryType.perPeriod"],
+] as const satisfies readonly (readonly [SalaryType, string, string])[];
 
-export const salaryTypeLabel = (t: string | null) => SALARY_TYPES.find((s) => s[0] === t)?.[1] ?? "Chưa thiết lập";
+export const salaryTypeLabel = (t: HrT, type: string | null) => {
+  const s = SALARY_TYPES.find((x) => x[0] === type);
+  return s ? t(s[1]) : t("salaryType.notSet");
+};
 
 /** Phụ cấp: DAY (theo ngày làm) / MONTH (cố định tháng). Giảm trừ: LATE / EARLY (mỗi lần) / MONTH. */
 export type PayItem = { name: string; kind: "DAY" | "MONTH" | "LATE" | "EARLY"; amount: number };
@@ -52,13 +57,13 @@ export type ScheduleWeek = { items: ScheduleItem[]; expected: Record<string, num
 export type AttendanceStatus = "ON_TIME" | "LATE_EARLY" | "MISSING" | "NOT_CHECKED" | "ABSENT";
 
 /** Chú thích màu Bảng chấm công (như KiotViet). */
-export const ATTENDANCE_STATUS: Record<AttendanceStatus, { label: string; color: string }> = {
-  ON_TIME: { label: "Đúng giờ", color: "#1f6fe5" },
-  LATE_EARLY: { label: "Đi muộn / Về sớm", color: "#9b51e0" },
-  MISSING: { label: "Chấm công thiếu", color: "#e5383b" },
-  NOT_CHECKED: { label: "Chưa chấm công", color: "#f2994a" },
-  ABSENT: { label: "Nghỉ làm", color: "#9aa1ab" },
-};
+export const ATTENDANCE_STATUS = {
+  ON_TIME: { label: "attendanceStatus.onTime", color: "#1f6fe5" },
+  LATE_EARLY: { label: "attendanceStatus.lateEarly", color: "#9b51e0" },
+  MISSING: { label: "attendanceStatus.missing", color: "#e5383b" },
+  NOT_CHECKED: { label: "attendanceStatus.notChecked", color: "#f2994a" },
+  ABSENT: { label: "attendanceStatus.absent", color: "#9aa1ab" },
+} as const satisfies Record<AttendanceStatus, { label: string; color: string }>;
 
 export type AttendanceCell = {
   attendanceId: string | null; scheduleId: string | null; employeeId: string; employeeCode: string; employeeName: string;
@@ -71,7 +76,9 @@ export type AttendanceCell = {
 export type MachineImportResult = { rows: number; punches: number; records: number; unknownCodes: string[]; unmatched: number; errors: string[] };
 
 export type PayrollStatus = "DRAFT" | "TEMP" | "LOCKED" | "CANCELLED";
-export const PAYROLL_STATUS: [PayrollStatus, string][] = [["DRAFT", "Đang tạo"], ["TEMP", "Tạm tính"], ["LOCKED", "Đã chốt lương"], ["CANCELLED", "Đã hủy"]];
+export const PAYROLL_STATUS = [
+  ["DRAFT", "payrollStatus.draft"], ["TEMP", "payrollStatus.temp"], ["LOCKED", "payrollStatus.locked"], ["CANCELLED", "payrollStatus.cancelled"],
+] as const satisfies readonly (readonly [PayrollStatus, string])[];
 
 export type Payroll = {
   id: string; code: string; name: string; payCycle: "MONTHLY"; periodStart: string; periodEnd: string; branchId: string | null;
@@ -132,5 +139,8 @@ export type HrSettings = {
 
 export type HrOverview = { employees: number; shifts: number; schedules: number; timekeeping: number; salaries: number; payrolls: number };
 
-export const WEEKDAY_SHORT = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"];
-export const WEEKDAY_LONG = ["Thứ hai", "Thứ ba", "Thứ tư", "Thứ năm", "Thứ sáu", "Thứ bảy", "Chủ nhật"];
+/** Khóa nhãn thứ (index 0 = Thứ hai … 6 = Chủ nhật), dịch bằng t (namespace hr). */
+export const WEEKDAY_SHORT = ["weekday.short.mon", "weekday.short.tue", "weekday.short.wed", "weekday.short.thu",
+  "weekday.short.fri", "weekday.short.sat", "weekday.short.sun"] as const;
+export const WEEKDAY_LONG = ["weekday.long.mon", "weekday.long.tue", "weekday.long.wed", "weekday.long.thu",
+  "weekday.long.fri", "weekday.long.sat", "weekday.long.sun"] as const;

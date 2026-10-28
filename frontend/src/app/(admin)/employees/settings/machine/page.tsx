@@ -9,12 +9,16 @@ import { useBranches } from "@/features/settings/settings-queries";
 import type { MachineImportResult } from "@/features/hr/hr-types";
 import { ApiRequestError, errorMessage } from "@/lib/api-client";
 import { useQueryClient } from "@tanstack/react-query";
+import { useT } from "@/lib/i18n";
+import { hrNs } from "@/messages/hr";
+import { renderRichText } from "@/lib/i18n/render-rich-text";
 
 /**
  * Máy chấm công vân tay / khuôn mặt: thay vì phần mềm kết nối của KiotViet, xuất file log từ máy (CSV / TXT / XLSX)
  * rồi nhập vào đây. Mỗi lượt quét được ghép vào ca theo Mã chấm công của nhân viên.
  */
 export default function MachineSettingsPage() {
+  const t = useT(hrNs);
   const qc = useQueryClient();
   const { data: branches = [] } = useBranches();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -31,9 +35,9 @@ export default function MachineSettingsPage() {
       if (branchId) form.append("branchId", branchId);
       const res = await fetch("/api/backend/hr/attendance/import", { method: "POST", body: form });
       const body = await res.json().catch(() => ({}));
-      if (!res.ok) throw new ApiRequestError(res.status, body.code ?? "UNKNOWN", body.message ?? "Nhập file thất bại", body.details);
+      if (!res.ok) throw new ApiRequestError(res.status, body.code ?? "UNKNOWN", body.message ?? t("machine.importFailed"), body.details);
       setResult(body as MachineImportResult);
-      toast.success(`Đã ghi nhận ${(body as MachineImportResult).records} lượt chấm công`);
+      toast.success(t("machine.toastRecorded", { count: (body as MachineImportResult).records }));
       qc.invalidateQueries({ queryKey: ["hr"] });
     } catch (e) {
       toast.error(errorMessage(e));
@@ -44,31 +48,32 @@ export default function MachineSettingsPage() {
   }
 
   const step = (n: number, text: React.ReactNode) => (
-    <p className="flex items-start gap-2"><span className="shrink-0 rounded bg-[#eff0f3] px-1.5 py-0.5 text-[12px] font-medium">Bước {n}</span><span>{text}</span></p>
+    <p className="flex items-start gap-2"><span className="shrink-0 rounded bg-[#eff0f3] px-1.5 py-0.5 text-[12px] font-medium">{t("settings.step", { n })}</span><span>{text}</span></p>
   );
   return (
-    <SettingsPage toc={[{ id: "machine", label: "Chấm công vân tay" }]}>
-      <SettingsCard id="machine" title="Cài đặt máy chấm công vân tay" description="Kết nối với máy chấm công để ghi nhận dữ liệu chấm công lên phần mềm">
+    <SettingsPage toc={[{ id: "machine", label: t("machine.toc") }]}>
+      <SettingsCard id="machine" title={t("machine.title")} description={t("machine.description")}>
         <div className="space-y-3 px-5 py-4 text-[13px]">
-          <p>Để triển khai chấm công bằng máy chấm công cho cửa hàng, vui lòng xem hướng dẫn dưới đây:</p>
-          {step(1, "Nhập Mã chấm công cho từng nhân viên trùng với mã (User ID / AC-No.) đã đăng ký trên máy chấm công.")}
-          {step(2, "Trên máy chấm công hoặc phần mềm đi kèm, xuất dữ liệu chấm công ra file CSV, TXT hoặc Excel (.xlsx) gồm cột Mã chấm công và Thời gian (hoặc Ngày + Giờ).")}
-          {step(3, "Chọn file bên dưới. Mỗi lượt quét được ghép vào ca làm việc phù hợp: giờ vào = lần quét sớm nhất, giờ ra = lần quét muộn nhất trong ca.")}
+          <p>{t("machine.intro")}</p>
+          {step(1, t("machine.step1"))}
+          {step(2, t("machine.step2"))}
+          {step(3, t("machine.step3"))}
           <div className="flex flex-wrap items-center gap-3 pt-1">
-            <select aria-label="Chi nhánh đặt máy" className="h-[30px] w-60 rounded-md border border-[#d9dbe0] bg-white px-2 text-[13px]"
+            <select aria-label={t("machine.branch")} className="h-[30px] w-60 rounded-md border border-[#d9dbe0] bg-white px-2 text-[13px]"
               value={branchId} onChange={(e) => setBranchId(e.target.value)}>
-              <option value="">Chi nhánh đặt máy (không bắt buộc)</option>
+              <option value="">{t("machine.branchOptional")}</option>
               {branches.filter((b) => b.active).map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
             </select>
-            <input ref={fileRef} type="file" accept=".csv,.txt,.xlsx" className="hidden" aria-label="File dữ liệu chấm công"
+            <input ref={fileRef} type="file" accept=".csv,.txt,.xlsx" className="hidden" aria-label={t("machine.file")}
               onChange={(e) => e.target.files?.[0] && upload(e.target.files[0])} />
-            <Button disabled={busy} onClick={() => fileRef.current?.click()}><Upload className="size-4" /> {busy ? "Đang nhập…" : "Chọn file dữ liệu chấm công"}</Button>
+            <Button disabled={busy} onClick={() => fileRef.current?.click()}><Upload className="size-4" /> {busy ? t("machine.importing") : t("machine.pickFile")}</Button>
           </div>
           {result && (
             <div className="rounded-md border bg-[#f8fafc] p-3 leading-6">
-              <p>Đọc {result.rows} dòng · {result.punches} lượt quét hợp lệ · <b>{result.records} lượt chấm công được ghi nhận</b></p>
-              {result.unmatched > 0 && <p className="text-[#b45309]">{result.unmatched} lượt quét không khớp ca làm việc nào (ngoài khung giờ ca)</p>}
-              {result.unknownCodes.length > 0 && <p className="text-[#b45309]">Mã chấm công chưa gán cho nhân viên: {result.unknownCodes.join(", ")}</p>}
+              <p>{renderRichText(t("machine.resultSummary"), { rows: result.rows, punches: result.punches,
+                records: <b>{t("machine.resultRecords", { records: result.records })}</b> })}</p>
+              {result.unmatched > 0 && <p className="text-[#b45309]">{t("machine.unmatched", { count: result.unmatched })}</p>}
+              {result.unknownCodes.length > 0 && <p className="text-[#b45309]">{t("machine.unknownCodes", { codes: result.unknownCodes.join(", ") })}</p>}
               {result.errors.map((e) => <p key={e} className="text-destructive">{e}</p>)}
             </div>
           )}

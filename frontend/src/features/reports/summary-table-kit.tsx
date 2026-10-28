@@ -7,6 +7,7 @@ import { sumOf, type SummaryRow } from "./report-api";
 import type { ChartItem } from "./report-charts";
 import type { ReportColumn, ReportLine } from "./report-table";
 import { DocCodeLink } from "@/components/ui/doc-code-link";
+import type { ReportsT } from "@/messages/reports";
 
 export type SumAgg = {
   label: string; code: string; count: number; subtotal: number; discount: number; revenue: number; returnValue: number;
@@ -36,20 +37,20 @@ export function summaryLines(rows: SummaryRow[], sumLabel: string, labelOf?: (r:
 const money = (key: keyof SumAgg, label: string): ReportColumn<SumAgg> => ({ key, label, type: "money", value: (r) => r[key] });
 
 /** Doanh thu: [nhãn, (mã)], Doanh thu, Giá trị trả, Doanh thu thuần. */
-export function revenueColumns(first: string, codeLabel?: string): ReportColumn<SumAgg>[] {
+export function revenueColumns(t: ReportsT, first: string, codeLabel?: string): ReportColumn<SumAgg>[] {
   return [
     ...(codeLabel ? [{ key: "code", label: codeLabel, value: (r: SumAgg) => r.code, render: (r: SumAgg) => <b><DocCodeLink code={r.code} /></b> }] : []),
     { key: "label", label: first, value: (r) => r.label },
-    money("revenue", "Doanh thu"), money("returnValue", "Giá trị trả"), money("net", "Doanh thu thuần"),
+    money("revenue", t("cols.revenue")), money("returnValue", t("cols.returnValue")), money("net", t("cols.net")),
   ];
 }
 
 /** Lợi nhuận: nhãn, Tổng tiền hàng, Giảm giá HĐ, Doanh thu, Giá trị trả, Doanh thu thuần, Tổng giá vốn, Lợi nhuận gộp. */
-export function profitColumns(first: string, codeLabel?: string): ReportColumn<SumAgg>[] {
+export function profitColumns(t: ReportsT, first: string, codeLabel?: string): ReportColumn<SumAgg>[] {
   return [
-    ...revenueColumns(first, codeLabel).slice(0, codeLabel ? 2 : 1), money("subtotal", "Tổng tiền hàng"), money("discount", "Giảm giá HĐ"),
-    money("revenue", "Doanh thu"), money("returnValue", "Giá trị trả"), money("net", "Doanh thu thuần"), money("cogs", "Tổng giá vốn"),
-    money("profit", "Lợi nhuận gộp"),
+    ...revenueColumns(t, first, codeLabel).slice(0, codeLabel ? 2 : 1), money("subtotal", t("cols.subtotal")), money("discount", t("cols.invoiceDiscount")),
+    money("revenue", t("cols.revenue")), money("returnValue", t("cols.returnValue")), money("net", t("cols.net")), money("cogs", t("cols.cogs")),
+    money("profit", t("cols.grossProfit")),
   ];
 }
 

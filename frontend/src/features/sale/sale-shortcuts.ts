@@ -28,13 +28,14 @@ export function resolveShortcut(e: ShortcutKey, ctx: ShortcutContext): SaleShort
   return LINE_KEYS[e.key] ?? null;
 }
 
-/** Danh sách hiển thị trong ngăn "Phím tắt chức năng". */
-export const SHORTCUT_HELP: [string, string][] = [
-  ["F1", "Thêm hóa đơn mới"], ["F2", "Bật/Tắt chế độ in tự động"], ["F3", "Tìm hàng hóa"], ["F4", "Tìm khách hàng"],
-  ["F6", "Thay đổi chế độ nhập số lượng"], ["F8", "Khách thanh toán"], ["F9", "Thanh toán"], ["F11", "Toàn màn hình"],
-  ["Home", "Thay đổi số lượng sản phẩm"], ["↑", "Tăng số lượng sản phẩm"], ["↓", "Giảm số lượng sản phẩm"],
-  ["Enter", "Di chuyển xuống sản phẩm tiếp theo"], ["Shift", "Di chuyển lên sản phẩm phía trên"],
-];
+/** Danh sách hiển thị trong ngăn "Phím tắt chức năng": [phím, khóa mô tả trong namespace sale — dịch lúc hiển thị]. */
+export const SHORTCUT_HELP = [
+  ["F1", "shortcuts.help.newInvoice"], ["F2", "shortcuts.help.autoPrint"], ["F3", "shortcuts.help.findProduct"],
+  ["F4", "shortcuts.help.findCustomer"], ["F6", "shortcuts.help.qtyMode"], ["F8", "shortcuts.help.customerPaid"],
+  ["F9", "shortcuts.help.pay"], ["F11", "shortcuts.help.fullscreen"], ["Home", "shortcuts.help.editQty"],
+  ["↑", "shortcuts.help.qtyUp"], ["↓", "shortcuts.help.qtyDown"], ["Enter", "shortcuts.help.nextLine"],
+  ["Shift", "shortcuts.help.prevLine"],
+] as const;
 
 /** Phần tử đang focus có phải ô nhập chữ (input/textarea/select/contenteditable)? */
 export function isTypingTarget(el: EventTarget | null): boolean {

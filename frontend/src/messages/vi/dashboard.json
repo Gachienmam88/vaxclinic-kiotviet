@@ -1,0 +1,70 @@
+{
+  "page": {
+    "hello": "Xin chào, {name}",
+    "role": "Vai trò: {role}",
+    "branches": "Chi nhánh làm việc: {branches}",
+    "noRevenuePermission": "Tài khoản chưa có quyền xem báo cáo doanh thu.",
+    "loadingRevenue": "Đang tải doanh thu..."
+  },
+  "period": {
+    "today": "Hôm nay",
+    "yesterday": "Hôm qua",
+    "last7": "7 ngày qua",
+    "thisMonth": "Tháng này",
+    "lastMonth": "Tháng trước"
+  },
+  "today": {
+    "title": "Kết quả bán hàng hôm nay",
+    "revenue": "Doanh thu",
+    "invoiceCount": "{count} hóa đơn",
+    "returns": "Trả hàng",
+    "netRevenue": "Doanh thu thuần",
+    "vsYesterday": "So với hôm qua",
+    "vsLastMonth": "So với cùng kỳ tháng trước"
+  },
+  "revenue": {
+    "title": "Doanh thu thuần",
+    "periodLabel": "Kỳ doanh thu",
+    "chartType": "Kiểu biểu đồ",
+    "byDay": "Theo ngày",
+    "byHour": "Theo giờ",
+    "byWeekday": "Theo thứ",
+    "needInvoicePermission": "Cần quyền xem hóa đơn để thống kê theo giờ.",
+    "loadFailed": "Không tải được dữ liệu hóa đơn.",
+    "tooMany": "Quá {max} hóa đơn — hãy chọn khoảng thời gian ngắn hơn để xem theo giờ.",
+    "hourlyNote": "Theo giờ: tổng tiền hóa đơn ({period}), chưa trừ trả hàng."
+  },
+  "weekday": {
+    "mon": "Thứ 2",
+    "tue": "Thứ 3",
+    "wed": "Thứ 4",
+    "thu": "Thứ 5",
+    "fri": "Thứ 6",
+    "sat": "Thứ 7",
+    "sun": "Chủ nhật"
+  },
+  "top": {
+    "title": "Top 10 hàng bán chạy",
+    "byNet": "Theo doanh thu thuần",
+    "periodLabel": "Kỳ hàng bán chạy",
+    "empty": "Chưa có dữ liệu bán hàng"
+  },
+  "activity": {
+    "title": "Hoạt động gần đây",
+    "viewAll": "Xem tất cả",
+    "empty": "Chưa có hoạt động",
+    "system": "Hệ thống",
+    "line": "{user} vừa {action}{doc}"
+  },
+  "timeAgo": {
+    "justNow": "vừa xong",
+    "minutes_other": "{count} phút trước",
+    "hours_other": "{count} giờ trước",
+    "days_other": "{count} ngày trước"
+  },
+  "short": {
+    "thousand": "{n}k",
+    "million": "{n} tr",
+    "billion": "{n} tỷ"
+  }
+}

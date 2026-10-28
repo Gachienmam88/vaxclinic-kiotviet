@@ -1,0 +1,459 @@
+{
+  "cart": {
+    "empty": "Chưa có hàng hóa — tìm hàng (F3) hoặc quét mã vạch",
+    "emptyQuickReturn": "Trả nhanh: tìm hàng (F3) hoặc quét mã vạch để thêm hàng khách trả",
+    "notInInvoice": "{name} không có trong hóa đơn {code}",
+    "notInPriceBook": "không được bán theo bảng giá này",
+    "returnMax": "{name}: chỉ còn trả được {max}"
+  },
+  "channel": {
+    "label": "Kênh bán"
+  },
+  "checkout": {
+    "alreadyPaid": "Khách đã trả",
+    "change": "Tiền thừa trả khách",
+    "cod": "Thu hộ (COD)",
+    "deliveryTime": "Thời gian giao hàng",
+    "deposited": "Đã đặt cọc",
+    "discount": "Giảm giá",
+    "discountPercent": "Giảm giá ({percent}%)",
+    "due": "Khách cần trả",
+    "invoiceDiscount": "Giảm giá hóa đơn",
+    "invoiceFromOrder": "Hóa đơn từ đơn",
+    "orderNote": "Ghi chú đơn hàng",
+    "orderRef": "Đặt hàng",
+    "paid": "Khách thanh toán",
+    "pay": "Thanh toán",
+    "payOnDelivery": "Còn phải trả khi nhận hàng",
+    "placeOrder": "Đặt hàng",
+    "saveOrder": "Lưu đơn",
+    "speakPaid": "Khách thanh toán {amount} đồng",
+    "subtotal": "Tổng tiền hàng",
+    "toDebt": "Tính vào công nợ"
+  },
+  "common": {
+    "walkIn": "Khách lẻ"
+  },
+  "customer": {
+    "add": "Thêm khách hàng",
+    "addOffline": "Mất mạng: chưa thêm được khách mới, bán cho khách lẻ hoặc khách đã có",
+    "clear": "Bỏ chọn khách",
+    "debt": "Nợ {amount}",
+    "noResults": "Không tìm thấy khách hàng",
+    "overLimit": "Nợ vượt mức {amount}",
+    "search": "Tìm khách hàng (F4)"
+  },
+  "delivery": {
+    "address": "Địa chỉ",
+    "errors": {
+      "noPartner": "Chưa chọn đối tác giao hàng",
+      "receiverRequired": "Nhập đủ tên, SĐT, địa chỉ người nhận"
+    },
+    "fee": "Phí giao hàng",
+    "feePayer": {
+      "label": "Người trả phí giao hàng"
+    },
+    "noPartners": "Chưa có đối tác — thêm ở Đối tác giao hàng",
+    "note": "Ghi chú giao hàng",
+    "partner": "Đối tác giao hàng",
+    "pickPartner": "Chọn đối tác giao hàng",
+    "receiverName": "Tên người nhận",
+    "receiverPhone": "Số điện thoại",
+    "title": "Thông tin giao hàng",
+    "weight": "Trọng lượng (gram)"
+  },
+  "detail": {
+    "category": "Nhóm hàng",
+    "lotLine": "{lot} — HSD {expiry} — tồn {qty}",
+    "lots": "Lô còn hàng (hết hạn trước bán trước):",
+    "noDesc": "Chưa có mô tả",
+    "position": "Vị trí",
+    "price": "Giá bán:",
+    "qty": "Số lượng:",
+    "qtyAria": "Số lượng trên dòng",
+    "stock": "Tồn kho: {qty}",
+    "tabs": {
+      "desc": "Mô tả chi tiết",
+      "info": "Thông tin chung"
+    },
+    "taxRate": "Tỷ lệ thuế"
+  },
+  "dialogs": {
+    "cols": {
+      "customer": "Khách hàng",
+      "total": "Tổng cộng"
+    },
+    "filters": {
+      "productCode": "Theo mã hàng",
+      "productName": "Theo tên hàng"
+    },
+    "fromDate": "Từ ngày",
+    "noData": "Chưa có dữ liệu",
+    "noResults": "Không tìm thấy kết quả nào phù hợp",
+    "time": "Thời gian",
+    "toDate": "Đến ngày"
+  },
+  "einvoice": {
+    "box": "Thông tin xuất HĐĐT",
+    "details": "Chi tiết",
+    "emailInvalid": "Email không hợp lệ",
+    "fields": {
+      "address": "Địa chỉ",
+      "buyerName": "Tên người mua",
+      "companyName": "Tên đơn vị",
+      "email": "Email",
+      "phone": "Số điện thoại",
+      "taxCode": "Mã số thuế"
+    },
+    "title": "Thông tin xuất hóa đơn điện tử"
+  },
+  "footer": {
+    "catalogUpdated": "Danh mục cập nhật {time}",
+    "modes": {
+      "delivery": "Bán giao hàng",
+      "normal": "Bán thường",
+      "quick": "Bán nhanh"
+    }
+  },
+  "grid": {
+    "filter": "Lọc hàng hóa theo tên"
+  },
+  "header": {
+    "offline": "Mất kết nối — phiếu lưu trên máy",
+    "sync": "Đồng bộ phiếu",
+    "syncPending_other": "Đồng bộ phiếu — {count} phiếu chờ"
+  },
+  "import": {
+    "chooseFile": "Chọn file",
+    "downloadTemplate": "Tải về file mẫu",
+    "errors": {
+      "areaNotFound": "không tìm thấy Khu vực \"{area}\" (danh mục 34 tỉnh/thành 2025)",
+      "badDiscount": "Dòng {row}: Giảm giá không hợp lệ",
+      "badDiscountPercent": "Dòng {row}: Giảm giá (%) phải từ 0 đến 100",
+      "badPrice": "Dòng {row}: Đơn giá không hợp lệ",
+      "badQty": "Dòng {row}: Số lượng phải lớn hơn 0",
+      "customer": "Khách hàng: {message}",
+      "customerCodeNotFound": "không tìm thấy khách hàng mã {code}",
+      "customerPhoneNotFound": "không tìm thấy khách hàng SĐT {phone}, thiếu Tên khách hàng để tạo mới",
+      "emptyFile": "File không có dữ liệu",
+      "header": "Sai tiêu đề cột {col}: cần \"{name}\" (dùng file mẫu)",
+      "missingCode": "Dòng {row}: thiếu Mã hàng",
+      "noLines": "Không có dòng hàng nào",
+      "productNotFound": "Dòng {row}: không tìm thấy hàng hóa mã {code}",
+      "tooManyRows": "Có {rows} dòng, tối đa {max} dòng mỗi trang tính",
+      "tooManySheets": "File có {sheets} trang tính, tối đa {max}",
+      "wardNotFound": "không tìm thấy Phường xã \"{ward}\" thuộc {province}"
+    },
+    "headersVietnamese": "Giữ nguyên tiêu đề cột tiếng Việt như file mẫu.",
+    "importedSheets_other": "Đã nhập {count} trang tính.",
+    "imported_other": "Đã nhập {count} hóa đơn từ file {file}",
+    "note": "Trong mỗi lần import, hệ thống hỗ trợ tối đa {sheets} trang tính (sheet), mỗi trang tính tương đương một giao dịch và có tối đa {rows} dòng.",
+    "noteTitle": "Lưu ý:",
+    "processData": "Xử lý dữ liệu ({template})",
+    "readFailed": "Không đọc được file: {message}",
+    "sheetRejected": "Trang tính “{sheet}” không được nhập:",
+    "title": "Nhập danh sách hóa đơn từ file excel"
+  },
+  "invoice": {
+    "change": "trả lại khách {amount}",
+    "editNeedsNetwork": "Mất kết nối: sửa hóa đơn cần có mạng, vui lòng thử lại",
+    "fromOrderNeedsNetwork": "Mất kết nối: tạo hóa đơn từ đơn đặt hàng cần có mạng, vui lòng thử lại",
+    "paid": "Đã thanh toán hóa đơn {code}",
+    "print": "In hóa đơn",
+    "savedOffline": "Mất kết nối: đã lưu hóa đơn trên máy, sẽ tự đồng bộ khi có mạng",
+    "shipment": "vận đơn {code}",
+    "updated": "Đã cập nhật hóa đơn {code}"
+  },
+  "line": {
+    "actions": "Thao tác dòng hàng",
+    "addLine": "Thêm dòng",
+    "addLineHint": "Thêm dòng cùng hàng",
+    "amount": "Thành tiền",
+    "applyLastPrice": "Áp dụng giá bán gần nhất của khách",
+    "detail": "Xem chi tiết",
+    "discount": "Giảm giá",
+    "discountAria": "Giảm giá mỗi đơn vị",
+    "discountPerUnit": "Giảm giá / {unit}",
+    "discountPercentAria": "Giảm giá (%) mỗi đơn vị",
+    "lastPrice": "Giá gần nhất: {price}",
+    "note": "Ghi chú",
+    "noteAria": "Ghi chú dòng hàng",
+    "notePlaceholder": "Ghi chú...",
+    "price": "Đơn giá",
+    "qty": "Số lượng",
+    "remove": "Xóa dòng",
+    "stock": "Tồn: {qty}",
+    "unit": "Đơn vị tính",
+    "viewLastPrices": "Xem giá bán gần nhất"
+  },
+  "lot": {
+    "enterNew": "+ Nhập lô mới",
+    "exists": "Lô {lot} đã có tại chi nhánh (HSD {expiry}) — sẽ nhập lại vào lô này.",
+    "expired": "Lô đã hết hạn: hàng trả hết hạn nên được xuất hủy sau khi nhận lại.",
+    "expiry": "HSD:",
+    "expiryMismatch": "Lô {lot} đã có với HSD {expiry} — HSD nhập không khớp.",
+    "lot": "Lô:",
+    "lotNumber": "Số lô",
+    "newLot": "Lô mới:",
+    "newLotExpiry": "Hạn sử dụng lô mới",
+    "newLotNumber": "Số lô mới",
+    "offline": "Mất mạng: chưa tải được lô",
+    "option": "{lot} · HSD {expiry} · tồn {qty}",
+    "pick": "-- Chọn lô --",
+    "pickExisting": "Chọn lô có sẵn",
+    "returnLot": "Lô hàng trả"
+  },
+  "menu": {
+    "endOfDay": "Báo cáo cuối ngày",
+    "import": "Import file",
+    "label": "Menu",
+    "logout": "Đăng xuất",
+    "manage": "Quản lý",
+    "orders": "Xử lý đặt hàng",
+    "receipt": "Lập phiếu thu",
+    "return": "Chọn hóa đơn trả hàng",
+    "settings": "Thiết lập & Hiển thị",
+    "shortcuts": "Phím tắt"
+  },
+  "open": {
+    "copyLabel": "Sao chép {code}",
+    "invoiceCancelled": "Hóa đơn đã hủy",
+    "invoiceFromOrderLabel": "Hóa đơn / {code}",
+    "orderCancelled": "Đơn {code} đã hủy",
+    "orderInvoiced": "Đơn {code} đã tạo hóa đơn {invoice}",
+    "returnLabel": "Trả hàng / {code}"
+  },
+  "order": {
+    "created": "Đã tạo đơn đặt hàng {code}",
+    "customerRequired": "Đặt hàng phải chọn khách hàng (F4)",
+    "editNeedsNetwork": "Mất kết nối: sửa đơn đặt hàng cần có mạng, vui lòng thử lại",
+    "savedOffline": "Mất kết nối: đã lưu đơn đặt hàng trên máy, sẽ tự đồng bộ khi có mạng",
+    "updated": "Đã cập nhật đơn đặt hàng {code}",
+    "withDeposit": "{message} — thu đặt cọc {amount}"
+  },
+  "orderPicker": {
+    "cols": {
+      "code": "Mã đặt hàng"
+    },
+    "filters": {
+      "code": "Theo mã đặt hàng",
+      "customer": "Theo khách hàng",
+      "note": "Theo ghi chú đặt hàng"
+    },
+    "offline": "Mất kết nối: xử lý đặt hàng cần có mạng"
+  },
+  "payment": {
+    "method": "Phương thức thanh toán",
+    "methods": {
+      "ewalletShort": "Ví"
+    },
+    "mixed": {
+      "nonCashOverDue": "Chuyển khoản / thẻ / ví không được vượt số khách cần trả",
+      "title": "Thanh toán nhiều phương thức"
+    },
+    "qr": "Thanh toán qua mã QR"
+  },
+  "priceBook": {
+    "confirmRemove": "Bảng giá mới không có: {names}.\nCác hàng này sẽ bị xóa khỏi giỏ. Tiếp tục đổi bảng giá?",
+    "general": "Bảng giá chung",
+    "label": "Bảng giá",
+    "missing": "Bảng giá không còn tồn tại — chuyển về Bảng giá chung",
+    "notApplicable": "Bảng giá \"{name}\" không áp dụng cho khách / người bán này — chuyển về Bảng giá chung",
+    "removedFromCart": "đã bỏ khỏi giỏ"
+  },
+  "print": {
+    "autoPrint": "Tự động in hóa đơn",
+    "copies": "Số bản in (Liên)",
+    "copiesAria": "Số bản in",
+    "mergeLines": "Gộp hàng cùng loại",
+    "template": "Chọn mẫu in",
+    "templateDefault": "Mẫu in hóa đơn mặc định",
+    "templateInvoice": "A. Mẫu in hóa đơn",
+    "templateStore": "Mẫu in hóa đơn của cửa hàng",
+    "title": "Thiết lập in"
+  },
+  "receipt": {
+    "amount": "Thu từ khách",
+    "amountLabel": "Thu từ khách:",
+    "amountRequired": "Nhập số tiền thu từ khách",
+    "create": "Tạo phiếu thu",
+    "createPrint": "Tạo phiếu thu & In",
+    "created": "Đã tạo phiếu thu {code} — {amount}",
+    "customerRequired": "Chọn khách hàng (F4)",
+    "debtAfter": "Nợ sau:",
+    "method": "Phương thức thu",
+    "offline": "Mất kết nối: lập phiếu thu cần có mạng",
+    "toDebt": "Trừ vào công nợ",
+    "toInvoices": "Tổng thanh toán cho hóa đơn:"
+  },
+  "recentPrice": {
+    "apply": "Áp dụng giá bán"
+  },
+  "returnPicker": {
+    "cols": {
+      "code": "Mã hóa đơn",
+      "employee": "Nhân viên"
+    },
+    "filters": {
+      "code": "Theo mã hóa đơn",
+      "customer": "Theo khách hàng hoặc ĐT",
+      "lot": "Theo lô, hạn sử dụng",
+      "shipmentCode": "Theo mã vận đơn bán"
+    },
+    "offline": "Mất kết nối: chọn hóa đơn trả hàng cần có mạng",
+    "quickReturn": "Trả nhanh"
+  },
+  "returns": {
+    "created": "Đã tạo phiếu trả hàng {code}",
+    "createdWithRefund": "Đã tạo phiếu trả hàng {code} — trả khách {amount}",
+    "due": "Cần trả khách",
+    "errors": {
+      "expiryRequired": "{name}: nhập hạn sử dụng cho lô mới",
+      "lotRequired": "{name}: chọn lô hàng trả hoặc nhập lô mới",
+      "noItems": "Chưa chọn hàng trả",
+      "walkInRefundFull": "Khách lẻ: phải trả đủ tiền cho khách"
+    },
+    "fee": "Phí trả hàng",
+    "original": "Tổng giá gốc hàng mua",
+    "qtyOf": "Số lượng trả {name}",
+    "quickTitle": "Trả nhanh (không theo hóa đơn)",
+    "refund": "Tiền trả khách",
+    "returnedQty": "đã trả {qty}",
+    "savedOffline": "Mất kết nối: đã lưu phiếu trả hàng trên máy, sẽ tự đồng bộ khi có mạng",
+    "submit": "Trả hàng",
+    "subtotal": "Tổng tiền hàng trả",
+    "title": "Trả hàng",
+    "toDebt": "Trừ vào công nợ khách"
+  },
+  "screen": {
+    "autoPrintOff": "Tự động in hóa đơn: tắt",
+    "autoPrintOn": "Tự động in hóa đơn: bật",
+    "loading": "Đang tải màn bán hàng...",
+    "openFailed": "Không mở được {what}: {message}",
+    "qtyModeOff": "Thêm hàng: giữ con trỏ ở ô tìm hàng",
+    "qtyModeOn": "Thêm hàng: chuyển con trỏ vào ô số lượng",
+    "qtyPositive": "Số lượng phải lớn hơn 0",
+    "syncedOffline": "Đã đồng bộ phiếu offline → {code}",
+    "walkInMustPayFull": "Khách lẻ phải thanh toán đủ — chọn khách hàng để ghi nợ",
+    "what": {
+      "invoice": "hóa đơn",
+      "order": "đơn đặt hàng"
+    }
+  },
+  "search": {
+    "addToOrder": "Thêm vào đơn",
+    "multiSelect": "Chế độ chọn nhiều hàng hóa",
+    "noResults": "Không tìm thấy hàng hóa",
+    "off": "đang tắt",
+    "on": "đang bật",
+    "placeholder": "Tìm hàng hóa (F3)",
+    "scanQuickAdd": "Quét mã để thêm hàng hóa nhanh",
+    "selected": "Đã chọn {count}"
+  },
+  "seller": {
+    "label": "Người bán",
+    "search": "Tìm người bán"
+  },
+  "settings": {
+    "display": "Hiển thị",
+    "goods": {
+      "addLineTip": "Hiện nút (+) trên dòng để thêm 1 dòng mới cùng hàng hóa",
+      "dragDrop": "Kéo thả hàng hóa",
+      "dragDropTip": "Kéo thả dòng hàng để đổi thứ tự (khi sắp xếp theo số thứ tự)",
+      "image": "Ảnh hàng hóa",
+      "imageTip": "Hàng hóa chưa có ảnh",
+      "lineNote": "Ghi chú hàng hóa",
+      "lineNoteTip": "Luôn hiện ô ghi chú dưới mỗi dòng hàng",
+      "merge": "Gộp hàng hóa liên quan",
+      "mergeTip": "Thêm hàng đã có trong đơn → tăng số lượng thay vì thêm dòng mới",
+      "scanTip": "Quét / gõ đúng mã hàng là thêm ngay, không cần Enter",
+      "sortBy": "Sắp xếp hàng hóa theo",
+      "sortOrder": "Sắp xếp thứ tự hàng hóa",
+      "stock": "Tồn kho",
+      "stockTip": "Hiện số tồn dưới tên hàng (theo đơn vị đang bán)",
+      "suggestPaid": "Gợi ý khách thanh toán"
+    },
+    "groups": "Nhóm thiết lập",
+    "options": "Cài đặt",
+    "payment": {
+      "autoCompleteQr": "Tự động hoàn thành đơn hàng khi quét QR thành công",
+      "autoCompleteQrTip": "Nhận đủ tiền chuyển khoản qua QR (SePay) → tự thanh toán hóa đơn",
+      "defaultMethod": "Phương thức thanh toán mặc định",
+      "paidEqualsDue": "Tiền khách thanh toán bằng khách cần trả",
+      "paidEqualsDueTip": "Tắt: hóa đơn mới để Khách thanh toán = 0",
+      "speakPaid": "Phát loa số tiền khách thanh toán",
+      "speakPaidTip": "Đọc số tiền khách thanh toán khi thanh toán xong"
+    },
+    "price": {
+      "discountTip": "Kiểu nhập giảm giá mặc định của dòng hàng",
+      "editAmount": "Chỉnh sửa thành tiền",
+      "editAmountTip": "Sửa thành tiền của dòng → tự tính lại đơn giá",
+      "lastPrice": "Giá bán gần nhất",
+      "lastPriceTip": "Giá đã bán gần nhất cho khách đang chọn, bấm để áp dụng",
+      "price": "Giá bán"
+    },
+    "sort": {
+      "asc": "Tăng dần",
+      "code": "Mã hàng",
+      "desc": "Giảm dần",
+      "index": "Số thứ tự",
+      "name": "Tên hàng"
+    },
+    "tabs": {
+      "goods": "Hàng hóa",
+      "payment": "Thanh toán",
+      "price": "Giá tiền"
+    }
+  },
+  "shortcuts": {
+    "help": {
+      "autoPrint": "Bật/Tắt chế độ in tự động",
+      "customerPaid": "Khách thanh toán",
+      "editQty": "Thay đổi số lượng sản phẩm",
+      "findCustomer": "Tìm khách hàng",
+      "findProduct": "Tìm hàng hóa",
+      "fullscreen": "Toàn màn hình",
+      "newInvoice": "Thêm hóa đơn mới",
+      "nextLine": "Di chuyển xuống sản phẩm tiếp theo",
+      "pay": "Thanh toán",
+      "prevLine": "Di chuyển lên sản phẩm phía trên",
+      "qtyDown": "Giảm số lượng sản phẩm",
+      "qtyMode": "Thay đổi chế độ nhập số lượng",
+      "qtyUp": "Tăng số lượng sản phẩm"
+    },
+    "title": "Phím tắt chức năng"
+  },
+  "sync": {
+    "code": "Mã phiếu",
+    "confirmRemove": "Xóa phiếu này khỏi máy? Phiếu sẽ KHÔNG được ghi nhận.",
+    "connection": "Trạng thái kết nối:",
+    "error": "Lỗi: {error}",
+    "kind": "Loại phiếu",
+    "kinds": {
+      "all": "--Tất cả--",
+      "invoice": "Hóa đơn",
+      "order": "Đặt hàng",
+      "return": "Trả hàng"
+    },
+    "offline": "Mất kết nối",
+    "online": "Có Internet",
+    "pending": "Chờ đồng bộ",
+    "remove": "Xóa khỏi máy",
+    "retry": "Gửi lại",
+    "syncAll": "Đồng bộ tất cả",
+    "value": "Giá trị"
+  },
+  "tabs": {
+    "addInvoice": "Thêm hóa đơn",
+    "addMenu": "Thêm hóa đơn / đặt hàng",
+    "addOrder": "Thêm đặt hàng",
+    "close": "Đóng {label}",
+    "confirmClose": "Đóng {label}? Giỏ hàng sẽ bị xóa.",
+    "invoiceN": "Hóa đơn {n}",
+    "label": "Hóa đơn đang soạn",
+    "orderN": "Đặt hàng {n}",
+    "returnN": "Trả hàng {n}",
+    "scrollLeft": "Cuộn tab sang trái",
+    "scrollRight": "Cuộn tab sang phải"
+  }
+}

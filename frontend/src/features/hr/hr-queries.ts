@@ -3,6 +3,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { api, errorMessage, type PageResponse } from "@/lib/api-client";
+import { useT } from "@/lib/i18n";
+import { hrNs, type HrT } from "@/messages/hr";
 import type {
   AttendanceCell, CatalogItem, CommissionRule, CommissionTable, Employee, EmployeeRow, HrOverview, HrSettings,
   PayrollDetail, PayrollPage, ScheduleWeek, Shift,
@@ -67,9 +69,10 @@ export function useHrMutation<TVars, TResult = unknown>(fn: (v: TVars) => Promis
 
 /** Lưu 1 khóa thiết lập HR (PUT /hr/settings/{key}). Danh sách gửi dạng { items }. */
 export function useSaveHrSetting(key: "timekeeping" | "payroll" | "workdays" | "holidays" | "mobile" | "templates") {
+  const t = useT(hrNs);
   return useHrMutation((body: unknown) => api<HrSettings>(`/hr/settings/${key}`, {
     method: "PUT", body: Array.isArray(body) ? { items: body } : body,
-  }), "Đã lưu thiết lập");
+  }), t("toast.settingsSaved"));
 }
 
 // ===== Ngày / tuần (giờ máy người dùng — cửa hàng ở Việt Nam) =====
@@ -86,9 +89,9 @@ export const addDays = (d: Date, n: number) => { const x = new Date(d); x.setDat
 export const mondayOf = (d: Date) => addDays(new Date(d.getFullYear(), d.getMonth(), d.getDate()), -((d.getDay() + 6) % 7));
 
 /** "Tuần 5 - Th. 10 2026": tuần thuộc tháng của ngày thứ năm trong tuần (như KiotViet). */
-export function weekLabel(monday: Date) {
+export function weekLabel(t: HrT, monday: Date) {
   const thu = addDays(monday, 3);
-  return `Tuần ${Math.ceil(thu.getDate() / 7)} - Th. ${thu.getMonth() + 1} ${thu.getFullYear()}`;
+  return t("week.label", { week: Math.ceil(thu.getDate() / 7), month: thu.getMonth() + 1, year: thu.getFullYear() });
 }
 
 /** "08:00:00" → "08:00". */

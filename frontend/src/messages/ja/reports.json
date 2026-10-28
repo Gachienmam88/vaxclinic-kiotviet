@@ -110,12 +110,6 @@
     "thisMonth": "今月",
     "overdue": "期限切れ"
   },
-  "orderStatus": {
-    "DRAFT": "仮伝票",
-    "CONFIRMED": "確定済み",
-    "COMPLETED": "完了",
-    "CANCELLED": "キャンセル"
-  },
   "viewer": {
     "undo": "元に戻す",
     "redo": "やり直し",

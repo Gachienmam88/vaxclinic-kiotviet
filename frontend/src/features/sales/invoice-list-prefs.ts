@@ -38,7 +38,7 @@ export function useInvoiceFavourites(userId: string | undefined) {
   return { ids, isFav: (id: string) => ids.includes(id), toggle };
 }
 
-/** Cột có thể ẩn / hiện (Mã hóa đơn luôn hiện). */
+/** Cột có thể ẩn / hiện (Mã hóa đơn luôn hiện). Nhãn hiển thị: salesNs "invoices.columns.<khóa>". */
 export const INVOICE_COLUMNS = [
   ["soldAt", "Thời gian"], ["returnCodes", "Mã trả hàng"], ["customerCode", "Mã KH"], ["customerName", "Khách hàng"],
   ["sellerName", "Người bán"], ["subtotal", "Tổng tiền hàng"], ["discount", "Giảm giá"], ["total", "Khách cần trả"],

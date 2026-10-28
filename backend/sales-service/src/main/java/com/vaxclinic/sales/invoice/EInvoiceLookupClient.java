@@ -1,5 +1,6 @@
 package com.vaxclinic.sales.invoice;
 
+import com.vaxclinic.common.http.InternalRestClientFactory;
 import com.vaxclinic.common.error.BusinessException;
 import com.vaxclinic.common.security.ServiceTokenProvider;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,8 +26,8 @@ public class EInvoiceLookupClient {
     private final RestClient integration;
     private final ServiceTokenProvider tokens;
 
-    public EInvoiceLookupClient(@Value("${app.integration-url}") String integrationUrl, @Value("${app.jwt.secret}") String secret) {
-        this.integration = RestClient.builder().baseUrl(integrationUrl).build();
+    public EInvoiceLookupClient(InternalRestClientFactory httpFactory, @Value("${app.integration-url}") String integrationUrl, @Value("${app.jwt.secret}") String secret) {
+        this.integration = httpFactory.create(integrationUrl);
         this.tokens = new ServiceTokenProvider(secret, "sales-service");
     }
 

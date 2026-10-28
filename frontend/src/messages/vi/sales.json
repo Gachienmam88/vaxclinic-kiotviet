@@ -1,0 +1,241 @@
+{
+  "enums": {
+    "paymentMethod": {
+      "CASH": "Tiền mặt",
+      "TRANSFER": "Chuyển khoản",
+      "CARD": "Thẻ",
+      "EWALLET": "Ví điện tử"
+    },
+    "fund": {
+      "CASH": "Tiền mặt",
+      "BANK": "Ngân hàng",
+      "EWALLET": "Ví điện tử",
+      "ALL": "Tổng quỹ"
+    },
+    "invoiceState": {
+      "PROCESSING": "Đang xử lý",
+      "COMPLETED": "Hoàn thành",
+      "FAILED_DELIVERY": "Không giao được",
+      "CANCELLED": "Đã hủy"
+    },
+    "einvoiceState": {
+      "NONE": "Chưa phát hành",
+      "PUBLISHED": "Đã phát hành",
+      "ACCEPTED": "CQT chấp nhận",
+      "FAILED": "Phát hành lỗi"
+    },
+    "einvoiceNature": {
+      "ORIGINAL": "Gốc",
+      "ADJUST": "Điều chỉnh",
+      "REPLACE": "Thay thế"
+    },
+    "voucherStatus": {
+      "PAID": "Đã thanh toán",
+      "CANCELLED": "Đã hủy"
+    },
+    "returnStatus": {
+      "COMPLETED": "Đã trả",
+      "CANCELLED": "Đã hủy"
+    },
+    "refundMethod": {
+      "CASH": "Hoàn tiền mặt",
+      "TRANSFER": "Hoàn chuyển khoản",
+      "CREDIT": "Giữ làm công nợ (khách trả trước)"
+    }
+  },
+  "listKit": {
+    "time": "Thời gian",
+    "thisMonth": "Tháng này",
+    "allTime": "Toàn thời gian"
+  },
+  "pager": {
+    "rangeWithUnit": "{from} - {to} trong {total} {unit}",
+    "rows_other": "{count} dòng"
+  },
+  "invoices": {
+    "title": "Hóa đơn",
+    "unit": "hóa đơn",
+    "emptyWhat": "hóa đơn",
+    "filter": {
+      "delivery": "Giao hàng",
+      "noDelivery": "Không giao hàng",
+      "withDelivery": "Giao hàng",
+      "invoiceState": "Trạng thái hóa đơn",
+      "returnState": "Trạng thái trả hàng",
+      "noReturn": "Không trả hàng",
+      "hasReturn": "Có trả hàng",
+      "einvoiceStatus": "Trạng thái HĐĐT",
+      "nature": "Tính chất hóa đơn",
+      "pickStatus": "Chọn trạng thái",
+      "paymentMethod": "Phương thức thanh toán",
+      "createdBy": "Người tạo",
+      "pickCreator": "Chọn người tạo",
+      "seller": "Người bán",
+      "pickSeller": "Chọn người bán",
+      "pickPreset": "Chọn mốc"
+    },
+    "columns": {
+      "code": "Mã hóa đơn",
+      "soldAt": "Thời gian",
+      "returnCodes": "Mã trả hàng",
+      "customerCode": "Mã KH",
+      "customerName": "Khách hàng",
+      "sellerName": "Người bán",
+      "subtotal": "Tổng tiền hàng",
+      "discount": "Giảm giá",
+      "total": "Khách cần trả",
+      "paid": "Khách đã trả",
+      "paymentMethod": "Thanh toán",
+      "state": "Trạng thái"
+    },
+    "table": {
+      "showAll": "Xem tất cả hóa đơn",
+      "favOnly": "Chỉ xem hóa đơn đã đánh dấu",
+      "mark": "Đánh dấu",
+      "unmark": "Bỏ đánh dấu"
+    },
+    "toolbar": {
+      "searchCode": "Theo mã hóa đơn",
+      "searchProduct": "Theo mã, tên hàng",
+      "searchCustomer": "Theo mã, tên, SĐT khách hàng",
+      "searchNote": "Theo ghi chú",
+      "advanced": "Tìm kiếm nâng cao",
+      "clearFilter": "Xóa lọc",
+      "create": "Tạo mới",
+      "newInvoice": "Hóa đơn",
+      "exportSummary": "Xuất file tổng quan",
+      "exportDetail": "Xuất file chi tiết",
+      "columns": "Chọn cột hiển thị",
+      "orderSettings": "Thiết lập đơn hàng",
+      "exportVietnameseNote": "File xuất giữ tiêu đề cột tiếng Việt (dùng cho kế toán/thuế)."
+    },
+    "detail": {
+      "tabPayments": "Lịch sử thanh toán",
+      "saved": "Đã lưu hóa đơn",
+      "cancelled": "Đã hủy hóa đơn, hàng đã hoàn lại kho",
+      "notePlaceholder": "Ghi chú..."
+    },
+    "header": {
+      "openCustomer": "Mở khách hàng ở tab mới",
+      "offline": "Bán offline",
+      "fromOrder": "Từ đơn đặt hàng {code}",
+      "createdBy": "Người tạo:",
+      "seller": "Người bán:",
+      "soldAt": "Ngày bán:",
+      "timeLocked": "Cửa hàng không cho phép thay đổi thời gian giao dịch (Thiết lập → Đơn hàng)",
+      "channel": "Kênh bán:",
+      "priceBook": "Bảng giá:",
+      "defaultPriceBook": "Bảng giá chung"
+    },
+    "lines": {
+      "productCode": "Mã hàng",
+      "productName": "Tên hàng",
+      "quantity": "Số lượng",
+      "unitPrice": "Đơn giá",
+      "discount": "Giảm giá",
+      "price": "Giá bán",
+      "amount": "Thành tiền",
+      "lots": "Lô: {lots}"
+    },
+    "totals": {
+      "subtotal": "Tổng tiền hàng ({qty})",
+      "invoiceDiscount": "Giảm giá hóa đơn",
+      "taxCut": "Giảm thuế",
+      "total": "Khách cần trả",
+      "paid": "Khách đã trả"
+    },
+    "payments": {
+      "code": "Mã phiếu",
+      "time": "Thời gian",
+      "createdBy": "Người tạo",
+      "voucherAmount": "Giá trị phiếu",
+      "method": "Phương thức",
+      "status": "Trạng thái",
+      "allocated": "Tiền thu/chi",
+      "emptyWhat": "phiếu thanh toán"
+    },
+    "footer": {
+      "cancel": "Hủy",
+      "confirmCancel": "Hủy hóa đơn {code}? Hàng sẽ được hoàn lại kho.",
+      "copy": "Sao chép",
+      "edit": "Chỉnh sửa",
+      "return": "Trả hàng",
+      "more": "Thêm thao tác",
+      "editTax": "Sửa tỷ lệ thuế hàng hóa",
+      "editTaxPublished": "{label} (đã phát hành HĐĐT)"
+    },
+    "einvoice": {
+      "title": "Hoá đơn điện tử",
+      "number": "Hóa đơn:",
+      "lookup": "Tra cứu hóa đơn điện tử",
+      "lookupTitle": "Tra cứu (mã {code})",
+      "issuedAt": "Ngày phát hành:",
+      "buyer": "Người mua:",
+      "nature": "Tính chất hóa đơn:",
+      "taxAuthorityCode": "Mã CQT:"
+    },
+    "taxDialog": {
+      "title": "Sửa tỉ lệ thuế của hàng hóa",
+      "vat": "GTGT (%)",
+      "taxRate": "Tỷ lệ thuế",
+      "taxRateOf": "Tỷ lệ thuế {code}",
+      "notChosen": "-- Chưa chọn --",
+      "saved": "Đã lưu tỷ lệ thuế"
+    }
+  },
+  "refund": {
+    "account": "Tài khoản chi",
+    "none": "-- Không chọn --"
+  },
+  "qr": {
+    "title": "Thanh toán qua mã QR",
+    "noBank": "Chưa có tài khoản ngân hàng — thêm tại Thiết lập → Tài khoản ngân hàng.",
+    "account": "Tài khoản",
+    "amount": "Số tiền",
+    "imageAlt": "Mã QR chuyển khoản",
+    "generating": "Đang tạo...",
+    "received": "Đã nhận tiền",
+    "waiting": "Đang chờ khách chuyển khoản (nội dung {code})",
+    "receivedToast": "Đã nhận {amount}đ chuyển khoản",
+    "download": "Tải QR",
+    "or": "hoặc",
+    "copy": "Sao chép QR",
+    "copied": "Đã sao chép mã QR",
+    "autoHint": "Đã bật nhận thông báo thanh toán QR. Hệ thống sẽ tự xác nhận khi nhận được tiền chuyển khoản."
+  },
+  "returns": {
+    "title": "Trả hàng",
+    "unit": "phiếu",
+    "emptyWhat": "phiếu trả hàng",
+    "status": "Trạng thái",
+    "searchPlaceholder": "Theo mã phiếu trả, mã hóa đơn, tên khách",
+    "exportTitle": "Xuất các dòng đang hiển thị ra file CSV (tiêu đề tiếng Việt)",
+    "columns": {
+      "code": "Mã trả hàng",
+      "time": "Thời gian",
+      "invoiceCode": "Mã hóa đơn",
+      "customer": "Khách hàng",
+      "subtotal": "Tổng tiền hàng",
+      "fee": "Phí trả hàng",
+      "total": "Cần trả khách",
+      "refunded": "Đã trả khách",
+      "status": "Trạng thái"
+    },
+    "detail": {
+      "cancelled": "Đã hủy phiếu trả hàng",
+      "createdBy": "Người tạo:",
+      "time": "Thời gian:",
+      "invoiceCode": "Mã hóa đơn:",
+      "lotsBack": "Lô nhập lại",
+      "returnPrice": "Giá trả",
+      "noNote": "Chưa có ghi chú",
+      "subtotal": "Tổng tiền hàng trả",
+      "discount": "Giảm giá",
+      "fee": "Phí trả hàng",
+      "total": "Cần trả khách",
+      "refunded": "Đã trả khách",
+      "cancel": "Hủy",
+      "confirmCancel": "Hủy phiếu {code}? Hàng sẽ bị xuất lại khỏi kho."
+    }
+  }
+}

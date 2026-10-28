@@ -1,0 +1,121 @@
+{
+  "page": {
+    "title": "Thuế & Kế toán",
+    "noProfile": "Chưa có hồ sơ kê khai thuế đang hoạt động. Vào {link} để thêm mã số thuế, nhóm doanh thu và địa điểm kinh doanh.",
+    "noProfileLink": "Thiết lập → Thuế & Kế toán",
+    "taxCodeOption": "MST {code}",
+    "yearOption": "Năm {year}",
+    "byQuarter": "Theo quý",
+    "byMonth": "Theo tháng",
+    "periodHint": "Kỳ đang chọn áp dụng cho các sổ; tờ khai hiện đủ các kỳ trong năm.",
+    "tabs": {
+      "declaration": "Tờ khai & nghĩa vụ thuế",
+      "revenue": "Sổ doanh thu ({code})",
+      "stock": "Sổ hàng hóa ({code})",
+      "cash": "Sổ tiền ({code})"
+    }
+  },
+  "period": {
+    "month": "Tháng {n}",
+    "quarter": "Quý {n}"
+  },
+  "groups": {
+    "g1": "Nhóm 1: Từ 1 tỷ trở xuống",
+    "g2": "Nhóm 2: Trên 1 tỷ - 3 tỷ",
+    "g3": "Nhóm 3: Trên 3 tỷ - 50 tỷ",
+    "g4": "Nhóm 4: Trên 50 tỷ"
+  },
+  "books": {
+    "formPeriod": "Mẫu {code} — {period} ({from} – {to})",
+    "noRevenue": "Không có doanh thu trong kỳ",
+    "stockNote": "Mẫu {code} — {period}. Giá trị nhập theo giá mua (gồm VAT), xuất theo giá vốn bình quân.",
+    "fundCash": "Tiền mặt",
+    "fundBank": "Tiền gửi ngân hàng",
+    "cashAllBranches": "Sổ tiền tính toàn bộ chi nhánh"
+  },
+  "declaration": {
+    "taxCodeLabel": "MST:",
+    "pitLabel": "TNCN:",
+    "vatLabel": "GTGT:",
+    "pitByProfit": "theo thu nhập, {rate}%",
+    "pitByRevenue": "theo doanh thu, tỷ lệ từng ngành",
+    "vatBySector": "tỷ lệ từng ngành trên doanh thu chịu thuế",
+    "vatNotApplied": "Không áp dụng",
+    "group1Note": "Nhóm 1 (doanh thu năm từ 1 tỷ trở xuống): không phải nộp thuế GTGT, TNCN — chỉ cần ghi Sổ doanh thu (S1a-HKD).",
+    "period": "Kỳ",
+    "yearTotal": "Cộng năm {year}",
+    "footnote": "Doanh thu = hóa đơn hoàn thành − hàng khách trả (đã trừ giảm giá). Doanh thu lũy kế năm: {total}. Số liệu là ước tính theo quy định hiện hành về thuế hộ kinh doanh từ 2026; hãy để kế toán đối chiếu trước khi nộp tờ khai trên Cổng thuế.",
+    "cols": {
+      "revenue": "Doanh thu",
+      "vatRevenue": "DT chịu GTGT",
+      "exemptRevenue": "DT không chịu GTGT",
+      "vat": "Thuế GTGT",
+      "cogs": "Giá vốn",
+      "expenses": "Chi phí khác",
+      "taxableIncome": "Thu nhập tính thuế",
+      "pitBaseRevenue": "DT tính TNCN (vượt 1 tỷ)",
+      "pit": "Thuế TNCN",
+      "totalDue": "Tổng phải nộp"
+    },
+    "sector": {
+      "title": "Chi tiết theo ngành nghề — {period}",
+      "name": "Ngành nghề",
+      "rates": "Tỷ lệ GTGT / TNCN",
+      "pitBase": "DT tính TNCN",
+      "allocationNote": "Phần doanh thu được trừ (1 tỷ/năm) chia cho các ngành theo tỷ trọng doanh thu trong kỳ — kế toán xác nhận cách phân bổ."
+    }
+  },
+  "profile": {
+    "declaring": "Đang kê khai",
+    "notDeclaring": "Ngừng kê khai",
+    "manageTitle": "Quản lý hồ sơ kê khai",
+    "manageDesc": "Dựa trên nhóm doanh thu và phương pháp tính thuế, hệ thống tự tổng hợp dữ liệu cho sổ kế toán và tờ khai của từng địa điểm kinh doanh.",
+    "revenueGroup": "Nhóm doanh thu",
+    "pitMethod": "Phương pháp tính thuế TNCN",
+    "pitRevenue": "Tính theo doanh thu",
+    "pitProfit": "Tính theo thu nhập (doanh thu - chi phí)",
+    "locations": "Danh sách địa điểm kinh doanh",
+    "addLocation": "Thêm địa điểm kinh doanh",
+    "editLocation": "Sửa địa điểm",
+    "colCode": "Mã địa điểm",
+    "colName": "Tên địa điểm",
+    "colAddress": "Địa chỉ",
+    "colBranches": "Chi nhánh",
+    "colStartDate": "Ngày chuyển lên kê khai",
+    "colStatus": "Trạng thái",
+    "noLocations": "Chưa có địa điểm — sổ sách sẽ tính số liệu của tất cả chi nhánh",
+    "confirmDeactivate": "Ngừng hoạt động địa điểm kinh doanh?\nDữ liệu các chi nhánh thuộc địa điểm này sẽ không được tiếp tục đưa vào sổ kế toán và tờ khai từ thời điểm hiện tại. Dữ liệu cũ không thay đổi.",
+    "deleteTitle": "Xóa mã số thuế",
+    "deleteDesc": "Thiết lập thuế của mã số thuế {code} sẽ bị xóa. Dữ liệu bán hàng không bị ảnh hưởng.",
+    "confirmDelete": "Xóa mã số thuế {code}?",
+    "saved": "Thiết lập đã được cập nhật thành công"
+  },
+  "location": {
+    "addTitle": "Thêm địa điểm kinh doanh",
+    "editTitle": "Chỉnh sửa địa điểm kinh doanh",
+    "name": "Tên địa điểm kinh doanh *",
+    "namePlaceholder": "VD: Trụ sở chính",
+    "code": "Mã địa điểm kinh doanh *",
+    "province": "Tỉnh/Thành phố",
+    "branches": "Chi nhánh",
+    "startDate": "Ngày chuyển lên kê khai"
+  },
+  "sectors": {
+    "title": "Ngành nghề kinh doanh & tỷ lệ thuế trên doanh thu",
+    "name": "Ngành nghề",
+    "vat": "GTGT (%)",
+    "pit": "TNCN (%)",
+    "default": "Mặc định",
+    "remove": "Xóa ngành",
+    "add": "Thêm ngành nghề",
+    "newName": "Ngành mới",
+    "cannotRemoveDefault": "Không xóa được ngành nghề mặc định — hãy chọn ngành mặc định khác trước.",
+    "categoriesTitle": "Gắn ngành nghề cho nhóm hàng",
+    "categoriesDesc": "Doanh thu của hàng hóa được tính thuế theo ngành của nhóm hàng. Nhóm con để trống thì theo nhóm cha; không gắn thì theo ngành mặc định.",
+    "noCategories": "Chưa có nhóm hàng (tạo ở Thiết lập → Hàng hóa).",
+    "followParent": "-- Theo nhóm cha --",
+    "followDefault": "-- Theo ngành mặc định --",
+    "defaultTaxRate": "Thuế suất mặc định của hàng hóa chưa chọn thuế",
+    "note": "Hàng có thuế suất KCT / KKKNT không tính GTGT. Vắc xin, dịch vụ y tế thường thuộc diện không chịu thuế GTGT. Tỷ lệ mặc định lấy theo quy định thuế hộ kinh doanh 2026 — hãy để kế toán xác nhận."
+  }
+}

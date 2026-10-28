@@ -14,6 +14,9 @@ import { api, errorMessage } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 import type { Supplier } from "./purchase-types";
 import { useInvalidateSuppliers, useSupplierGroups } from "./supplier-queries";
+import { useT } from "@/lib/i18n";
+import { commonNs } from "@/messages/common";
+import { purchasesNs } from "@/messages/purchases";
 
 type Props = { supplier?: Supplier; onClose: () => void; onSaved?: (s: Supplier) => void };
 
@@ -25,6 +28,8 @@ type Form = Record<(typeof FIELDS)[number], string>;
 export function SupplierFormDialog({ supplier, onClose, onSaved }: Props) {
   const invalidate = useInvalidateSuppliers();
   const { data: groups = [] } = useSupplierGroups();
+  const t = useT(purchasesNs);
+  const tc = useT(commonNs);
   const [form, setForm] = useState<Form>(() =>
     Object.fromEntries(FIELDS.map((f) => [f, supplier?.[f] ?? ""])) as Form);
   const [addr, setAddr] = useState<VnAddress>(() => toVnAddress(supplier?.address, supplier?.provinceCode, supplier?.province,
@@ -41,7 +46,7 @@ export function SupplierFormDialog({ supplier, onClose, onSaved }: Props) {
       ? api<Supplier>(`/suppliers/${supplier.id}`, { method: "PUT", body: body() })
       : api<Supplier>("/suppliers", { method: "POST", body: body() }),
     onSuccess: (s) => {
-      toast.success(supplier ? "Đã cập nhật nhà cung cấp" : `Đã tạo nhà cung cấp ${s.code}`);
+      toast.success(supplier ? t("suppliers.form.toastUpdated") : t("suppliers.form.toastCreated", { code: s.code }));
       invalidate();
       onSaved?.(s);
       onClose();
@@ -60,44 +65,44 @@ export function SupplierFormDialog({ supplier, onClose, onSaved }: Props) {
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="flex max-h-[92vh] flex-col gap-0 rounded-lg p-0 sm:max-w-[870px]">
         <DialogHeader className="px-4 pt-4 pb-3">
-          <DialogTitle className="text-base font-bold">{supplier ? "Sửa nhà cung cấp" : "Thêm nhà cung cấp"}</DialogTitle>
+          <DialogTitle className="text-base font-bold">{supplier ? t("suppliers.form.titleEdit") : t("suppliers.form.titleCreate")}</DialogTitle>
         </DialogHeader>
         <form id="supplier-form" className="space-y-3 overflow-y-auto px-4 pb-4"
           onSubmit={(e) => { e.preventDefault(); save.mutate(); }}>
           <div className="grid grid-cols-1 gap-x-5 gap-y-2.5 md:grid-cols-2">
-            {field("name", "Tên nhà cung cấp", { required: true, placeholder: "Bắt buộc" })}
-            {field("code", "Mã nhà cung cấp", { placeholder: "Tự động" })}
-            {field("phone", "Điện thoại")}
-            {field("email", "Email", { type: "email", placeholder: "email@gmail.com" })}
+            {field("name", t("suppliers.cols.name"), { required: true, placeholder: tc("status.required") })}
+            {field("code", t("suppliers.cols.code"), { placeholder: t("suppliers.form.auto") })}
+            {field("phone", tc("fields.phone"))}
+            {field("email", tc("fields.email"), { type: "email", placeholder: "email@gmail.com" })}
           </div>
-          <FormSection title="Địa chỉ">
+          <FormSection title={tc("fields.address")}>
             <div className="grid grid-cols-1 gap-x-5 gap-y-2.5 md:grid-cols-2">
-              <VnAddressFields value={addr} onChange={setAddr} idPrefix="supplier" addressPlaceholder="Nhập địa chỉ"
+              <VnAddressFields value={addr} onChange={setAddr} idPrefix="supplier" addressPlaceholder={t("suppliers.form.addressPlaceholder")}
                 addressFieldClassName="md:col-span-2" labelClassName="text-xs font-normal" />
             </div>
           </FormSection>
-          <FormSection title="Nhóm nhà cung cấp, ghi chú">
+          <FormSection title={t("suppliers.form.groupNote")}>
             <div className="grid gap-2.5">
-              <div className="grid gap-1"><Label htmlFor="supplier-groupId" className="text-xs font-normal">Nhóm nhà cung cấp</Label>
+              <div className="grid gap-1"><Label htmlFor="supplier-groupId" className="text-xs font-normal">{t("suppliers.cols.group")}</Label>
                 <NativeSelect id="supplier-groupId" {...bind("groupId")}>
-                  <option value="">Chọn nhóm nhà cung cấp</option>
+                  <option value="">{t("suppliers.form.pickGroup")}</option>
                   {groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
                 </NativeSelect></div>
-              <div className="grid gap-1"><Label htmlFor="supplier-note" className="text-xs font-normal">Ghi chú</Label>
-                <Textarea id="supplier-note" className="min-h-[58px] rounded-md" placeholder="Nhập ghi chú" {...bind("note")} /></div>
+              <div className="grid gap-1"><Label htmlFor="supplier-note" className="text-xs font-normal">{tc("fields.note")}</Label>
+                <Textarea id="supplier-note" className="min-h-[58px] rounded-md" placeholder={t("suppliers.form.notePlaceholder")} {...bind("note")} /></div>
             </div>
           </FormSection>
-          <FormSection title="Thông tin xuất hóa đơn">
+          <FormSection title={t("suppliers.info.billing")}>
             <div className="grid grid-cols-1 gap-x-5 gap-y-2.5 md:grid-cols-2">
-              {field("companyName", "Tên công ty", { placeholder: "Nhập tên công ty" })}
-              {field("taxCode", "Mã số thuế", { placeholder: "Nhập mã số thuế" })}
-              {field("idNumber", "Số CCCD/CMND", { placeholder: "Nhập số CCCD/CMND" })}
+              {field("companyName", t("suppliers.form.companyName"), { placeholder: t("suppliers.form.companyPlaceholder") })}
+              {field("taxCode", t("suppliers.cols.taxCode"), { placeholder: t("suppliers.form.taxCodePlaceholder") })}
+              {field("idNumber", t("suppliers.form.idNumber"), { placeholder: t("suppliers.form.idNumberPlaceholder") })}
             </div>
           </FormSection>
         </form>
         <div className="flex justify-end gap-2 border-t border-[#e5e7eb] px-4 py-3">
-          <Button variant="outline" className="h-8 rounded-md border-[#d1d5db] px-3" onClick={onClose}>Bỏ qua</Button>
-          <Button type="submit" form="supplier-form" className="h-8 rounded-md px-4" disabled={save.isPending}>Lưu</Button>
+          <Button variant="outline" className="h-8 rounded-md border-[#d1d5db] px-3" onClick={onClose}>{tc("actions.skip")}</Button>
+          <Button type="submit" form="supplier-form" className="h-8 rounded-md px-4" disabled={save.isPending}>{tc("actions.save")}</Button>
         </div>
       </DialogContent>
     </Dialog>

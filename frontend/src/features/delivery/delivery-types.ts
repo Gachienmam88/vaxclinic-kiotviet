@@ -67,3 +67,16 @@ export const FEE_PAYERS: ["SHOP" | "CUSTOMER", string][] = [["SHOP", "Cửa hàn
 export const LEDGER_LABELS: Record<PartnerLedgerRow["docType"], string> = {
   COD: "Thu hộ", FEE: "Phí giao hàng", SETTLEMENT: "Thanh toán / đối soát", SETTLEMENT_CANCEL: "Hủy thanh toán",
 };
+
+/**
+ * Khóa i18n (namespace "delivery") cho màn hình: t(SHIPMENT_STATUS_KEY[s]), t(FEE_PAYER_KEY[p]), t(LEDGER_KEY[d]).
+ * Các mảng / map tiếng Việt ở trên giữ lại cho nơi chưa i18n (VD features/sale) và in ấn.
+ */
+export const SHIPMENT_STATUS_KEY = {
+  PENDING: "status.PENDING", PICKING: "status.PICKING", DELIVERING: "status.DELIVERING", DELIVERED: "status.DELIVERED",
+  RETURNING: "status.RETURNING", RETURNED: "status.RETURNED", CANCELLED: "status.CANCELLED",
+} as const satisfies Record<ShipmentStatus, string>;
+export const FEE_PAYER_KEY = { SHOP: "feePayer.SHOP", CUSTOMER: "feePayer.CUSTOMER" } as const;
+export const LEDGER_KEY = {
+  COD: "ledger.COD", FEE: "ledger.FEE", SETTLEMENT: "ledger.SETTLEMENT", SETTLEMENT_CANCEL: "ledger.SETTLEMENT_CANCEL",
+} as const satisfies Record<PartnerLedgerRow["docType"], string>;

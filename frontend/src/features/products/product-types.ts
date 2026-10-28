@@ -84,23 +84,3 @@ export type LedgerLine = {
 };
 
 export type ProductLot = { id: string; branchId: string; lotNumber: string; expiryDate: string; quantity: number };
-
-/** Tên hiển thị loại giao dịch trên thẻ kho. */
-export const DOC_TYPE_LABEL: Record<string, string> = {
-  OPENING: "Khởi tạo tồn",
-  PURCHASE: "Nhập hàng",
-  PURCHASE_RETURN: "Trả hàng nhập",
-  SALE: "Bán hàng",
-  SALE_CANCEL: "Hủy hóa đơn",
-  SALE_RETURN: "Khách trả hàng",
-  SALE_RETURN_CANCEL_OUT: "Hủy phiếu khách trả",
-  PURCHASE_CANCEL: "Hủy phiếu nhập",
-  PURCHASE_RETURN_CANCEL: "Hủy trả hàng nhập",
-  ADJUSTMENT: "Kiểm kho",
-  TRANSFER_OUT: "Chuyển hàng đi",
-  TRANSFER_IN: "Nhận hàng chuyển",
-  DAMAGE: "Xuất hủy",
-  DAMAGE_CANCEL: "Hủy phiếu xuất hủy",
-  INTERNAL_USE: "Xuất dùng nội bộ",
-  INTERNAL_USE_CANCEL: "Hủy phiếu xuất dùng nội bộ",
-};

@@ -15,6 +15,8 @@ import { DEFAULT_SUPPLIER_FILTERS, type SupplierFilters, type SupplierPage, type
 import { downloadCsv } from "@/features/sales/customer-csv-export";
 import { api } from "@/lib/api-client";
 import { useCurrentUser } from "@/lib/use-current-user";
+import { useT } from "@/lib/i18n";
+import { purchasesNs } from "@/messages/purchases";
 
 const COLUMNS_KEY = "supplier-list-columns";
 const defaultColumns = () => SUPPLIER_COLUMNS.filter((c) => c.defaultVisible).map((c) => c.key);
@@ -27,6 +29,7 @@ const defaultColumns = () => SUPPLIER_COLUMNS.filter((c) => c.defaultVisible).ma
 function SuppliersPage({ link }: { link: DeepLink }) {
   const docCode = link.code && !/^NCC/i.test(link.code) ? link.code : null;
   const { can } = useCurrentUser();
+  const t = useT(purchasesNs);
   const [search, setSearch] = useState(docCode ? "" : (link.code ?? ""));
   const [q, setQ] = useState(search);
   const [linkDoc, setLinkDoc] = useState(docCode);
@@ -38,7 +41,7 @@ function SuppliersPage({ link }: { link: DeepLink }) {
   const [selected, setSelected] = useState<string[]>([]);
   const [dialog, setDialog] = useState<"create" | "import" | null>(null);
   const [exporting, setExporting] = useState(false);
-  useEffect(() => { const t = setTimeout(() => { setQ(search); setPage(0); }, 300); return () => clearTimeout(t); }, [search]);
+  useEffect(() => { const timer = setTimeout(() => { setQ(search); setPage(0); }, 300); return () => clearTimeout(timer); }, [search]);
   useEffect(() => {
     try { const saved = JSON.parse(localStorage.getItem(COLUMNS_KEY) ?? "null"); if (Array.isArray(saved)) setColumns(saved); } catch { /* bỏ qua */ }
   }, []);
@@ -63,14 +66,14 @@ function SuppliersPage({ link }: { link: DeepLink }) {
       const out = selected.length ? rows.filter((s) => selected.includes(s.id)) : rows;
       downloadCsv("danh-sach-nha-cung-cap.csv", SUPPLIER_CSV_HEADER, out.map(supplierCsvRow));
     } catch {
-      toast.error("Không xuất được file");
+      toast.error(t("suppliers.exportFailed"));
     } finally {
       setExporting(false);
     }
   }
 
   return (
-    <PurchaseListLayout title="Nhà cung cấp"
+    <PurchaseListLayout title={t("suppliers.title")}
       toolbar={<SupplierListToolbar search={search} onSearch={(v) => { setSearch(v); setLinkDoc(null); }} filtersOpen={filtersOpen} onToggleFilters={() => setFiltersOpen(!filtersOpen)}
         canManage={can("inventory.manage")} onCreate={() => setDialog("create")} onImport={() => setDialog("import")}
         onExport={exportCsv} exporting={exporting} columns={columns} onColumns={changeColumns} size={size}
@@ -80,7 +83,7 @@ function SuppliersPage({ link }: { link: DeepLink }) {
         docCode={linkDoc && expanded === data?.items[0]?.id ? linkDoc : null}
         selected={selected} onSelect={setSelected} />
       <PurchaseListPager size={size} onSize={(n) => { setSize(n); setPage(0); }} page={page} pages={pages} total={data?.total ?? 0}
-        unit="nhà cung cấp" onPage={(p) => { setPage(p); setExpanded(null); }} />
+        unit={t("suppliers.unit")} onPage={(p) => { setPage(p); setExpanded(null); }} />
       {dialog === "create" && <SupplierFormDialog onClose={() => setDialog(null)} />}
       {dialog === "import" && <SupplierImportDialog onClose={() => setDialog(null)} />}
     </PurchaseListLayout>

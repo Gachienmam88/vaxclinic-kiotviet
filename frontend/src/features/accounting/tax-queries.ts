@@ -3,6 +3,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { api, errorMessage } from "@/lib/api-client";
+import { useT } from "@/lib/i18n";
+import { accountingNs } from "@/messages/accounting";
 
 export type TaxLocation = {
   code: string; name: string; address: string | null; province: string | null; ward: string | null;
@@ -23,9 +25,10 @@ export const useTaxSettings = () => useQuery({ queryKey: ["tax-settings"], query
 
 export function useSaveTax() {
   const qc = useQueryClient();
+  const t = useT(accountingNs);
   return useMutation({
     mutationFn: (body: TaxSettings) => api<TaxSettings>("/settings/tax", { method: "PUT", body }),
-    onSuccess: (d) => { qc.setQueryData(["tax-settings"], d); toast.success("Thiết lập đã được cập nhật thành công"); },
+    onSuccess: (d) => { qc.setQueryData(["tax-settings"], d); toast.success(t("profile.saved")); },
     onError: (e) => toast.error(errorMessage(e)),
   });
 }

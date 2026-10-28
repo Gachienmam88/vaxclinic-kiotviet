@@ -6,6 +6,8 @@ import { useCategories, usePositions } from "@/features/products/product-queries
 import { CategoryManagerDialog, PositionManagerDialog } from "@/features/settings/catalog-list-dialogs";
 import { SettingRow, SettingsCard, SettingsPage } from "@/features/settings/settings-shell";
 import { useCurrentUser } from "@/lib/use-current-user";
+import { useT } from "@/lib/i18n";
+import { settingsNs } from "@/messages/settings";
 
 function Count({ text, onClick }: { text: string; onClick?: () => void }) {
   return (
@@ -21,24 +23,25 @@ export default function ProductSettingsPage() {
   const { data: categories = [] } = useCategories();
   const { data: positions = [] } = usePositions();
   const { can } = useCurrentUser();
+  const t = useT(settingsNs);
   const [dialog, setDialog] = useState<"categories" | "positions" | null>(null);
   const manage = can("catalog.manage");
 
   return (
-    <SettingsPage toc={[{ id: "info", label: "Thông tin hàng hóa" }, { id: "cost", label: "Giá vốn, tồn kho" }]}>
-      <SettingsCard id="info" title="Thông tin hàng hóa">
-        <SettingRow title="Nhóm hàng" description="Quản lý hàng hóa theo chủng loại, đặc tính, công năng."
-          control={<Count text={categories.length ? `${categories.length} nhóm hàng` : "Chưa có nhóm hàng"}
+    <SettingsPage toc={[{ id: "info", label: t("products.tocInfo") }, { id: "cost", label: t("products.tocCost") }]}>
+      <SettingsCard id="info" title={t("products.tocInfo")}>
+        <SettingRow title={t("products.categories")} description={t("products.categoriesDesc")}
+          control={<Count text={categories.length ? t("products.categoryCount", { count: categories.length }) : t("products.noCategories")}
             onClick={manage ? () => setDialog("categories") : undefined} />} />
-        <SettingRow title="Vị trí" description="Quản lý hàng hóa theo vị trí lưu trữ như tủ lạnh, kệ, ngăn."
-          control={<Count text={positions.length ? `${positions.length} vị trí` : "Chưa có vị trí"}
+        <SettingRow title={t("products.positions")} description={t("products.positionsDesc")}
+          control={<Count text={positions.length ? t("products.positionCount", { count: positions.length }) : t("products.noPositions")}
             onClick={manage ? () => setDialog("positions") : undefined} />} />
-        <SettingRow title="Đơn vị tính" description="Mỗi hàng hóa có đơn vị cơ bản (VD: Liều) và các đơn vị quy đổi (VD: Hộp = 10 Liều), khai báo trong từng hàng hóa." />
-        <SettingRow title="Quản lý theo lô, hạn sử dụng" description="Bật cho từng hàng hóa. Hàng theo lô bán theo nguyên tắc hết hạn trước xuất trước (FEFO) và không bán lô đã hết hạn." />
+        <SettingRow title={t("products.units")} description={t("products.unitsDesc")} />
+        <SettingRow title={t("products.lots")} description={t("products.lotsDesc")} />
       </SettingsCard>
-      <SettingsCard id="cost" title="Giá vốn, tồn kho">
-        <SettingRow title="Phương pháp tính giá vốn" control={<span className="text-[13px] font-medium">Giá vốn trung bình</span>}
-          description="Giá vốn được tính lại sau mỗi lần nhập hàng / trả hàng nhập theo bình quân gia quyền (giá nhập đã gồm VAT)." />
+      <SettingsCard id="cost" title={t("products.tocCost")}>
+        <SettingRow title={t("products.costMethod")} control={<span className="text-[13px] font-medium">{t("products.costMethodValue")}</span>}
+          description={t("products.costMethodDesc")} />
       </SettingsCard>
       {dialog === "categories" && <CategoryManagerDialog onClose={() => setDialog(null)} />}
       {dialog === "positions" && <PositionManagerDialog onClose={() => setDialog(null)} />}

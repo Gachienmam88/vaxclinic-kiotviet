@@ -10,24 +10,30 @@ import {
   DocStatusBadge, LIST_HEADER_ROW, PurchaseEmptyState, PurchaseListLayout, PurchaseListPager, PurchaseListToolbar,
 } from "@/features/purchases/purchase-list-chrome";
 import { DEFAULT_PURCHASE_FILTERS, deepLinkPurchaseFilters, useReturns } from "@/features/purchases/purchase-queries";
-import { RETURN_STATUS_LABEL } from "@/features/purchases/purchase-types";
+import { returnStatusLabels } from "@/features/purchases/purchase-types";
 import { ReturnDetailPanel } from "@/features/purchases/return-detail-panel";
 import { formatDateTime, formatMoney } from "@/lib/format";
 import { useCurrentUser } from "@/lib/use-current-user";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
+import { commonNs } from "@/messages/common";
+import { purchasesNs } from "@/messages/purchases";
 
 const COLS = 10;
 const NUM = "text-right";
 
 function PurchaseReturnsPage({ link }: { link: DeepLink }) {
   const { can } = useCurrentUser();
+  const t = useT(purchasesNs);
+  const tc = useT(commonNs);
+  const statusLabels = returnStatusLabels(t);
   const [filters, setFilters] = useState(link.code ? deepLinkPurchaseFilters(link.code) : DEFAULT_PURCHASE_FILTERS);
   const [search, setSearch] = useState(link.code ?? "");
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(15);
   useEffect(() => {
-    const t = setTimeout(() => { setFilters((f) => ({ ...f, q: search })); setPage(0); }, 300);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => { setFilters((f) => ({ ...f, q: search })); setPage(0); }, 300);
+    return () => clearTimeout(timer);
   }, [search]);
   const { data, isLoading } = useReturns(filters, page, size);
   const pages = data ? Math.max(1, Math.ceil(data.total / size)) : 1;
@@ -35,25 +41,26 @@ function PurchaseReturnsPage({ link }: { link: DeepLink }) {
   const { open: expanded, setOpen: setExpanded, toggle } = useDeepLinkExpanded(data?.items, link, (r) => [r.code]);
 
   return (
-    <PurchaseListLayout title="Trả hàng nhập"
-      toolbar={<PurchaseListToolbar search={search} onSearch={setSearch} placeholder="Theo mã phiếu trả"
-        createLabel={can("inventory.manage") ? "Trả hàng nhập" : undefined} createHref="/purchases/returns/new"
-        onExport={data?.items.length ? () => exportReturnsCsv(data.items) : undefined} />}
-      sidebar={<PurchaseFilterSidebar filters={filters} statusLabels={RETURN_STATUS_LABEL} personLabel="Người trả"
+    <PurchaseListLayout title={t("returns.title")}
+      toolbar={<PurchaseListToolbar search={search} onSearch={setSearch} placeholder={t("returns.searchPlaceholder")}
+        createLabel={can("inventory.manage") ? t("returns.create") : undefined} createHref="/purchases/returns/new"
+        onExport={data?.items.length ? () => exportReturnsCsv(data.items, t, tc) : undefined} />}
+      sidebar={<PurchaseFilterSidebar filters={filters} statusLabels={statusLabels} personLabel={t("returns.returner")}
         onChange={applyFilters} />}>
       <div className="min-h-[calc(100vh-190px)] overflow-hidden rounded-lg bg-background">
         <Table>
           <TableHeader>
             <TableRow className={LIST_HEADER_ROW}>
-              <TableHead className="pl-4">Mã trả hàng nhập</TableHead><TableHead>Thời gian</TableHead><TableHead>Nhà cung cấp</TableHead>
-              <TableHead className={NUM}>Tổng tiền hàng</TableHead><TableHead className={NUM}>Giảm giá</TableHead>
-              <TableHead className={NUM}>VAT hoàn trả</TableHead><TableHead className={NUM}>NCC cần trả</TableHead>
-              <TableHead className={NUM}>NCC đã trả</TableHead><TableHead>Theo phiếu nhập</TableHead>
-              <TableHead className="pr-4">Trạng thái</TableHead>
+              <TableHead className="pl-4">{t("returns.cols.code")}</TableHead><TableHead>{t("receipts.cols.time")}</TableHead>
+              <TableHead>{t("receipts.cols.supplier")}</TableHead>
+              <TableHead className={NUM}>{t("receipts.cols.subtotal")}</TableHead><TableHead className={NUM}>{t("receipts.cols.discount")}</TableHead>
+              <TableHead className={NUM}>{t("returns.cols.vatRefund")}</TableHead><TableHead className={NUM}>{t("returns.cols.supplierDue")}</TableHead>
+              <TableHead className={NUM}>{t("returns.cols.supplierPaid")}</TableHead><TableHead>{t("returns.cols.byReceipt")}</TableHead>
+              <TableHead className="pr-4">{tc("fields.status")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading && <TableRow><TableCell colSpan={COLS} className="py-8 text-center text-muted-foreground">Đang tải...</TableCell></TableRow>}
+            {isLoading && <TableRow><TableCell colSpan={COLS} className="py-8 text-center text-muted-foreground">{tc("status.loading")}</TableCell></TableRow>}
             {data && !data.items.length && (
               <TableRow className="hover:bg-transparent"><TableCell colSpan={COLS} className="whitespace-normal">
                 <PurchaseEmptyState onWiden={filters.period === "month" ? () => applyFilters({ ...filters, period: "custom", from: "", to: "" }) : undefined} />
@@ -84,7 +91,7 @@ function PurchaseReturnsPage({ link }: { link: DeepLink }) {
                   <TableCell className={NUM}>{formatMoney(r.total)}</TableCell>
                   <TableCell className={NUM}>{formatMoney(r.refundAmount)}</TableCell>
                   <TableCell><DocCodeLink code={r.receiptCode} /></TableCell>
-                  <TableCell className="pr-4"><DocStatusBadge status={r.status} label={RETURN_STATUS_LABEL[r.status]} /></TableCell>
+                  <TableCell className="pr-4"><DocStatusBadge status={r.status} label={statusLabels[r.status]} /></TableCell>
                 </TableRow>
                 {expanded === r.id && (
                   <TableRow className="hover:bg-transparent">
@@ -97,7 +104,7 @@ function PurchaseReturnsPage({ link }: { link: DeepLink }) {
         </Table>
       </div>
       <PurchaseListPager size={size} onSize={(n) => { setSize(n); setPage(0); }} page={page} pages={pages}
-        total={data?.total ?? 0} unit="phiếu" onPage={setPage} />
+        total={data?.total ?? 0} unit={t("chrome.docUnit")} onPage={setPage} />
     </PurchaseListLayout>
   );
 }

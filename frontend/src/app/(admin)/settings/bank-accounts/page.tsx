@@ -13,33 +13,38 @@ import { QrPaymentDialog } from "@/features/sales/qr-payment-dialog";
 import type { BankAccount } from "@/features/sales/sales-types";
 import { api, errorMessage } from "@/lib/api-client";
 import { useCurrentUser } from "@/lib/use-current-user";
+import { useT } from "@/lib/i18n";
+import { commonNs } from "@/messages/common";
+import { settingsNs } from "@/messages/settings";
 
 /** Bảng tài khoản thu chi của 1 tab (ngân hàng hoặc ví điện tử). */
 function AccountTable({ kind, list, onEdit }: { kind: "BANK" | "EWALLET"; list: BankAccount[]; onEdit: (a: BankAccount) => void }) {
   const qc = useQueryClient();
   const { can } = useCurrentUser();
+  const t = useT(settingsNs);
+  const tc = useT(commonNs);
   const remove = useMutation({
     mutationFn: (id: string) => api(`/bank-accounts/${id}/deactivate`, { method: "POST" }),
-    onSuccess: () => { toast.success("Đã xóa tài khoản"); qc.invalidateQueries({ queryKey: ["bank-accounts"] }); },
+    onSuccess: () => { toast.success(t("bankAccounts.deleted")); qc.invalidateQueries({ queryKey: ["bank-accounts"] }); },
     onError: (e) => toast.error(errorMessage(e)),
   });
   const bank = kind === "BANK";
   return (
     <table className="w-full text-[13px]">
-      <thead className="bg-[#f0f2f5] text-left text-xs [&_th]:h-[34px] [&_th]:font-semibold"><tr><th className="px-3 py-2">{bank ? "Số tài khoản" : "Số điện thoại / mã ví"}</th>
-        <th className="px-3">{bank ? "Ngân hàng" : "Ví điện tử"}</th><th className="px-3">{bank ? "Chủ tài khoản" : "Chủ ví"}</th>
-        <th className="px-3">Phạm vi áp dụng</th><th className="px-3">Ghi chú</th><th className="w-24 px-3 text-right">Thao tác</th></tr></thead>
+      <thead className="bg-[#f0f2f5] text-left text-xs [&_th]:h-[34px] [&_th]:font-semibold"><tr><th className="px-3 py-2">{bank ? t("bankAccounts.colAccountNo") : t("bankAccounts.colWalletNo")}</th>
+        <th className="px-3">{bank ? t("bankAccounts.colBank") : t("bankAccounts.colWallet")}</th><th className="px-3">{bank ? t("bankAccounts.colHolder") : t("bankAccounts.colWalletHolder")}</th>
+        <th className="px-3">{t("bankAccounts.colScope")}</th><th className="px-3">{t("bankAccounts.colNote")}</th><th className="w-24 px-3 text-right">{t("common.actions")}</th></tr></thead>
       <tbody>
-        {!list.length && <ListEmptyRow cols={6} what={bank ? "tài khoản ngân hàng" : "ví điện tử"} compact />}
+        {!list.length && <ListEmptyRow cols={6} what={bank ? t("bankAccounts.emptyBank") : t("bankAccounts.emptyWallet")} compact />}
         {list.map((a) => (
           <tr key={a.id} className="border-b">
-            <td className="px-3 py-2">{a.accountNo}{bank && !a.bankBin && <span className="block text-xs text-destructive">thiếu mã BIN — không tạo được QR</span>}</td>
-            <td className="px-3">{a.bankName}</td><td className="px-3">{a.accountName}</td><td className="px-3">Toàn hệ thống</td>
+            <td className="px-3 py-2">{a.accountNo}{bank && !a.bankBin && <span className="block text-xs text-destructive">{t("bankAccounts.missingBin")}</span>}</td>
+            <td className="px-3">{a.bankName}</td><td className="px-3">{a.accountName}</td><td className="px-3">{t("bankAccounts.scopeAll")}</td>
             <td className="px-3 text-muted-foreground">{a.note}</td>
             <td className="px-3 text-right">{can("cashbook.manage") && <>
-              <Button size="icon-sm" variant="ghost" title="Sửa" onClick={() => onEdit(a)}><Pencil className="size-4" /></Button>
-              <Button size="icon-sm" variant="ghost" title="Xóa" className="text-destructive"
-                onClick={() => confirm(`Xóa tài khoản ${a.accountNo}? Các phiếu thu chi cũ không bị ảnh hưởng.`) && remove.mutate(a.id)}><Trash2 className="size-4" /></Button>
+              <Button size="icon-sm" variant="ghost" title={tc("actions.edit")} onClick={() => onEdit(a)}><Pencil className="size-4" /></Button>
+              <Button size="icon-sm" variant="ghost" title={tc("actions.delete")} className="text-destructive"
+                onClick={() => confirm(t("bankAccounts.confirmDelete", { accountNo: a.accountNo })) && remove.mutate(a.id)}><Trash2 className="size-4" /></Button>
             </>}</td>
           </tr>
         ))}
@@ -51,6 +56,7 @@ function AccountTable({ kind, list, onEdit }: { kind: "BANK" | "EWALLET"; list: 
 /** Thiết lập → Sổ quỹ: quản lý tài khoản ngân hàng (VietQR) và ví điện tử dùng cho thu chi. */
 export default function MoneyAccountsPage() {
   const { can } = useCurrentUser();
+  const t = useT(settingsNs);
   const { data: all = [] } = useQuery({ queryKey: ["bank-accounts", "ALL"], queryFn: () => api<BankAccount[]>("/bank-accounts?kind=ALL") });
   const [tab, setTab] = useState<"BANK" | "EWALLET">("BANK");
   const [dialog, setDialog] = useState<{ account?: BankAccount } | null>(null);
@@ -58,18 +64,18 @@ export default function MoneyAccountsPage() {
   const banks = all.filter((a) => (a.kind ?? "BANK") === "BANK"), wallets = all.filter((a) => a.kind === "EWALLET");
 
   return (
-    <SettingsPage toc={[{ id: "accounts", label: "Quản lý tài khoản thu chi" }]}>
-      <SettingsCard id="accounts" title="Quản lý tài khoản thu chi" description="Quản lý các tài khoản ngân hàng và ví điện tử dùng cho giao dịch thu chi của cửa hàng.">
+    <SettingsPage toc={[{ id: "accounts", label: t("bankAccounts.title") }]}>
+      <SettingsCard id="accounts" title={t("bankAccounts.title")} description={t("bankAccounts.description")}>
         <div className="p-4">
           <Tabs value={tab} onValueChange={(v) => setTab(v as "BANK" | "EWALLET")}>
             <div className="flex items-center">
               <TabsList variant="line">
-                <TabsTrigger value="BANK">Tài khoản ngân hàng <span className="ml-1 text-xs text-muted-foreground">{banks.length}</span></TabsTrigger>
-                <TabsTrigger value="EWALLET">Ví điện tử <span className="ml-1 text-xs text-muted-foreground">{wallets.length}</span></TabsTrigger>
+                <TabsTrigger value="BANK">{t("bankAccounts.tabBank")} <span className="ml-1 text-xs text-muted-foreground">{banks.length}</span></TabsTrigger>
+                <TabsTrigger value="EWALLET">{t("bankAccounts.tabWallet")} <span className="ml-1 text-xs text-muted-foreground">{wallets.length}</span></TabsTrigger>
               </TabsList>
               <div className="ml-auto flex gap-2">
-                {tab === "BANK" && banks.length > 0 && <Button variant="outline" size="sm" onClick={() => setPreview(true)}><QrCode className="size-4" /> Thử tạo QR</Button>}
-                {can("cashbook.manage") && <Button variant="outline" size="sm" onClick={() => setDialog({})}><Plus className="size-4" /> Thêm tài khoản</Button>}
+                {tab === "BANK" && banks.length > 0 && <Button variant="outline" size="sm" onClick={() => setPreview(true)}><QrCode className="size-4" /> {t("bankAccounts.tryQr")}</Button>}
+                {can("cashbook.manage") && <Button variant="outline" size="sm" onClick={() => setDialog({})}><Plus className="size-4" /> {t("bankAccounts.add")}</Button>}
               </div>
             </div>
             <TabsContent value="BANK" className="pt-3"><AccountTable kind="BANK" list={banks} onEdit={(account) => setDialog({ account })} /></TabsContent>

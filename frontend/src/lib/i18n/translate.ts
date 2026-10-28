@@ -6,8 +6,7 @@
 export type MessageTree = { [key: string]: string | MessageTree };
 export type TranslateVars = Record<string, string | number>;
 
-const PLURAL_SUFFIXES = ["zero", "one", "two", "few", "many", "other"] as const;
-type PluralSuffix = (typeof PLURAL_SUFFIXES)[number];
+type PluralSuffix = "zero" | "one" | "two" | "few" | "many" | "other";
 
 /** Mọi đường dẫn lá của cây JSON: { a: { b: "x" } } → "a.b". */
 type LeafPaths<T, P extends string = ""> = {

@@ -10,6 +10,7 @@ import com.vaxclinic.sales.debt.DebtLedger;
 import com.vaxclinic.sales.delivery.ShipmentInvoiceHooks;
 import com.vaxclinic.sales.invoice.InvoiceDtos.InfoRequest;
 import com.vaxclinic.sales.invoice.InvoiceDtos.InvoiceRequest;
+import com.vaxclinic.sales.invoice.checkout.CheckoutAttemptService;
 import com.vaxclinic.sales.order.OrderDepositLedger;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,10 +35,13 @@ public class InvoiceWriter {
     private final OrderDepositLedger orderDeposits;
     private final ShipmentInvoiceHooks shipments;
     private final InvoiceExtraPayments extraPayments;
+    private final CheckoutAttemptService checkouts;
 
     public InvoiceWriter(InvoiceRepository invoices, CustomerRepository customers, CashVoucherRepository vouchers,
                          CashbookWriter cashbook, DebtLedger debt, InvoiceLineBuilder lineBuilder,
-                         OrderDepositLedger orderDeposits, ShipmentInvoiceHooks shipments, InvoiceExtraPayments extraPayments) {
+                         OrderDepositLedger orderDeposits, ShipmentInvoiceHooks shipments, InvoiceExtraPayments extraPayments,
+                         CheckoutAttemptService checkouts) {
+        this.checkouts = checkouts;
         this.extraPayments = extraPayments;
         this.orderDeposits = orderDeposits;
         this.shipments = shipments;
@@ -54,6 +58,12 @@ public class InvoiceWriter {
                         ProductStockClient.Result stockResult, InvoiceMath.Totals totals, BigDecimal paid) {
         if (invoices.existsById(req.id())) { // 2 lần gửi chạy song song: lần sau dừng ở đây
             return req.id();
+        }
+        // Cùng transaction: lần thanh toán → DONE. Job đối soát đã nhận hoàn kho lần này → dừng (rollback), không lưu HĐ thiếu kho.
+        if (!checkouts.markDone(req.id(), stockResult.docId())) {
+            if (invoices.existsById(req.id())) return req.id(); // lần gửi song song khác vừa lưu xong
+            throw BusinessException.conflict("CHECKOUT_RECONCILED",
+                    "Lần thanh toán này đã được đối soát hoàn kho, vui lòng gửi lại hóa đơn");
         }
         var inv = new Invoice();
         inv.setId(req.id());
@@ -75,7 +85,7 @@ public class InvoiceWriter {
         inv.setNote(req.note());
         inv.setOffline(req.offline());
         inv.applyEInvoiceBuyer(req.einvoiceBuyer());
-        inv.setStockDocId(req.id()); // chứng từ kho đầu tiên dùng chính id hóa đơn
+        inv.setStockDocId(stockResult.docId()); // = id hóa đơn; khác khi trừ kho lại sau đối soát (CheckoutAttemptRules)
         inv.setOrderId(req.orderId());
         applyMeta(inv, req);
         if (req.delivery() != null) inv.setSaleMode("DELIVERY");

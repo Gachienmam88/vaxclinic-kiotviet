@@ -10,41 +10,46 @@ import { linesToCsv, ReportTable, type ReportColumn, type ReportLine } from "./r
 import { parseYmd, rangeText } from "./report-time-presets";
 import { ReportViewer } from "./report-viewer";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
+import { DEFAULT_LOCALE, useLocale, useT } from "@/lib/i18n";
+import { reportsNs } from "@/messages/reports";
 
 type Totals = MonthRow & { damage: number; supplierDiscount: number };
 type MonthValue = { month: string; value: number };
-type Line = { label: string; values: number[] };
+/** label: tên chỉ tiêu theo ngôn ngữ; vi: thuật ngữ kế toán tiếng Việt gốc (chỉ khi ngôn ngữ ≠ vi). */
+type Line = { label: string; vi: string; values: number[] };
+type RowKey = keyof typeof reportsNs.vi.finance.rows;
 const ZERO = () => 0;
 
 /**
  * Dòng Báo cáo kết quả hoạt động kinh doanh. Phí trả ĐTGH = phí giao hàng cửa hàng chịu (sổ công nợ đối tác giao hàng).
  * Chiết khấu thanh toán nhận từ NCC = phiếu chiết khấu (CKN…) còn hiệu lực trên sổ công nợ NCC → thu nhập khác.
  * Các khoản ứng dụng chưa có nguồn dữ liệu (voucher, hoàn tiền, thanh toán bằng điểm, chênh lệch làm tròn) luôn 0.
+ * Tên chỉ tiêu là thuật ngữ kế toán VN: ở en/ja/zh hiện bản dịch kèm nguyên văn tiếng Việt (màn hình, in, CSV).
  */
-const ROWS: { label: string; level?: 1; f: (t: Totals) => number }[] = (() => {
+const ROWS: { label: RowKey; level?: 1; f: (t: Totals) => number }[] = (() => {
   const net = (t: Totals) => t.sales - t.invoiceDiscount - t.returnValue;
   const cost = (t: Totals) => t.damage + t.paymentDiscount + t.salary + t.deliveryFee;
   const other = (t: Totals) => t.returnFee + t.otherIncome + t.supplierDiscount;
   return [
-    { label: "Doanh thu bán hàng (1)", f: (t) => t.sales },
-    { label: "Giảm trừ Doanh thu (2 = 2.1+2.2)", f: (t) => t.invoiceDiscount + t.returnValue },
-    { label: "Chiết khấu hóa đơn (2.1)", level: 1, f: (t) => t.invoiceDiscount },
-    { label: "Giá trị hàng bán bị trả lại (2.2)", level: 1, f: (t) => t.returnValue },
-    { label: "Doanh thu thuần (3=1-2)", f: net },
-    { label: "Giá vốn hàng bán (4)", f: (t) => t.cogs },
-    { label: "Lợi nhuận gộp về bán hàng (5=3-4)", f: (t) => net(t) - t.cogs },
-    { label: "Chi phí (6)", f: cost },
-    { label: "Chi phí voucher", level: 1, f: ZERO }, { label: "Phí trả ĐTGH", level: 1, f: (t) => t.deliveryFee }, { label: "Hoàn tiền cho khách", level: 1, f: ZERO },
-    { label: "Xuất hủy hàng hóa", level: 1, f: (t) => t.damage }, { label: "Giá trị thanh toán bằng điểm", level: 1, f: ZERO },
-    { label: "Chiết khấu thanh toán cho khách", level: 1, f: (t) => t.paymentDiscount }, { label: "Chi trả lương NV", level: 1, f: (t) => t.salary },
-    { label: "Chênh lệch làm tròn nhập hàng", level: 1, f: ZERO }, { label: "Chênh lệch làm tròn bán hàng", level: 1, f: ZERO },
-    { label: "Lợi nhuận từ hoạt động kinh doanh (7=5-6)", f: (t) => net(t) - t.cogs - cost(t) },
-    { label: "Thu nhập khác (8)", f: other },
-    { label: "Phí trả hàng", level: 1, f: (t) => t.returnFee }, { label: "Chênh lệch làm tròn nhập hàng", level: 1, f: ZERO },
-    { label: "Chênh lệch làm tròn bán hàng", level: 1, f: ZERO }, { label: "Thu khác (Sổ quỹ)", level: 1, f: (t) => t.otherIncome },
-    { label: "Chiết khấu thanh toán nhận từ nhà cung cấp", level: 1, f: (t) => t.supplierDiscount },
-    { label: "Chi phí khác (9)", f: (t) => t.otherExpense },
-    { label: "Lợi nhuận thuần (10=7+8-9)", f: (t) => net(t) - t.cogs - cost(t) + other(t) - t.otherExpense },
+    { label: "sales", f: (t) => t.sales },
+    { label: "deductions", f: (t) => t.invoiceDiscount + t.returnValue },
+    { label: "invoiceDiscount", level: 1, f: (t) => t.invoiceDiscount },
+    { label: "returns", level: 1, f: (t) => t.returnValue },
+    { label: "netRevenue", f: net },
+    { label: "cogs", f: (t) => t.cogs },
+    { label: "grossProfit", f: (t) => net(t) - t.cogs },
+    { label: "expenses", f: cost },
+    { label: "voucherCost", level: 1, f: ZERO }, { label: "deliveryFee", level: 1, f: (t) => t.deliveryFee }, { label: "customerRefund", level: 1, f: ZERO },
+    { label: "damage", level: 1, f: (t) => t.damage }, { label: "pointsPayment", level: 1, f: ZERO },
+    { label: "paymentDiscount", level: 1, f: (t) => t.paymentDiscount }, { label: "salary", level: 1, f: (t) => t.salary },
+    { label: "purchaseRounding", level: 1, f: ZERO }, { label: "saleRounding", level: 1, f: ZERO },
+    { label: "operatingProfit", f: (t) => net(t) - t.cogs - cost(t) },
+    { label: "otherIncome", f: other },
+    { label: "returnFee", level: 1, f: (t) => t.returnFee }, { label: "purchaseRounding", level: 1, f: ZERO },
+    { label: "saleRounding", level: 1, f: ZERO }, { label: "cashbookIncome", level: 1, f: (t) => t.otherIncome },
+    { label: "supplierDiscount", level: 1, f: (t) => t.supplierDiscount },
+    { label: "otherExpense", f: (t) => t.otherExpense },
+    { label: "netProfit", f: (t) => net(t) - t.cogs - cost(t) + other(t) - t.otherExpense },
   ];
 })();
 
@@ -57,6 +62,8 @@ const total = (rows: Totals[]): Totals => {
 
 /** Báo cáo tài chính (kết quả hoạt động kinh doanh): năm + Theo tháng / Theo quý, hoặc khoảng ngày tùy chỉnh (1 cột Tổng). */
 export function FinanceReport() {
+  const t = useT(reportsNs);
+  const showVi = useLocale() !== DEFAULT_LOCALE;
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [mode, setMode] = useState<"month" | "quarter" | "range">("range");
@@ -80,34 +87,37 @@ export function FinanceReport() {
   const queries = [salesQ, dmgQ, supQ];
   const months = [...byMonth.values()];
   const buckets: { label: string; t: Totals }[] = mode === "month"
-    ? Array.from({ length: 12 }, (_, i) => ({ label: `Tháng ${i + 1}`, t: total(months.filter((r) => r.month === `${year}-${String(i + 1).padStart(2, "0")}`)) }))
-    : mode === "quarter" ? Array.from({ length: 4 }, (_, q) => ({ label: `Quý ${q + 1}`, t: total(months.filter((r) => Math.floor((+r.month.slice(5) - 1) / 3) === q)) }))
+    ? Array.from({ length: 12 }, (_, i) => ({ label: t("finance.month", { n: i + 1 }), t: total(months.filter((r) => r.month === `${year}-${String(i + 1).padStart(2, "0")}`)) }))
+    : mode === "quarter" ? Array.from({ length: 4 }, (_, q) => ({ label: t("finance.quarter", { n: q + 1 }), t: total(months.filter((r) => Math.floor((+r.month.slice(5) - 1) / 3) === q)) }))
       : [];
-  buckets.push({ label: "Tổng", t: total(months) });
-  const lines: ReportLine<Line>[] = ROWS.map((r, i) => ({ id: String(i), kind: "row", level: r.level, data: { label: r.label, values: buckets.map((b) => r.f(b.t)) } }));
-  const columns: ReportColumn<Line>[] = [{ key: "label", label: "", value: (l) => l.label, width: 220 },
+  buckets.push({ label: t("common.total"), t: total(months) });
+  const lines: ReportLine<Line>[] = ROWS.map((r, i) => ({ id: String(i), kind: "row", level: r.level, data: {
+    label: t(`finance.rows.${r.label}`), vi: showVi ? reportsNs.vi.finance.rows[r.label] : "", values: buckets.map((b) => r.f(b.t)) } }));
+  // CSV: "Bản dịch (nguyên văn tiếng Việt)"; màn hình + in: nguyên văn chữ nhỏ màu xám sau bản dịch
+  const columns: ReportColumn<Line>[] = [{ key: "label", label: "", value: (l) => (l.vi ? `${l.label} (${l.vi})` : l.label), width: 220,
+    render: (l) => (l.vi ? <>{l.label}<span className="rp-vi">({l.vi})</span></> : l.label) },
     ...buckets.map((b, i) => ({ key: `c${i}`, label: b.label, type: "money" as const, value: (l: Line) => l.values[i] }))];
-  const exportCsv = () => { const t = linesToCsv(columns, lines); downloadCsv(`bao-cao-tai-chinh-${ymd(range.from)}.csv`, ["Chỉ tiêu", ...t.header.slice(1)], t.rows); };
+  const exportCsv = () => { const csv = linesToCsv(columns, lines); downloadCsv(`bao-cao-tai-chinh-${ymd(range.from)}.csv`, [t("cols.metric"), ...csv.header.slice(1)], csv.rows); };
   const box = "flex h-[30px] flex-1 items-center justify-between rounded-md border bg-background px-2 text-[13px]";
 
   return (
-    <ReportLayout title="Báo cáo tài chính" sidebar={<>
+    <ReportLayout title={t("finance.title")} sidebar={<>
       <ViewModeFilter value="report" onChange={() => undefined} reportOnly />
       <BranchFilter value={branch} onChange={setBranch} />
-      <FilterSection title="Thời gian">
+      <FilterSection title={t("filters.time")}>
         <SelectFilter value={String(year)} onChange={(v) => setYear(+v)} options={Array.from({ length: 6 }, (_, i) => String(now.getFullYear() - i)).map((y) => [y, y] as const)} />
         <RadioOption checked={mode !== "range"} onSelect={() => setMode("month")}>
-          <select className={FILTER_FIELD} aria-label="Theo tháng / quý" value={mode === "quarter" ? "quarter" : "month"}
-            onChange={(e) => setMode(e.target.value as "month" | "quarter")}><option value="month">Theo Tháng</option><option value="quarter">Theo Quý</option></select>
+          <select className={FILTER_FIELD} aria-label={t("finance.monthOrQuarter")} value={mode === "quarter" ? "quarter" : "month"}
+            onChange={(e) => setMode(e.target.value as "month" | "quarter")}><option value="month">{t("finance.byMonth")}</option><option value="quarter">{t("finance.byQuarter")}</option></select>
         </RadioOption>
         <RadioOption checked={mode === "range"} onSelect={() => setMode("range")}>
           <DateRangePicker className={box} value={{ from, to }} onChange={(r) => { setFrom(r.from); setTo(r.to); setMode("range"); }} />
         </RadioOption>
       </FilterSection>
     </>}>
-      <ReportViewer title="Báo cáo kết quả hoạt động kinh doanh" meta={[rangeText(range), branchLabel]} landscape
+      <ReportViewer title={t("finance.paperTitle")} meta={[rangeText(t, range), branchLabel]} landscape note={showVi ? t("finance.viNote") : undefined}
         loading={queries.some((q) => q.isFetching)} onRefresh={() => queries.forEach((q) => q.refetch())} onExport={exportCsv}>
-        {queries.some((q) => q.isError) ? <p className="rp-empty">Không tải được báo cáo</p> : <ReportTable columns={columns} lines={lines} />}
+        {queries.some((q) => q.isError) ? <p className="rp-empty">{t("common.loadError")}</p> : <ReportTable columns={columns} lines={lines} />}
       </ReportViewer>
     </ReportLayout>
   );

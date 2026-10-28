@@ -1,4 +1,5 @@
 import { cartTotals } from "./use-sale-tabs";
+import type { SaleT } from "@/messages/sale";
 import { splitPayments } from "./sale-payment-split";
 import type { DeliveryDraft, DraftInvoice } from "./sale-types";
 
@@ -35,10 +36,10 @@ const deliveryBody = (v: DeliveryDraft) => ({
 });
 
 /** Lỗi thiếu thông tin giao hàng (null = đủ) — kiểm tra trước khi thanh toán tab Bán giao hàng. */
-export function deliveryProblem(d: DraftInvoice): string | null {
+export function deliveryProblem(t: SaleT, d: DraftInvoice): string | null {
   if (d.mode !== "DELIVERY" || d.kind === "ORDER") return null;
   const v = d.delivery;
-  if (!v?.partnerId) return "Chưa chọn đối tác giao hàng";
-  if (!v.receiverName.trim() || !v.receiverPhone.trim() || !v.receiverAddress.trim()) return "Nhập đủ tên, SĐT, địa chỉ người nhận";
+  if (!v?.partnerId) return t("delivery.errors.noPartner");
+  if (!v.receiverName.trim() || !v.receiverPhone.trim() || !v.receiverAddress.trim()) return t("delivery.errors.receiverRequired");
   return null;
 }

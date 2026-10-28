@@ -5,6 +5,7 @@ import { loadVnAdmin } from "@/lib/vn-admin-data";
 import { foldVietnamese } from "@/lib/vn-admin-search";
 import { toGroupDiscount } from "@/features/sales/customer-group-discount";
 import type { Customer, CustomerList, GroupDiscountType } from "@/features/sales/sales-types";
+import type { SaleT } from "@/messages/sale";
 import { IMPORT_COLUMNS, parseImportSheets, type ImportCustomer, type RawSheet } from "./sale-import-parse";
 import { mapImportRows, matchAdminUnits, type MappedLine } from "./sale-import-map";
 import type { CatalogProduct, SaleCustomer } from "./sale-types";
@@ -32,17 +33,17 @@ const toSale = (c: { id: string; code: string; name: string; phone: string | nul
     groupDiscount: toGroupDiscount(c.groupDiscountType as GroupDiscountType | null | undefined, c.groupDiscountValue) });
 
 /** Khách theo Mã khách hàng → Số điện thoại → tạo mới (Khu vực / Phường xã theo ĐVHC 2025). Cần mạng. */
-async function resolveCustomer(c: ImportCustomer, branchId: string): Promise<SaleCustomer> {
+async function resolveCustomer(c: ImportCustomer, branchId: string, t: SaleT): Promise<SaleCustomer> {
   const find = async (q: string, match: (x: CustomerList["items"][number]) => boolean) =>
     (await api<CustomerList>(`/customers?q=${encodeURIComponent(q)}&size=20`)).items.find(match);
   const byCode = c.code ? await find(c.code, (x) => x.code.toLowerCase() === c.code.toLowerCase()) : undefined;
   if (byCode) return toSale(byCode);
-  if (c.code && !c.name) throw new Error(`không tìm thấy khách hàng mã ${c.code}`);
+  if (c.code && !c.name) throw new Error(t("import.errors.customerCodeNotFound", { code: c.code }));
   const digits = c.phone.replace(/\D/g, "");
   const byPhone = digits ? await find(digits, (x) => (x.phone ?? "").replace(/\D/g, "") === digits) : undefined;
   if (byPhone) return toSale(byPhone);
-  if (!c.name) throw new Error(`không tìm thấy khách hàng SĐT ${c.phone}, thiếu Tên khách hàng để tạo mới`);
-  const admin = matchAdminUnits(await loadVnAdmin(), c.area, c.ward, foldVietnamese);
+  if (!c.name) throw new Error(t("import.errors.customerPhoneNotFound", { phone: c.phone }));
+  const admin = matchAdminUnits(await loadVnAdmin(), c.area, c.ward, foldVietnamese, t);
   if (admin && "error" in admin) throw new Error(admin.error);
   const created = await api<Customer>("/customers", { method: "POST", body: {
     code: c.code || null, name: c.name, phone: c.phone || null, customerType: c.type, address: c.address || null, branchId,
@@ -57,21 +58,21 @@ export type ImportResult = { imported: ImportedSheet[]; errors: { sheet: string;
  * Đọc + kiểm tra file: trang tính có lỗi (tiêu đề, dòng, hàng không có trong danh mục, khách) không được nhập,
  * các trang tính hợp lệ → mỗi trang tính 1 tab hóa đơn. Lô / Hạn sử dụng: hệ thống tự xuất lô theo hạn dùng gần nhất.
  */
-export async function importInvoiceWorkbook(file: File, catalog: CatalogProduct[], branchId: string): Promise<ImportResult> {
-  const parsed = parseImportSheets(await readSheets(file));
+export async function importInvoiceWorkbook(file: File, catalog: CatalogProduct[], branchId: string, t: SaleT): Promise<ImportResult> {
+  const parsed = parseImportSheets(await readSheets(file), t);
   if (parsed.errors.length) return { imported: [], errors: [{ sheet: file.name, messages: parsed.errors }] };
   const out: ImportResult = { imported: [], errors: [] };
   for (const s of parsed.sheets) {
-    const mapped = mapImportRows(s.rows, catalog, foldVietnamese);
+    const mapped = mapImportRows(s.rows, catalog, foldVietnamese, t);
     const messages = [...s.errors, ...mapped.errors];
-    if (!messages.length && !mapped.lines.length) messages.push("Không có dòng hàng nào");
+    if (!messages.length && !mapped.lines.length) messages.push(t("import.errors.noLines"));
     let customer: SaleCustomer | null = null;
     if (!messages.length && s.customer) {
-      try { customer = await resolveCustomer(s.customer, branchId); } catch (e) { messages.push(`Khách hàng: ${(e as Error).message}`); }
+      try { customer = await resolveCustomer(s.customer, branchId, t); } catch (e) { messages.push(t("import.errors.customer", { message: (e as Error).message })); }
     }
     if (messages.length) out.errors.push({ sheet: s.name, messages });
     else out.imported.push({ name: s.name, lines: mapped.lines, customer });
   }
-  if (!parsed.sheets.length) out.errors.push({ sheet: file.name, messages: ["File không có dữ liệu"] });
+  if (!parsed.sheets.length) out.errors.push({ sheet: file.name, messages: [t("import.errors.emptyFile")] });
   return out;
 }

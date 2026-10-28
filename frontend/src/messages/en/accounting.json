@@ -44,7 +44,6 @@
     "group1Note": "Group 1 (annual revenue up to 1 billion): no VAT or PIT payable — only the revenue book (S1a-HKD) is required.",
     "period": "Period",
     "yearTotal": "Total {year}",
-    "total": "Total",
     "footnote": "Revenue = completed invoices − customer returns (after discounts). Year-to-date revenue: {total}. Figures are estimates under the current household-business tax rules from 2026; have your accountant reconcile them before filing on the tax portal.",
     "cols": {
       "revenue": "Revenue",

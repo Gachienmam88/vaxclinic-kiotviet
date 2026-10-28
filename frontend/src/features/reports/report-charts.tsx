@@ -4,6 +4,9 @@ import { useState } from "react";
 import { niceStep } from "@/features/dashboard/dashboard-column-chart";
 import { shortMoney } from "@/features/dashboard/dashboard-date-utils";
 import { formatMoney, formatNumber } from "@/lib/format";
+import { useT } from "@/lib/i18n";
+import { dashboardNs } from "@/messages/dashboard";
+import { reportsNs } from "@/messages/reports";
 
 /** Biểu đồ báo cáo thuần CSS/SVG (không thư viện) theo kiểu KiotViet: khung trắng, tiêu đề giữa, cột / thanh xanh #0070f4. */
 
@@ -24,10 +27,15 @@ const axis = (items: ChartItem[], ticks = 10) => {
   const top = Math.max(step, Math.ceil(max / step) * step);
   return { top, ticks: Array.from({ length: Math.round(top / step) + 1 }, (_, i) => i * step) };
 };
-const fmt = (v: number, money: boolean) => (money ? shortMoney(v) : formatNumber(v));
+/** Nhãn trục: tiền rút gọn theo ngôn ngữ (dashboard "short.*": 1,2 tr / 1.2M...), số lượng giữ định dạng số. */
+const useAxisFmt = () => {
+  const td = useT(dashboardNs);
+  return (v: number, money: boolean) => (money ? shortMoney(v, td) : formatNumber(v));
+};
 
 /** Cột dọc + bong bóng giá trị khi rê chuột (Doanh thu thuần theo ngày / tháng). */
 export function ColumnChart({ items, height = 290, money = true }: { items: ChartItem[]; height?: number; money?: boolean }) {
+  const fmt = useAxisFmt();
   const [hover, setHover] = useState<number | null>(null);
   const { top, ticks } = axis(items);
   return (
@@ -56,6 +64,7 @@ export function ColumnChart({ items, height = 290, money = true }: { items: Char
 
 /** Thanh ngang (Top 10 ...): nhãn bên trái, trục giá trị phía dưới. */
 export function BarChart({ items, money = true }: { items: ChartItem[]; money?: boolean }) {
+  const fmt = useAxisFmt();
   const { top, ticks } = axis(items, 10);
   if (!items.length) return <EmptyChart />;
   return (
@@ -80,13 +89,15 @@ export function BarChart({ items, money = true }: { items: ChartItem[]; money?: 
 }
 
 export function EmptyChart() {
-  return <div className="flex h-[300px] items-center justify-center border-b border-l border-[#ccc] text-xs text-muted-foreground">Không có dữ liệu</div>;
+  const t = useT(reportsNs);
+  return <div className="flex h-[300px] items-center justify-center border-b border-l border-[#ccc] text-xs text-muted-foreground">{t("common.chartNoData")}</div>;
 }
 
 const PIE_COLORS = ["#2f8cf2", "#f5a623", "#7ed321", "#d0021b", "#9013fe", "#50e3c2", "#8b572a", "#4a4a4a"];
 
 /** Biểu đồ tròn + chú thích "nhãn - %" (Doanh thu kênh bán hàng). */
 export function PieChart({ items }: { items: ChartItem[] }) {
+  const t = useT(reportsNs);
   const data = items.filter((i) => i.value > 0);
   const total = data.reduce((s, i) => s + i.value, 0);
   if (!total) return <EmptyChart />;
@@ -101,7 +112,7 @@ export function PieChart({ items }: { items: ChartItem[] }) {
   });
   return (
     <div className="flex flex-col items-center gap-2 text-[11px]">
-      <svg viewBox="0 0 260 260" className="h-[260px] w-[260px]" role="img" aria-label="Biểu đồ tròn">
+      <svg viewBox="0 0 260 260" className="h-[260px] w-[260px]" role="img" aria-label={t("common.pieAria")}>
         {slices.map((s) => <path key={s.label} d={s.path} fill={s.color} stroke="#fff" strokeWidth={1}><title>{`${s.label}: ${formatMoney(s.value)}`}</title></path>)}
       </svg>
       {slices.map((s) => (

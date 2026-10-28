@@ -7,6 +7,9 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { kvDialog, kvDialogBody, kvDialogFooter, kvDialogHeader, kvDialogTitle, kvFooterBtn, kvInput, kvLabel } from "@/features/sales/customer-ui-primitives";
 import { RefundMethodFields, type RefundChoice } from "@/features/sales/refund-method-fields";
 import { formatMoney } from "@/lib/format";
+import { useT } from "@/lib/i18n";
+import { commonNs } from "@/messages/common";
+import { deliveryNs } from "@/messages/delivery";
 import type { ReturnedOptions } from "./use-shipment-status";
 
 /**
@@ -18,6 +21,8 @@ export function ShipmentReturnedDialog({ count, single, pending, onSubmit, onClo
   count: number; pending: boolean; onClose: () => void; onSubmit: (o: ReturnedOptions) => void;
   single?: { code: string; shippingFee: number; paid: number; walkIn: boolean };
 }) {
+  const t = useT(deliveryNs);
+  const tc = useT(commonNs);
   const [refund, setRefund] = useState<RefundChoice>({ method: "CASH", bankAccountId: "" });
   const [fee, setFee] = useState(Number(single?.shippingFee ?? 0));
   const [returnFee, setReturnFee] = useState(0);
@@ -28,27 +33,27 @@ export function ShipmentReturnedDialog({ count, single, pending, onSubmit, onClo
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className={`${kvDialog} sm:max-w-[480px]`}>
         <DialogHeader className={kvDialogHeader}>
-          <DialogTitle className={kvDialogTitle}>Đã chuyển hoàn {single ? single.code : `${count} vận đơn`}</DialogTitle>
+          <DialogTitle className={kvDialogTitle}>{single ? t("returned.titleOne", { code: single.code }) : t("returned.titleMany", { count })}</DialogTitle>
         </DialogHeader>
         <div className={kvDialogBody}>
-          <p className="text-[13px] text-muted-foreground">Cửa hàng đã nhận lại hàng: hệ thống tạo phiếu trả hàng, hàng nhập lại kho.</p>
+          <p className="text-[13px] text-muted-foreground">{t("returned.intro")}</p>
           <div className="space-y-1">
-            <span className={kvLabel}>Tiền khách đã trả trước{single ? `: ${formatMoney(single.paid)}` : " (áp dụng cho tất cả vận đơn)"}</span>
+            <span className={kvLabel}>{single ? t("returned.prepaidOne", { amount: formatMoney(single.paid) }) : t("returned.prepaidMany")}</span>
             <RefundMethodFields value={refund} onChange={setRefund} allowCredit={!single?.walkIn} />
-            {!single && <p className="text-xs text-muted-foreground">Khách lẻ không giữ làm công nợ được — vận đơn đó sẽ báo lỗi riêng.</p>}
+            {!single && <p className="text-xs text-muted-foreground">{t("returned.walkInNote")}</p>}
           </div>
           {single ? (
             <div className="grid grid-cols-2 gap-3">
-              <label className="block space-y-1"><span className={kvLabel}>Phí giao hàng cửa hàng chịu</span>
-                <NumberInput aria-label="Phí giao hàng" className={kvInput} value={fee} onValueChange={setFee} /></label>
-              <label className="block space-y-1"><span className={kvLabel}>Phí chuyển hoàn</span>
-                <NumberInput aria-label="Phí chuyển hoàn" className={kvInput} value={returnFee} onValueChange={setReturnFee} /></label>
+              <label className="block space-y-1"><span className={kvLabel}>{t("returned.shopFee")}</span>
+                <NumberInput aria-label={t("fields.fee")} className={kvInput} value={fee} onValueChange={setFee} /></label>
+              <label className="block space-y-1"><span className={kvLabel}>{t("returned.returnFee")}</span>
+                <NumberInput aria-label={t("returned.returnFee")} className={kvInput} value={returnFee} onValueChange={setReturnFee} /></label>
             </div>
-          ) : <p className="text-xs text-muted-foreground">Phí cửa hàng chịu = phí giao hàng của từng vận đơn (cập nhật từng vận đơn để sửa phí).</p>}
+          ) : <p className="text-xs text-muted-foreground">{t("returned.bulkFeeNote")}</p>}
         </div>
         <DialogFooter className={kvDialogFooter}>
-          <Button variant="outline" className={kvFooterBtn} onClick={onClose}>Bỏ qua</Button>
-          <Button className={kvFooterBtn} disabled={pending} onClick={submit}>Xác nhận</Button>
+          <Button variant="outline" className={kvFooterBtn} onClick={onClose}>{tc("actions.skip")}</Button>
+          <Button className={kvFooterBtn} disabled={pending} onClick={submit}>{tc("actions.confirm")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

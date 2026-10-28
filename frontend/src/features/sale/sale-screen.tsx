@@ -3,7 +3,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useT } from "@/lib/i18n";
 import { useCurrentUser } from "@/lib/use-current-user";
+import { saleNs } from "@/messages/sale";
 import { loadVnAdmin } from "@/lib/vn-admin-data";
 import { useUserLookup } from "@/features/purchases/purchase-queries";
 import { SALES_KEYS } from "@/features/sales/sales-queries";
@@ -45,6 +47,7 @@ export function SaleScreen() {
 
 function SaleScreenBody() {
   const qc = useQueryClient();
+  const t = useT(saleNs);
   const { settings, set } = useSaleSettings();
   const { data: me } = useCurrentUser();
   const { data: users = [] } = useUserLookup();
@@ -56,9 +59,9 @@ function SaleScreenBody() {
   const [dialog, setDialog] = useState<SaleDialog>(null);
   const [online, setOnline] = useState(true);
   const onSynced = useCallback((code: string) => {
-    toast.success(`Đã đồng bộ phiếu offline → ${code}`);
+    toast.success(t("screen.syncedOffline", { code }));
     SALES_KEYS.forEach((k) => qc.invalidateQueries({ queryKey: k }));
-  }, [qc]);
+  }, [qc, t]);
   const queue = useOfflineQueue(onSynced);
   const d = tabs.active;
   const submitOrder = useSaleOrderSubmit(tabs, branchId, queue.enqueue);
@@ -82,26 +85,26 @@ function SaleScreenBody() {
   const refreshAfterSave = () => { void catalog.refresh(); SALES_KEYS.forEach((k) => qc.invalidateQueries({ queryKey: k })); };
 
   const addProduct = (p: CatalogProduct, unitId: string) => {
-    const key = addProductToTab(tabs, p, unitId, priceBook.resolve, settings.mergeSameItems);
+    const key = addProductToTab(t, tabs, p, unitId, priceBook.resolve, settings.mergeSameItems);
     if (key) { lineKeys.select(key); if (settings.qtyInputMode) focusQty(key); }
   };
 
   async function pay() {
     if (!d || paying) return;
     if (d.kind === "RETURN") {
-      const problem = returnProblem(d, (id) => !!catalog.products.find((p) => p.id === id)?.lotManaged);
+      const problem = returnProblem(t, d, (id) => !!catalog.products.find((p) => p.id === id)?.lotManaged);
       if (problem) return toast.error(problem);
       setPaying(true);
-      if (await submitReturnDoc(d, branchId, queue.enqueue)) { tabs.close(d.id); refreshAfterSave(); }
+      if (await submitReturnDoc(t, d, branchId, queue.enqueue)) { tabs.close(d.id); refreshAfterSave(); }
       setPaying(false);
       return;
     }
     if (!d.lines.length) return;
-    const t = cartTotals(d);
-    if (d.kind !== "ORDER" && d.mode !== "DELIVERY" && !d.customer && t.paid < t.total) return toast.error("Khách lẻ phải thanh toán đủ — chọn khách hàng để ghi nợ");
-    const missing = deliveryProblem(d);
+    const totals = cartTotals(d);
+    if (d.kind !== "ORDER" && d.mode !== "DELIVERY" && !d.customer && totals.paid < totals.total) return toast.error(t("screen.walkInMustPayFull"));
+    const missing = deliveryProblem(t, d);
     if (missing) return toast.error(missing);
-    if (d.lines.some((l) => l.quantity <= 0)) return toast.error("Số lượng phải lớn hơn 0");
+    if (d.lines.some((l) => l.quantity <= 0)) return toast.error(t("screen.qtyPositive"));
     const sellerName = users.find((u) => u.id === d.sellerId)?.fullName;
     setPaying(true);
     if (d.kind === "ORDER") await submitOrder(d, sellerName); // Đặt hàng: không trừ kho
@@ -120,17 +123,17 @@ function SaleScreenBody() {
 
   useSaleShortcuts({
     NEW_INVOICE: () => tabs.add(),
-    TOGGLE_AUTO_PRINT: () => { set({ autoPrint: !settings.autoPrint }); toast.info(`Tự động in hóa đơn: ${settings.autoPrint ? "tắt" : "bật"}`); },
+    TOGGLE_AUTO_PRINT: () => { set({ autoPrint: !settings.autoPrint }); toast.info(t(settings.autoPrint ? "screen.autoPrintOff" : "screen.autoPrintOn")); },
     FOCUS_PRODUCT: () => document.getElementById("sale-product-search")?.focus(),
     FOCUS_CUSTOMER: focusCustomerSearch,
-    TOGGLE_QTY_MODE: () => { set({ qtyInputMode: !settings.qtyInputMode }); toast.info(settings.qtyInputMode ? "Thêm hàng: giữ con trỏ ở ô tìm hàng" : "Thêm hàng: chuyển con trỏ vào ô số lượng"); },
+    TOGGLE_QTY_MODE: () => { set({ qtyInputMode: !settings.qtyInputMode }); toast.info(t(settings.qtyInputMode ? "screen.qtyModeOff" : "screen.qtyModeOn")); },
     FOCUS_PAID: () => (document.getElementById("sale-paid") as HTMLInputElement | null)?.focus(),
     PAY: () => void pay(),
     FULLSCREEN: toggleFullscreen,
     ...lineKeys.handlers,
   });
 
-  if (!me || !d) return <div className="p-6 text-sm text-muted-foreground">Đang tải màn bán hàng...</div>;
+  if (!me || !d) return <div className="p-6 text-sm text-muted-foreground">{t("screen.loading")}</div>;
   const cartView = !d.returnOf;
 
   return (
@@ -168,8 +171,8 @@ function SaleScreenBody() {
         onHelp={() => setDialog("SHORTCUTS")} />
       <SaleScreenDialogs dialog={dialog} close={() => setDialog(null)} branchId={branchId} userName={me.user.fullName}
         online={online && !catalog.offline} catalog={catalog.products} queue={queue} onImported={onImported}
-        onPickOrder={(id) => openPicked(draftFromOrder(id, "invoice", catalog.products, me.user.id), tabs.open, "đơn đặt hàng")}
-        onPickReturn={(id) => openPicked(draftFromInvoice(id, "return", catalog.products, me.user.id), tabs.open, "hóa đơn")}
+        onPickOrder={(id) => openPicked(draftFromOrder(id, "invoice", catalog.products, me.user.id, t), tabs.open, t("screen.what.order"), t)}
+        onPickReturn={(id) => openPicked(draftFromInvoice(id, "return", catalog.products, me.user.id, t), tabs.open, t("screen.what.invoice"), t)}
         onQuickReturn={() => tabs.add("QUICK_RETURN")} />
     </div>
   );

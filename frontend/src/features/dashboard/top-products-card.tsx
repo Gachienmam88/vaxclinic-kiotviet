@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import type { DailyRevenue } from "@/features/accounting/tax-calc";
+import { useT } from "@/lib/i18n";
 import { formatMoney } from "@/lib/format";
+import { dashboardNs } from "@/messages/dashboard";
 import { niceStep } from "./dashboard-column-chart";
 import { daysBetween, periodRange, shortMoney, type DashPeriod } from "./dashboard-date-utils";
 import { DashboardPeriodSelect } from "./dashboard-period-select";
@@ -10,6 +12,7 @@ import { useProductNames } from "./dashboard-queries";
 
 /** "Top 10 hàng bán chạy" theo doanh thu thuần — gom /accounting/revenue/daily theo mặt hàng, thanh ngang thuần CSS. */
 export function TopProductsCard({ rows, today }: { rows: DailyRevenue[]; today: Date }) {
+  const t = useT(dashboardNs);
   const [period, setPeriod] = useState<DashPeriod>("thisMonth");
   const { from, to } = periodRange(period, today);
   const days = new Set(daysBetween(from, to));
@@ -26,11 +29,11 @@ export function TopProductsCard({ rows, today }: { rows: DailyRevenue[]; today: 
   return (
     <section className="rounded-lg bg-background px-5 py-4" aria-labelledby="top-products-title">
       <div className="mb-3 flex items-center gap-2">
-        <h2 id="top-products-title" className="flex-1 text-[13px] font-semibold">Top 10 hàng bán chạy</h2>
-        <span className="text-xs text-muted-foreground">Theo doanh thu thuần</span>
-        <DashboardPeriodSelect label="Kỳ hàng bán chạy" value={period} onChange={setPeriod} />
+        <h2 id="top-products-title" className="flex-1 text-[13px] font-semibold">{t("top.title")}</h2>
+        <span className="text-xs text-muted-foreground">{t("top.byNet")}</span>
+        <DashboardPeriodSelect label={t("top.periodLabel")} value={period} onChange={setPeriod} />
       </div>
-      {!top.length ? <p className="py-16 text-center text-[13px] text-muted-foreground">Chưa có dữ liệu bán hàng</p> : (
+      {!top.length ? <p className="py-16 text-center text-[13px] text-muted-foreground">{t("top.empty")}</p> : (
         <>
           <ol className="space-y-2.5">
             {top.map(([id, v]) => (
@@ -39,13 +42,13 @@ export function TopProductsCard({ rows, today }: { rows: DailyRevenue[]; today: 
                 <div className="relative mt-0.5 mr-12 h-[18px]">
                   <div className="h-full bg-primary" style={{ width: `${(v / axis) * 100}%` }} />
                   <span className="absolute top-0.5 whitespace-nowrap text-muted-foreground" style={{ left: `calc(${(v / axis) * 100}% + 6px)` }}
-                    title={formatMoney(v)}>{shortMoney(v)}</span>
+                    title={formatMoney(v)}>{shortMoney(v, t)}</span>
                 </div>
               </li>
             ))}
           </ol>
           <div className="mt-2 mr-12 flex justify-between border-t border-[#e8eaee] pt-1 text-[11px] text-muted-foreground" aria-hidden>
-            {ticks.map((t) => <span key={t}>{shortMoney(t)}</span>)}
+            {ticks.map((v) => <span key={v}>{shortMoney(v, t)}</span>)}
           </div>
         </>
       )}

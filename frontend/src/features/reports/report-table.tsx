@@ -2,6 +2,8 @@
 
 import { Fragment } from "react";
 import { formatMoney, formatNumber } from "@/lib/format";
+import { useT } from "@/lib/i18n";
+import { reportsNs } from "@/messages/reports";
 
 /** Cột bảng báo cáo. money/qty: căn phải + định dạng số. */
 export type ReportColumn<T> = {
@@ -23,9 +25,10 @@ export const cellText = <T,>(c: ReportColumn<T>, r: T) => {
   return String(v);
 };
 
-export function ReportTable<T>({ columns, lines, expanded, onToggle, empty = "Báo cáo không có dữ liệu" }: {
+export function ReportTable<T>({ columns, lines, expanded, onToggle, empty }: {
   columns: ReportColumn<T>[]; lines: ReportLine<T>[]; expanded?: Set<string>; onToggle?: (id: string) => void; empty?: string;
 }) {
+  const t = useT(reportsNs);
   const renderLine = (l: ReportLine<T>): React.ReactNode => {
     const open = expanded?.has(l.id) ?? false;
     const cls = l.kind === "sum" ? "rp-sum" : l.kind === "group" ? "rp-group" : l.kind === "sub" ? "rp-sub" : "";
@@ -35,7 +38,7 @@ export function ReportTable<T>({ columns, lines, expanded, onToggle, empty = "B�
           {columns.map((c, i) => (
             <td key={c.key} className={[c.type && c.type !== "text" ? "r" : "", i === 0 && l.level ? `rp-l${l.level}` : ""].join(" ").trim() || undefined}>
               {i === 0 && l.children?.length ? (
-                <span className="rp-toggle" role="button" tabIndex={0} aria-label={open ? "Thu gọn" : "Mở rộng"}
+                <span className="rp-toggle" role="button" tabIndex={0} aria-label={open ? t("viewer.collapse") : t("viewer.expand")}
                   onClick={() => onToggle?.(l.id)} onKeyDown={(e) => e.key === "Enter" && onToggle?.(l.id)}>{open ? "−" : "+"}</span>) : null}
               {i === 0 && l.label !== undefined ? l.label : c.render ? c.render(l.data) : cellText(c, l.data)}
             </td>))}
@@ -48,7 +51,7 @@ export function ReportTable<T>({ columns, lines, expanded, onToggle, empty = "B�
     <table className="rp-table">
       <thead><tr>{columns.map((c) => <th key={c.key} className={c.type && c.type !== "text" ? "r" : undefined} style={c.width ? { width: c.width } : undefined}>{c.label}</th>)}</tr></thead>
       <tbody>
-        {lines.length ? lines.map(renderLine) : <tr><td colSpan={columns.length} className="rp-empty">{empty}</td></tr>}
+        {lines.length ? lines.map(renderLine) : <tr><td colSpan={columns.length} className="rp-empty">{empty ?? t("common.noData")}</td></tr>}
       </tbody>
     </table>
   );

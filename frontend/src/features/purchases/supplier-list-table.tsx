@@ -8,8 +8,11 @@ import { formatMoney } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { LIST_HEADER_ROW } from "./purchase-list-chrome";
 import { SupplierDetailPanel } from "./supplier-detail-panel";
-import { SUPPLIER_COLUMNS } from "./supplier-list-columns";
+import { columnLabel, SUPPLIER_COLUMNS } from "./supplier-list-columns";
 import type { SupplierPage } from "./supplier-types";
+import { useT } from "@/lib/i18n";
+import { commonNs } from "@/messages/common";
+import { purchasesNs } from "@/messages/purchases";
 
 type Props = {
   data: SupplierPage | undefined; loading: boolean; columns: string[]; expanded: string | null; onExpand: (id: string | null) => void;
@@ -23,6 +26,8 @@ type Props = {
  * Dòng đang mở + panel chi tiết có viền xanh 1px bao quanh như KiotViet.
  */
 export function SupplierListTable({ data, loading, columns, expanded, onExpand, selected, onSelect, docCode }: Props) {
+  const t = useT(purchasesNs);
+  const tc = useT(commonNs);
   const cols = SUPPLIER_COLUMNS.filter((c) => columns.includes(c.key));
   const span = cols.length + 1;
   const pageIds = data?.items.map((s) => s.id) ?? [];
@@ -32,18 +37,18 @@ export function SupplierListTable({ data, loading, columns, expanded, onExpand, 
     <div className="overflow-hidden rounded-lg bg-white">
       <Table>
         <TableHeader><TableRow className={LIST_HEADER_ROW}>
-          <TableHead className="w-10 pl-3"><Checkbox aria-label="Chọn tất cả" checked={allChecked}
+          <TableHead className="w-10 pl-3"><Checkbox aria-label={t("suppliers.table.selectAll")} checked={allChecked}
             onCheckedChange={(on) => onSelect(on ? [...new Set([...selected, ...pageIds])] : selected.filter((id) => !pageIds.includes(id)))} /></TableHead>
-          {cols.map((c, i) => <TableHead key={c.key} className={cn(c.align === "right" && "text-right", i === cols.length - 1 && "pr-4")}>{c.label}</TableHead>)}
+          {cols.map((c, i) => <TableHead key={c.key} className={cn(c.align === "right" && "text-right", i === cols.length - 1 && "pr-4")}>{columnLabel(c.label, t, tc)}</TableHead>)}
         </TableRow></TableHeader>
         <TableBody>
           <TableRow className="font-bold hover:bg-transparent">
             <TableCell />
             {cols.map((c, i) => <TableCell key={c.key} className={cn("text-right", i === cols.length - 1 && "pr-4")}>{c.sum ? formatMoney(sums[c.sum]) : ""}</TableCell>)}
           </TableRow>
-          {loading && !data && <TableRow><TableCell colSpan={span} className="py-8 text-center text-muted-foreground">Đang tải...</TableCell></TableRow>}
+          {loading && !data && <TableRow><TableCell colSpan={span} className="py-8 text-center text-muted-foreground">{tc("status.loading")}</TableCell></TableRow>}
           {data && !data.items.length && (
-            <TableRow className="hover:bg-transparent"><TableCell colSpan={span} className="whitespace-normal"><ListEmptyState what="nhà cung cấp" /></TableCell></TableRow>
+            <TableRow className="hover:bg-transparent"><TableCell colSpan={span} className="whitespace-normal"><ListEmptyState what={t("suppliers.unit")} /></TableCell></TableRow>
           )}
           {data?.items.map((s) => {
             const open = expanded === s.id;
@@ -53,11 +58,11 @@ export function SupplierListTable({ data, loading, columns, expanded, onExpand, 
                 <TableRow aria-expanded={open} onClick={() => onExpand(open ? null : s.id)}
                   className={cn("cursor-pointer", open && "bg-primary-tint font-semibold hover:bg-primary-tint", !s.active && "text-muted-foreground")}>
                   <TableCell className={cn("pl-3", edge)} onClick={(e) => e.stopPropagation()}>
-                    <Checkbox aria-label={`Chọn ${s.code}`} checked={selected.includes(s.id)}
+                    <Checkbox aria-label={t("suppliers.table.selectRow", { code: s.code })} checked={selected.includes(s.id)}
                       onCheckedChange={(on) => onSelect(on ? [...selected, s.id] : selected.filter((id) => id !== s.id))} /></TableCell>
                   {cols.map((c, i) => (
                     <TableCell key={c.key} className={cn(edge, c.align === "right" && "text-right", c.key === "name" && "max-w-[320px] whitespace-normal",
-                      i === cols.length - 1 && "pr-4")}>{c.value(s)}</TableCell>
+                      i === cols.length - 1 && "pr-4")}>{c.value(s, tc)}</TableCell>
                   ))}
                 </TableRow>
                 {open && (

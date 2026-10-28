@@ -11,6 +11,9 @@ import { useCurrentUser } from "@/lib/use-current-user";
 import { newKey, type ProductForm } from "./product-form-state";
 import { useTaxRates } from "./product-queries";
 import { DatePicker } from "@/components/ui/date-picker";
+import { useT } from "@/lib/i18n";
+import { commonNs } from "@/messages/common";
+import { productsNs } from "@/messages/products";
 
 export type SectionProps = { form: ProductForm; set: (patch: Partial<ProductForm>) => void; isCreate: boolean };
 
@@ -42,23 +45,24 @@ export function NativeSelect(props: React.ComponentProps<"select">) {
 
 export function PriceSection({ form, set }: SectionProps) {
   const { data: taxRates = [] } = useTaxRates();
+  const t = useT(productsNs);
   const base = form.units[0];
   const setBasePrice = (price: number) => set({ units: form.units.map((u, i) => (i === 0 ? { ...u, price } : u)) });
   return (
-    <FormSection title="Giá vốn, giá bán">
+    <FormSection title={t("form.priceSection")}>
       <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
-        <div className="grid gap-1.5"><Label>Giá vốn</Label>
+        <div className="grid gap-1.5"><Label>{t("fields.cost")}</Label>
           <NumberInput value={form.cost} onValueChange={(cost) => set({ cost })} /></div>
-        <div className="grid gap-1.5"><Label>Giá bán</Label>
+        <div className="grid gap-1.5"><Label>{t("fields.price")}</Label>
           <NumberInput value={base.price} onValueChange={setBasePrice} /></div>
-        <div className="grid gap-1.5"><Label>Tỷ lệ tính thuế</Label>
+        <div className="grid gap-1.5"><Label>{t("fields.taxRate")}</Label>
           <NativeSelect value={form.taxRateId} onChange={(e) => set({ taxRateId: e.target.value })}>
-            <option value="">-- Chọn --</option>
-            {taxRates.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+            <option value="">{t("form.pickOption")}</option>
+            {taxRates.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
           </NativeSelect></div>
-        <div className="grid gap-1.5"><Label>Áp dụng giảm thuế</Label>
+        <div className="grid gap-1.5"><Label>{t("fields.taxReduction")}</Label>
           <NativeSelect value={form.taxReduction ? "1" : "0"} onChange={(e) => set({ taxReduction: e.target.value === "1" })}>
-            <option value="0">Không áp dụng</option><option value="1">Có áp dụng</option>
+            <option value="0">{t("fields.taxReductionNo")}</option><option value="1">{t("fields.taxReductionYes")}</option>
           </NativeSelect></div>
       </div>
     </FormSection>
@@ -68,40 +72,42 @@ export function PriceSection({ form, set }: SectionProps) {
 export function StockSection({ form, set, isCreate }: SectionProps) {
   const { data: me } = useCurrentUser();
   const { data: branches = [] } = useBranches();
+  const t = useT(productsNs);
+  const tc = useT(commonNs);
   const myBranches = branches.filter((b) => me?.user.branches.some((x) => x.id === b.id));
   const setLot = (key: string, patch: object) =>
     set({ openingLots: form.openingLots.map((l) => (l.key === key ? { ...l, ...patch } : l)) });
   return (
-    <FormSection title="Tồn kho" hint="Quản lý số lượng tồn kho và định mức tồn. Khi tồn chạm định mức, hệ thống sẽ cảnh báo.">
+    <FormSection title={t("fields.stock")} hint={t("form.stockHint")}>
       <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
-        <div className="grid gap-1.5"><Label>Quản lý theo lô, hạn sử dụng</Label>
+        <div className="grid gap-1.5"><Label>{t("fields.lotManaged")}</Label>
           <NativeSelect value={form.lotManaged ? "1" : "0"} onChange={(e) => set({ lotManaged: e.target.value === "1" })}>
-            <option value="0">Không</option><option value="1">Có</option>
+            <option value="0">{tc("status.no")}</option><option value="1">{tc("status.yes")}</option>
           </NativeSelect></div>
         {isCreate && !form.lotManaged && (
-          <div className="grid gap-1.5"><Label>Tồn kho</Label>
+          <div className="grid gap-1.5"><Label>{t("fields.stock")}</Label>
             <NumberInput value={form.openingQty} onValueChange={(openingQty) => set({ openingQty })} /></div>
         )}
-        <div className="grid gap-1.5"><Label>Định mức tồn thấp nhất</Label>
+        <div className="grid gap-1.5"><Label>{t("fields.minStock")}</Label>
           <NumberInput value={form.minStock} onValueChange={(minStock) => set({ minStock })} /></div>
-        <div className="grid gap-1.5"><Label>Định mức tồn cao nhất</Label>
+        <div className="grid gap-1.5"><Label>{t("fields.maxStock")}</Label>
           <NumberInput value={form.maxStock} onValueChange={(maxStock) => set({ maxStock })} /></div>
       </div>
       {isCreate && myBranches.length > 1 && (
-        <div className="mt-3 grid max-w-xs gap-1.5"><Label>Tồn đầu kỳ tại chi nhánh</Label>
+        <div className="mt-3 grid max-w-xs gap-1.5"><Label>{t("form.openingBranch")}</Label>
           <NativeSelect value={form.openingBranchId} onChange={(e) => set({ openingBranchId: e.target.value })}>
             {myBranches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
           </NativeSelect></div>
       )}
       {isCreate && form.lotManaged && (
         <div className="mt-3 space-y-2">
-          <Label>Tồn đầu kỳ theo lô</Label>
+          <Label>{t("form.openingLots")}</Label>
           {form.openingLots.map((l) => (
             <div key={l.key} className="grid grid-cols-[1fr_1fr_8rem_auto] items-center gap-2">
-              <Input placeholder="Số lô" value={l.lotNumber} onChange={(e) => setLot(l.key, { lotNumber: e.target.value })} />
+              <Input placeholder={t("fields.lotNumber")} value={l.lotNumber} onChange={(e) => setLot(l.key, { lotNumber: e.target.value })} />
               <DatePicker value={l.expiryDate} onChange={(v) => setLot(l.key, { expiryDate: v })} />
-              <NumberInput placeholder="Số lượng" value={l.quantity} onValueChange={(quantity) => setLot(l.key, { quantity })} />
-              <Button type="button" variant="ghost" size="icon" aria-label="Xóa lô"
+              <NumberInput placeholder={t("fields.quantity")} value={l.quantity} onValueChange={(quantity) => setLot(l.key, { quantity })} />
+              <Button type="button" variant="ghost" size="icon" aria-label={t("form.removeLot")}
                 onClick={() => set({ openingLots: form.openingLots.filter((x) => x.key !== l.key) })}>
                 <Trash2 className="size-4" />
               </Button>
@@ -109,7 +115,7 @@ export function StockSection({ form, set, isCreate }: SectionProps) {
           ))}
           <Button type="button" variant="link" className="px-0"
             onClick={() => set({ openingLots: [...form.openingLots, { key: newKey(), lotNumber: "", expiryDate: "", quantity: 0 }] })}>
-            <Plus className="size-4" /> Thêm lô
+            <Plus className="size-4" /> {t("form.addLot")}
           </Button>
         </div>
       )}

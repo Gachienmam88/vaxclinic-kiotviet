@@ -1,6 +1,7 @@
 package com.vaxclinic.sales.salesreturn;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.vaxclinic.common.http.InternalRestClientFactory;
 import com.vaxclinic.common.error.ApiError;
 import com.vaxclinic.common.error.BusinessException;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,8 +32,8 @@ public class ProductCatalogClient {
 
     private final RestClient http;
 
-    public ProductCatalogClient(@Value("${app.product-url}") String productUrl) {
-        this.http = RestClient.builder().baseUrl(productUrl).build();
+    public ProductCatalogClient(InternalRestClientFactory httpFactory, @Value("${app.product-url}") String productUrl) {
+        this.http = httpFactory.create(productUrl);
     }
 
     public Product get(UUID productId, String bearerToken) {

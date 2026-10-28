@@ -15,24 +15,29 @@ import { downloadCsv, ListPager } from "@/features/sales/invoice-list-pager";
 import { periodParams, type Period } from "@/features/sales/sales-queries";
 import { api } from "@/lib/api-client";
 import { formatDateTime, formatMoney } from "@/lib/format";
+import { useT } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { commonNs } from "@/messages/common";
+import { salesNs } from "@/messages/sales";
 import { SalesReturnDetailPanel, type SalesReturnItem } from "./sales-return-detail-panel";
 
 const COLS = 9;
-const STATUSES = [["COMPLETED", "Đã trả"], ["CANCELLED", "Đã hủy"]] as const;
+const STATUSES = ["COMPLETED", "CANCELLED"] as const;
 
 /**
  * Đơn hàng → Trả hàng: danh sách phiếu khách trả hàng. Tạo phiếu từ nút "Trả hàng" trong chi tiết hóa đơn.
  * Link sâu: /returns?code=TH000001 (lọc theo mã, mọi thời gian, mở chi tiết) hoặc ?id=<uuid>.
  */
 function SalesReturnsPage({ link }: { link: DeepLink }) {
+  const t = useT(salesNs);
+  const tc = useT(commonNs);
   const [search, setSearch] = useState(link.code ?? "");
   const [q, setQ] = useState(link.code ?? "");
   const [period, setPeriod] = useState<Period>({ mode: link.code || link.id ? "all" : "month", from: "", to: "" });
   const [statuses, setStatuses] = useState<string[]>([]);
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(15);
-  useEffect(() => { const t = setTimeout(() => { setQ(search); setPage(0); }, 300); return () => clearTimeout(t); }, [search]);
+  useEffect(() => { const timer = setTimeout(() => { setQ(search); setPage(0); }, 300); return () => clearTimeout(timer); }, [search]);
   const params = useMemo(() => {
     const p = periodParams(period, new URLSearchParams({ page: String(page), size: String(size) }));
     if (q) p.set("q", q);
@@ -46,6 +51,7 @@ function SalesReturnsPage({ link }: { link: DeepLink }) {
   });
   const { open: expanded, setOpen: setExpanded, toggle: toggleRow } = useDeepLinkExpanded(data?.items, link, (r) => [r.code]);
   const toggle = (v: string, on: boolean) => { setStatuses(on ? [...statuses, v] : statuses.filter((x) => x !== v)); setPage(0); };
+  // CSV chứng từ tài chính: giữ tiêu đề & giá trị tiếng Việt cho kế toán (mọi ngôn ngữ).
   const exportCsv = () => downloadCsv("tra-hang", ["Mã trả hàng", "Thời gian", "Mã hóa đơn", "Khách hàng", "Tổng tiền hàng", "Phí trả hàng",
     "Cần trả khách", "Đã trả khách", "Trạng thái"], (data?.items ?? []).map((r) => [r.code, formatDateTime(r.returnedAt), r.invoiceCode,
     r.customerName, r.subtotal, r.fee, r.total, r.refunded, r.status === "COMPLETED" ? "Đã trả" : "Đã hủy"]));
@@ -53,32 +59,34 @@ function SalesReturnsPage({ link }: { link: DeepLink }) {
   return (
     <div className="flex gap-2.5">
       <div className="space-y-3">
-        <PageTitle>Trả hàng</PageTitle>
+        <PageTitle>{t("returns.title")}</PageTitle>
         <FilterSidebar>
           <PeriodFilter allowAll value={period} onChange={(p) => { setPeriod(p); setPage(0); }} />
-          <FilterSection title="Trạng thái">
-            {STATUSES.map(([v, l]) => <CheckOption key={v} checked={statuses.includes(v)} onChange={(on) => toggle(v, on)}>{l}</CheckOption>)}
+          <FilterSection title={t("returns.status")}>
+            {STATUSES.map((v) => <CheckOption key={v} checked={statuses.includes(v)} onChange={(on) => toggle(v, on)}>{t(`enums.returnStatus.${v}`)}</CheckOption>)}
           </FilterSection>
         </FilterSidebar>
       </div>
       <div className="min-w-0 flex-1 space-y-3">
         <div className="flex items-center gap-2">
-          <ListSearch value={search} onChange={setSearch} placeholder="Theo mã phiếu trả, mã hóa đơn, tên khách" />
+          <ListSearch value={search} onChange={setSearch} placeholder={t("returns.searchPlaceholder")} />
           <Button variant="outline" className={cn(TOOLBAR_BTN, "ml-auto")} disabled={!data?.items.length} onClick={exportCsv}
-            title="Xuất các dòng đang hiển thị ra file CSV"><FileOutput className="size-4" /> Xuất file</Button>
+            title={t("returns.exportTitle")}><FileOutput className="size-4" /> {tc("actions.export")}</Button>
         </div>
         <div className="overflow-x-auto rounded-lg bg-background">
           <Table>
             <TableHeader><TableRow className={LIST_HEAD_ROW}>
-              <TableHead className="pl-4">Mã trả hàng</TableHead><TableHead>Thời gian</TableHead><TableHead>Mã hóa đơn</TableHead><TableHead>Khách hàng</TableHead>
-              <TableHead className="text-right">Tổng tiền hàng</TableHead><TableHead className="text-right">Phí trả hàng</TableHead>
-              <TableHead className="text-right">Cần trả khách</TableHead><TableHead className="text-right">Đã trả khách</TableHead><TableHead className="pr-4">Trạng thái</TableHead>
+              <TableHead className="pl-4">{t("returns.columns.code")}</TableHead><TableHead>{t("returns.columns.time")}</TableHead>
+              <TableHead>{t("returns.columns.invoiceCode")}</TableHead><TableHead>{t("returns.columns.customer")}</TableHead>
+              <TableHead className="text-right">{t("returns.columns.subtotal")}</TableHead><TableHead className="text-right">{t("returns.columns.fee")}</TableHead>
+              <TableHead className="text-right">{t("returns.columns.total")}</TableHead><TableHead className="text-right">{t("returns.columns.refunded")}</TableHead>
+              <TableHead className="pr-4">{t("returns.columns.status")}</TableHead>
             </TableRow></TableHeader>
             <TableBody>
               {!!data?.items.length && <TableRow className="font-bold hover:bg-transparent">
                 <TableCell colSpan={6} /><TableCell className="text-right">{formatMoney(data.sumTotal ?? 0)}</TableCell><TableCell colSpan={2} />
               </TableRow>}
-              {data && !data.items.length && <ListEmptyRow cols={COLS} what="phiếu trả hàng"
+              {data && !data.items.length && <ListEmptyRow cols={COLS} what={t("returns.emptyWhat")}
                 onWiden={period.mode === "month" ? () => { setPeriod({ ...period, mode: "all" }); setPage(0); } : undefined} />}
               {data?.items.map((r) => (
                 <Fragment key={r.id}>
@@ -87,14 +95,14 @@ function SalesReturnsPage({ link }: { link: DeepLink }) {
                     <TableCell><DocCodeLink code={r.invoiceCode} /></TableCell><TableCell className="whitespace-normal">{r.customerName}</TableCell>
                     <TableCell className="text-right">{formatMoney(r.subtotal)}</TableCell><TableCell className="text-right">{formatMoney(r.fee)}</TableCell>
                     <TableCell className="text-right">{formatMoney(r.total)}</TableCell><TableCell className="text-right">{formatMoney(r.refunded)}</TableCell>
-                    <TableCell className="pr-4"><StatusBadge tone={r.status === "COMPLETED" ? "green" : "red"}>{r.status === "COMPLETED" ? "Đã trả" : "Đã hủy"}</StatusBadge></TableCell>
+                    <TableCell className="pr-4"><StatusBadge tone={r.status === "COMPLETED" ? "green" : "red"}>{t(`enums.returnStatus.${r.status}`)}</StatusBadge></TableCell>
                   </TableRow>
                   {expanded === r.id && <TableRow className="hover:bg-transparent"><TableCell colSpan={COLS} className="p-0 whitespace-normal"><SalesReturnDetailPanel id={r.id} onClose={() => setExpanded(null)} /></TableCell></TableRow>}
                 </Fragment>))}
             </TableBody>
           </Table>
         </div>
-        <ListPager total={data?.total ?? 0} page={page} size={size} unit="phiếu" onPage={setPage} onSize={(s) => { setSize(s); setPage(0); }} />
+        <ListPager total={data?.total ?? 0} page={page} size={size} unit={t("returns.unit")} onPage={setPage} onSize={(s) => { setSize(s); setPage(0); }} />
       </div>
     </div>
   );

@@ -16,10 +16,13 @@ import { lineFromProduct } from "./purchase-line-form";
 import { PurchaseLineTable } from "./purchase-line-table";
 import { ProductPicker } from "./search-pickers";
 import { SupplierFormDialog } from "./supplier-form-dialog";
+import { useT } from "@/lib/i18n";
+import { commonNs } from "@/messages/common";
+import { purchasesNs } from "@/messages/purchases";
 
 const CONFIG = {
-  receipt: { title: "Nhập hàng", endpoint: "/purchase-receipts", listPath: "/purchases/receipts", listKey: "purchase-receipts" },
-  return: { title: "Trả hàng nhập", endpoint: "/purchase-returns", listPath: "/purchases/returns", listKey: "purchase-returns" },
+  receipt: { title: "receipts.title", endpoint: "/purchase-receipts", listPath: "/purchases/receipts", listKey: "purchase-receipts" },
+  return: { title: "returns.title", endpoint: "/purchase-returns", listPath: "/purchases/returns", listKey: "purchase-returns" },
 } as const;
 
 /**
@@ -31,6 +34,8 @@ export function PurchaseEditor({ mode, initial, reference }: { mode: EditorMode;
   const router = useRouter();
   const qc = useQueryClient();
   const { data: users = [] } = useUserLookup();
+  const t = useT(purchasesNs);
+  const tc = useT(commonNs);
   const [state, setState] = useState(initial);
   const [supplierDialog, setSupplierDialog] = useState(false);
   const set = (p: Partial<EditorState>) => setState((s) => ({ ...s, ...p }));
@@ -43,10 +48,10 @@ export function PurchaseEditor({ mode, initial, reference }: { mode: EditorMode;
       return api<{ id: string; code: string }>(`${url}?complete=${complete}`, { method: state.id ? "PUT" : "POST", body });
     },
     onSuccess: async (doc, complete) => {
-      toast.success(`${complete ? "Đã hoàn thành" : "Đã lưu tạm"} phiếu ${doc.code}`);
+      toast.success(t(complete ? "editor.toastCompleted" : "editor.toastDrafted", { code: doc.code }));
       if (reference) {
         await api(`/input-invoices/${reference.id}/receipt`, { method: "PATCH", body: { receiptId: doc.id, receiptCode: doc.code } })
-          .catch((e) => toast.error(`Chưa gắn được phiếu vào hóa đơn đầu vào: ${errorMessage(e)}`));
+          .catch((e) => toast.error(t("editor.linkInvoiceFailed", { error: errorMessage(e) })));
         qc.invalidateQueries({ queryKey: ["input-invoices"] });
       }
       qc.invalidateQueries({ queryKey: [cfg.listKey] });
@@ -57,10 +62,10 @@ export function PurchaseEditor({ mode, initial, reference }: { mode: EditorMode;
   });
 
   function submit(complete: boolean) {
-    if (!state.lines.length) return toast.error("Phiếu chưa có hàng hóa");
+    if (!state.lines.length) return toast.error(t("editor.noLines"));
     if (complete) {
       const missing = state.lines.find((l) => l.lotManaged && (!l.lotNumber || (mode === "receipt" && !l.expiryDate)));
-      if (missing) return toast.error(`${missing.productName}: nhập ${mode === "receipt" ? "số lô và hạn sử dụng" : "lô trả"}`);
+      if (missing) return toast.error(t(mode === "receipt" ? "editor.missingLotExpiry" : "editor.missingReturnLot", { product: missing.productName }));
     }
     save.mutate(complete);
   }
@@ -69,8 +74,8 @@ export function PurchaseEditor({ mode, initial, reference }: { mode: EditorMode;
     <div className="flex min-h-[calc(100vh-110px)] gap-2.5">
       <div className="flex min-w-0 flex-1 flex-col gap-2.5">
         <div className="flex h-8 items-center gap-2.5">
-          <Button variant="ghost" size="icon-sm" onClick={() => router.push(cfg.listPath)} aria-label="Quay lại"><ArrowLeft /></Button>
-          <h1 className="text-lg font-bold">{cfg.title}</h1>
+          <Button variant="ghost" size="icon-sm" onClick={() => router.push(cfg.listPath)} aria-label={tc("actions.back")}><ArrowLeft /></Button>
+          <h1 className="text-lg font-bold">{t(cfg.title)}</h1>
           {!state.receiptId && (
             <ProductPicker onPick={(p) => set({ lines: [...state.lines, lineFromProduct(p)] })} />
           )}
@@ -78,7 +83,8 @@ export function PurchaseEditor({ mode, initial, reference }: { mode: EditorMode;
         {reference && (
           <details open className="rounded-lg border border-primary/30 bg-primary-tint-light p-3 text-[13px]">
             <summary className="cursor-pointer font-medium">
-              Hóa đơn đầu vào {reference.series} số {reference.number} — {reference.sellerName} — {formatMoney(reference.total)} (đối chiếu để chọn hàng)
+              {t("editor.referenceSummary", { series: reference.series, number: reference.number, seller: reference.sellerName ?? "",
+                total: formatMoney(reference.total) })}
             </summary>
             <table className="mt-2 w-full"><tbody>{reference.lines.map((l, n) => (
               <tr key={n} className="border-b border-primary/10"><td className="py-1">{l.name}</td><td>{l.unit}</td>
@@ -90,7 +96,7 @@ export function PurchaseEditor({ mode, initial, reference }: { mode: EditorMode;
           <PurchaseLineTable mode={mode} lines={state.lines} branchId={state.branchId} onChange={(lines) => set({ lines })} />
           {!state.lines.length && (
             <div className="py-40 text-center text-[13px] text-muted-foreground">
-              Tìm hàng hóa theo mã hoặc tên (phím F3) để thêm vào phiếu
+              {t("editor.emptyHint")}
             </div>
           )}
         </div>
@@ -100,9 +106,9 @@ export function PurchaseEditor({ mode, initial, reference }: { mode: EditorMode;
         <div className="mt-auto grid grid-cols-2 gap-2.5 pt-2">
           <Button variant="outline" className="h-[38px] rounded-lg border-primary bg-background text-sm font-semibold text-primary hover:bg-primary/5 hover:text-primary"
             disabled={save.isPending} onClick={() => submit(false)}>
-            Lưu tạm
+            {t("editor.saveDraft")}
           </Button>
-          <Button className="h-[38px] rounded-lg text-sm font-semibold" disabled={save.isPending} onClick={() => submit(true)}>Hoàn thành</Button>
+          <Button className="h-[38px] rounded-lg text-sm font-semibold" disabled={save.isPending} onClick={() => submit(true)}>{t("editor.complete")}</Button>
         </div>
       </aside>
       {supplierDialog && (

@@ -5,6 +5,7 @@
 import { sumOf, type DamageRow, type MovementRow, type ProductRow, type SupplierRow } from "./report-api";
 import type { ReportColumn, ReportLine } from "./report-table";
 import { DocCodeLink, docCodeHref } from "@/components/ui/doc-code-link";
+import type { ReportsT } from "@/messages/reports";
 
 /** 1 dòng chung cho mọi bảng hàng hóa (các trường không dùng = 0). */
 export type PAgg = { code: string; name: string; dim: string; v: Record<string, number> };
@@ -73,8 +74,6 @@ export const fromSupplier = (s: SupplierRow): PAgg => agg(s.productCode ?? "", s
   { qtySold: +s.qtyIn, revenue: +s.valueIn, qtyReturned: +s.qtyReturned, returnValue: +s.valueReturned, net: +s.valueIn - +s.valueReturned });
 
 const col = (key: string, label: string, type: "money" | "qty" = "money"): ReportColumn<PAgg> => ({ key, label, type, value: (r) => r.v[key] });
-const CODE: ReportColumn<PAgg> = { key: "code", label: "Mã hàng", value: (r) => r.code, render: (r) => <b><DocCodeLink code={r.code} /></b> };
-const NAME: ReportColumn<PAgg> = { key: "name", label: "Tên hàng", value: (r) => r.name, width: 140 };
 /** Cột nhóm "Mã - Tên" (vd. NCC000001 - Công ty A): mã đầu thành link nếu nhận ra. */
 const dimCell = (dim: string) => {
   const i = dim.indexOf(" - ");
@@ -83,18 +82,25 @@ const dimCell = (dim: string) => {
 };
 const DIM = (label: string): ReportColumn<PAgg> => ({ key: "dim", label, value: (r) => r.dim, width: 130, render: (r) => dimCell(r.dim) });
 
-export const COLUMNS: Record<string, ReportColumn<PAgg>[]> = {
-  sales: [CODE, NAME, col("qtySold", "SL Bán", "qty"), col("revenue", "Doanh thu"), col("qtyReturned", "SL Trả", "qty"), col("returnValue", "Giá trị trả"), col("net", "Doanh thu thuần")],
-  profit: [CODE, NAME, col("qtySold", "SL Bán", "qty"), col("revenue", "Doanh thu"), col("qtyReturned", "SL Trả", "qty"), col("returnValue", "Giá trị trả"),
-    col("net", "Doanh thu thuần"), col("cogs", "Tổng giá vốn"), col("profit", "Lợi nhuận"), col("margin", "Tỷ suất (%)", "qty")],
-  stock: [CODE, NAME, col("oq", "Tồn đầu kỳ", "qty"), col("ov", "Giá trị đầu kỳ"), col("iq", "SL Nhập", "qty"), col("iv", "Giá trị nhập"),
-    col("xq", "SL Xuất", "qty"), col("xv", "Giá trị xuất"), col("cq", "Tồn cuối kỳ", "qty"), col("cv", "Giá trị cuối kỳ")],
-  stockDetail: [CODE, NAME, col("before", "Tồn đầu kỳ", "qty"), col("purchase", "Nhập NCC", "qty"), col("custReturn", "Nhập khách trả", "qty"),
-    col("adjust", "Kiểm kho", "qty"), col("otherIn", "Nhập khác", "qty"), col("sale", "Xuất bán", "qty"), col("supReturn", "Xuất trả NCC", "qty"),
-    col("damage", "Xuất hủy", "qty"), col("internal", "Xuất nội bộ", "qty"), col("otherOut", "Xuất khác", "qty"), col("closing", "Tồn cuối kỳ", "qty"),
-    col("closingValue", "Giá trị cuối kỳ")],
-  damage: [CODE, NAME, col("docs", "Số phiếu", "qty"), col("qty", "SL hủy", "qty"), col("value", "Giá trị hủy")],
-  seller: [CODE, NAME, DIM("Nhân viên"), col("qtySold", "SL Bán", "qty"), col("revenue", "Doanh thu"), col("qtyReturned", "SL Trả", "qty"), col("returnValue", "Giá trị trả"), col("net", "Doanh thu thuần")],
-  customer: [CODE, NAME, DIM("Khách hàng"), col("qtySold", "SL Mua", "qty"), col("revenue", "Doanh thu"), col("qtyReturned", "SL Trả", "qty"), col("returnValue", "Giá trị trả"), col("net", "Doanh thu thuần")],
-  supplier: [CODE, NAME, DIM("Nhà cung cấp"), col("qtySold", "SL Nhập", "qty"), col("revenue", "Giá trị nhập"), col("qtyReturned", "SL Trả", "qty"), col("returnValue", "Giá trị trả"), col("net", "Giá trị nhập thuần")],
-};
+/** Cột theo từng mối quan tâm (nhãn theo ngôn ngữ đang chọn). */
+export function productColumns(t: ReportsT): Record<string, ReportColumn<PAgg>[]> {
+  const CODE: ReportColumn<PAgg> = { key: "code", label: t("cols.productCode"), value: (r) => r.code, render: (r) => <b><DocCodeLink code={r.code} /></b> };
+  const NAME: ReportColumn<PAgg> = { key: "name", label: t("cols.productName"), value: (r) => r.name, width: 140 };
+  const c = (key: string, label: Parameters<ReportsT>[0], type: "money" | "qty" = "money") => col(key, t(label), type);
+  const sold = [c("qtySold", "cols.qtySold", "qty"), c("revenue", "cols.revenue"), c("qtyReturned", "cols.qtyReturned", "qty"), c("returnValue", "cols.returnValue"), c("net", "cols.net")];
+  return {
+    sales: [CODE, NAME, ...sold],
+    profit: [CODE, NAME, ...sold, c("cogs", "cols.cogs"), c("profit", "cols.profit"), c("margin", "cols.margin", "qty")],
+    stock: [CODE, NAME, c("oq", "cols.openingQty", "qty"), c("ov", "cols.openingValue"), c("iq", "cols.qtyIn", "qty"), c("iv", "cols.valueIn"),
+      c("xq", "cols.qtyOut", "qty"), c("xv", "cols.valueOut"), c("cq", "cols.closingQty", "qty"), c("cv", "cols.closingValue")],
+    stockDetail: [CODE, NAME, c("before", "cols.openingQty", "qty"), c("purchase", "cols.purchaseIn", "qty"), c("custReturn", "cols.customerReturnIn", "qty"),
+      c("adjust", "cols.stockTake", "qty"), c("otherIn", "cols.otherIn", "qty"), c("sale", "cols.saleOut", "qty"), c("supReturn", "cols.supplierReturnOut", "qty"),
+      c("damage", "cols.damageOut", "qty"), c("internal", "cols.internalOut", "qty"), c("otherOut", "cols.otherOut", "qty"), c("closing", "cols.closingQty", "qty"),
+      c("closingValue", "cols.closingValue")],
+    damage: [CODE, NAME, c("docs", "cols.docCount", "qty"), c("qty", "cols.damageQty", "qty"), c("value", "cols.damageValue")],
+    seller: [CODE, NAME, DIM(t("cols.employee")), ...sold],
+    customer: [CODE, NAME, DIM(t("cols.customer")), c("qtySold", "cols.qtyBought", "qty"), ...sold.slice(1)],
+    supplier: [CODE, NAME, DIM(t("cols.supplier")), c("qtySold", "cols.qtyIn", "qty"), c("revenue", "cols.valueIn"), c("qtyReturned", "cols.qtyReturned", "qty"),
+      c("returnValue", "cols.returnValue"), c("net", "cols.netIn")],
+  };
+}

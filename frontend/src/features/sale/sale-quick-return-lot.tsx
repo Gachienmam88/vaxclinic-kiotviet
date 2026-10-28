@@ -6,6 +6,8 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { api } from "@/lib/api-client";
 import { toYmd } from "@/lib/date-input-format";
 import { formatDate, formatNumber } from "@/lib/format";
+import { useT } from "@/lib/i18n";
+import { saleNs } from "@/messages/sale";
 
 type Lot = { id: string; branchId: string; lotNumber: string; expiryDate: string; quantity: number };
 
@@ -20,6 +22,7 @@ export function SaleQuickReturnLot({ productId, branchId, value, expiry, onChang
   productId: string; branchId: string; value: string | null | undefined; expiry: string | null | undefined;
   onChange: (patch: { lotNumber: string; lotExpiry: string | null }) => void;
 }) {
+  const t = useT(saleNs);
   const { data = [], isError } = useQuery({
     queryKey: ["product-lots", productId], queryFn: () => api<Lot[]>(`/products/${productId}/lots`), staleTime: 60_000,
   });
@@ -34,33 +37,33 @@ export function SaleQuickReturnLot({ productId, branchId, value, expiry, onChang
     return (
       <div className="mt-0.5 space-y-0.5 text-xs text-[#6b7280]" onClick={stop}>
         <div className="flex flex-wrap items-center gap-1.5">
-          Lô mới:
-          <input aria-label="Số lô mới" placeholder="Số lô" maxLength={50} value={value ?? ""}
+          {t("lot.newLot")}
+          <input aria-label={t("lot.newLotNumber")} placeholder={t("lot.lotNumber")} maxLength={50} value={value ?? ""}
             onChange={(e) => onChange({ lotNumber: e.target.value, lotExpiry: expiry })}
             className={`h-6 w-28 rounded border bg-background px-1 text-xs outline-none ${typed ? "border-[#d6d9de]" : "border-destructive"}`} />
-          HSD:
-          <DatePicker className="h-6 w-32 text-xs" aria-label="Hạn sử dụng lô mới" value={expiry}
+          {t("lot.expiry")}
+          <DatePicker className="h-6 w-32 text-xs" aria-label={t("lot.newLotExpiry")} value={expiry}
             onChange={(v) => onChange({ lotNumber: value ?? "", lotExpiry: v })} />
           <button type="button" className="text-primary hover:underline" onClick={() => onChange({ lotNumber: "", lotExpiry: null })}>
-            Chọn lô có sẵn
+            {t("lot.pickExisting")}
           </button>
         </div>
-        {same && !mismatch && <div>Lô {typed} đã có tại chi nhánh (HSD {formatDate(same.expiryDate)}) — sẽ nhập lại vào lô này.</div>}
-        {mismatch && <div className="text-destructive">Lô {typed} đã có với HSD {formatDate(same.expiryDate)} — HSD nhập không khớp.</div>}
-        {expired && <div className="text-amber-600">Lô đã hết hạn: hàng trả hết hạn nên được xuất hủy sau khi nhận lại.</div>}
+        {same && !mismatch && <div>{t("lot.exists", { lot: typed, expiry: formatDate(same.expiryDate) })}</div>}
+        {mismatch && <div className="text-destructive">{t("lot.expiryMismatch", { lot: typed, expiry: formatDate(same.expiryDate) })}</div>}
+        {expired && <div className="text-amber-600">{t("lot.expired")}</div>}
       </div>
     );
   }
 
   return (
     <label className="mt-0.5 flex items-center gap-1.5 text-xs text-[#6b7280]" onClick={stop}>
-      Lô:
-      <select aria-label="Lô hàng trả" value={value ?? ""}
+      {t("lot.lot")}
+      <select aria-label={t("lot.returnLot")} value={value ?? ""}
         onChange={(e) => onChange(e.target.value === NEW_LOT ? { lotNumber: "", lotExpiry: "" } : { lotNumber: e.target.value, lotExpiry: null })}
         className={`h-6 max-w-56 rounded border bg-background px-1 text-xs outline-none ${value ? "border-[#d6d9de]" : "border-destructive"}`}>
-        <option value="">{isError ? "Mất mạng: chưa tải được lô" : "-- Chọn lô --"}</option>
-        {lots.map((l) => <option key={l.id} value={l.lotNumber}>{l.lotNumber} · HSD {formatDate(l.expiryDate)} · tồn {formatNumber(l.quantity)}</option>)}
-        <option value={NEW_LOT}>+ Nhập lô mới</option>
+        <option value="">{t(isError ? "lot.offline" : "lot.pick")}</option>
+        {lots.map((l) => <option key={l.id} value={l.lotNumber}>{t("lot.option", { lot: l.lotNumber, expiry: formatDate(l.expiryDate), qty: formatNumber(l.quantity) })}</option>)}
+        <option value={NEW_LOT}>{t("lot.enterNew")}</option>
       </select>
     </label>
   );

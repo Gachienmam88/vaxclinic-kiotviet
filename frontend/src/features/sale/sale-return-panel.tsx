@@ -3,6 +3,8 @@
 import { NumberInput } from "@/components/number-input";
 import { DocCodeLink } from "@/components/ui/doc-code-link";
 import { formatMoney, formatNumber } from "@/lib/format";
+import { useT } from "@/lib/i18n";
+import { saleNs } from "@/messages/sale";
 import { CART_GRID } from "./sale-cart-line";
 import { underlineInput } from "./sale-ui-parts";
 import type { DraftInvoice } from "./sale-types";
@@ -34,6 +36,7 @@ export function returnTotals(d: DraftInvoice) {
 
 /** Danh sách hàng trên hóa đơn (thẻ trắng như giỏ hàng): nhập SL trả, dưới ô là "/ tối đa" (= đã mua − đã trả). */
 export function ReturnLines({ draft, update }: Props) {
+  const t = useT(saleNs);
   const r = draft.returnOf!;
   const set = (id: string, quantity: number) =>
     update({ returnOf: { ...r, lines: r.lines.map((l) => (l.invoiceLineId === id ? { ...l, quantity } : l)) } });
@@ -48,10 +51,10 @@ export function ReturnLines({ draft, update }: Props) {
             <span className="truncate" title={l.productName}>{l.productName}</span>
             <span><span className="rounded bg-primary-tint px-1.5 py-0.5 text-primary">{l.unitName}</span></span>
             <div className="px-3.5 text-center">
-              <NumberInput aria-label={`Số lượng trả ${l.productName}`} className={`${underlineInput} text-center`} disabled={max <= 0} value={l.quantity}
+              <NumberInput aria-label={t("returns.qtyOf", { name: l.productName })} className={`${underlineInput} text-center`} disabled={max <= 0} value={l.quantity}
                 onValueChange={(q) => set(l.invoiceLineId, Math.min(Math.max(q, 0), max))} />
               <span className="mt-1 block text-[#6b7280]">/ {formatNumber(max)}</span>
-              {l.returned > 0 && <span className="block text-xs text-[#6b7280]">đã trả {formatNumber(l.returned)}</span>}
+              {l.returned > 0 && <span className="block text-xs text-[#6b7280]">{t("returns.returnedQty", { qty: formatNumber(l.returned) })}</span>}
             </div>
             <span className="border-b border-[#c8ccd2] pb-1 text-right">{formatMoney(l.price)}</span>
             <span className="text-right font-bold">{formatMoney(Math.round(l.quantity * l.price))}</span>

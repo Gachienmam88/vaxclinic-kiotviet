@@ -5,6 +5,8 @@ import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProductPicker } from "@/features/purchases/search-pickers";
 import type { ProductDetail } from "@/features/products/product-types";
+import { useT } from "@/lib/i18n";
+import { inventoryNs } from "@/messages/inventory";
 
 /** Ô nhập/chọn cột phải: cao 30px, viền xám, bo 6px (giống PurchaseEditorPanel). */
 export const PANEL_FIELD = "h-[30px] w-full rounded-md border border-[#d1d5db] bg-background px-2 text-[13px] outline-none placeholder:text-muted-foreground focus-visible:border-primary disabled:opacity-60";
@@ -28,11 +30,12 @@ export function InventoryEditorShell({ title, listPath, onPick, toolbar, empty, 
   panel: React.ReactNode; saving: boolean; onSave: (complete: boolean) => void; children: React.ReactNode;
 }) {
   const router = useRouter();
+  const t = useT(inventoryNs);
   return (
     <div className="flex min-h-[calc(100vh-110px)] gap-2.5">
       <div className="flex min-w-0 flex-1 flex-col gap-2.5">
         <div className="flex h-8 items-center gap-2.5">
-          <Button variant="ghost" size="icon-sm" onClick={() => router.push(listPath)} aria-label="Quay lại"><ArrowLeft /></Button>
+          <Button variant="ghost" size="icon-sm" onClick={() => router.push(listPath)} aria-label={t("editor.back")}><ArrowLeft /></Button>
           <h1 className="text-lg font-bold">{title}</h1>
           <ProductPicker onPick={onPick} />
         </div>
@@ -41,7 +44,7 @@ export function InventoryEditorShell({ title, listPath, onPick, toolbar, empty, 
           {children}
           {empty && (
             <div className="py-40 text-center text-[13px] text-muted-foreground">
-              Tìm hàng hóa theo mã hoặc tên (phím F3) để thêm vào phiếu
+              {t("editor.emptyHint")}
             </div>
           )}
         </div>
@@ -51,9 +54,9 @@ export function InventoryEditorShell({ title, listPath, onPick, toolbar, empty, 
         <div className="mt-auto grid grid-cols-2 gap-2.5 pt-2">
           <Button variant="outline" className="h-[38px] rounded-lg border-primary bg-background text-sm font-semibold text-primary hover:bg-primary/5 hover:text-primary"
             disabled={saving} onClick={() => onSave(false)}>
-            Lưu tạm
+            {t("editor.saveDraft")}
           </Button>
-          <Button className="h-[38px] rounded-lg text-sm font-semibold" disabled={saving} onClick={() => onSave(true)}>Hoàn thành</Button>
+          <Button className="h-[38px] rounded-lg text-sm font-semibold" disabled={saving} onClick={() => onSave(true)}>{t("editor.complete")}</Button>
         </div>
       </aside>
     </div>

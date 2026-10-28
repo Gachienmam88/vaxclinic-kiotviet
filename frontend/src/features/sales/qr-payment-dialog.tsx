@@ -10,7 +10,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Label } from "@/components/ui/label";
 import { NumberInput } from "@/components/number-input";
 import { api, errorMessage } from "@/lib/api-client";
+import { useT } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { salesNs } from "@/messages/sales";
 import { kvDialog, kvDialogBody, kvDialogHeader, kvDialogTitle, kvInput, kvLabel } from "./customer-ui-primitives";
 import { useBankAccounts } from "./sales-queries";
 
@@ -24,6 +26,7 @@ type PayRequest = { code: string; amount: number; paidAmount: number; status: "P
  * Khi bật SePay: nội dung chuyển khoản là mã VXC... để tự khớp giao dịch, màn hình tự báo "Đã nhận tiền".
  */
 export function QrPaymentDialog({ amount: initial, info, onClose, onPaid }: Props) {
+  const t = useT(salesNs);
   const { data: banks = [] } = useBankAccounts();
   const { data: sepay } = useQuery({ queryKey: ["sepay-settings"], queryFn: () => api<{ enabled: boolean }>("/payments/sepay/settings") });
   const [bankId, setBankId] = useState("");
@@ -42,17 +45,17 @@ export function QrPaymentDialog({ amount: initial, info, onClose, onPaid }: Prop
         const r = await api<PayRequest>(`/payment-requests/${request.code}`);
         if (r.status === "PAID") {
           setRequest(r);
-          toast.success(`Đã nhận ${Number(r.paidAmount).toLocaleString("vi-VN")}đ chuyển khoản`);
+          toast.success(t("qr.receivedToast", { amount: Number(r.paidAmount).toLocaleString("vi-VN") }));
           onPaid?.(Number(r.paidAmount), r.autoComplete);
         }
       } catch { /* mất mạng tạm thời: thử lại lần sau */ }
     }, 3000);
     return () => clearInterval(timer);
-  }, [request, onPaid]);
+  }, [request, onPaid, t]);
 
   useEffect(() => {
     if (!account || sepay === undefined) return;
-    const t = setTimeout(async () => {
+    const timer = setTimeout(async () => {
       try {
         let content = info ?? "";
         if (autoMatch && Math.round(amount) >= 1000) {
@@ -69,28 +72,28 @@ export function QrPaymentDialog({ amount: initial, info, onClose, onPaid }: Prop
         toast.error(errorMessage(e));
       }
     }, 300);
-    return () => clearTimeout(t);
+    return () => clearTimeout(timer);
   }, [account, amount, info, autoMatch, sepay]);
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className={cn(kvDialog, "sm:max-w-[360px]")}>
-        <DialogHeader className={kvDialogHeader}><DialogTitle className={kvDialogTitle}>Thanh toán qua mã QR</DialogTitle></DialogHeader>
+        <DialogHeader className={kvDialogHeader}><DialogTitle className={kvDialogTitle}>{t("qr.title")}</DialogTitle></DialogHeader>
         {!banks.length ? (
-          <p className="px-5 pb-5 text-[13px] text-muted-foreground">Chưa có tài khoản ngân hàng — thêm tại Thiết lập → Tài khoản ngân hàng.</p>
+          <p className="px-5 pb-5 text-[13px] text-muted-foreground">{t("qr.noBank")}</p>
         ) : (
           <div className={cn(kvDialogBody, "pb-5")}>
-            <div className="grid gap-1.5"><Label className={kvLabel}>Tài khoản</Label>
+            <div className="grid gap-1.5"><Label className={kvLabel}>{t("qr.account")}</Label>
               <select className="h-8 w-full truncate rounded-md border border-[#d9dbe0] bg-white px-2.5 text-[13px] outline-none focus:border-primary"
-                aria-label="Tài khoản" value={account} onChange={(e) => setBankId(e.target.value)}>
+                aria-label={t("qr.account")} value={account} onChange={(e) => setBankId(e.target.value)}>
                 {banks.map((b) => <option key={b.id} value={b.id}>{b.bankName} - {b.accountNo} - {b.accountName}</option>)}
               </select></div>
-            <div className="grid gap-1.5"><Label className={kvLabel}>Số tiền</Label>
-              <NumberInput aria-label="Số tiền" className={cn(kvInput, "text-left")} value={amount} onValueChange={setAmount} /></div>
+            <div className="grid gap-1.5"><Label className={kvLabel}>{t("qr.amount")}</Label>
+              <NumberInput aria-label={t("qr.amount")} className={cn(kvInput, "text-left")} value={amount} onValueChange={setAmount} /></div>
             <div className="flex items-center gap-5 rounded-lg bg-[#004a9f] p-4 text-white">
               <div className="flex size-[112px] shrink-0 items-center justify-center rounded-md bg-white">
                 {/* eslint-disable-next-line @next/next/no-img-element -- QR data URL */}
-                {image ? <img src={image} alt="Mã QR chuyển khoản" className="size-[104px]" /> : <span className="text-[12px] text-muted-foreground">Đang tạo...</span>}
+                {image ? <img src={image} alt={t("qr.imageAlt")} className="size-[104px]" /> : <span className="text-[12px] text-muted-foreground">{t("qr.generating")}</span>}
               </div>
               <div className="min-w-0 space-y-1.5 text-[12px]">
                 <div className="text-[13px] font-bold uppercase">{qr?.accountName}</div>
@@ -100,22 +103,22 @@ export function QrPaymentDialog({ amount: initial, info, onClose, onPaid }: Prop
             </div>
             {autoMatch && request && (
               request.status === "PAID"
-                ? <p className="flex items-center justify-center gap-2 font-semibold text-green-600"><CircleCheck className="size-5" /> Đã nhận tiền</p>
+                ? <p className="flex items-center justify-center gap-2 font-semibold text-green-600"><CircleCheck className="size-5" /> {t("qr.received")}</p>
                 : <p className="flex items-center justify-center gap-2 text-[12px] text-muted-foreground">
-                    <LoaderCircle className="size-4 animate-spin" /> Đang chờ khách chuyển khoản (nội dung {request.code})</p>
+                    <LoaderCircle className="size-4 animate-spin" /> {t("qr.waiting", { code: request.code })}</p>
             )}
             <div className="flex items-center justify-center gap-2 text-[13px]">
               <Button variant="outline" size="sm" className="h-7 rounded-md text-[12px]" disabled={!image}
                 render={<a href={image} download={`QR-${qr?.accountNo}-${Math.round(amount)}.png`} />}>
-                <Download className="size-3.5" /> Tải QR</Button>
-              <span>hoặc</span>
+                <Download className="size-3.5" /> {t("qr.download")}</Button>
+              <span>{t("qr.or")}</span>
               <Button variant="outline" size="sm" className="h-7 rounded-md text-[12px]" disabled={!qr}
-                onClick={() => navigator.clipboard.writeText(qr!.payload).then(() => toast.success("Đã sao chép mã QR"))}>
-                <Copy className="size-3.5" /> Sao chép QR</Button>
+                onClick={() => navigator.clipboard.writeText(qr!.payload).then(() => toast.success(t("qr.copied")))}>
+                <Copy className="size-3.5" /> {t("qr.copy")}</Button>
             </div>
             {autoMatch && (
               <p className="flex gap-2 text-[12px] text-primary"><Lightbulb className="mt-0.5 size-4 shrink-0" />
-                Đã bật nhận thông báo thanh toán QR. Hệ thống sẽ tự xác nhận khi nhận được tiền chuyển khoản.</p>
+                {t("qr.autoHint")}</p>
             )}
           </div>
         )}

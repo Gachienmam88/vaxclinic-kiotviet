@@ -4,17 +4,21 @@ import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DocCodeLink } from "@/components/ui/doc-code-link";
-import { orderStatusLabel, type OrderStatus } from "@/features/orders/order-types";
+import { ORDER_STATUS_KEY, type OrderStatus } from "@/features/orders/order-types";
 import { api } from "@/lib/api-client";
 import { formatDateTime, formatMoney } from "@/lib/format";
+import { useT } from "@/lib/i18n";
+import { commonNs } from "@/messages/common";
+import { ordersNs } from "@/messages/orders";
+import { saleNs } from "@/messages/sale";
 import {
   SALE_TABLE_HEAD, SaleDateRangeCard, SaleFilterCard, SaleFilterInput, SaleTableEmpty, rangeParams, ymdDaysAgo,
 } from "./sale-dialog-parts";
 
 type Row = { id: string; code: string; orderedAt: string; customerName: string; total: number; status: OrderStatus; note: string | null };
 type Page = { items: Row[]; total: number };
-const FILTERS = [["code", "Theo mã đặt hàng"], ["customer", "Theo khách hàng"], ["note", "Theo ghi chú đặt hàng"],
-  ["productCode", "Theo mã hàng"], ["productName", "Theo tên hàng"]] as const;
+const FILTERS = [["code", "orderPicker.filters.code"], ["customer", "orderPicker.filters.customer"], ["note", "orderPicker.filters.note"],
+  ["productCode", "dialogs.filters.productCode"], ["productName", "dialogs.filters.productName"]] as const;
 type Key = (typeof FILTERS)[number][0];
 
 /** Chuỗi tìm kiếm → đợi 300ms sau lần gõ cuối mới gọi API. */
@@ -29,6 +33,9 @@ export function useDebounced<T>(value: T, ms = 300) {
  * Chọn 1 dòng → mở đơn lên màn bán hàng để tạo hóa đơn (tiền cọc trừ vào khách cần trả). Cần mạng.
  */
 export function SaleOrderPickerDialog({ branchId, onPick, onClose }: { branchId: string; onPick: (orderId: string) => void; onClose: () => void }) {
+  const t = useT(saleNs);
+  const tc = useT(commonNs);
+  const to = useT(ordersNs);
   const [f, setF] = useState<Record<Key, string>>({ code: "", customer: "", note: "", productCode: "", productName: "" });
   const [range, setRange] = useState({ from: ymdDaysAgo(30), to: "" });
   const [page, setPage] = useState(0);
@@ -48,11 +55,11 @@ export function SaleOrderPickerDialog({ branchId, onPick, onClose }: { branchId:
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="gap-4 p-6 text-[13px] sm:max-w-[1035px]">
-        <DialogHeader><DialogTitle className="text-[15px] font-bold">Xử lý đặt hàng</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle className="text-[15px] font-bold">{t("menu.orders")}</DialogTitle></DialogHeader>
         <div className="grid grid-cols-[168px_1fr] items-start gap-7">
           <div className="space-y-5">
-            <SaleFilterCard title="Tìm kiếm">
-              {FILTERS.map(([k, label], i) => <SaleFilterInput key={k} autoFocus={i === 0} placeholder={label} value={f[k]}
+            <SaleFilterCard title={tc("actions.search")}>
+              {FILTERS.map(([k, label], i) => <SaleFilterInput key={k} autoFocus={i === 0} placeholder={t(label)} value={f[k]}
                 onChange={(v) => { setF({ ...f, [k]: v }); setPage(0); }} />)}
             </SaleFilterCard>
             <SaleDateRangeCard from={range.from} to={range.to} onChange={(from, to) => { setRange({ from, to }); setPage(0); }} />
@@ -60,15 +67,15 @@ export function SaleOrderPickerDialog({ branchId, onPick, onClose }: { branchId:
           <div className="overflow-hidden rounded-sm border border-[#e5e7eb]">
             <table className="w-full">
               <thead className={SALE_TABLE_HEAD}><tr>
-                <th>Mã đặt hàng</th><th>Thời gian</th><th>Khách hàng</th><th className="text-right">Tổng cộng</th><th>Trạng thái</th><th>Ghi chú</th>
+                <th>{t("orderPicker.cols.code")}</th><th>{t("dialogs.time")}</th><th>{t("dialogs.cols.customer")}</th><th className="text-right">{t("dialogs.cols.total")}</th><th>{tc("fields.status")}</th><th>{tc("fields.note")}</th>
               </tr></thead>
               <tbody>
-                {!rows.length && <SaleTableEmpty colSpan={6} text={isError ? "Mất kết nối: xử lý đặt hàng cần có mạng" : isFetching ? "Đang tải..." : undefined} />}
+                {!rows.length && <SaleTableEmpty colSpan={6} text={isError ? t("orderPicker.offline") : isFetching ? tc("status.loading") : undefined} />}
                 {rows.map((r) => (
                   <tr key={r.id} className="cursor-pointer border-b border-[#eef0f3] hover:bg-primary-tint [&_td]:h-9 [&_td]:px-2.5"
                     onClick={() => { onPick(r.id); onClose(); }}>
                     <td><DocCodeLink code={r.code} newTab /></td><td>{formatDateTime(r.orderedAt)}</td><td>{r.customerName}</td>
-                    <td className="text-right">{formatMoney(r.total)}</td><td>{orderStatusLabel(r.status)}</td>
+                    <td className="text-right">{formatMoney(r.total)}</td><td>{ORDER_STATUS_KEY[r.status] ? to(ORDER_STATUS_KEY[r.status]) : r.status}</td>
                     <td className="max-w-40 truncate" title={r.note ?? ""}>{r.note}</td>
                   </tr>
                 ))}

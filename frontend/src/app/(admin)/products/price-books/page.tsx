@@ -14,11 +14,16 @@ import { PriceBookSidebar } from "@/features/products/price-book-sidebar";
 import { PriceBookTable } from "@/features/products/price-book-table";
 import type { PriceBook } from "@/features/products/price-book-types";
 import { useCurrentUser } from "@/lib/use-current-user";
+import { useT } from "@/lib/i18n";
+import { commonNs } from "@/messages/common";
+import { productsNs } from "@/messages/products";
 
 /** Hàng hóa → Thiết lập giá: giá chung + giá theo từng bảng giá, sửa trực tiếp trên bảng. */
 export default function PriceBooksPage() {
   const { can } = useCurrentUser();
   const editable = can("catalog.manage");
+  const t = useT(productsNs);
+  const tc = useT(commonNs);
   const { data: books = [] } = usePriceBooks();
   const [selected, setSelected] = useState<string[]>([]);
   const [filters, setFilters] = useState(EMPTY_PRICE_FILTERS);
@@ -30,8 +35,8 @@ export default function PriceBooksPage() {
   const priceImport = usePriceImport();
 
   useEffect(() => {
-    const t = setTimeout(() => { setFilters((f) => ({ ...f, q: search })); setPage(0); }, 300);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => { setFilters((f) => ({ ...f, q: search })); setPage(0); }, 300);
+    return () => clearTimeout(timer);
   }, [search]);
 
   // Bảng giá bị xóa → bỏ khỏi danh sách đang chọn; giữ thứ tự cột theo thứ tự chọn.
@@ -43,7 +48,7 @@ export default function PriceBooksPage() {
   const pages = data ? Math.max(1, Math.ceil(data.total / size)) : 1;
 
   function importFile() {
-    if (shown.length !== 1) return toast.error("Chọn đúng 1 bảng giá để nhập file (hoặc dùng menu trên cột bảng giá)");
+    if (shown.length !== 1) return toast.error(t("priceBooks.importPickOne"));
     priceImport.start(shown[0]);
   }
 
@@ -51,24 +56,24 @@ export default function PriceBooksPage() {
     <div className="flex items-center gap-2">
       <div className="relative w-full max-w-[400px]">
         <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-        <input aria-label="Tìm hàng hóa" placeholder="Theo mã, tên hàng" value={search} onChange={(e) => setSearch(e.target.value)}
+        <input aria-label={t("list.searchAria")} placeholder={t("priceBooks.searchPlaceholder")} value={search} onChange={(e) => setSearch(e.target.value)}
           className="h-8 w-full rounded-md border border-[#d1d5db] bg-background pr-2 pl-8 text-sm outline-none placeholder:text-muted-foreground focus-visible:border-primary" />
       </div>
       <div className="ml-auto flex items-center gap-2">
         {editable && (
           <Button variant="outline" className={OUTLINE_GRAY_BTN} disabled={priceImport.isPending} onClick={importFile}
-            title="CSV gồm cột Mã hàng, Giá"><FileUp className="size-4" /> Nhập file</Button>
+            title={t("priceBooks.importHint")}><FileUp className="size-4" /> {tc("actions.import")}</Button>
         )}
         <Button variant="outline" className={OUTLINE_GRAY_BTN} disabled={!data?.items.length}
-          onClick={() => exportPriceRowsCsv(data?.items ?? [], shown)} title="Xuất các dòng đang hiển thị ra file CSV">
-          <FileOutput className="size-4" /> Xuất file
+          onClick={() => exportPriceRowsCsv(data?.items ?? [], shown)} title={t("priceBooks.exportHint")}>
+          <FileOutput className="size-4" /> {tc("actions.export")}
         </Button>
       </div>
     </div>
   );
 
   return (
-    <PurchaseListLayout title="Thiết lập giá" toolbar={toolbar} sidebar={
+    <PurchaseListLayout title={t("priceBooks.title")} toolbar={toolbar} sidebar={
       <PriceBookSidebar books={books} selected={selected} onSelect={(ids) => { setSelected(ids); setPage(0); }}
         onCreate={() => setBookDialog({ key: Date.now() })} onEdit={(book) => setBookDialog({ key: Date.now(), book })}
         filters={filters} onFilters={(f) => { setFilters(f); setPage(0); }} />
@@ -76,7 +81,7 @@ export default function PriceBooksPage() {
       <PriceBookTable data={data} isLoading={isLoading} books={shown} editable={editable}
         onFormula={setFormulaBook} onImport={priceImport.start} onEdit={(book) => setBookDialog({ key: Date.now(), book })} />
       <PurchaseListPager size={size} onSize={(n) => { setSize(n); setPage(0); }} page={page} pages={pages}
-        total={data?.total ?? 0} unit="hàng hóa" onPage={setPage} />
+        total={data?.total ?? 0} unit={t("list.emptyWhat")} onPage={setPage} />
       {bookDialog && (
         <PriceBookFormDialog key={bookDialog.key} book={bookDialog.book} onClose={() => setBookDialog(null)}
           onSaved={(b) => !bookDialog.book && setSelected((s) => [...s, b.id])} />

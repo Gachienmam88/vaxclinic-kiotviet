@@ -23,7 +23,6 @@ export function UpdateChoiceDialog({ isOwner, onClose, onChoose }: {
 }) {
   const [value, setValue] = useState<UpdateChoice>("profile");
   const t = useT(storeProfileNs);
-  const t = useT(storeProfileNs);
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="gap-3 sm:max-w-[520px]">

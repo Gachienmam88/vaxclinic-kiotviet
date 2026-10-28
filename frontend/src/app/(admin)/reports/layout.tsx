@@ -1,13 +1,11 @@
-"use client";
+import { ReportMountGate } from "@/features/reports/report-mount-gate";
+import { I18nPreload } from "@/lib/i18n/i18n-preload";
 
-import { useEffect, useState } from "react";
-
-/**
- * Báo cáo phụ thuộc "hôm nay / lúc này" (khoảng thời gian mặc định, "Ngày lập") theo giờ máy người xem
- * → không dựng sẵn trên server (giờ build / múi giờ server khác) để tránh lệch nội dung khi hydrate.
- */
+/** Khu Báo cáo: tải sẵn chuỗi namespace reports (+ orders: trạng thái đơn, dashboard: đơn vị tiền rút gọn của biểu đồ) (F5 ở en/ja/zh không nháy tiếng Việt) + chỉ vẽ sau khi mount. */
 export default function ReportsLayout({ children }: { children: React.ReactNode }) {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-  return mounted ? children : <div className="p-6 text-sm text-muted-foreground">Đang tải báo cáo...</div>;
+  return (
+    <I18nPreload namespaces={["reports", "orders", "dashboard"]}>
+      <ReportMountGate>{children}</ReportMountGate>
+    </I18nPreload>
+  );
 }

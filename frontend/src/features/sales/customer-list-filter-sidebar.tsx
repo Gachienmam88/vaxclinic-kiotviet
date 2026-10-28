@@ -5,6 +5,10 @@ import { useUserLookup } from "@/features/purchases/purchase-queries";
 import { cn } from "@/lib/utils";
 import { useCustomerGroups, type Period } from "./sales-queries";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
+import { useT } from "@/lib/i18n";
+import { commonNs } from "@/messages/common";
+import { customersNs } from "@/messages/customers";
+import { salesNs } from "@/messages/sales";
 
 export type CustomerFilters = {
   group: string; period: Period; createdBy: string; // group = id nhóm khách hàng
@@ -40,25 +44,28 @@ function Pills<T extends string>({ value, options, onChange }: { value: T; optio
 
 /** Bộ lọc bên trái màn Khách hàng: Nhóm, Ngày tạo, Người tạo, Loại khách hàng, Giới tính. */
 export function CustomerListFilterSidebar({ value, onChange }: { value: CustomerFilters; onChange: (v: CustomerFilters) => void }) {
+  const t = useT(customersNs);
+  const tc = useT(commonNs);
+  const ts = useT(salesNs);
   const { data: groups = [] } = useCustomerGroups();
   const { data: users = [] } = useUserLookup();
   const set = <K extends keyof CustomerFilters>(k: K) => (v: CustomerFilters[K]) => onChange({ ...value, [k]: v });
   const { period } = value;
   return (
     <aside className="space-y-5 rounded-lg bg-white p-2.5 text-[12px]">
-      <Section title="Nhóm khách hàng">
-        <select className={box} value={value.group} onChange={(e) => set("group")(e.target.value)} aria-label="Nhóm khách hàng">
-          <option value="">Tất cả các nhóm</option>{groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
+      <Section title={t("filter.group")}>
+        <select className={box} value={value.group} onChange={(e) => set("group")(e.target.value)} aria-label={t("filter.group")}>
+          <option value="">{t("filter.allGroups")}</option>{groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
         </select>
       </Section>
-      <Section title="Ngày tạo">
+      <Section title={t("filter.createdAt")}>
         {(["all", "custom"] as const).map((m) => (
           <label key={m} className="flex cursor-pointer items-center gap-2">
             <input type="radio" name="created-period" className="size-3.5 accent-primary" checked={period.mode === m}
               onChange={() => set("period")({ ...period, mode: m })} />
             {m === "all" ? (
               <span className={cn(box, "flex items-center justify-between")}>
-                Toàn thời gian <ChevronRight className="size-3.5 text-muted-foreground" />
+                {ts("listKit.allTime")} <ChevronRight className="size-3.5 text-muted-foreground" />
               </span>
             ) : (
               <DateRangePicker className={cn(box, "flex items-center justify-between")} value={period.mode === "custom" ? period : null}
@@ -67,17 +74,17 @@ export function CustomerListFilterSidebar({ value, onChange }: { value: Customer
           </label>
         ))}
       </Section>
-      <Section title="Người tạo">
+      <Section title={t("filter.createdBy")}>
         <select className={cn(box, !value.createdBy && "text-muted-foreground")} value={value.createdBy}
-          onChange={(e) => set("createdBy")(e.target.value)} aria-label="Người tạo">
-          <option value="">Chọn người tạo</option>{users.map((u) => <option key={u.id} value={u.id}>{u.fullName}</option>)}
+          onChange={(e) => set("createdBy")(e.target.value)} aria-label={t("filter.createdBy")}>
+          <option value="">{t("filter.pickCreator")}</option>{users.map((u) => <option key={u.id} value={u.id}>{u.fullName}</option>)}
         </select>
       </Section>
-      <Section title="Loại khách hàng">
-        <Pills value={value.type} onChange={set("type")} options={[["", "Tất cả"], ["PERSONAL", "Cá nhân"], ["COMPANY", "Công ty"]]} />
+      <Section title={t("filter.type")}>
+        <Pills value={value.type} onChange={set("type")} options={[["", tc("status.all")], ["PERSONAL", t("enums.customerType.PERSONAL")], ["COMPANY", t("enums.customerType.COMPANY")]]} />
       </Section>
-      <Section title="Giới tính">
-        <Pills value={value.gender} onChange={set("gender")} options={[["", "Tất cả"], ["MALE", "Nam"], ["FEMALE", "Nữ"]]} />
+      <Section title={t("filter.gender")}>
+        <Pills value={value.gender} onChange={set("gender")} options={[["", tc("status.all")], ["MALE", t("enums.gender.MALE")], ["FEMALE", t("enums.gender.FEMALE")]]} />
       </Section>
     </aside>
   );

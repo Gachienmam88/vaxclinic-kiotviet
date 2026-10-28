@@ -5,6 +5,9 @@ import { FileOutput, Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ListEmptyState } from "@/components/ui/list-empty-state";
+import { useT } from "@/lib/i18n";
+import { commonNs } from "@/messages/common";
+import { purchasesNs } from "@/messages/purchases";
 
 /** Hàng tiêu đề bảng danh sách: nền xanh nhạt kiểu KiotViet. */
 export const LIST_HEADER_ROW = "bg-primary-tint hover:bg-primary-tint";
@@ -35,6 +38,7 @@ export function PurchaseListToolbar({ search, onSearch, placeholder, createLabel
   search: string; onSearch: (v: string) => void; placeholder: string;
   createLabel?: string; createHref?: string; onCreate?: () => void; onExport?: () => void;
 }) {
+  const tc = useT(commonNs);
   return (
     <div className="flex items-center gap-2">
       <div className="relative w-full max-w-[400px]">
@@ -52,28 +56,30 @@ export function PurchaseListToolbar({ search, onSearch, placeholder, createLabel
           <Button variant="outline" className={OUTLINE_BLUE_BTN} onClick={onCreate}><Plus className="size-4" /> {createLabel}</Button>
         )}
         {onExport && (
-          <Button variant="outline" className={OUTLINE_GRAY_BTN} onClick={onExport}><FileOutput className="size-4" /> Xuất file</Button>
+          <Button variant="outline" className={OUTLINE_GRAY_BTN} onClick={onExport}><FileOutput className="size-4" /> {tc("actions.export")}</Button>
         )}
       </div>
     </div>
   );
 }
 
-/** Chân bảng: "Hiển thị [15 dòng]" bên trái, phân trang bên phải. */
+/** Chân bảng: "Hiển thị [15 dòng]" bên trái, phân trang bên phải. `unit`: danh từ đã dịch (VD t("chrome.docUnit")). */
 export function PurchaseListPager({ size, onSize, page, pages, total, unit, onPage }: {
   size: number; onSize: (n: number) => void; page: number; pages: number; total: number; unit: string;
   onPage: (p: number) => void;
 }) {
+  const t = useT(purchasesNs);
+  const tc = useT(commonNs);
   return (
     <div className="flex items-center gap-2 text-xs">
-      <span>Hiển thị</span>
-      <select aria-label="Số dòng mỗi trang" className="h-6 rounded border border-[#d1d5db] bg-background px-1.5" value={size}
+      <span>{tc("pager.perPage")}</span>
+      <select aria-label={t("chrome.rowsPerPage")} className="h-6 rounded border border-[#d1d5db] bg-background px-1.5" value={size}
         onChange={(e) => onSize(Number(e.target.value))}>
-        {[15, 30, 50, 100].map((n) => <option key={n} value={n}>{n} dòng</option>)}
+        {[15, 30, 50, 100].map((n) => <option key={n} value={n}>{t("chrome.rowsOption", { n })}</option>)}
       </select>
-      <span className="ml-auto text-muted-foreground">{total} {unit} — trang {page + 1}/{pages}</span>
-      <Button size="xs" variant="outline" disabled={page === 0} onClick={() => onPage(page - 1)}>Trước</Button>
-      <Button size="xs" variant="outline" disabled={page + 1 >= pages} onClick={() => onPage(page + 1)}>Sau</Button>
+      <span className="ml-auto text-muted-foreground">{t("chrome.pagerSummary", { total, unit, page: page + 1, pages })}</span>
+      <Button size="xs" variant="outline" disabled={page === 0} onClick={() => onPage(page - 1)}>{tc("pager.prev")}</Button>
+      <Button size="xs" variant="outline" disabled={page + 1 >= pages} onClick={() => onPage(page + 1)}>{tc("pager.next")}</Button>
     </div>
   );
 }

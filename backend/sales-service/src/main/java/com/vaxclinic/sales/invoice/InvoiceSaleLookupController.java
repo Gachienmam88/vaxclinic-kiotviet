@@ -1,5 +1,6 @@
 package com.vaxclinic.sales.invoice;
 
+import com.vaxclinic.common.search.AccentInsensitiveSql;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -74,7 +75,7 @@ public class InvoiceSaleLookupController {
                     + " where l.invoice_id = i.id and x.lot_number ilike :lot)");
         }
         if (like(p, "customer", customer)) {
-            w.append(" and (coalesce(i.customer_name, 'Khách lẻ') ilike :customer or c.code ilike :customer"
+            w.append(" and (" + AccentInsensitiveSql.like("coalesce(i.customer_name, 'Khách lẻ')", ":customer") + " or c.code ilike :customer"
                     + " or c.phone ilike :customer)");
         }
         if (like(p, "productCode", productCode)) {

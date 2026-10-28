@@ -21,7 +21,7 @@ public interface AppUserRepository extends JpaRepository<AppUser, UUID> {
     @Query("""
             select u from AppUser u
             where :q = '' or lower(u.username) like lower(concat('%', :q, '%'))
-               or lower(u.fullName) like lower(concat('%', :q, '%'))
+               or function('immutable_unaccent' as String, lower(u.fullName)) like function('immutable_unaccent' as String, lower(concat('%', :q, '%')))
                or u.phone like concat('%', :q, '%')
             """)
     Page<AppUser> search(@Param("q") String q, Pageable pageable);

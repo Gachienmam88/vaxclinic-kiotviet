@@ -9,6 +9,7 @@ import com.vaxclinic.sales.customer.CustomerRepository;
 import com.vaxclinic.sales.channel.SalesChannels;
 import com.vaxclinic.sales.delivery.ShipmentInvoiceHooks;
 import com.vaxclinic.sales.invoice.InvoiceDtos.InvoiceRequest;
+import com.vaxclinic.sales.invoice.checkout.CheckoutAttemptService;
 import com.vaxclinic.sales.order.OrderDepositLedger;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -41,11 +42,14 @@ public class InvoiceService {
     private final ShipmentInvoiceHooks shipments;
     private final SalesChannels channels;
     private final InvoiceExtraPayments extraPayments;
+    private final CheckoutAttemptService checkouts;
 
     public InvoiceService(InvoiceRepository invoices, CustomerRepository customers, CashVoucherRepository vouchers,
                           InvoiceWriter writer, InvoiceEditWriter editWriter, ProductStockClient stock, JdbcTemplate jdbc,
                           SalesRules rules, com.vaxclinic.common.audit.AuditLogger audit, OrderDepositLedger orderDeposits,
-                          ShipmentInvoiceHooks shipments, SalesChannels channels, InvoiceExtraPayments extraPayments) {
+                          ShipmentInvoiceHooks shipments, SalesChannels channels, InvoiceExtraPayments extraPayments,
+                          CheckoutAttemptService checkouts) {
+        this.checkouts = checkouts;
         this.extraPayments = extraPayments;
         this.orderDeposits = orderDeposits;
         this.shipments = shipments;
@@ -95,10 +99,13 @@ public class InvoiceService {
         // Line ids derived from the invoice id: a retry gets the SAME ids, matching the stored stock result (cost + lots).
         List<UUID> lineIds = IntStream.range(0, req.lines().size())
                 .mapToObj(i -> UUID.nameUUIDFromBytes((req.id() + ":" + i).getBytes(StandardCharsets.UTF_8))).toList();
+        String partner = customer == null ? "Khách lẻ" : customer.getName();
         UUID id;
         try {
-            var result = stock.apply(new ProductStockClient.Request(req.id(), "SALE", code, req.branchId(),
-                    customer == null ? "Khách lẻ" : customer.getName(), actor.id(), null, stockLines(req, lineIds)));
+            // Ghi nhận lần thanh toán TRƯỚC khi trừ kho → lưu hóa đơn lỗi mà không ai gửi lại thì job đối soát hoàn kho.
+            UUID stockDocId = checkouts.begin(req, code, partner, actor, totals.total());
+            var result = applySale(req.id(), new ProductStockClient.Request(stockDocId, "SALE", code, req.branchId(),
+                    partner, actor.id(), null, stockLines(req, lineIds)));
             id = writer.persist(req, actor, customer, code, lineIds, result, totals, paid);
         } catch (RuntimeException e) {
             if (req.orderId() != null) orderDeposits.releaseClaim(req.orderId(), req.id());
@@ -201,6 +208,16 @@ public class InvoiceService {
         }
         String channel = req.salesChannel() == null ? null : channels.resolve(req.salesChannel(), inv.getSalesChannel());
         writer.updateInfo(id, req, channel);
+    }
+
+    /** Kho từ chối (4xx: thiếu tồn...) → chắc chắn chưa trừ gì → FAILED; lỗi mạng / timeout → giữ PENDING cho đối soát. */
+    private ProductStockClient.Result applySale(UUID invoiceId, ProductStockClient.Request request) {
+        try {
+            return stock.apply(request);
+        } catch (BusinessException e) {
+            if (e.getStatus().is4xxClientError()) checkouts.markFailed(invoiceId, e.getCode() + ": " + e.getMessage());
+            throw e;
+        }
     }
 
     private Invoice find(UUID id) {

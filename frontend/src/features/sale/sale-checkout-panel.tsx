@@ -5,7 +5,10 @@ import { QrPaymentDialog } from "@/features/sales/qr-payment-dialog";
 import { Button } from "@/components/ui/button";
 import { DocCodeLink } from "@/components/ui/doc-code-link";
 import { NumberInput } from "@/components/number-input";
+import { useT } from "@/lib/i18n";
 import { formatMoney, formatNumber } from "@/lib/format";
+import { commonNs } from "@/messages/common";
+import { saleNs } from "@/messages/sale";
 import { SaleChannelPicker } from "./sale-channel-picker";
 import { SaleCustomerPicker } from "./sale-customer-picker";
 import { SalePaidSection } from "./sale-paid-section";
@@ -48,6 +51,8 @@ function customerPatch(customer: SaleCustomer | null, draft: DraftInvoice): Part
  */
 export function SaleCheckoutPanel({ draft, branchId, update, onPay, paying, priceBook, lookups }: Props) {
   const { settings } = useSaleSettings();
+  const tr = useT(saleNs);
+  const tc = useT(commonNs);
   const [qr, setQr] = useState(false);
   const [autoPay, setAutoPay] = useState(false);
   const t = cartTotals(draft);
@@ -72,28 +77,28 @@ export function SaleCheckoutPanel({ draft, branchId, update, onPay, paying, pric
         <div className="min-w-0 flex-1"><SaleCustomerPicker value={draft.customer} branchId={branchId} onChange={(c) => update(customerPatch(c, draft))} /></div>
         <SalePriceBookSelect options={priceBook.options} value={priceBook.value} onChange={priceBook.select} />
       </div>
-      {ref && <p className="mt-3 text-[13px] font-bold text-[#16a34a]">{order ? "Đặt hàng" : "Hóa đơn từ đơn"} / <DocCodeLink code={ref.code} newTab className="font-medium" /></p>}
+      {ref && <p className="mt-3 text-[13px] font-bold text-[#16a34a]">{tr(order ? "checkout.orderRef" : "checkout.invoiceFromOrder")} / <DocCodeLink code={ref.code} newTab className="font-medium" /></p>}
       <div className="mt-4 min-h-0 flex-1 space-y-1 overflow-y-auto border-t border-dashed border-[#d6d9de] pt-3">
-        <SummaryRow label="Tổng tiền hàng" sub={formatNumber(t.quantity)}>{formatMoney(t.subtotal)}</SummaryRow>
-        <SummaryRow label={draft.discountPercent != null ? `Giảm giá (${formatNumber(draft.discountPercent)}%)` : "Giảm giá"}>
-          <NumberInput aria-label="Giảm giá hóa đơn" className={`${underlineInput} w-[104px] text-[15px]`} value={t.discount}
+        <SummaryRow label={tr("checkout.subtotal")} sub={formatNumber(t.quantity)}>{formatMoney(t.subtotal)}</SummaryRow>
+        <SummaryRow label={draft.discountPercent != null ? tr("checkout.discountPercent", { percent: formatNumber(draft.discountPercent) }) : tr("checkout.discount")}>
+          <NumberInput aria-label={tr("checkout.invoiceDiscount")} className={`${underlineInput} w-[104px] text-[15px]`} value={t.discount}
             onValueChange={(discount) => update({ discount, discountPercent: null })} />
         </SummaryRow>
-        <SummaryRow label="Khách cần trả" bold><span className="text-[17px] text-primary">{formatMoney(t.total)}</span></SummaryRow>
-        {t.deposit > 0 && <SummaryRow label={order ? "Khách đã trả" : "Đã đặt cọc"}>{formatMoney(t.deposit)}</SummaryRow>}
+        <SummaryRow label={tr("checkout.due")} bold><span className="text-[17px] text-primary">{formatMoney(t.total)}</span></SummaryRow>
+        {t.deposit > 0 && <SummaryRow label={tr(order ? "checkout.alreadyPaid" : "checkout.deposited")}>{formatMoney(t.deposit)}</SummaryRow>}
         <SalePaidSection draft={draft} paid={t.paid} due={t.due} update={update} onQr={() => { update({ paymentMethod: "TRANSFER", extraPayments: [] }); setQr(true); }}
           allowMixed={!order && !draft.editOf} suggest={settings.suggestPaid && !order && !delivery} />
-        {change > 0 && <SummaryRow label="Tiền thừa trả khách">{formatMoney(change)}</SummaryRow>}
-        {change < 0 && !order && !delivery && <div className="text-destructive"><SummaryRow label="Tính vào công nợ">{formatMoney(-change)}</SummaryRow></div>}
-        {delivery && <SummaryRow bold label="Thu hộ (COD)"><span className="text-primary">{formatMoney(t.cod)}</span></SummaryRow>}
-        {change < 0 && order && <SummaryRow label="Còn phải trả khi nhận hàng">{formatMoney(-change)}</SummaryRow>}
-        {order && <SummaryRow label="Thời gian giao hàng">
-          <DateTimePicker aria-label="Thời gian giao hàng" className={`${underlineInput} w-[180px]`}
+        {change > 0 && <SummaryRow label={tr("checkout.change")}>{formatMoney(change)}</SummaryRow>}
+        {change < 0 && !order && !delivery && <div className="text-destructive"><SummaryRow label={tr("checkout.toDebt")}>{formatMoney(-change)}</SummaryRow></div>}
+        {delivery && <SummaryRow bold label={tr("checkout.cod")}><span className="text-primary">{formatMoney(t.cod)}</span></SummaryRow>}
+        {change < 0 && order && <SummaryRow label={tr("checkout.payOnDelivery")}>{formatMoney(-change)}</SummaryRow>}
+        {order && <SummaryRow label={tr("checkout.deliveryTime")}>
+          <DateTimePicker aria-label={tr("checkout.deliveryTime")} className={`${underlineInput} w-[180px]`}
             value={draft.expectedDeliveryAt ?? ""} onChange={(v) => update({ expectedDeliveryAt: v || null })} />
         </SummaryRow>}
       </div>
       <Button title="F9" className="mt-3 h-12 w-full shrink-0 rounded-md bg-chrome text-[15px] font-bold uppercase hover:bg-chrome-hover" disabled={paying || !draft.lines.length} onClick={onPay}>
-        {paying ? "Đang lưu..." : order ? (draft.orderOf ? "Lưu đơn" : "Đặt hàng") : "Thanh toán"}
+        {paying ? tc("status.saving") : tr(order ? (draft.orderOf ? "checkout.saveOrder" : "checkout.placeOrder") : "checkout.pay")}
       </Button>
       {qr && <QrPaymentDialog amount={t.paid} info={draft.editOf?.code ?? ref?.code ?? draft.label} onClose={() => setQr(false)}
         onPaid={draft.editOf ? undefined : (paid) => {

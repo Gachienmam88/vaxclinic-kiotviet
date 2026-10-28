@@ -7,7 +7,9 @@ import { SettingSwitch } from "@/features/settings/setting-switch";
 import { NativeSelect } from "@/features/products/product-form-sections";
 import { useBranches } from "@/features/settings/settings-queries";
 import { formatDate } from "@/lib/format";
-import { GROUPS } from "./tax-calc";
+import { useT } from "@/lib/i18n";
+import { accountingNs } from "@/messages/accounting";
+import { groupLabel, REVENUE_GROUPS } from "./accounting-labels";
 import { TaxLocationDialog } from "./tax-location-dialog";
 import type { TaxLocation, TaxProfile } from "./tax-queries";
 
@@ -15,6 +17,7 @@ import type { TaxLocation, TaxProfile } from "./tax-queries";
 export function TaxProfileCard({ profile, readOnly, onChange, onDelete }: {
   profile: TaxProfile; readOnly: boolean; onChange: (p: TaxProfile) => void; onDelete: () => void;
 }) {
+  const t = useT(accountingNs);
   const { data: branches = [] } = useBranches();
   const [open, setOpen] = useState(true);
   const [dialog, setDialog] = useState<{ index?: number } | null>(null);
@@ -26,7 +29,7 @@ export function TaxProfileCard({ profile, readOnly, onChange, onDelete }: {
     setDialog(null);
   };
   const toggleLocation = (i: number, active: boolean) => {
-    if (!active && !confirm("Ngừng hoạt động địa điểm kinh doanh?\nDữ liệu các chi nhánh thuộc địa điểm này sẽ không được tiếp tục đưa vào sổ kế toán và tờ khai từ thời điểm hiện tại. Dữ liệu cũ không thay đổi.")) return;
+    if (!active && !confirm(t("profile.confirmDeactivate"))) return;
     set({ locations: profile.locations.map((l, j) => (j === i ? { ...l, active } : l)) });
   };
 
@@ -35,38 +38,38 @@ export function TaxProfileCard({ profile, readOnly, onChange, onDelete }: {
       <button type="button" className="flex w-full items-center gap-2 px-4 py-3" onClick={() => setOpen(!open)}>
         <span className="text-[15px] font-semibold text-primary">{profile.taxCode}</span>
         <span className={profile.active ? "rounded bg-primary-tint px-1 py-0.5 text-[11px] text-primary" : "rounded bg-muted px-1 py-0.5 text-[11px] text-muted-foreground"}>
-          {profile.active ? "Đang kê khai" : "Ngừng kê khai"}</span>
+          {t(profile.active ? "profile.declaring" : "profile.notDeclaring")}</span>
         {open ? <ChevronUp className="ml-auto size-4" /> : <ChevronDown className="ml-auto size-4" />}
       </button>
       {open && (
         <div className="space-y-4 px-5 pb-4 text-[13px]">
           <div className="flex items-center gap-4">
-            <div className="flex-1"><p className="font-medium">Quản lý hồ sơ kê khai</p>
-              <p className="text-muted-foreground">Dựa trên nhóm doanh thu và phương pháp tính thuế, hệ thống tự tổng hợp dữ liệu cho sổ kế toán và tờ khai của từng địa điểm kinh doanh.</p></div>
+            <div className="flex-1"><p className="font-medium">{t("profile.manageTitle")}</p>
+              <p className="text-muted-foreground">{t("profile.manageDesc")}</p></div>
             <SettingSwitch checked={profile.active} disabled={readOnly} onCheckedChange={(v) => set({ active: v })} />
           </div>
           <div className="grid grid-cols-[12rem_1fr] items-center gap-3 border-t pt-3">
-            <span>Nhóm doanh thu</span>
+            <span>{t("profile.revenueGroup")}</span>
             <div className="w-64"><NativeSelect value={profile.revenueGroup} disabled={readOnly}
               onChange={(e) => set({ revenueGroup: Number(e.target.value) })}>
-              {Object.entries(GROUPS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</NativeSelect></div>
-            <span>Phương pháp tính thuế TNCN</span>
+              {REVENUE_GROUPS.map((g) => <option key={g} value={g}>{groupLabel(t, g)}</option>)}</NativeSelect></div>
+            <span>{t("profile.pitMethod")}</span>
             <div className="flex gap-4">
-              {([["REVENUE", "Tính theo doanh thu"], ["PROFIT", "Tính theo thu nhập (doanh thu - chi phí)"]] as const).map(([v, label]) => (
+              {([["REVENUE", "profile.pitRevenue"], ["PROFIT", "profile.pitProfit"]] as const).map(([v, label]) => (
                 <label key={v} className="flex items-center gap-1.5">
                   <input type="radio" className="accent-primary" disabled={readOnly || profile.revenueGroup === 1}
-                    checked={profile.pitMethod === v} onChange={() => set({ pitMethod: v })} />{label}</label>
+                    checked={profile.pitMethod === v} onChange={() => set({ pitMethod: v })} />{t(label)}</label>
               ))}
             </div>
           </div>
           <div className="border-t pt-3">
-            <div className="mb-2 flex items-center"><b className="font-semibold">Danh sách địa điểm kinh doanh</b>
-              {!readOnly && <Button variant="outline" size="sm" className="ml-auto" onClick={() => setDialog({})}><Plus className="size-4" /> Thêm địa điểm kinh doanh</Button>}</div>
+            <div className="mb-2 flex items-center"><b className="font-semibold">{t("profile.locations")}</b>
+              {!readOnly && <Button variant="outline" size="sm" className="ml-auto" onClick={() => setDialog({})}><Plus className="size-4" /> {t("profile.addLocation")}</Button>}</div>
             <table className="w-full">
-              <thead className="bg-[#f0f2f5] text-left text-xs"><tr><th className="h-[34px] px-2 font-semibold">Mã địa điểm</th><th className="px-2">Tên địa điểm</th><th className="px-2">Địa chỉ</th>
-                <th className="px-2">Chi nhánh</th><th className="px-2">Ngày chuyển lên kê khai</th><th className="px-2">Trạng thái</th><th className="w-12 px-2" /></tr></thead>
+              <thead className="bg-[#f0f2f5] text-left text-xs"><tr><th className="h-[34px] px-2 font-semibold">{t("profile.colCode")}</th><th className="px-2">{t("profile.colName")}</th><th className="px-2">{t("profile.colAddress")}</th>
+                <th className="px-2">{t("profile.colBranches")}</th><th className="px-2">{t("profile.colStartDate")}</th><th className="px-2">{t("profile.colStatus")}</th><th className="w-12 px-2" /></tr></thead>
               <tbody>
-                {!profile.locations.length && <tr><td colSpan={7} className="py-4 text-center text-muted-foreground">Chưa có địa điểm — sổ sách sẽ tính số liệu của tất cả chi nhánh</td></tr>}
+                {!profile.locations.length && <tr><td colSpan={7} className="py-4 text-center text-muted-foreground">{t("profile.noLocations")}</td></tr>}
                 {profile.locations.map((l, i) => (
                   <tr key={l.code} className="border-b">
                     <td className="px-2 py-2">{l.code}</td>
@@ -75,7 +78,7 @@ export function TaxProfileCard({ profile, readOnly, onChange, onDelete }: {
                     <td className="px-2">{l.branchIds.map((id) => branches.find((b) => b.id === id)?.name).filter(Boolean).join(", ")}</td>
                     <td className="px-2">{formatDate(l.startDate)}</td>
                     <td className="px-2"><SettingSwitch checked={l.active} disabled={readOnly} onCheckedChange={(v) => toggleLocation(i, v)} /></td>
-                    <td className="px-2">{!readOnly && <Button size="icon-sm" variant="outline" onClick={() => setDialog({ index: i })}><Pencil className="size-4" /></Button>}</td>
+                    <td className="px-2">{!readOnly && <Button size="icon-sm" variant="outline" aria-label={t("profile.editLocation")} title={t("profile.editLocation")} onClick={() => setDialog({ index: i })}><Pencil className="size-4" /></Button>}</td>
                   </tr>
                 ))}
               </tbody>
@@ -83,9 +86,9 @@ export function TaxProfileCard({ profile, readOnly, onChange, onDelete }: {
           </div>
           {!readOnly && (
             <div className="flex items-center border-t pt-3">
-              <div className="flex-1"><p className="font-medium">Xóa mã số thuế</p>
-                <p className="text-muted-foreground">Thiết lập thuế của mã số thuế {profile.taxCode} sẽ bị xóa. Dữ liệu bán hàng không bị ảnh hưởng.</p></div>
-              <Button variant="outline" onClick={() => confirm(`Xóa mã số thuế ${profile.taxCode}?`) && onDelete()}><Trash2 className="size-4" /> Xóa mã số thuế</Button>
+              <div className="flex-1"><p className="font-medium">{t("profile.deleteTitle")}</p>
+                <p className="text-muted-foreground">{t("profile.deleteDesc", { code: profile.taxCode })}</p></div>
+              <Button variant="outline" onClick={() => confirm(t("profile.confirmDelete", { code: profile.taxCode })) && onDelete()}><Trash2 className="size-4" /> {t("profile.deleteTitle")}</Button>
             </div>
           )}
         </div>

@@ -1,13 +1,19 @@
 /** Kiểu dữ liệu khớp PurchaseDtos / SupplierController của product-service. */
+import type { TFunction } from "@/lib/i18n";
+import type { purchasesNs } from "@/messages/purchases";
+
+/** Hàm dịch namespace "purchases" — truyền vào helper không phải React (CSV, nhãn). */
+export type PurchasesT = TFunction<(typeof purchasesNs)["vi"]>;
 
 export type DocStatus = "DRAFT" | "COMPLETED" | "CANCELLED";
 
-export const RECEIPT_STATUS_LABEL: Record<DocStatus, string> = {
-  DRAFT: "Phiếu tạm", COMPLETED: "Đã nhập hàng", CANCELLED: "Đã hủy",
-};
-export const RETURN_STATUS_LABEL: Record<DocStatus, string> = {
-  DRAFT: "Phiếu tạm", COMPLETED: "Đã trả hàng", CANCELLED: "Đã hủy",
-};
+/** Nhãn trạng thái phiếu nhập / trả hàng nhập theo ngôn ngữ đang chọn. */
+export const receiptStatusLabels = (t: PurchasesT): Record<DocStatus, string> => ({
+  DRAFT: t("status.draft"), COMPLETED: t("status.received"), CANCELLED: t("status.cancelled"),
+});
+export const returnStatusLabels = (t: PurchasesT): Record<DocStatus, string> => ({
+  DRAFT: t("status.draft"), COMPLETED: t("status.returned"), CANCELLED: t("status.cancelled"),
+});
 
 export type Supplier = {
   id: string; code: string; name: string; phone: string | null; email: string | null; address: string | null;

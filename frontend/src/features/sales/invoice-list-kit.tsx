@@ -1,6 +1,8 @@
 "use client";
 
 import { Search } from "lucide-react";
+import { useT } from "@/lib/i18n";
+import { salesNs } from "@/messages/sales";
 import type { Period } from "./sales-queries";
 import { cn } from "@/lib/utils";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
@@ -78,16 +80,17 @@ export function PillGroup({ value, options, onChange }: { value: string; options
 }
 
 /** Lọc thời gian: Tháng này / Tùy chỉnh (khoảng ngày). */
-export function PeriodFilter({ value, onChange, title = "Thời gian", allowAll }: {
+export function PeriodFilter({ value, onChange, title, allowAll }: {
   value: Period; onChange: (p: Period) => void; title?: string; allowAll?: boolean;
 }) {
+  const t = useT(salesNs);
   const box = "flex h-[30px] flex-1 items-center justify-between rounded-md border bg-background px-2";
   return (
-    <FilterSection title={title}>
+    <FilterSection title={title ?? t("listKit.time")}>
       <RadioOption checked={value.mode === "month"} onSelect={() => onChange({ ...value, mode: "month" })}>
-        <span className={box}>Tháng này</span></RadioOption>
+        <span className={box}>{t("listKit.thisMonth")}</span></RadioOption>
       {allowAll && <RadioOption checked={value.mode === "all"} onSelect={() => onChange({ ...value, mode: "all" })}>
-        <span className={box}>Toàn thời gian</span></RadioOption>}
+        <span className={box}>{t("listKit.allTime")}</span></RadioOption>}
       <RadioOption checked={value.mode === "custom"} onSelect={() => onChange({ ...value, mode: "custom" })}>
         <DateRangePicker className="flex-1" value={value.mode === "custom" ? value : null} onChange={(r) => onChange({ ...value, ...r, mode: "custom" })} />
       </RadioOption>

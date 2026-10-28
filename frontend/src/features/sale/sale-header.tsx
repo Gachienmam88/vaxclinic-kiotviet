@@ -2,6 +2,8 @@
 
 import { RefreshCw, ShoppingBag, Undo2, WifiOff } from "lucide-react";
 import { AccentThemeSync } from "@/components/layout/accent-theme-sync";
+import { useT } from "@/lib/i18n";
+import { saleNs } from "@/messages/sale";
 import { SaleInvoiceTabs } from "./sale-invoice-tabs";
 import { SaleMainMenu, type SaleMenuAction } from "./sale-main-menu";
 import { SalePrintSettingsPopover } from "./sale-print-settings-popover";
@@ -26,6 +28,8 @@ const icon = "relative grid size-8 shrink-0 place-items-center rounded-md hover:
  * Xử lý đặt hàng · Chọn hóa đơn trả hàng · Đồng bộ phiếu (số phiếu chờ / mất mạng) · Thiết lập in · tên người dùng · menu ☰.
  */
 export function SaleHeader({ products, onPick, tabs, online, pending, userName, onAction }: Props) {
+  const t = useT(saleNs);
+  const syncLabel = online ? (pending ? t("header.syncPending", { count: pending }) : t("header.sync")) : t("header.offline");
   return (
     <header className="flex h-[50px] shrink-0 items-center gap-2 bg-chrome pr-3 pl-1.5 text-white">
       {/* Thanh trên + nút THANH TOÁN theo màu chủ đề của người dùng (như KiotViet) */}
@@ -33,13 +37,12 @@ export function SaleHeader({ products, onPick, tabs, online, pending, userName, 
       <SaleProductSearch products={products} onPick={onPick} />
       <SaleInvoiceTabs tabs={tabs} />
       <div className="flex shrink-0 items-center gap-1.5 pl-2">
-        <button type="button" className={icon} aria-label="Xử lý đặt hàng" title="Xử lý đặt hàng" onClick={() => onAction("ORDERS")}>
+        <button type="button" className={icon} aria-label={t("menu.orders")} title={t("menu.orders")} onClick={() => onAction("ORDERS")}>
           <ShoppingBag className="size-5" /></button>
-        <button type="button" className={icon} aria-label="Chọn hóa đơn trả hàng" title="Chọn hóa đơn trả hàng" onClick={() => onAction("RETURN")}>
+        <button type="button" className={icon} aria-label={t("menu.return")} title={t("menu.return")} onClick={() => onAction("RETURN")}>
           <Undo2 className="size-5" /></button>
         <button type="button" className={`${icon} ${!online ? "bg-orange-500 hover:bg-orange-500/90" : ""}`} onClick={() => onAction("SYNC")}
-          aria-label={`Đồng bộ phiếu${pending ? ` (${pending} chờ đồng bộ)` : ""}${online ? "" : " — mất kết nối"}`}
-          title={online ? `Đồng bộ phiếu${pending ? ` — ${pending} phiếu chờ` : ""}` : "Mất kết nối — phiếu lưu trên máy"}>
+          aria-label={syncLabel} title={syncLabel}>
           {online ? <RefreshCw className="size-5" /> : <WifiOff className="size-5" />}
           {pending > 0 && <span className="absolute -top-1 -right-1 grid h-4 min-w-4 place-items-center rounded-full bg-orange-500 px-1 text-[10px] font-bold">{pending}</span>}
         </button>

@@ -3,10 +3,10 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { useT } from "@/lib/i18n";
+import { storeProfileNs } from "@/messages/store-profile";
 import { FlowFooter, FlowStepper, useVerifyStep } from "./store-flow-parts";
 import { useStoreProfileMutation, type StoreProfile } from "./store-profile-queries";
-
-const STEPS = ["Xác thực", "Nhập SĐT mới", "Xác nhận"];
 
 function PhoneBox({ label, phone }: { label: string; phone: string }) {
   return (
@@ -19,11 +19,12 @@ function PhoneBox({ label, phone }: { label: string; phone: string }) {
 
 /** "Yêu cầu thay đổi số điện thoại" (ảnh 181): Xác thực → Nhập SĐT mới → Xác nhận. */
 export function PhoneChangeDialog({ profile, onClose }: { profile: StoreProfile; onClose: () => void }) {
+  const t = useT(storeProfileNs);
   const [step, setStep] = useState(0);
   const [token, setToken] = useState<string | null>(null);
   const [phone, setPhone] = useState("");
   const verify = useVerifyStep("PHONE", profile.twoFactorEnabled);
-  const save = useStoreProfileMutation<{ phone: string; verifyToken: string }>("PUT", "/phone", "Đã cập nhật số điện thoại chủ gian hàng");
+  const save = useStoreProfileMutation<{ phone: string; verifyToken: string }>("PUT", "/phone", t("phone.toast"));
   const phoneValid = /^0\d{9}$/.test(phone) && phone !== profile.phone;
 
   async function next() {
@@ -40,36 +41,36 @@ export function PhoneChangeDialog({ profile, onClose }: { profile: StoreProfile;
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="gap-3 sm:max-w-[520px]">
-        <DialogHeader><DialogTitle className="text-[17px] font-semibold">Yêu cầu thay đổi số điện thoại</DialogTitle></DialogHeader>
-        <FlowStepper steps={STEPS} current={step} />
+        <DialogHeader><DialogTitle className="text-[17px] font-semibold">{t("phone.title")}</DialogTitle></DialogHeader>
+        <FlowStepper steps={[t("phone.steps.verify"), t("phone.steps.newPhone"), t("phone.steps.confirm")]} current={step} />
         <div className="space-y-3 py-1 text-[13px]">
           {step === 0 && (
             <>
-              <PhoneBox label="Số điện thoại hiện tại" phone={profile.phone || "Chưa có"} />
+              <PhoneBox label={t("phone.current")} phone={profile.phone || t("phone.none")} />
               {verify.fields}
             </>
           )}
           {step === 1 && (
             <label className="grid gap-1">
-              <span className="text-xs text-muted-foreground">Số điện thoại mới của chủ gian hàng</span>
-              <Input autoFocus inputMode="tel" maxLength={10} placeholder="VD: 0912345678" value={phone}
+              <span className="text-xs text-muted-foreground">{t("phone.newLabel")}</span>
+              <Input autoFocus inputMode="tel" maxLength={10} placeholder={t("phone.placeholder")} value={phone}
                 onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))} />
-              {phone && !phoneValid && <span className="text-xs text-destructive">Số điện thoại gồm 10 số, bắt đầu bằng 0 và khác số hiện tại</span>}
+              {phone && !phoneValid && <span className="text-xs text-destructive">{t("phone.invalid")}</span>}
             </label>
           )}
           {step === 2 && (
             <>
-              <p className="text-center">Xác nhận đổi số điện thoại chủ gian hàng:</p>
+              <p className="text-center">{t("phone.confirmPrompt")}</p>
               <div className="flex items-center justify-center gap-3">
-                <PhoneBox label="Số hiện tại" phone={profile.phone || "Chưa có"} />
+                <PhoneBox label={t("phone.currentShort")} phone={profile.phone || t("phone.none")} />
                 <span aria-hidden>→</span>
-                <PhoneBox label="Số mới" phone={phone} />
+                <PhoneBox label={t("phone.newShort")} phone={phone} />
               </div>
-              <p className="text-center text-xs text-muted-foreground">Số mới được dùng cho thông tin cửa hàng và đầu mẫu in.</p>
+              <p className="text-center text-xs text-muted-foreground">{t("phone.usageNote")}</p>
             </>
           )}
         </div>
-        <FlowFooter onCancel={onClose} nextLabel={step === 2 ? "Xác nhận" : "Tiếp tục"} onNext={() => void next()}
+        <FlowFooter onCancel={onClose} nextLabel={step === 2 ? t("flow.confirm") : t("flow.next")} onNext={() => void next()}
           disabled={(step === 0 && (!verify.valid || verify.pending)) || (step === 1 && !phoneValid) || save.isPending} />
       </DialogContent>
     </Dialog>

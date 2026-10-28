@@ -10,6 +10,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toVnAddress, VnAddressFields, type VnAddress } from "@/components/ui/vn-address-fields";
 import { api, errorMessage } from "@/lib/api-client";
+import { useT } from "@/lib/i18n";
+import { commonNs } from "@/messages/common";
+import { settingsNs } from "@/messages/settings";
 import type { Branch } from "./settings-queries";
 
 type Props = { open: boolean; onOpenChange: (open: boolean) => void; branch?: Branch };
@@ -17,6 +20,8 @@ type Props = { open: boolean; onOpenChange: (open: boolean) => void; branch?: Br
 /** Thêm / sửa điểm tiêm. Mã điểm tiêm không đổi được sau khi tạo. */
 export function BranchFormDialog({ open, onOpenChange, branch }: Props) {
   const qc = useQueryClient();
+  const t = useT(settingsNs);
+  const tc = useT(commonNs);
   const [form, setForm] = useState({
     code: branch?.code ?? "",
     name: branch?.name ?? "",
@@ -34,7 +39,7 @@ export function BranchFormDialog({ open, onOpenChange, branch }: Props) {
         ? api(`/branches/${branch.id}`, { method: "PUT", body: body() })
         : api("/branches", { method: "POST", body: body() }),
     onSuccess: () => {
-      toast.success(branch ? "Đã cập nhật chi nhánh" : "Đã thêm chi nhánh");
+      toast.success(branch ? t("branchForm.updated") : t("branchForm.added"));
       qc.invalidateQueries({ queryKey: ["branches"] });
       onOpenChange(false);
     },
@@ -48,32 +53,32 @@ export function BranchFormDialog({ open, onOpenChange, branch }: Props) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{branch ? "Sửa chi nhánh" : "Thêm chi nhánh"}</DialogTitle>
+          <DialogTitle>{branch ? t("branchForm.editTitle") : t("branchForm.addTitle")}</DialogTitle>
         </DialogHeader>
         <form id="branch-form" className="grid gap-3"
           onSubmit={(e) => { e.preventDefault(); save.mutate(); }}>
           <div className="grid gap-1.5">
-            <Label htmlFor="b-code">Mã chi nhánh</Label>
+            <Label htmlFor="b-code">{t("branchForm.code")}</Label>
             <Input id="b-code" required maxLength={20} disabled={!!branch} value={form.code} onChange={set("code")} />
           </div>
           <div className="grid gap-1.5">
-            <Label htmlFor="b-name">Tên chi nhánh</Label>
+            <Label htmlFor="b-name">{t("branchForm.name")}</Label>
             <Input id="b-name" required maxLength={200} value={form.name} onChange={set("name")} />
           </div>
           <VnAddressFields idPrefix="b" value={addr} onChange={setAddr} fieldClassName="grid gap-1.5"
             labelClassName="text-sm font-medium leading-none" />
           <div className="grid gap-1.5">
-            <Label htmlFor="b-phone">Số điện thoại</Label>
+            <Label htmlFor="b-phone">{t("branchForm.phone")}</Label>
             <Input id="b-phone" maxLength={20} value={form.phone} onChange={set("phone")} />
           </div>
           <label className="flex items-center gap-2 text-sm">
             <Checkbox checked={form.active} onCheckedChange={(v) => setForm((f) => ({ ...f, active: v === true }))} />
-            Đang hoạt động
+            {t("branchForm.active")}
           </label>
         </form>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Bỏ qua</Button>
-          <Button type="submit" form="branch-form" disabled={save.isPending}>Lưu</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>{tc("actions.skip")}</Button>
+          <Button type="submit" form="branch-form" disabled={save.isPending}>{tc("actions.save")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

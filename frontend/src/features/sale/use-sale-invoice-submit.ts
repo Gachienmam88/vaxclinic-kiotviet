@@ -2,7 +2,10 @@
 
 import { toast } from "sonner";
 import { api } from "@/lib/api-client";
+import { useLocale, useT, type Locale } from "@/lib/i18n";
+import { interpolate } from "@/lib/i18n/translate";
 import { formatMoney } from "@/lib/format";
+import { saleNs } from "@/messages/sale";
 import type { Invoice } from "@/features/sales/sales-types";
 import { toBody } from "./sale-invoice-body";
 import { isNetworkError } from "./sale-storage";
@@ -11,14 +14,23 @@ import { cartTotals, type SaleTabs } from "./use-sale-tabs";
 import { useSaleInvoicePrinter } from "./use-sale-invoice-printer";
 import { useSaleSettings } from "./use-sale-settings";
 
-/** Đọc số tiền khách thanh toán bằng giọng tiếng Việt (Web Speech API); máy không hỗ trợ thì bỏ qua. */
-export function speakPaid(amount: number) {
+const SPEECH_LANG: Record<Locale, string> = { vi: "vi-VN", en: "en-US", ja: "ja-JP", zh: "zh-CN" };
+
+/**
+ * Đọc số tiền khách thanh toán (Web Speech API) bằng ngôn ngữ giao diện nếu máy có giọng đọc ngôn ngữ đó,
+ * không có thì đọc câu tiếng Việt (giọng vi nếu có). Máy không hỗ trợ / chặn đọc thì bỏ qua.
+ */
+export function speakPaid(amount: number, locale: Locale, text: string) {
   try {
     if (amount <= 0 || typeof speechSynthesis === "undefined") return;
-    const u = new SpeechSynthesisUtterance(`Khách thanh toán ${Math.round(amount)} đồng`);
-    u.lang = "vi-VN";
-    const vi = speechSynthesis.getVoices().find((v) => v.lang.toLowerCase().startsWith("vi"));
-    if (vi) u.voice = vi;
+    const voices = speechSynthesis.getVoices();
+    const voiceOf = (l: Locale) => voices.find((v) => v.lang.toLowerCase().startsWith(l));
+    const local = locale !== "vi" ? voiceOf(locale) : undefined;
+    const vars = { amount: Math.round(amount) };
+    const u = new SpeechSynthesisUtterance(local ? interpolate(text, vars) : interpolate(saleNs.vi.checkout.speakPaid, vars));
+    u.lang = SPEECH_LANG[local ? locale : "vi"];
+    const voice = local ?? voiceOf("vi");
+    if (voice) u.voice = voice;
     speechSynthesis.speak(u);
   } catch { /* trình duyệt chặn đọc: bỏ qua */ }
 }
@@ -31,36 +43,41 @@ export function speakPaid(amount: number) {
 export function useSaleInvoiceSubmit(tabs: SaleTabs, branchId: string, enqueue: (q: QueuedInvoice) => void) {
   const { settings } = useSaleSettings();
   const print = useSaleInvoicePrinter();
+  const tr = useT(saleNs);
+  const locale = useLocale();
+  const speak = (amount: number) => speakPaid(amount, locale, tr("checkout.speakPaid"));
   return async (d: DraftInvoice, sellerName: string | undefined): Promise<boolean> => {
     const t = cartTotals(d);
     if (d.editOf) { // Lưu bản sửa hóa đơn (kho hoàn lô cũ + xuất lô mới trong 1 giao dịch)
       try {
         const inv = await api<Invoice>(`/invoices/${d.editOf.invoiceId}?revision=${d.editOf.revision}`,
           { method: "PUT", body: { ...toBody(d, branchId, sellerName, false), soldAt: undefined } });
-        toast.success(`Đã cập nhật hóa đơn ${inv.code}`, { action: { label: "In hóa đơn", onClick: () => print(inv) } });
+        toast.success(tr("invoice.updated", { code: inv.code }), { action: { label: tr("invoice.print"), onClick: () => print(inv) } });
         tabs.close(d.id);
         return true;
       } catch (e) {
-        toast.error(isNetworkError(e) ? "Mất kết nối: sửa hóa đơn cần có mạng, vui lòng thử lại" : (e as Error).message);
+        toast.error(isNetworkError(e) ? tr("invoice.editNeedsNetwork") : (e as Error).message);
         return false;
       }
     }
     try {
       const inv = await api<Invoice>("/invoices", { method: "POST", body: toBody(d, branchId, sellerName, false) });
-      toast.success(`Đã thanh toán hóa đơn ${inv.code}${inv.shipment ? ` — vận đơn ${inv.shipment.code}` : ""}${t.paid > t.due ? ` — trả lại khách ${formatMoney(t.paid - t.due)}` : ""}`,
-        { duration: 8000, action: { label: "In hóa đơn", onClick: () => print(inv) } });
-      if (settings.speakPaid) speakPaid(Math.min(t.paid, t.due));
+      const parts = [tr("invoice.paid", { code: inv.code })];
+      if (inv.shipment) parts.push(tr("invoice.shipment", { code: inv.shipment.code }));
+      if (t.paid > t.due) parts.push(tr("invoice.change", { amount: formatMoney(t.paid - t.due) }));
+      toast.success(parts.join(" — "), { duration: 8000, action: { label: tr("invoice.print"), onClick: () => print(inv) } });
+      if (settings.speakPaid) speak(Math.min(t.paid, t.due));
       if (settings.autoPrint) print(inv);
       tabs.resetActive();
       return true;
     } catch (e) {
       if (isNetworkError(e) && d.fromOrder) { // hóa đơn từ đơn đặt hàng phải lên server ngay (đơn + tiền cọc ở server)
-        toast.error("Mất kết nối: tạo hóa đơn từ đơn đặt hàng cần có mạng, vui lòng thử lại");
+        toast.error(tr("invoice.fromOrderNeedsNetwork"));
       } else if (isNetworkError(e)) {
         enqueue({ id: d.id, kind: "INVOICE", label: d.label, createdAt: new Date().toISOString(), body: toBody(d, branchId, sellerName, true),
-          customerName: d.customer?.name ?? "Khách lẻ", total: t.total, status: "pending" });
-        toast.warning("Mất kết nối: đã lưu hóa đơn trên máy, sẽ tự đồng bộ khi có mạng");
-        if (settings.speakPaid) speakPaid(Math.min(t.paid, t.due));
+          customerName: d.customer?.name ?? tr("common.walkIn"), total: t.total, status: "pending" });
+        toast.warning(tr("invoice.savedOffline"));
+        if (settings.speakPaid) speak(Math.min(t.paid, t.due));
         tabs.resetActive();
         return true;
       } else {

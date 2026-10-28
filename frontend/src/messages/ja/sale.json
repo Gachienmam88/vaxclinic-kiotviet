@@ -1,0 +1,459 @@
+{
+  "cart": {
+    "empty": "商品がありません — 検索(F3)またはバーコードをスキャン",
+    "emptyQuickReturn": "クイック返品: 検索(F3)またはスキャンで返品商品を追加",
+    "notInInvoice": "{name}は請求書{code}にありません",
+    "notInPriceBook": "この価格表では販売できません",
+    "returnMax": "{name}: 返品可能な残数は{max}です"
+  },
+  "channel": {
+    "label": "販売チャネル"
+  },
+  "checkout": {
+    "alreadyPaid": "支払済み",
+    "change": "お釣り",
+    "cod": "代金引換 (COD)",
+    "deliveryTime": "配送日時",
+    "deposited": "前受金",
+    "discount": "値引き",
+    "discountPercent": "値引き ({percent}%)",
+    "due": "お支払い金額",
+    "invoiceDiscount": "請求書値引き",
+    "invoiceFromOrder": "注文からの請求書",
+    "orderNote": "注文メモ",
+    "orderRef": "注文",
+    "paid": "お預かり",
+    "pay": "支払い",
+    "payOnDelivery": "受取時の支払額",
+    "placeOrder": "注文する",
+    "saveOrder": "注文を保存",
+    "speakPaid": "お客様のお支払いは{amount}ドンです",
+    "subtotal": "商品合計",
+    "toDebt": "売掛金に計上"
+  },
+  "common": {
+    "walkIn": "一般客"
+  },
+  "customer": {
+    "add": "顧客を追加",
+    "addOffline": "オフライン: 新規顧客は追加できません。一般客または既存顧客で販売してください",
+    "clear": "顧客の選択を解除",
+    "debt": "売掛 {amount}",
+    "noResults": "顧客が見つかりません",
+    "overLimit": "売掛上限超過 {amount}",
+    "search": "顧客を検索 (F4)"
+  },
+  "delivery": {
+    "address": "住所",
+    "errors": {
+      "noPartner": "配送業者が選択されていません",
+      "receiverRequired": "受取人の氏名・電話・住所を入力してください"
+    },
+    "fee": "配送料",
+    "feePayer": {
+      "label": "配送料の負担者"
+    },
+    "noPartners": "配送業者がありません — 配送業者画面で追加",
+    "note": "配送メモ",
+    "partner": "配送業者",
+    "pickPartner": "配送業者を選択",
+    "receiverName": "受取人名",
+    "receiverPhone": "電話番号",
+    "title": "配送情報",
+    "weight": "重量 (g)"
+  },
+  "detail": {
+    "category": "商品グループ",
+    "lotLine": "{lot} — 期限 {expiry} — 在庫 {qty}",
+    "lots": "在庫ロット (期限の早い順に販売):",
+    "noDesc": "説明はありません",
+    "position": "保管場所",
+    "price": "販売価格:",
+    "qty": "数量:",
+    "qtyAria": "行の数量",
+    "stock": "在庫: {qty}",
+    "tabs": {
+      "desc": "詳細説明",
+      "info": "基本情報"
+    },
+    "taxRate": "税率"
+  },
+  "dialogs": {
+    "cols": {
+      "customer": "顧客",
+      "total": "合計"
+    },
+    "filters": {
+      "productCode": "商品コード",
+      "productName": "商品名"
+    },
+    "fromDate": "開始日",
+    "noData": "データがありません",
+    "noResults": "該当する結果はありません",
+    "time": "期間",
+    "toDate": "終了日"
+  },
+  "einvoice": {
+    "box": "電子請求書情報",
+    "details": "詳細",
+    "emailInvalid": "メールアドレスが無効です",
+    "fields": {
+      "address": "住所",
+      "buyerName": "購入者名",
+      "companyName": "会社名",
+      "email": "メール",
+      "phone": "電話番号",
+      "taxCode": "税番号 (MST)"
+    },
+    "title": "電子請求書の購入者情報"
+  },
+  "footer": {
+    "catalogUpdated": "カタログ更新 {time}",
+    "modes": {
+      "delivery": "配送販売",
+      "normal": "通常販売",
+      "quick": "クイック販売"
+    }
+  },
+  "grid": {
+    "filter": "商品名で絞り込み"
+  },
+  "header": {
+    "offline": "オフライン — 伝票はこの端末に保存",
+    "sync": "伝票を同期",
+    "syncPending_other": "伝票を同期 — 未送信 {count} 件"
+  },
+  "import": {
+    "chooseFile": "ファイルを選択",
+    "downloadTemplate": "テンプレートをダウンロード",
+    "errors": {
+      "areaNotFound": "\"Khu vực\" \"{area}\" が見つかりません (2025年の34省・市)",
+      "badDiscount": "{row}行目: \"Giảm giá\" が不正です",
+      "badDiscountPercent": "{row}行目: \"Giảm giá (%)\" は0〜100で入力",
+      "badPrice": "{row}行目: \"Đơn giá\" が不正です",
+      "badQty": "{row}行目: \"Số lượng\" は0より大きくしてください",
+      "customer": "顧客: {message}",
+      "customerCodeNotFound": "顧客コード {code} が見つかりません",
+      "customerPhoneNotFound": "電話 {phone} の顧客が見つからず、新規作成用の \"Tên khách hàng\" がありません",
+      "emptyFile": "ファイルにデータがありません",
+      "header": "{col}列目の見出しが不正: \"{name}\" が必要です (テンプレートを使用)",
+      "missingCode": "{row}行目: \"Mã hàng\" がありません",
+      "noLines": "商品行がありません",
+      "productNotFound": "{row}行目: 商品コード {code} が見つかりません",
+      "tooManyRows": "{rows}行あります。1シート最大{max}行です",
+      "tooManySheets": "ファイルのシート数は{sheets}、上限は{max}です",
+      "wardNotFound": "{province}に \"Phường xã\" \"{ward}\" が見つかりません"
+    },
+    "headersVietnamese": "列見出しはテンプレートのベトナム語のまま変更しないでください。",
+    "importedSheets_other": "{count}シートを取込みました。",
+    "imported_other": "{file}から請求書を{count}件取込みました",
+    "note": "1回の取込で最大{sheets}シートまで。1シートが1取引で、最大{rows}行です。",
+    "noteTitle": "注意:",
+    "processData": "データ処理 ({template})",
+    "readFailed": "ファイルを読み込めません: {message}",
+    "sheetRejected": "シート「{sheet}」は取込まれませんでした:",
+    "title": "Excelから請求書を取込"
+  },
+  "invoice": {
+    "change": "お釣り {amount}",
+    "editNeedsNetwork": "オフライン: 請求書の編集には接続が必要です。再試行してください",
+    "fromOrderNeedsNetwork": "オフライン: 注文からの請求書作成には接続が必要です。再試行してください",
+    "paid": "請求書{code}の支払い完了",
+    "print": "請求書を印刷",
+    "savedOffline": "オフライン: 請求書を端末に保存しました。接続後に自動同期します",
+    "shipment": "配送伝票 {code}",
+    "updated": "請求書{code}を更新しました"
+  },
+  "line": {
+    "actions": "行の操作",
+    "addLine": "行を追加",
+    "addLineHint": "同じ商品の行を追加",
+    "amount": "金額",
+    "applyLastPrice": "この顧客の直近価格を適用",
+    "detail": "詳細を見る",
+    "discount": "値引き",
+    "discountAria": "単位あたり値引き",
+    "discountPerUnit": "値引き / {unit}",
+    "discountPercentAria": "単位あたり値引き(%)",
+    "lastPrice": "直近価格: {price}",
+    "note": "メモ",
+    "noteAria": "行メモ",
+    "notePlaceholder": "メモ...",
+    "price": "単価",
+    "qty": "数量",
+    "remove": "行を削除",
+    "stock": "在庫: {qty}",
+    "unit": "単位",
+    "viewLastPrices": "直近の販売価格を見る"
+  },
+  "lot": {
+    "enterNew": "+ 新ロットを入力",
+    "exists": "ロット{lot}は店舗に既存 (期限 {expiry}) — このロットに戻します。",
+    "expired": "期限切れロット: 受領後に廃棄処理してください。",
+    "expiry": "期限:",
+    "expiryMismatch": "ロット{lot}は期限 {expiry} で既存 — 入力した期限と一致しません。",
+    "lot": "ロット:",
+    "lotNumber": "ロット番号",
+    "newLot": "新ロット:",
+    "newLotExpiry": "新ロットの使用期限",
+    "newLotNumber": "新ロット番号",
+    "offline": "オフライン: ロットを読み込めません",
+    "option": "{lot} · 期限 {expiry} · 在庫 {qty}",
+    "pick": "-- ロットを選択 --",
+    "pickExisting": "既存ロットを選択",
+    "returnLot": "返品ロット"
+  },
+  "menu": {
+    "endOfDay": "日次締めレポート",
+    "import": "ファイル取込",
+    "label": "メニュー",
+    "logout": "ログアウト",
+    "manage": "管理画面",
+    "orders": "注文処理",
+    "receipt": "入金伝票を作成",
+    "return": "返品する請求書を選択",
+    "settings": "設定と表示",
+    "shortcuts": "ショートカット"
+  },
+  "open": {
+    "copyLabel": "{code}のコピー",
+    "invoiceCancelled": "請求書は取消済みです",
+    "invoiceFromOrderLabel": "請求書 / {code}",
+    "orderCancelled": "注文{code}は取消済みです",
+    "orderInvoiced": "注文{code}は請求書作成済み {invoice}",
+    "returnLabel": "返品 / {code}"
+  },
+  "order": {
+    "created": "注文{code}を作成しました",
+    "customerRequired": "注文には顧客の選択が必要です (F4)",
+    "editNeedsNetwork": "オフライン: 注文の編集には接続が必要です。再試行してください",
+    "savedOffline": "オフライン: 注文を端末に保存しました。接続後に自動同期します",
+    "updated": "注文{code}を更新しました",
+    "withDeposit": "{message} — 前受金 {amount}"
+  },
+  "orderPicker": {
+    "cols": {
+      "code": "注文番号"
+    },
+    "filters": {
+      "code": "注文番号",
+      "customer": "顧客",
+      "note": "注文メモ"
+    },
+    "offline": "オフライン: 注文処理には接続が必要です"
+  },
+  "payment": {
+    "method": "支払方法",
+    "methods": {
+      "ewalletShort": "電子マネー"
+    },
+    "mixed": {
+      "nonCashOverDue": "振込・カード・電子マネーは請求額を超えられません",
+      "title": "複数の支払方法"
+    },
+    "qr": "QRコードで支払い"
+  },
+  "priceBook": {
+    "confirmRemove": "新しい価格表に含まれない商品: {names}。\nこれらはカートから削除されます。価格表を変更しますか？",
+    "general": "標準価格表",
+    "label": "価格表",
+    "missing": "価格表が存在しません — 標準価格表に切替えました",
+    "notApplicable": "価格表「{name}」はこの顧客／販売担当には適用されません — 標準価格表に切替えました",
+    "removedFromCart": "カートから削除"
+  },
+  "print": {
+    "autoPrint": "請求書を自動印刷",
+    "copies": "印刷部数",
+    "copiesAria": "印刷部数",
+    "mergeLines": "同一商品をまとめる",
+    "template": "印刷テンプレート",
+    "templateDefault": "既定の請求書テンプレート",
+    "templateInvoice": "A. 請求書テンプレート",
+    "templateStore": "店舗の請求書テンプレート",
+    "title": "印刷設定"
+  },
+  "receipt": {
+    "amount": "顧客から受領",
+    "amountLabel": "顧客から受領:",
+    "amountRequired": "受領額を入力してください",
+    "create": "入金伝票を作成",
+    "createPrint": "作成して印刷",
+    "created": "入金伝票{code}を作成 — {amount}",
+    "customerRequired": "顧客を選択してください (F4)",
+    "debtAfter": "受領後の売掛:",
+    "method": "受領方法",
+    "offline": "オフライン: 入金伝票の作成には接続が必要です",
+    "toDebt": "売掛金から差引",
+    "toInvoices": "請求書への充当額:"
+  },
+  "recentPrice": {
+    "apply": "価格を適用"
+  },
+  "returnPicker": {
+    "cols": {
+      "code": "請求書番号",
+      "employee": "担当者"
+    },
+    "filters": {
+      "code": "請求書番号",
+      "customer": "顧客または電話",
+      "lot": "ロット・使用期限",
+      "shipmentCode": "配送伝票番号"
+    },
+    "offline": "オフライン: 返品請求書の選択には接続が必要です",
+    "quickReturn": "クイック返品"
+  },
+  "returns": {
+    "created": "返品伝票{code}を作成しました",
+    "createdWithRefund": "返品伝票{code}を作成 — 返金 {amount}",
+    "due": "返金額",
+    "errors": {
+      "expiryRequired": "{name}: 新しいロットの使用期限を入力",
+      "lotRequired": "{name}: 返品ロットを選択するか新しいロットを入力",
+      "noItems": "返品商品が選択されていません",
+      "walkInRefundFull": "一般客: 全額を返金してください"
+    },
+    "fee": "返品手数料",
+    "original": "購入時の合計",
+    "qtyOf": "返品数量 {name}",
+    "quickTitle": "クイック返品 (請求書なし)",
+    "refund": "返金済み額",
+    "returnedQty": "返品済 {qty}",
+    "savedOffline": "オフライン: 返品伝票を端末に保存しました。接続後に自動同期します",
+    "submit": "返品",
+    "subtotal": "返品商品合計",
+    "title": "返品",
+    "toDebt": "顧客の売掛金から差引"
+  },
+  "screen": {
+    "autoPrintOff": "請求書の自動印刷: オフ",
+    "autoPrintOn": "請求書の自動印刷: オン",
+    "loading": "販売画面を読み込み中...",
+    "openFailed": "{what}を開けませんでした: {message}",
+    "qtyModeOff": "商品追加: カーソルを商品検索に残す",
+    "qtyModeOn": "商品追加: カーソルを数量欄へ移動",
+    "qtyPositive": "数量は0より大きくしてください",
+    "syncedOffline": "オフライン伝票を同期しました → {code}",
+    "walkInMustPayFull": "一般客は全額支払いが必要です — 掛売りにするには顧客を選択してください",
+    "what": {
+      "invoice": "請求書",
+      "order": "注文"
+    }
+  },
+  "search": {
+    "addToOrder": "注文に追加",
+    "multiSelect": "複数選択モード",
+    "noResults": "商品が見つかりません",
+    "off": "オフ",
+    "on": "オン",
+    "placeholder": "商品を検索 (F3)",
+    "scanQuickAdd": "スキャンで即追加",
+    "selected": "{count}件選択"
+  },
+  "seller": {
+    "label": "販売担当",
+    "search": "販売担当を検索"
+  },
+  "settings": {
+    "display": "表示",
+    "goods": {
+      "addLineTip": "行に(+)ボタンを表示し同じ商品の行を追加",
+      "dragDrop": "ドラッグで並べ替え",
+      "dragDropTip": "行をドラッグして並べ替え (番号順のとき)",
+      "image": "商品画像",
+      "imageTip": "商品画像はまだありません",
+      "lineNote": "商品メモ",
+      "lineNoteTip": "各行の下に常にメモ欄を表示",
+      "merge": "同一商品をまとめる",
+      "mergeTip": "注文済みの商品を追加すると新しい行ではなく数量を増やします",
+      "scanTip": "コードを正確にスキャン/入力すると Enter なしで追加",
+      "sortBy": "商品の並び順",
+      "sortOrder": "商品の表示順",
+      "stock": "在庫",
+      "stockTip": "商品名の下に在庫数を表示 (販売単位)",
+      "suggestPaid": "お預かり金額の候補"
+    },
+    "groups": "設定グループ",
+    "options": "設定",
+    "payment": {
+      "autoCompleteQr": "QR決済成功時に自動で会計完了",
+      "autoCompleteQrTip": "QR振込(SePay)で全額受領 → 請求書を自動で会計",
+      "defaultMethod": "既定の支払方法",
+      "paidEqualsDue": "お預かり金額を請求額と同額にする",
+      "paidEqualsDueTip": "オフ: 新しい請求書のお預かりは0",
+      "speakPaid": "お預かり金額を音声で読み上げ",
+      "speakPaidTip": "会計後にお預かり金額を読み上げ (該当言語の音声がなければベトナム語)"
+    },
+    "price": {
+      "discountTip": "行値引きの既定入力方式",
+      "editAmount": "金額を編集",
+      "editAmountTip": "行の金額を編集すると単価を再計算",
+      "lastPrice": "直近の販売価格",
+      "lastPriceTip": "選択中の顧客への直近価格。クリックで適用",
+      "price": "販売価格"
+    },
+    "sort": {
+      "asc": "昇順",
+      "code": "商品コード",
+      "desc": "降順",
+      "index": "番号",
+      "name": "商品名"
+    },
+    "tabs": {
+      "goods": "商品",
+      "payment": "支払い",
+      "price": "価格"
+    }
+  },
+  "shortcuts": {
+    "help": {
+      "autoPrint": "自動印刷のオン/オフ",
+      "customerPaid": "お預かり金額",
+      "editQty": "商品数量を変更",
+      "findCustomer": "顧客を検索",
+      "findProduct": "商品を検索",
+      "fullscreen": "全画面",
+      "newInvoice": "新しい請求書",
+      "nextLine": "次の商品へ移動",
+      "pay": "支払い",
+      "prevLine": "前の商品へ移動",
+      "qtyDown": "数量を減らす",
+      "qtyMode": "数量入力モードを切替",
+      "qtyUp": "数量を増やす"
+    },
+    "title": "ショートカットキー"
+  },
+  "sync": {
+    "code": "伝票番号",
+    "confirmRemove": "この伝票を端末から削除しますか？記録されません。",
+    "connection": "接続状態:",
+    "error": "エラー: {error}",
+    "kind": "伝票種別",
+    "kinds": {
+      "all": "--すべて--",
+      "invoice": "請求書",
+      "order": "注文",
+      "return": "返品"
+    },
+    "offline": "オフライン",
+    "online": "オンライン",
+    "pending": "同期待ち",
+    "remove": "端末から削除",
+    "retry": "再送信",
+    "syncAll": "すべて同期",
+    "value": "金額"
+  },
+  "tabs": {
+    "addInvoice": "請求書を追加",
+    "addMenu": "請求書・注文を追加",
+    "addOrder": "注文を追加",
+    "close": "{label}を閉じる",
+    "confirmClose": "{label}を閉じますか？カートは消去されます。",
+    "invoiceN": "請求書 {n}",
+    "label": "作成中の請求書",
+    "orderN": "注文 {n}",
+    "returnN": "返品 {n}",
+    "scrollLeft": "タブを左へスクロール",
+    "scrollRight": "タブを右へスクロール"
+  }
+}

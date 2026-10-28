@@ -3,7 +3,9 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { api } from "@/lib/api-client";
+import { useT } from "@/lib/i18n";
 import { formatMoney } from "@/lib/format";
+import { saleNs } from "@/messages/sale";
 import type { Order } from "@/features/orders/order-types";
 import { SALES_KEYS } from "@/features/sales/sales-queries";
 import { toBody } from "./sale-invoice-body";
@@ -17,8 +19,9 @@ import { cartTotals, type SaleTabs } from "./use-sale-tabs";
  */
 export function useSaleOrderSubmit(tabs: SaleTabs, branchId: string, enqueue: (q: QueuedInvoice) => void) {
   const qc = useQueryClient();
+  const tr = useT(saleNs);
   return async (d: DraftInvoice, sellerName: string | undefined) => {
-    if (!d.customer) { toast.error("Đặt hàng phải chọn khách hàng (F4)"); return; }
+    if (!d.customer) { toast.error(tr("order.customerRequired")); return; }
     const t = cartTotals(d);
     const body = toBody(d, branchId, sellerName, false);
     try {
@@ -26,17 +29,18 @@ export function useSaleOrderSubmit(tabs: SaleTabs, branchId: string, enqueue: (q
         ? await api<Order>(`/orders/${d.orderOf.orderId}`, { method: "PUT", body })
         : await api<Order>("/orders", { method: "POST", body });
       const paid = Math.min(t.paid, t.due);
-      toast.success(`${d.orderOf ? "Đã cập nhật" : "Đã tạo"} đơn đặt hàng ${o.code}${paid > 0 ? ` — thu đặt cọc ${formatMoney(paid)}` : ""}`);
+      const msg = tr(d.orderOf ? "order.updated" : "order.created", { code: o.code });
+      toast.success(paid > 0 ? tr("order.withDeposit", { message: msg, amount: formatMoney(paid) }) : msg);
       if (d.orderOf) tabs.close(d.id); else tabs.resetActive();
       SALES_KEYS.forEach((k) => qc.invalidateQueries({ queryKey: k }));
     } catch (e) {
       if (isNetworkError(e) && !d.orderOf) {
         enqueue({ id: d.id, kind: "ORDER", label: d.label, createdAt: new Date().toISOString(), body,
           customerName: d.customer.name, total: t.total, status: "pending" });
-        toast.warning("Mất kết nối: đã lưu đơn đặt hàng trên máy, sẽ tự đồng bộ khi có mạng");
+        toast.warning(tr("order.savedOffline"));
         tabs.resetActive();
       } else {
-        toast.error(isNetworkError(e) ? "Mất kết nối: sửa đơn đặt hàng cần có mạng, vui lòng thử lại" : (e as Error).message);
+        toast.error(isNetworkError(e) ? tr("order.editNeedsNetwork") : (e as Error).message);
       }
     }
   };

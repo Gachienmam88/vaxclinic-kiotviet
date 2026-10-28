@@ -23,6 +23,7 @@ export const REPORT_CSS = `
 .rp-toggle { display: inline-flex; width: 11px; height: 11px; border: 1px solid #555; align-items: center; justify-content: center;
   font-size: 10px; line-height: 1; margin-right: 6px; cursor: pointer; background: #fff; vertical-align: -1px; }
 .rp-empty { text-align: center; color: #777; padding: 24px 0; }
+.rp-vi { color: #777; font-size: 10px; font-weight: normal; margin-left: 4px; }
 `;
 
 /** In nội dung tờ báo cáo (HTML) khổ A4 dọc / ngang. */
@@ -44,8 +45,8 @@ export function printReportHtml(body: string, landscape: boolean) {
   }, 50);
 }
 
-/** "Ngày lập: 28/10/2026 19:39" */
+/** "28/10/2026 19:39" — thời điểm lập báo cáo (nhãn "Ngày lập: …" dịch ở ReportViewer). */
 export function madeAt(d = new Date()) {
   const p = (n: number) => String(n).padStart(2, "0");
-  return `Ngày lập: ${p(d.getDate())}/${p(d.getMonth() + 1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;
+  return `${p(d.getDate())}/${p(d.getMonth() + 1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;
 }

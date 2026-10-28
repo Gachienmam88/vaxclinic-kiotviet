@@ -1,6 +1,7 @@
 import { api } from "@/lib/api-client";
 import { areaFromServer } from "@/features/delivery/delivery-address";
 import type { Invoice } from "@/features/sales/sales-types";
+import type { SaleT } from "@/messages/sale";
 import { KEYS, load, newId } from "./sale-storage";
 import type { CartLine, CatalogProduct, DeliveryDraft, DraftInvoice, EInvoiceBuyer, SaleCustomer } from "./sale-types";
 
@@ -36,14 +37,14 @@ export function cachedCustomerGroupId(customerId: string): string | null {
  * Cần có mạng (dữ liệu hóa đơn nằm trên server).
  */
 export async function draftFromInvoice(invoiceId: string, mode: "edit" | "return", catalog: CatalogProduct[],
-                                       sellerId: string): Promise<DraftInvoice> {
+                                       sellerId: string, t: SaleT): Promise<DraftInvoice> {
   const inv = await api<Invoice>(`/invoices/${invoiceId}`);
-  if (inv.status !== "COMPLETED") throw new Error("Hóa đơn đã hủy");
+  if (inv.status !== "COMPLETED") throw new Error(t("open.invoiceCancelled"));
   const customer = inv.customerId ? { id: inv.customerId, code: inv.customerCode ?? "", name: inv.customerName, phone: inv.customerPhone,
     groupId: cachedCustomerGroupId(inv.customerId) } : null;
   if (mode === "return") {
     return {
-      id: newId(), kind: "RETURN", label: `Trả hàng / ${inv.code}`, mode: "QUICK", customer, sellerId, lines: [],
+      id: newId(), kind: "RETURN", label: t("open.returnLabel", { code: inv.code }), mode: "QUICK", customer, sellerId, lines: [],
       discount: 0, paid: null, paymentMethod: "CASH", note: "", priceBookId: null,
       returnOf: {
         invoiceId: inv.id, code: inv.code, fee: 0, refund: null,
@@ -77,12 +78,12 @@ function deliveryDraftOf(s: Invoice["shipment"]): DeliveryDraft | null {
  * "Sao chép" ở chi tiết hóa đơn (/sale?copy=<id>): tab bán MỚI điền sẵn khách, hàng (giá đã bán), giảm giá, kênh bán, bảng giá,
  * ghi chú của hóa đơn cũ (kể cả hóa đơn đã hủy). Không mang theo tiền đã trả / vận đơn → khách trả = khách cần trả.
  */
-export async function draftCopyOfInvoice(invoiceId: string, catalog: CatalogProduct[], sellerId: string): Promise<DraftInvoice> {
+export async function draftCopyOfInvoice(invoiceId: string, catalog: CatalogProduct[], sellerId: string, t: SaleT): Promise<DraftInvoice> {
   const inv = await api<Invoice>(`/invoices/${invoiceId}`);
   const customer = inv.customerId ? { id: inv.customerId, code: inv.customerCode ?? "", name: inv.customerName, phone: inv.customerPhone,
     groupId: cachedCustomerGroupId(inv.customerId) } : null;
   return {
-    id: newId(), kind: "SALE", label: `Sao chép ${inv.code}`, mode: "QUICK", customer, sellerId, lines: toCartLines(inv.lines, catalog),
+    id: newId(), kind: "SALE", label: t("open.copyLabel", { code: inv.code }), mode: "QUICK", customer, sellerId, lines: toCartLines(inv.lines, catalog),
     discount: Number(inv.discount), paid: null, paymentMethod: "CASH", note: inv.note ?? "", priceBookId: inv.priceBookId ?? null,
     priceBookName: inv.priceBookName, salesChannel: inv.salesChannel ?? "DIRECT",
   };

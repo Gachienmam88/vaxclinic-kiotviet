@@ -1,6 +1,7 @@
 package com.vaxclinic.integration.inputinvoice;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.vaxclinic.common.http.InternalRestClientFactory;
 import com.vaxclinic.common.error.BusinessException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -9,6 +10,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
 
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -34,8 +36,9 @@ public class GdtPortalClient {
 
     private final RestClient http;
 
-    public GdtPortalClient(@Value("${app.gdt-portal-url}") String baseUrl) {
-        this.http = RestClient.builder().baseUrl(baseUrl).build();
+    public GdtPortalClient(InternalRestClientFactory httpFactory, @Value("${app.http.external-read-timeout:30s}") Duration externalReadTimeout,
+                          @Value("${app.gdt-portal-url}") String baseUrl) {
+        this.http = httpFactory.create(baseUrl, externalReadTimeout);
     }
 
     public Captcha captcha() {

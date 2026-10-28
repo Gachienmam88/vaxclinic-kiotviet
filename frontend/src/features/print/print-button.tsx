@@ -2,6 +2,8 @@
 
 import { Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useT } from "@/lib/i18n";
+import { commonNs } from "@/messages/common";
 import { useBranches, useShopSettings } from "@/features/settings/settings-queries";
 import { usePrintTemplates, storeFields } from "./print-data";
 import { printHtml, renderTemplate, type PrintData } from "./print-render";
@@ -19,12 +21,13 @@ export function usePrinter() {
   };
 }
 
-/** Nút "In" khổ A5. */
-export function PrintButton({ type, data, branchId, label = "In" }: {
+/** Nút "In" khổ A5 (mặc định nhãn common.actions.print). */
+export function PrintButton({ type, data, branchId, label }: {
   type: PrintType; data: PrintData | undefined; branchId?: string | null; label?: string;
 }) {
   const print = usePrinter();
+  const tc = useT(commonNs);
   return (
-    <Button variant="outline" disabled={!data} onClick={() => data && print(type, data, branchId)}><Printer className="size-4" /> {label}</Button>
+    <Button variant="outline" disabled={!data} onClick={() => data && print(type, data, branchId)}><Printer className="size-4" /> {label ?? tc("actions.print")}</Button>
   );
 }

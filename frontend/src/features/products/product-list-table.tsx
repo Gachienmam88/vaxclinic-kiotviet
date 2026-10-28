@@ -5,6 +5,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ListEmptyRow } from "@/components/ui/list-empty-state";
 import { formatMoney, formatNumber } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
+import { commonNs } from "@/messages/common";
+import { productsNs } from "@/messages/products";
 import { ProductDetailPanel } from "./product-detail-panel";
 import type { ProductDetail, ProductListResponse } from "./product-types";
 
@@ -20,19 +23,21 @@ type Props = {
 
 /** Bảng danh sách hàng hóa: dòng tổng tồn ở đầu, bấm dòng để mở panel chi tiết ngay bên dưới. */
 export function ProductListTable({ data, isLoading, expanded, onToggle, onEdit }: Props) {
+  const t = useT(productsNs);
+  const tc = useT(commonNs);
   return (
     <div className="overflow-x-auto rounded-lg bg-background">
       <Table>
         <TableHeader>
           <TableRow className="bg-primary-tint hover:bg-primary-tint">
-            <TableHead className="w-28 pl-4">Mã hàng</TableHead>
-            <TableHead>Tên hàng</TableHead>
-            <TableHead>Tên viết tắt</TableHead>
-            <TableHead className="text-right">Giá bán</TableHead>
-            <TableHead className="text-right">VAT hàng bán (%)</TableHead>
-            <TableHead>Áp dụng giảm thuế</TableHead>
-            <TableHead className="text-right">Giá vốn</TableHead>
-            <TableHead className="pr-4 text-right">Tồn kho</TableHead>
+            <TableHead className="w-28 pl-4">{t("fields.code")}</TableHead>
+            <TableHead>{t("fields.name")}</TableHead>
+            <TableHead>{t("fields.shortName")}</TableHead>
+            <TableHead className="text-right">{t("fields.price")}</TableHead>
+            <TableHead className="text-right">{t("detail.salesVat")}</TableHead>
+            <TableHead>{t("fields.taxReduction")}</TableHead>
+            <TableHead className="text-right">{t("fields.cost")}</TableHead>
+            <TableHead className="pr-4 text-right">{t("fields.stock")}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -41,9 +46,9 @@ export function ProductListTable({ data, isLoading, expanded, onToggle, onEdit }
             <TableCell className="pr-4 text-right font-bold">{formatNumber(data.totalStock ?? 0)}</TableCell>
           </TableRow>}
           {isLoading && (
-            <TableRow><TableCell colSpan={COLS} className="py-8 text-center text-muted-foreground">Đang tải...</TableCell></TableRow>
+            <TableRow><TableCell colSpan={COLS} className="py-8 text-center text-muted-foreground">{tc("status.loading")}</TableCell></TableRow>
           )}
-          {data && !data.items.length && <ListEmptyRow cols={COLS} what="hàng hóa" />}
+          {data && !data.items.length && <ListEmptyRow cols={COLS} what={t("list.emptyWhat")} />}
           {data?.items.map((p) => {
             const open = expanded === p.id;
             return (
@@ -58,12 +63,12 @@ export function ProductListTable({ data, isLoading, expanded, onToggle, onEdit }
                       ? <> <span className="text-muted-foreground">- {p.unitName}</span>
                         <span className="text-primary"> - {p.otherUnits.join(", ")}</span></>
                       : <span> ({p.unitName})</span>}
-                    {p.lotManaged && <span className="ml-1 text-xs text-muted-foreground">· Lô</span>}
+                    {p.lotManaged && <span className="ml-1 text-xs text-muted-foreground">· {t("fields.lot")}</span>}
                   </TableCell>
                   <TableCell className="max-w-36 whitespace-normal">{p.shortName}</TableCell>
                   <TableCell className="text-right">{formatMoney(p.price)}</TableCell>
                   <TableCell className="text-right" title={p.taxRateName ?? ""}>{p.taxRateName?.split(" ")[0]}</TableCell>
-                  <TableCell>{p.taxReduction ? "Có áp dụng" : "Không áp dụng"}</TableCell>
+                  <TableCell>{p.taxReduction ? t("fields.taxReductionYes") : t("fields.taxReductionNo")}</TableCell>
                   <TableCell className="text-right">{formatNumber(p.cost)}</TableCell>
                   <TableCell className="pr-4 text-right">{formatNumber(p.stock)}</TableCell>
                 </TableRow>

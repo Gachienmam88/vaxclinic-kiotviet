@@ -2,8 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChartLine, ChevronDown, Eye, EyeOff, Phone, ShoppingCart, Syringe } from "lucide-react";
+import { ChartLine, Eye, EyeOff, Phone, ShoppingCart, Syringe } from "lucide-react";
+import { LoginLanguageSelect } from "@/features/auth/login-language-select";
 import { lookupStore, STORE_KEY, type StoreBrand } from "@/features/auth/store-access-dialog";
+import { useT } from "@/lib/i18n";
+import { translateApiError } from "@/lib/i18n/translate-api-error";
+import { authNs } from "@/messages/auth";
 
 const SUPPORT_PHONE = process.env.NEXT_PUBLIC_SUPPORT_PHONE ?? "";
 
@@ -14,6 +18,7 @@ const SUPPORT_PHONE = process.env.NEXT_PUBLIC_SUPPORT_PHONE ?? "";
  */
 export default function LoginPage() {
   const router = useRouter();
+  const t = useT(authNs);
   const [store, setStore] = useState<StoreBrand | null>(null);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -40,8 +45,8 @@ export default function LoginPage() {
   }, [router]);
 
   async function login(target: "manage" | "sale") {
-    if (!username || !password) { setError("Nhập tên đăng nhập và mật khẩu"); return; }
-    if (needCode && !code) { setError("Nhập mã xác thực 2 lớp"); return; }
+    if (!username || !password) { setError(t("login.needCredentials")); return; }
+    if (needCode && !code) { setError(t("login.needCode")); return; }
     setLoading(target);
     setError(null);
     const res = await fetch("/api/session/login", {
@@ -58,10 +63,10 @@ export default function LoginPage() {
     if (err.code === "TOTP_REQUIRED" && !needCode) {
       setNeedCode(true);
       setError(null);
-      setNotice("Tài khoản đã bật xác thực 2 lớp. Nhập mã 6 số trong ứng dụng xác thực.");
+      setNotice(t("login.totpNotice"));
       return;
     }
-    setError(err.message ?? "Đăng nhập thất bại");
+    setError(err.message ? translateApiError(err.code ?? "UNKNOWN", err.message) : t("login.failed"));
   }
 
   const input = "h-[26px] w-full rounded-[5px] border border-[#ced4da] px-2.5 text-xs outline-none focus:border-primary";
@@ -76,24 +81,24 @@ export default function LoginPage() {
               ? <img src={store.logo} alt={store.name} className="max-h-[26px] max-w-36 object-contain" onError={() => setLogoFailed(true)} />
               : <><Syringe className="size-[22px] text-primary" /><span className="text-[17px] font-bold text-[#0a2540]">{store?.name ?? "..."}</span></>}
           </div>
-          <input autoFocus value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Tên đăng nhập" autoComplete="username" className={input} />
+          <input autoFocus value={username} onChange={(e) => setUsername(e.target.value)} placeholder={t("login.username")} autoComplete="username" className={input} />
           <div className="relative">
-            <input type={show ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Mật khẩu"
+            <input type={show ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} placeholder={t("login.password")}
               autoComplete="current-password" className={`${input} pr-8`} />
-            <button type="button" tabIndex={-1} aria-label={show ? "Ẩn mật khẩu" : "Hiện mật khẩu"} onClick={() => setShow(!show)}
+            <button type="button" tabIndex={-1} aria-label={show ? t("login.hidePassword") : t("login.showPassword")} onClick={() => setShow(!show)}
               className="absolute right-2 top-[5px] text-[#495057]">{show ? <Eye className="size-4" /> : <EyeOff className="size-4" />}</button>
           </div>
           {needCode && (
-            <input autoFocus value={code} onChange={(e) => setCode(e.target.value.trim())} placeholder="Mã xác thực 2 lớp (hoặc mã khôi phục)"
-              inputMode="numeric" autoComplete="one-time-code" maxLength={11} aria-label="Mã xác thực 2 lớp" className={input} />
+            <input autoFocus value={code} onChange={(e) => setCode(e.target.value.trim())} placeholder={t("login.codePlaceholder")}
+              inputMode="numeric" autoComplete="one-time-code" maxLength={11} aria-label={t("login.codeLabel")} className={input} />
           )}
           <div className="flex items-center gap-1.5 pt-0.5 text-[11px]">
             <label className="flex items-center gap-1.5">
-              <input type="checkbox" className="size-[13px] accent-primary" checked={remember} onChange={(e) => setRemember(e.target.checked)} /> Duy trì đăng nhập
+              <input type="checkbox" className="size-[13px] accent-primary" checked={remember} onChange={(e) => setRemember(e.target.checked)} /> {t("login.remember")}
             </label>
             <span className="text-[#ced4da]">|</span>
             <button type="button" className="text-primary hover:underline"
-              onClick={() => setNotice("Liên hệ quản trị cửa hàng để đặt lại mật khẩu (Thiết lập → Quản lý người dùng).")}>Quên mật khẩu?</button>
+              onClick={() => setNotice(t("login.forgotNotice"))}>{t("login.forgot")}</button>
           </div>
           {error && <p className="text-[11px] text-destructive">{error}</p>}
           {notice && <p className="text-[11px] text-[#0a58ca]">{notice}</p>}
@@ -101,16 +106,16 @@ export default function LoginPage() {
         <div className="grid grid-cols-2">
           <button type="submit" disabled={!!loading || !store}
             className="flex h-9 items-center justify-center gap-1.5 bg-primary text-[13px] font-bold text-white hover:bg-primary-hover disabled:opacity-70">
-            <ChartLine className="size-4" /> {loading === "manage" ? "Đang vào..." : "Quản lý"}</button>
+            <ChartLine className="size-4" /> {loading === "manage" ? t("login.entering") : t("login.manage")}</button>
           <button type="button" disabled={!!loading || !store} onClick={() => void login("sale")}
             className="flex h-9 items-center justify-center gap-1.5 bg-[#00b63e] text-[13px] font-bold text-white hover:bg-[#00a136] disabled:opacity-70">
-            <ShoppingCart className="size-4" /> {loading === "sale" ? "Đang vào..." : "Bán hàng"}</button>
+            <ShoppingCart className="size-4" /> {loading === "sale" ? t("login.entering") : t("login.sale")}</button>
         </div>
       </form>
       <div className="absolute bottom-3 flex items-center gap-4 text-[11px] font-semibold text-white">
-        {SUPPORT_PHONE && <span className="flex items-center gap-1"><Phone className="size-3" /> Hỗ trợ: {SUPPORT_PHONE}</span>}
-        <button type="button" onClick={() => router.push("/welcome?login=1")} className="hover:underline">Đổi cửa hàng</button>
-        <span className="flex items-center gap-1">🇻🇳 Tiếng Việt <ChevronDown className="ml-6 size-3" /></span>
+        {SUPPORT_PHONE && <span className="flex items-center gap-1"><Phone className="size-3" /> {t("login.support", { phone: SUPPORT_PHONE })}</span>}
+        <button type="button" onClick={() => router.push("/welcome?login=1")} className="hover:underline">{t("login.changeStore")}</button>
+        <LoginLanguageSelect />
       </div>
     </main>
   );

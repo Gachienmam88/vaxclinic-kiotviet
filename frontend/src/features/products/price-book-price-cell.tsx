@@ -6,6 +6,8 @@ import { errorMessage } from "@/lib/api-client";
 import { formatMoney, parseNumber } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { useSetPrices } from "./price-book-queries";
+import { useT } from "@/lib/i18n";
+import { productsNs } from "@/messages/products";
 
 type Props = { bookId: string; unitId: string; price: number | undefined; basePrice: number; editable: boolean };
 
@@ -16,6 +18,7 @@ type Props = { bookId: string; unitId: string; price: number | undefined; basePr
 export function PriceBookPriceCell({ bookId, unitId, price, basePrice, editable }: Props) {
   const [draft, setDraft] = useState<string | null>(null);
   const setPrices = useSetPrices();
+  const t = useT(productsNs);
   const shown = price == null ? "" : formatMoney(price);
 
   function commit() {
@@ -23,7 +26,7 @@ export function PriceBookPriceCell({ bookId, unitId, price, basePrice, editable 
     const text = draft.trim();
     setDraft(null);
     if (text === shown) return;
-    if (text && !/^[\d,]+(\.\d+)?$/.test(text)) return toast.error("Giá không hợp lệ");
+    if (text && !/^[\d,]+(\.\d+)?$/.test(text)) return toast.error(t("priceBooks.invalidPrice"));
     if (!text && price == null) return;
     setPrices.mutate({ bookId, items: [{ unitId, price: text ? parseNumber(text) : null }] }, {
       onError: (e) => toast.error(errorMessage(e)),
@@ -34,7 +37,7 @@ export function PriceBookPriceCell({ bookId, unitId, price, basePrice, editable 
     return <span className={cn(price == null && "text-muted-foreground")}>{price == null ? "—" : shown}</span>;
   }
   return (
-    <input aria-label="Giá trong bảng giá" inputMode="numeric" value={draft ?? shown} placeholder={formatMoney(basePrice)}
+    <input aria-label={t("priceBooks.priceCellAria")} inputMode="numeric" value={draft ?? shown} placeholder={formatMoney(basePrice)}
       disabled={setPrices.isPending}
       onFocus={(e) => { setDraft(shown); e.currentTarget.select(); }}
       onChange={(e) => setDraft(e.target.value)}

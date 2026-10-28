@@ -8,6 +8,10 @@ import { errorMessage } from "@/lib/api-client";
 import { parsePriceCsv } from "./price-book-csv";
 import { useImportPrices } from "./price-book-queries";
 import type { ImportResult, PriceBook } from "./price-book-types";
+import { renderRichText } from "@/lib/i18n/render-rich-text";
+import { useT } from "@/lib/i18n";
+import { commonNs } from "@/messages/common";
+import { productsNs } from "@/messages/products";
 
 /**
  * "Nhập file" giá vào 1 bảng giá: start(book) mở hộp chọn file CSV (Mã hàng, Giá), gửi lên server,
@@ -18,6 +22,8 @@ export function usePriceImport() {
   const target = useRef<PriceBook | null>(null);
   const [result, setResult] = useState<{ book: PriceBook; data: ImportResult } | null>(null);
   const importPrices = useImportPrices();
+  const t = useT(productsNs);
+  const tc = useT(commonNs);
 
   function start(book: PriceBook) {
     target.current = book;
@@ -30,7 +36,7 @@ export function usePriceImport() {
     if (fileRef.current) fileRef.current.value = "";
     if (!file || !book) return;
     const rows = parsePriceCsv(await file.text(), book.name);
-    if (!rows.length) return toast.error("File không có dòng dữ liệu (cần cột Mã hàng, Giá)");
+    if (!rows.length) return toast.error(t("import.noRows"));
     importPrices.mutate({ bookId: book.id, rows }, {
       onSuccess: (data) => setResult({ book, data }),
       onError: (e) => toast.error(errorMessage(e)),
@@ -43,15 +49,17 @@ export function usePriceImport() {
       {result && (
         <Dialog open onOpenChange={(o) => !o && setResult(null)}>
           <DialogContent className="rounded-lg sm:max-w-[560px]">
-            <DialogHeader><DialogTitle className="text-base font-bold">Kết quả nhập file — {result.book.name}</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle className="text-base font-bold">{t("import.resultTitle", { name: result.book.name })}</DialogTitle></DialogHeader>
             <p className="text-[13px]">
-              Cập nhật thành công <b>{result.data.updated}</b> dòng
-              {result.data.errors.length > 0 && <>, <span className="text-destructive">{result.data.errors.length} dòng lỗi</span></>}.
+              {renderRichText(t(result.data.errors.length ? "import.resultWithErrors" : "import.result"), {
+                updated: <b>{result.data.updated}</b>,
+                errors: <span className="text-destructive">{t("import.errorRows", { count: result.data.errors.length })}</span>,
+              })}
             </p>
             {result.data.errors.length > 0 && (
               <div className="max-h-72 overflow-y-auto rounded border text-[13px]">
                 <table className="w-full">
-                  <thead className="bg-muted text-left"><tr><th className="px-2 py-1">Dòng</th><th className="px-2 py-1">Mã hàng</th><th className="px-2 py-1">Lỗi</th></tr></thead>
+                  <thead className="bg-muted text-left"><tr><th className="px-2 py-1">{t("import.line")}</th><th className="px-2 py-1">{t("fields.code")}</th><th className="px-2 py-1">{t("import.error")}</th></tr></thead>
                   <tbody>
                     {result.data.errors.map((e) => (
                       <tr key={e.line} className="border-t"><td className="px-2 py-1">{e.line}</td><td className="px-2 py-1">{e.code}</td>
@@ -61,7 +69,7 @@ export function usePriceImport() {
                 </table>
               </div>
             )}
-            <DialogFooter><Button onClick={() => setResult(null)}>Đóng</Button></DialogFooter>
+            <DialogFooter><Button onClick={() => setResult(null)}>{tc("actions.close")}</Button></DialogFooter>
           </DialogContent>
         </Dialog>
       )}

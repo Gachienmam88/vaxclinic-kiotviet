@@ -9,12 +9,19 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { kvDialog, kvDialogBody, kvDialogFooter, kvDialogHeader, kvDialogTitle, kvFooterBtn, kvInput, kvLabel } from "@/features/sales/customer-ui-primitives";
 import { SUB_HEAD } from "@/features/sales/invoice-list-kit";
 import { api, errorMessage } from "@/lib/api-client";
+import { enumLabel } from "@/features/sales/i18n-enum-label";
 import { formatDateTime, formatMoney } from "@/lib/format";
+import { useT } from "@/lib/i18n";
+import { renderRichText } from "@/lib/i18n/render-rich-text";
 import { useCurrentUser } from "@/lib/use-current-user";
+import { commonNs } from "@/messages/common";
+import { deliveryNs } from "@/messages/delivery";
+import { salesNs } from "@/messages/sales";
 import { refreshDelivery, usePartnerOptions, useReconcilable } from "./delivery-queries";
-import { shipmentStatusLabel, type SettlementResult } from "./delivery-types";
+import type { SettlementResult } from "./delivery-types";
 
-export const FUNDS: [string, string][] = [["CASH", "Tiền mặt"], ["BANK", "Ngân hàng"], ["EWALLET", "Ví điện tử"]];
+/** Quỹ thu / chi khi thanh toán với đối tác — nhãn: salesNs "enums.fund.<giá trị>". */
+export const FUND_OPTIONS = ["CASH", "BANK", "EWALLET"] as const;
 const SELECT = `${kvInput} w-full border bg-background px-2`;
 
 /**
@@ -22,6 +29,9 @@ const SELECT = `${kvInput} w-full border bg-background px-2`;
  * chênh lệch = Σ thu hộ − Σ phí cửa hàng chịu → 1 phiếu thu (đối tác trả) hoặc phiếu chi (cửa hàng trả) ở Sổ quỹ.
  */
 export function ReconcileDialog({ partnerId: initial, onClose }: { partnerId?: string; onClose: () => void }) {
+  const t = useT(deliveryNs);
+  const tc = useT(commonNs);
+  const ts = useT(salesNs);
   const qc = useQueryClient();
   const { data: me } = useCurrentUser();
   const branches = me?.user.branches ?? [];
@@ -43,7 +53,9 @@ export function ReconcileDialog({ partnerId: initial, onClose }: { partnerId?: s
     mutationFn: () => api<SettlementResult>(`/delivery-partners/${partnerId}/reconcile`, { method: "POST",
       body: { branchId: branchId || branches[0]?.id, shipmentIds: picked, fund, note: note || null } }),
     onSuccess: (r) => {
-      toast.success(`Đã đối soát ${picked.length} vận đơn (${r.code})${r.voucherCode ? ` — phiếu ${r.voucherCode} ${formatMoney(Math.abs(r.amount))}` : ""}`);
+      toast.success(r.voucherCode
+        ? t("reconcile.doneVoucher", { n: picked.length, code: r.code, voucher: r.voucherCode, amount: formatMoney(Math.abs(r.amount)) })
+        : t("reconcile.done", { n: picked.length, code: r.code }));
       refreshDelivery(qc);
       onClose();
     },
@@ -53,33 +65,34 @@ export function ReconcileDialog({ partnerId: initial, onClose }: { partnerId?: s
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className={`${kvDialog} sm:max-w-[820px]`}>
-        <DialogHeader className={kvDialogHeader}><DialogTitle className={kvDialogTitle}>Đối soát với đối tác giao hàng</DialogTitle></DialogHeader>
+        <DialogHeader className={kvDialogHeader}><DialogTitle className={kvDialogTitle}>{t("reconcile.title")}</DialogTitle></DialogHeader>
         <div className={kvDialogBody}>
           <div className="grid grid-cols-3 gap-3">
-            <label className="space-y-1"><span className={kvLabel}>Đối tác giao hàng</span>
+            <label className="space-y-1"><span className={kvLabel}>{t("fields.partner")}</span>
               <select className={SELECT} value={partnerId} onChange={(e) => setPartnerId(e.target.value)}>
-                <option value="">Chọn đối tác</option>{partners.map((p) => <option key={p.id} value={p.id}>{p.code} - {p.name}</option>)}</select></label>
-            <label className="space-y-1"><span className={kvLabel}>Chi nhánh</span>
+                <option value="">{t("reconcile.pickPartner")}</option>{partners.map((p) => <option key={p.id} value={p.id}>{p.code} - {p.name}</option>)}</select></label>
+            <label className="space-y-1"><span className={kvLabel}>{tc("fields.branch")}</span>
               <select className={SELECT} value={branchId} onChange={(e) => setBranchId(e.target.value)}>
                 {branches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</select></label>
-            <label className="space-y-1"><span className={kvLabel}>Quỹ thu / chi</span>
+            <label className="space-y-1"><span className={kvLabel}>{t("reconcile.fund")}</span>
               <select className={SELECT} value={fund} onChange={(e) => setFund(e.target.value)}>
-                {FUNDS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></label>
+                {FUND_OPTIONS.map((v) => <option key={v} value={v}>{ts(`enums.fund.${v}`)}</option>)}</select></label>
           </div>
           <div className="max-h-[320px] overflow-y-auto rounded-md border">
             <table className="w-full text-[13px]">
               <thead className={SUB_HEAD}><tr>
-                <th><input type="checkbox" aria-label="Chọn tất cả" className="accent-primary" checked={!!rows.length && picked.length === rows.length}
+                <th><input type="checkbox" aria-label={t("table.selectAll")} className="accent-primary" checked={!!rows.length && picked.length === rows.length}
                   onChange={(e) => setPicked(e.target.checked ? rows.map((r) => r.id) : [])} /></th>
-                <th>Mã vận đơn</th><th>Hóa đơn</th><th>Người nhận</th><th>Trạng thái</th><th>Hoàn tất</th>
-                <th className="text-right">Thu hộ</th><th className="text-right">Phí cửa hàng trả</th><th className="text-right">Còn lại</th></tr></thead>
+                <th>{t("fields.shipmentCode")}</th><th>{t("fields.invoice")}</th><th>{t("fields.receiver")}</th><th>{t("fields.status")}</th>
+                <th>{t("fields.completed")}</th><th className="text-right">{t("fields.codShort")}</th>
+                <th className="text-right">{t("reconcile.shopFee")}</th><th className="text-right">{t("reconcile.net")}</th></tr></thead>
               <tbody>
-                {!rows.length && <tr><td colSpan={9} className="py-6 text-center text-muted-foreground">{partnerId ? "Không có vận đơn chờ đối soát" : "Chọn đối tác giao hàng"}</td></tr>}
+                {!rows.length && <tr><td colSpan={9} className="py-6 text-center text-muted-foreground">{t(partnerId ? "reconcile.noRows" : "reconcile.pickFirst")}</td></tr>}
                 {rows.map((r) => (
                   <tr key={r.id} className="border-b [&_td]:h-[30px] [&_td]:px-2">
-                    <td><input type="checkbox" aria-label={`Chọn ${r.code}`} className="accent-primary" checked={picked.includes(r.id)}
+                    <td><input type="checkbox" aria-label={t("table.selectRow", { code: r.code })} className="accent-primary" checked={picked.includes(r.id)}
                       onChange={(e) => setPicked(e.target.checked ? [...picked, r.id] : picked.filter((x) => x !== r.id))} /></td>
-                    <td><DocCodeLink code={r.code} kind="/delivery/shipments" newTab /></td><td><DocCodeLink code={r.invoiceCode} kind="/invoices" newTab /></td><td>{r.receiverName}</td><td>{shipmentStatusLabel(r.status)}</td>
+                    <td><DocCodeLink code={r.code} kind="/delivery/shipments" newTab /></td><td><DocCodeLink code={r.invoiceCode} kind="/invoices" newTab /></td><td>{r.receiverName}</td><td>{enumLabel(t, deliveryNs, "status", r.status)}</td>
                     <td>{r.deliveredAt ? formatDateTime(r.deliveredAt) : ""}</td><td className="text-right">{formatMoney(r.cod)}</td>
                     <td className="text-right">{formatMoney(r.fee)}</td><td className="text-right">{formatMoney(r.net)}</td>
                   </tr>))}
@@ -87,14 +100,16 @@ export function ReconcileDialog({ partnerId: initial, onClose }: { partnerId?: s
             </table>
           </div>
           <div className="flex flex-wrap items-center justify-end gap-6 text-[13px]">
-            <span>Tổng thu hộ: <b>{formatMoney(sum((r) => r.cod))}</b></span><span>Tổng phí: <b>{formatMoney(sum((r) => r.fee))}</b></span>
-            <span className="text-[15px]">{net >= 0 ? "Đối tác cần trả cửa hàng" : "Cửa hàng cần trả đối tác"}: <b className="text-primary">{formatMoney(Math.abs(net))}</b></span>
+            <span>{renderRichText(t("reconcile.totalCod"), { amount: <b>{formatMoney(sum((r) => r.cod))}</b> })}</span>
+            <span>{renderRichText(t("reconcile.totalFee"), { amount: <b>{formatMoney(sum((r) => r.fee))}</b> })}</span>
+            <span className="text-[15px]">{renderRichText(t(net >= 0 ? "reconcile.partnerPays" : "reconcile.shopPays"),
+              { amount: <b className="text-primary">{formatMoney(Math.abs(net))}</b> })}</span>
           </div>
-          <input className={`${kvInput} w-full border px-2`} placeholder="Ghi chú" aria-label="Ghi chú" value={note} onChange={(e) => setNote(e.target.value)} />
+          <input className={`${kvInput} w-full border px-2`} placeholder={tc("fields.note")} aria-label={tc("fields.note")} value={note} onChange={(e) => setNote(e.target.value)} />
         </div>
         <DialogFooter className={kvDialogFooter}>
-          <Button variant="outline" className={kvFooterBtn} onClick={onClose}>Bỏ qua</Button>
-          <Button className={kvFooterBtn} disabled={save.isPending || !partnerId || !picked.length} onClick={() => save.mutate()}>Đối soát</Button>
+          <Button variant="outline" className={kvFooterBtn} onClick={onClose}>{tc("actions.skip")}</Button>
+          <Button className={kvFooterBtn} disabled={save.isPending || !partnerId || !picked.length} onClick={() => save.mutate()}>{t("reconcile.submit")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

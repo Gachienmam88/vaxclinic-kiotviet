@@ -1,0 +1,241 @@
+{
+  "enums": {
+    "paymentMethod": {
+      "CASH": "現金",
+      "TRANSFER": "振込",
+      "CARD": "カード",
+      "EWALLET": "電子マネー"
+    },
+    "fund": {
+      "CASH": "現金",
+      "BANK": "銀行",
+      "EWALLET": "電子マネー",
+      "ALL": "全資金"
+    },
+    "invoiceState": {
+      "PROCESSING": "処理中",
+      "COMPLETED": "完了",
+      "FAILED_DELIVERY": "配送失敗",
+      "CANCELLED": "取消済み"
+    },
+    "einvoiceState": {
+      "NONE": "未発行",
+      "PUBLISHED": "発行済み",
+      "ACCEPTED": "税務当局承認済み",
+      "FAILED": "発行エラー"
+    },
+    "einvoiceNature": {
+      "ORIGINAL": "原本",
+      "ADJUST": "調整",
+      "REPLACE": "差替え"
+    },
+    "voucherStatus": {
+      "PAID": "支払済み",
+      "CANCELLED": "取消済み"
+    },
+    "returnStatus": {
+      "COMPLETED": "返品済み",
+      "CANCELLED": "取消済み"
+    },
+    "refundMethod": {
+      "CASH": "現金で返金",
+      "TRANSFER": "振込で返金",
+      "CREDIT": "預り金として保持（前受金）"
+    }
+  },
+  "listKit": {
+    "time": "期間",
+    "thisMonth": "今月",
+    "allTime": "全期間"
+  },
+  "pager": {
+    "rangeWithUnit": "{from} - {to} / {total} {unit}",
+    "rows_other": "{count} 行"
+  },
+  "invoices": {
+    "title": "売上伝票",
+    "unit": "件",
+    "emptyWhat": "売上伝票",
+    "filter": {
+      "delivery": "配送",
+      "noDelivery": "配送なし",
+      "withDelivery": "配送あり",
+      "invoiceState": "伝票ステータス",
+      "returnState": "返品ステータス",
+      "noReturn": "返品なし",
+      "hasReturn": "返品あり",
+      "einvoiceStatus": "電子インボイス状態",
+      "nature": "インボイス区分",
+      "pickStatus": "ステータスを選択",
+      "paymentMethod": "支払方法",
+      "createdBy": "作成者",
+      "pickCreator": "作成者を選択",
+      "seller": "販売担当",
+      "pickSeller": "販売担当を選択",
+      "pickPreset": "期間を選択"
+    },
+    "columns": {
+      "code": "伝票番号",
+      "soldAt": "日時",
+      "returnCodes": "返品番号",
+      "customerCode": "顧客コード",
+      "customerName": "顧客",
+      "sellerName": "販売担当",
+      "subtotal": "商品合計",
+      "discount": "値引き",
+      "total": "請求額",
+      "paid": "入金額",
+      "paymentMethod": "支払方法",
+      "state": "ステータス"
+    },
+    "table": {
+      "showAll": "すべての伝票を表示",
+      "favOnly": "スター付きのみ表示",
+      "mark": "スターを付ける",
+      "unmark": "スターを外す"
+    },
+    "toolbar": {
+      "searchCode": "伝票番号で検索",
+      "searchProduct": "商品コード・商品名",
+      "searchCustomer": "顧客コード・名前・電話",
+      "searchNote": "備考で検索",
+      "advanced": "詳細検索",
+      "clearFilter": "条件をクリア",
+      "create": "新規作成",
+      "newInvoice": "売上伝票",
+      "exportSummary": "概要をエクスポート",
+      "exportDetail": "明細をエクスポート",
+      "columns": "表示列を選択",
+      "orderSettings": "注文設定",
+      "exportVietnameseNote": "エクスポートファイルの列見出しはベトナム語のままです（会計・税務用）。"
+    },
+    "detail": {
+      "tabPayments": "入金履歴",
+      "saved": "売上伝票を保存しました",
+      "cancelled": "売上伝票を取り消し、商品を在庫に戻しました",
+      "notePlaceholder": "備考..."
+    },
+    "header": {
+      "openCustomer": "新しいタブで顧客を開く",
+      "offline": "オフライン販売",
+      "fromOrder": "受注 {code} から",
+      "createdBy": "作成者:",
+      "seller": "販売担当:",
+      "soldAt": "販売日:",
+      "timeLocked": "取引日時の変更は許可されていません（設定 → 注文）",
+      "channel": "販売チャネル:",
+      "priceBook": "価格表:",
+      "defaultPriceBook": "標準価格表"
+    },
+    "lines": {
+      "productCode": "商品コード",
+      "productName": "商品名",
+      "quantity": "数量",
+      "unitPrice": "単価",
+      "discount": "値引き",
+      "price": "販売価格",
+      "amount": "金額",
+      "lots": "ロット: {lots}"
+    },
+    "totals": {
+      "subtotal": "商品合計（{qty}）",
+      "invoiceDiscount": "伝票値引き",
+      "taxCut": "減税額",
+      "total": "請求額",
+      "paid": "入金額"
+    },
+    "payments": {
+      "code": "伝票番号",
+      "time": "日時",
+      "createdBy": "作成者",
+      "voucherAmount": "伝票金額",
+      "method": "方法",
+      "status": "ステータス",
+      "allocated": "入出金額",
+      "emptyWhat": "入金伝票"
+    },
+    "footer": {
+      "cancel": "取消",
+      "confirmCancel": "売上伝票 {code} を取り消しますか？商品は在庫に戻ります。",
+      "copy": "コピー",
+      "edit": "編集",
+      "return": "返品",
+      "more": "その他の操作",
+      "editTax": "商品の税率を編集",
+      "editTaxPublished": "{label}（電子インボイス発行済み）"
+    },
+    "einvoice": {
+      "title": "電子インボイス",
+      "number": "インボイス:",
+      "lookup": "電子インボイスを照会",
+      "lookupTitle": "照会（コード {code}）",
+      "issuedAt": "発行日:",
+      "buyer": "購入者:",
+      "nature": "インボイス区分:",
+      "taxAuthorityCode": "税務当局コード（Mã CQT）:"
+    },
+    "taxDialog": {
+      "title": "商品の税率を編集",
+      "vat": "付加価値税 (%)",
+      "taxRate": "税率",
+      "taxRateOf": "{code} の税率",
+      "notChosen": "-- 未選択 --",
+      "saved": "税率を保存しました"
+    }
+  },
+  "refund": {
+    "account": "出金口座",
+    "none": "-- 選択なし --"
+  },
+  "qr": {
+    "title": "QRコード決済",
+    "noBank": "銀行口座が未登録です。設定 → 銀行口座 で追加してください。",
+    "account": "口座",
+    "amount": "金額",
+    "imageAlt": "振込用QRコード",
+    "generating": "生成中...",
+    "received": "入金を確認しました",
+    "waiting": "お客様の振込を待っています（振込内容 {code}）",
+    "receivedToast": "振込 {amount}đ を受け取りました",
+    "download": "QRをダウンロード",
+    "or": "または",
+    "copy": "QRをコピー",
+    "copied": "QRコードをコピーしました",
+    "autoHint": "QR決済の入金通知が有効です。振込を受け取ると自動で確認されます。"
+  },
+  "returns": {
+    "title": "返品",
+    "unit": "件",
+    "emptyWhat": "返品伝票",
+    "status": "ステータス",
+    "searchPlaceholder": "返品番号・伝票番号・顧客名",
+    "exportTitle": "表示中の行をCSVに出力（見出しはベトナム語）",
+    "columns": {
+      "code": "返品番号",
+      "time": "日時",
+      "invoiceCode": "伝票番号",
+      "customer": "顧客",
+      "subtotal": "商品合計",
+      "fee": "返品手数料",
+      "total": "返金予定額",
+      "refunded": "返金済み額",
+      "status": "ステータス"
+    },
+    "detail": {
+      "cancelled": "返品を取り消しました",
+      "createdBy": "作成者:",
+      "time": "日時:",
+      "invoiceCode": "伝票番号:",
+      "lotsBack": "戻しロット",
+      "returnPrice": "返品単価",
+      "noNote": "備考なし",
+      "subtotal": "返品商品合計",
+      "discount": "値引き",
+      "fee": "返品手数料",
+      "total": "返金予定額",
+      "refunded": "返金済み額",
+      "cancel": "取消",
+      "confirmCancel": "返品 {code} を取り消しますか？商品は再度在庫から出庫されます。"
+    }
+  }
+}

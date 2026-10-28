@@ -14,10 +14,13 @@ import { formatDateTime, formatMoney, formatNumber } from "@/lib/format";
 import { useCurrentUser } from "@/lib/use-current-user";
 import { DocStatusBadge } from "./purchase-list-chrome";
 import { useReturn } from "./purchase-queries";
-import { RETURN_STATUS_LABEL } from "./purchase-types";
+import { returnStatusLabels } from "./purchase-types";
 import { ReceiptViewDialog } from "./receipt-view-dialog";
 import { purchaseReturnData } from "@/features/print/print-data";
 import { PrintButton } from "@/features/print/print-button";
+import { useT } from "@/lib/i18n";
+import { commonNs } from "@/messages/common";
+import { purchasesNs } from "@/messages/purchases";
 
 function Info({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -35,24 +38,26 @@ export function ReturnDetailPanel({ id, onClose }: { id: string; onClose?: () =>
   const { data: r } = useReturn(id);
   const { data: branches = [] } = useBranches();
   const [viewReceipt, setViewReceipt] = useState(false);
+  const t = useT(purchasesNs);
+  const tc = useT(commonNs);
   const cancel = useMutation({
     mutationFn: () => api(`/purchase-returns/${id}/cancel`, { method: "POST" }),
     onSuccess: () => {
-      toast.success("Đã hủy phiếu trả hàng nhập");
+      toast.success(t("detail.toastReturnCancelled"));
       qc.invalidateQueries({ queryKey: ["purchase-returns"] });
       qc.invalidateQueries({ queryKey: ["purchase-return", id] });
       qc.invalidateQueries({ queryKey: ["products"] });
     },
     onError: (e) => toast.error(errorMessage(e)),
   });
-  if (!r) return <div className="border border-primary bg-background p-6 text-sm text-muted-foreground">Đang tải...</div>;
+  if (!r) return <div className="border border-primary bg-background p-6 text-sm text-muted-foreground">{tc("status.loading")}</div>;
 
   const qty = r.lines.reduce((s, l) => s + Number(l.quantity), 0);
   const rows: [string, string][] = [
-    ["Số lượng mặt hàng", String(r.lines.length)], [`Tổng tiền hàng (${formatNumber(qty)})`, formatMoney(r.subtotal)],
-    ["Giảm giá", formatMoney(r.discount)],
-    ...(r.vatRate != null ? [[`VAT ${formatNumber(r.vatRate)}%`, formatMoney(r.vatAmount)] as [string, string]] : []),
-    ["NCC cần trả", formatMoney(r.total)], ["NCC đã trả", formatMoney(r.refundAmount)],
+    [t("summary.itemCount"), String(r.lines.length)], [t("summary.subtotalQty", { qty: formatNumber(qty) }), formatMoney(r.subtotal)],
+    [t("lines.discount"), formatMoney(r.discount)],
+    ...(r.vatRate != null ? [[t("summary.vatRate", { rate: formatNumber(r.vatRate) }), formatMoney(r.vatAmount)] as [string, string]] : []),
+    [t("returns.cols.supplierDue"), formatMoney(r.total)], [t("returns.cols.supplierPaid"), formatMoney(r.refundAmount)],
   ];
   return (
     <div className="border border-primary bg-background text-[13px]">
@@ -62,17 +67,17 @@ export function ReturnDetailPanel({ id, onClose }: { id: string; onClose?: () =>
       <div className="space-y-4 p-4">
         <div className="flex items-center gap-3">
           <span className="text-base font-bold">{r.code}</span>
-          <DocStatusBadge status={r.status} label={RETURN_STATUS_LABEL[r.status]} />
+          <DocStatusBadge status={r.status} label={returnStatusLabels(t)[r.status]} />
           <span className="ml-auto">{branches.find((b) => b.id === r.branchId)?.name}</span>
         </div>
         <div className="grid grid-cols-1 gap-x-8 gap-y-1.5 md:grid-cols-3">
-          <Info label="Người tạo">{r.createdByName}</Info>
-          <Info label="Người trả">{r.returnerName}</Info>
-          <Info label="Ngày trả">{formatDateTime(r.returnedAt)}</Info>
-          <Info label="Tên NCC"><span className="block truncate" title={r.supplierName ?? ""}>{r.supplierName && r.supplierCode
+          <Info label={tc("fields.createdBy")}>{r.createdByName}</Info>
+          <Info label={t("returns.returner")}>{r.returnerName}</Info>
+          <Info label={t("detail.returnDate")}>{formatDateTime(r.returnedAt)}</Info>
+          <Info label={t("detail.supplierName")}><span className="block truncate" title={r.supplierName ?? ""}>{r.supplierName && r.supplierCode
             ? <DocCodeLink code={r.supplierName} to={docCodeHref(r.supplierCode) ?? undefined} /> : (r.supplierName ?? "—")}</span></Info>
           {r.receiptCode && (
-            <Info label="Theo phiếu nhập">
+            <Info label={t("returns.cols.byReceipt")}>
               {r.receiptId
                 ? <button type="button" className={DOC_CODE_LINK_CLASS} onClick={() => setViewReceipt(true)}>{r.receiptCode}</button>
                 : <DocCodeLink code={r.receiptCode} />}
@@ -81,8 +86,9 @@ export function ReturnDetailPanel({ id, onClose }: { id: string; onClose?: () =>
         </div>
         <table className="w-full">
           <thead className="bg-[#eff0f3] text-left text-xs font-bold"><tr className="h-[30px]">
-            <th className="px-2">Mã hàng</th><th className="px-2">Tên hàng</th><th className="px-2">Lô</th>
-            <th className="px-2 text-right">Số lượng</th><th className="px-2 text-right">Giá trả</th><th className="px-2 text-right">Thành tiền</th>
+            <th className="px-2">{t("lines.productCode")}</th><th className="px-2">{t("lines.productName")}</th><th className="px-2">{t("lines.lot")}</th>
+            <th className="px-2 text-right">{t("lines.quantity")}</th><th className="px-2 text-right">{t("lines.returnPrice")}</th>
+            <th className="px-2 text-right">{t("lines.amount")}</th>
           </tr></thead>
           <tbody>
             {r.lines.map((l) => (
@@ -105,12 +111,12 @@ export function ReturnDetailPanel({ id, onClose }: { id: string; onClose?: () =>
       {can("inventory.manage") && r.status !== "CANCELLED" && (
         <div className="flex flex-wrap items-center gap-1 border-t border-[#e5e7eb] px-2 py-2.5">
           <Button variant="ghost" disabled={cancel.isPending}
-            onClick={() => confirm(`Hủy phiếu ${r.code}?${r.status === "COMPLETED" ? " Hàng sẽ được nhập lại kho." : ""}`) && cancel.mutate()}>
-            <Trash2 className="size-4" /> Hủy</Button>
+            onClick={() => confirm(t(r.status === "COMPLETED" ? "detail.confirmCancelReturnCompleted" : "detail.confirmCancelReturn", { code: r.code })) && cancel.mutate()}>
+            <Trash2 className="size-4" /> {tc("actions.cancel")}</Button>
           <div className="ml-auto flex gap-2">
             {r.status === "DRAFT" && (
               <Button className="h-[30px] rounded-md px-3" onClick={() => router.push(`/purchases/returns/new?edit=${r.id}`)}>
-                <ExternalLink className="size-4" /> Mở phiếu</Button>
+                <ExternalLink className="size-4" /> {t("detail.openDoc")}</Button>
             )}
             <PrintButton type="PURCHASE_RETURN" data={purchaseReturnData(r)} branchId={r.branchId} />
           </div>

@@ -8,6 +8,9 @@ import { kvSubHead, kvSubRow, kvSubTable } from "@/features/sales/customer-ui-pr
 import { formatDateTime, formatMoney } from "@/lib/format";
 import { sumAllocation, type Allocation } from "./supplier-allocation-math";
 import type { UnpaidReceipt } from "./supplier-types";
+import { useT } from "@/lib/i18n";
+import { commonNs } from "@/messages/common";
+import { purchasesNs } from "@/messages/purchases";
 
 type Props = {
   kind: "payment" | "discount"; receipts: UnpaidReceipt[] | undefined; alloc: Allocation; unallocated: number;
@@ -20,6 +23,8 @@ type Props = {
  */
 export function SupplierAllocationTable({ kind, receipts, alloc, unallocated, onRow, onOpen }: Props) {
   const pay = kind === "payment";
+  const t = useT(purchasesNs);
+  const tc = useT(commonNs);
   const rows = receipts ?? [];
   const sum = (f: (r: UnpaidReceipt) => number) => rows.reduce((s, r) => s + f(r), 0);
   const allocated = sumAllocation(alloc);
@@ -28,11 +33,13 @@ export function SupplierAllocationTable({ kind, receipts, alloc, unallocated, on
     <div>
       <table className={kvSubTable}>
         <thead className={kvSubHead}><tr>
-          <th>{pay ? "Mã hóa đơn" : "Mã nhập hàng"}</th><th>Thời gian</th><th className="text-right">Giá trị phiếu nhập</th>
-          {pay && <th className="text-right">Đã trả trước</th>}
-          <th className="text-right"><span className="inline-flex items-center gap-1">Còn cần trả
-            <span title="Giá trị phiếu nhập − đã trả / đã chiết khấu trước"><Info className="size-3.5" /></span></span></th>
-          <th className="w-36 text-right">{pay ? "Tiền trả" : "Chiết khấu phân bổ"}</th><th className="text-right">Còn nợ</th>
+          <th>{pay ? t("suppliers.alloc.invoiceCode") : t("receipts.cols.code")}</th><th>{t("receipts.cols.time")}</th>
+          <th className="text-right">{t("suppliers.alloc.receiptValue")}</th>
+          {pay && <th className="text-right">{t("suppliers.alloc.paidBefore")}</th>}
+          <th className="text-right"><span className="inline-flex items-center gap-1">{t("suppliers.alloc.remaining")}
+            <span title={t("suppliers.alloc.remainingHint")}><Info className="size-3.5" /></span></span></th>
+          <th className="w-36 text-right">{pay ? t("suppliers.alloc.payAmount") : t("suppliers.alloc.discountAlloc")}</th>
+          <th className="text-right">{t("suppliers.alloc.stillOwed")}</th>
         </tr></thead>
         <tbody>
           {rows.length > 0 && (
@@ -41,15 +48,15 @@ export function SupplierAllocationTable({ kind, receipts, alloc, unallocated, on
               <td className="text-right">{formatMoney(allocated)}</td><td className="text-right">{formatMoney(remaining - allocated)}</td>
             </tr>
           )}
-          {!receipts && <tr className={kvSubRow}><td colSpan={7} className="text-center text-muted-foreground">Đang tải...</td></tr>}
-          {receipts && !rows.length && <tr><td colSpan={7}><ListEmptyState compact what="phiếu nhập còn nợ" /></td></tr>}
+          {!receipts && <tr className={kvSubRow}><td colSpan={7} className="text-center text-muted-foreground">{tc("status.loading")}</td></tr>}
+          {receipts && !rows.length && <tr><td colSpan={7}><ListEmptyState compact what={t("suppliers.alloc.emptyWhat")} /></td></tr>}
           {rows.map((r) => (
             <tr key={r.id} className={kvSubRow}>
               <td><button type="button" className={DOC_CODE_LINK_CLASS} onClick={() => onOpen(r.id)}>{r.code}</button></td>
               <td>{formatDateTime(r.receivedAt)}</td><td className="text-right">{formatMoney(r.total)}</td>
               {pay && <td className="text-right">{formatMoney(r.paidBefore)}</td>}
               <td className="text-right">{formatMoney(r.remaining)}</td>
-              <td><NumberInput className="ml-auto h-7 w-32 rounded-md text-[13px] md:text-[13px]" aria-label={`${pay ? "Tiền trả" : "Chiết khấu"} ${r.code}`}
+              <td><NumberInput className="ml-auto h-7 w-32 rounded-md text-[13px] md:text-[13px]" aria-label={t(pay ? "suppliers.alloc.rowPay" : "suppliers.alloc.rowDiscount", { code: r.code })}
                 value={alloc[r.id] ?? 0} onValueChange={(v) => onRow(r, v)} /></td>
               <td className="text-right">{formatMoney(r.remaining - (alloc[r.id] ?? 0))}</td>
             </tr>
@@ -57,7 +64,7 @@ export function SupplierAllocationTable({ kind, receipts, alloc, unallocated, on
         </tbody>
       </table>
       <div className="mt-3 flex justify-end gap-16 pr-2 text-[13px]">
-        <span>{pay ? "Tiền chưa phân bổ:" : "Chiết khấu chưa phân bổ:"}</span><b>{formatMoney(unallocated)}</b>
+        <span>{pay ? t("suppliers.alloc.unallocatedPay") : t("suppliers.alloc.unallocatedDiscount")}</span><b>{formatMoney(unallocated)}</b>
       </div>
     </div>
   );

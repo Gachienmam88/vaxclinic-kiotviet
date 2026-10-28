@@ -2,6 +2,9 @@
 
 import { Info } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
+import { commonNs } from "@/messages/common";
+import { hrNs } from "@/messages/hr";
 
 /** Ô nhập số kiểu KiotViet có đơn vị đứng sau (VD "0 phút", "8 giờ"), cao 26px, căn phải. */
 export function UnitBox({ value, onChange, unit, disabled, label, width = 60, step }: {
@@ -22,12 +25,13 @@ export function UnitBox({ value, onChange, unit, disabled, label, width = 60, st
 export function DurationBox({ minutes, onChange, disabled, label }: {
   minutes: number; onChange: (m: number) => void; disabled?: boolean; label: string;
 }) {
+  const t = useT(hrNs);
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
   return (
     <span className="inline-flex items-center gap-1">
-      <UnitBox label={`${label} (giờ)`} value={h} unit="giờ" width={28} disabled={disabled} onChange={(v) => onChange(Math.max(0, v) * 60 + m)} />
-      <UnitBox label={`${label} (phút)`} value={m} unit="phút" width={28} disabled={disabled}
+      <UnitBox label={`${label} (${t("units.hour")})`} value={h} unit={t("units.hour")} width={28} disabled={disabled} onChange={(v) => onChange(Math.max(0, v) * 60 + m)} />
+      <UnitBox label={`${label} (${t("units.minute")})`} value={m} unit={t("units.minute")} width={28} disabled={disabled}
         onChange={(v) => onChange(h * 60 + Math.min(59, Math.max(0, v)))} />
     </span>
   );
@@ -55,11 +59,13 @@ export function CheckLine({ checked, onChange, label, disabled, children, hint }
 
 /** Thanh lưu dính dưới cùng các trang thiết lập. */
 export function SaveBar({ onSave, pending, dirty }: { onSave: () => void; pending: boolean; dirty: boolean }) {
+  const t = useT(hrNs);
+  const tc = useT(commonNs);
   return (
     <div className="sticky bottom-0 z-10 flex justify-end gap-2 rounded-lg bg-background px-5 py-2.5 shadow-[0_-2px_6px_rgba(0,0,0,0.05)]">
-      {dirty && <span className="mr-auto self-center text-[12px] text-muted-foreground">Có thay đổi chưa lưu</span>}
+      {dirty && <span className="mr-auto self-center text-[12px] text-muted-foreground">{t("settings.unsaved")}</span>}
       <button type="button" disabled={pending || !dirty} onClick={onSave}
-        className="h-8 rounded-md bg-primary px-5 text-[13px] font-semibold text-white hover:bg-primary/90 disabled:opacity-50">Lưu</button>
+        className="h-8 rounded-md bg-primary px-5 text-[13px] font-semibold text-white hover:bg-primary/90 disabled:opacity-50">{tc("actions.save")}</button>
     </div>
   );
 }

@@ -110,12 +110,6 @@
     "thisMonth": "本月",
     "overdue": "已逾期"
   },
-  "orderStatus": {
-    "DRAFT": "草稿单",
-    "CONFIRMED": "已确认",
-    "COMPLETED": "已完成",
-    "CANCELLED": "已取消"
-  },
   "viewer": {
     "undo": "撤销",
     "redo": "重做",

@@ -13,9 +13,12 @@ import { TimesheetLegend, TimesheetWeekGrid } from "@/features/hr/timesheet-week
 import { addDays, isoDate, mondayOf, parseIso, useAllEmployees, useAttendance, useHrMutation, useShifts } from "@/features/hr/hr-queries";
 import type { AttendanceCell, Shift } from "@/features/hr/hr-types";
 import { EmployeeSearch, thisMonday, ViewSelect, WEEK_BTN, WeekNavigator, weekDays } from "@/features/hr/week-toolbar";
+import { useT } from "@/lib/i18n";
+import { hrNs } from "@/messages/hr";
 
 /** Bảng chấm công (ảnh KiotViet 113): lưới tuần theo ca / nhân viên, chấm công tay, Duyệt chấm công. */
 export default function TimesheetsPage() {
+  const t = useT(hrNs);
   const [monday, setMonday] = useState(thisMonday);
   const [employeeId, setEmployeeId] = useState("");
   const [mode, setMode] = useState<"shift" | "employee">("shift");
@@ -34,34 +37,34 @@ export default function TimesheetsPage() {
   const shown = employeeId ? cells.filter((c) => c.employeeId === employeeId) : cells;
 
   const approve = useHrMutation(() => api<{ approved: number }>("/hr/attendance/approve", { method: "POST", body: { from, to } }),
-    undefined, (r) => toast.success(r.approved ? `Đã duyệt ${r.approved} lượt chấm công` : "Không có lượt chấm công nào cần duyệt (cần đủ giờ vào - ra hoặc nghỉ)"));
+    undefined, (r) => toast.success(r.approved ? t("timesheets.toastApproved", { count: r.approved }) : t("timesheets.nothingToApprove")));
 
   return (
     <div className="space-y-2.5">
       <div className="flex flex-wrap items-center gap-2">
-        <h1 className="w-[160px] text-[18px] font-bold">Bảng chấm công</h1>
+        <h1 className="w-[160px] text-[18px] font-bold">{t("timesheets.title")}</h1>
         <EmployeeSearch employees={all} value={employeeId} onChange={setEmployeeId} />
-        <ViewSelect label="Kỳ xem" value="week" onChange={() => undefined} options={[["week", "Theo tuần"]]} />
+        <ViewSelect label={t("timesheets.period")} value="week" onChange={() => undefined} options={[["week", t("timesheets.weekly")]]} />
         <WeekNavigator monday={monday} onChange={setMonday} />
         <PickerPopover open={picking} onOpenChange={(o) => { if (o) setPickMonth(`${from.slice(0, 7)}-01`); setPicking(o); }}
-          label="Chọn ngày" icon="Chọn" triggerClassName={WEEK_BTN} align="start">
+          label={t("timesheets.pickDate")} icon={t("timesheets.pick")} triggerClassName={WEEK_BTN} align="start">
           <MonthCalendar month={pickMonth} onMonthChange={setPickMonth} selected={from}
             onPick={(d) => { setMonday(mondayOf(parseIso(d))); setPicking(false); }} />
         </PickerPopover>
         <div className="ml-auto flex items-center gap-2">
-          <ViewSelect label="Kiểu xem" value={mode} onChange={setMode} icon={<CalendarDays className="size-3.5" />}
-            options={[["shift", "Xem theo ca"], ["employee", "Xem theo nhân viên"]]} />
+          <ViewSelect label={t("week.viewMode")} value={mode} onChange={setMode} icon={<CalendarDays className="size-3.5" />}
+            options={[["shift", t("week.byShift")], ["employee", t("week.byEmployee")]]} />
           <button type="button" className={WEEK_BTN} disabled={approve.isPending} onClick={() => approve.mutate(undefined)}>
-            <CalendarCheck className="size-4" /> Duyệt chấm công</button>
+            <CalendarCheck className="size-4" /> {t("timesheets.approve")}</button>
           <div className="relative">
-            <button type="button" aria-label="Thao tác khác" aria-expanded={menu} className={WEEK_BTN} onClick={() => setMenu(!menu)}>
+            <button type="button" aria-label={t("timesheets.moreActions")} aria-expanded={menu} className={WEEK_BTN} onClick={() => setMenu(!menu)}>
               <Ellipsis className="size-4" /></button>
             {menu && (
               <div className="absolute top-9 right-0 z-30 w-56 rounded-md border bg-white py-1 text-[13px] shadow-lg">
                 <Link href="/employees/settings/machine" className="flex items-center gap-2 px-3 py-1.5 hover:bg-[#f3f6fa]">
-                  <Fingerprint className="size-4" /> Import file máy chấm công</Link>
+                  <Fingerprint className="size-4" /> {t("timesheets.importMachine")}</Link>
                 <button type="button" className="flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-[#f3f6fa]"
-                  onClick={() => { setMenu(false); setShiftDialog("list"); }}>Quản lý ca làm việc</button>
+                  onClick={() => { setMenu(false); setShiftDialog("list"); }}>{t("timesheets.manageShifts")}</button>
               </div>
             )}
           </div>

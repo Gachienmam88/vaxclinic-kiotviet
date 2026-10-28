@@ -1,5 +1,6 @@
 package com.vaxclinic.product.product;
 
+import com.vaxclinic.common.search.AccentInsensitiveSql;
 import com.vaxclinic.product.product.ProductDtos.ProductListItem;
 import com.vaxclinic.product.product.ProductDtos.ProductListResponse;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -48,7 +49,7 @@ public class ProductListQuery {
         var where = new StringBuilder(" where not p.deleted");
         if (f.q() != null && !f.q().isBlank()) {
             // Leading space is explicit: text blocks strip indentation.
-            where.append(" and (p.name ilike :q or p.short_name ilike :q")
+            where.append(" and (" + AccentInsensitiveSql.like("p.name", ":q") + " or " + AccentInsensitiveSql.like("p.short_name", ":q"))
                     .append(" or exists (select 1 from product_units x where x.product_id = p.id")
                     .append(" and (x.code ilike :q or x.barcode ilike :q)))");
             params.addValue("q", "%" + f.q().trim() + "%");

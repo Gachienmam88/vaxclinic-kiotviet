@@ -5,6 +5,8 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { VnAddressFields } from "@/components/ui/vn-address-fields";
+import { useT } from "@/lib/i18n";
+import { storeProfileNs } from "@/messages/store-profile";
 import { FlowFooter, useVerifyStep } from "./store-flow-parts";
 import { BUSINESS_TYPES, GENDERS, useStoreProfileMutation, type StoreProfile } from "./store-profile-queries";
 
@@ -26,6 +28,7 @@ function Field({ label, required, children, wide }: { label: string; required?: 
 
 /** "Cập nhật thông tin hồ sơ" (ảnh 180): form → bước Xác thực → lưu (ghi Lịch sử cập nhật). */
 export function ProfileUpdateDialog({ profile, onClose }: { profile: StoreProfile; onClose: () => void }) {
+  const t = useT(storeProfileNs);
   const [f, setF] = useState<Form>({
     businessType: profile.businessType ?? "PERSONAL", email: profile.email ?? "", gender: profile.gender ?? "",
     idNumber: profile.idNumber ?? "", birthDate: profile.birthDate ?? "", idIssueDate: profile.idIssueDate ?? "",
@@ -34,7 +37,7 @@ export function ProfileUpdateDialog({ profile, onClose }: { profile: StoreProfil
   });
   const [step, setStep] = useState<"form" | "verify">("form");
   const verify = useVerifyStep("PROFILE", profile.twoFactorEnabled);
-  const save = useStoreProfileMutation<Record<string, unknown>>("PUT", "/profile", "Đã cập nhật thông tin hồ sơ");
+  const save = useStoreProfileMutation<Record<string, unknown>>("PUT", "/profile", t("profileUpdate.toast"));
   const set = (k: keyof Form) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setF({ ...f, [k]: e.target.value });
   const complete = !!(f.email.trim() && f.gender && f.idNumber.trim() && f.birthDate && f.idIssueDate && f.representative.trim() && f.address.trim());
 
@@ -49,38 +52,38 @@ export function ProfileUpdateDialog({ profile, onClose }: { profile: StoreProfil
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="gap-3 sm:max-w-[600px]">
-        <DialogHeader><DialogTitle className="text-[17px] font-semibold">Cập nhật thông tin hồ sơ</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle className="text-[17px] font-semibold">{t("profileUpdate.title")}</DialogTitle></DialogHeader>
         {step === "form" ? (
           <div className="grid grid-cols-2 gap-x-6 gap-y-2.5">
-            <Field label="Loại hình kinh doanh" wide>
+            <Field label={t("general.fields.businessType")} wide>
               <select className={SELECT} value={f.businessType} onChange={set("businessType")}>
-                {BUSINESS_TYPES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                {BUSINESS_TYPES.map((v) => <option key={v} value={v}>{t(`businessTypes.${v}`)}</option>)}
               </select>
             </Field>
-            <Field label="Email" required><Input type="email" value={f.email} onChange={set("email")} /></Field>
-            <Field label="Giới tính" required>
+            <Field label={t("general.fields.email")} required><Input type="email" value={f.email} onChange={set("email")} /></Field>
+            <Field label={t("general.fields.gender")} required>
               <select className={SELECT} value={f.gender} onChange={set("gender")}>
-                <option value="">Chọn giới tính</option>
-                {GENDERS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                <option value="">{t("profileUpdate.pickGender")}</option>
+                {GENDERS.map((v) => <option key={v} value={v}>{t(`genders.${v}`)}</option>)}
               </select>
             </Field>
-            <Field label="CCCD/Hộ chiếu" required><Input value={f.idNumber} maxLength={12} onChange={set("idNumber")} /></Field>
-            <Field label="Ngày sinh" required><DatePicker value={f.birthDate} onChange={(v) => setF({ ...f, birthDate: v })} /></Field>
-            <Field label="Ngày cấp" required><DatePicker value={f.idIssueDate} onChange={(v) => setF({ ...f, idIssueDate: v })} /></Field>
-            <Field label="Nơi cấp"><Input value={f.idIssuePlace} onChange={set("idIssuePlace")} /></Field>
-            <Field label="Người đại diện" required wide><Input value={f.representative} onChange={set("representative")} /></Field>
+            <Field label={t("general.fields.idNumber")} required><Input value={f.idNumber} maxLength={12} onChange={set("idNumber")} /></Field>
+            <Field label={t("general.fields.birthDate")} required><DatePicker value={f.birthDate} onChange={(v) => setF({ ...f, birthDate: v })} /></Field>
+            <Field label={t("general.fields.idIssueDate")} required><DatePicker value={f.idIssueDate} onChange={(v) => setF({ ...f, idIssueDate: v })} /></Field>
+            <Field label={t("general.fields.idIssuePlace")}><Input value={f.idIssuePlace} onChange={set("idIssuePlace")} /></Field>
+            <Field label={t("general.fields.representative")} required wide><Input value={f.representative} onChange={set("representative")} /></Field>
             <VnAddressFields idPrefix="owner" addressRequired fieldClassName="grid gap-1" addressFieldClassName="col-span-2"
               labelClassName="text-xs text-muted-foreground" controlClassName="h-9 text-[13px]"
-              labels={{ address: "Địa chỉ *", province: "Tỉnh/Thành phố" }}
+              labels={{ address: t("profileUpdate.addressRequired"), province: t("profileUpdate.province") }}
               value={{ address: f.address, provinceCode: f.provinceCode, provinceName: f.province, wardCode: f.wardCode, wardName: f.ward }}
               onChange={(v) => setF({ ...f, address: v.address, province: v.provinceName, ward: v.wardName, provinceCode: v.provinceCode, wardCode: v.wardCode })} />
             <p className="col-span-2 text-[13px]">
-              Để hoàn tất cập nhật, hệ thống cần xác thực chủ tài khoản đang thực hiện. Nhấn &quot;Tiếp tục&quot; để sang bước xác thực.
+              {t("profileUpdate.verifyNote")}
             </p>
           </div>
         ) : verify.fields}
-        <FlowFooter onCancel={step === "form" ? onClose : () => setStep("form")} cancelLabel={step === "form" ? "Hủy bỏ" : "Quay lại"}
-          nextLabel={step === "form" ? "Tiếp tục" : "Xác nhận"}
+        <FlowFooter onCancel={step === "form" ? onClose : () => setStep("form")} cancelLabel={step === "form" ? t("flow.cancel") : t("flow.back")}
+          nextLabel={step === "form" ? t("flow.next") : t("flow.confirm")}
           disabled={step === "form" ? !complete : !verify.valid || verify.pending || save.isPending}
           onNext={() => (step === "form" ? setStep("verify") : void submit())} />
       </DialogContent>

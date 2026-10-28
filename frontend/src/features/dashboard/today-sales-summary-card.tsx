@@ -2,7 +2,9 @@
 
 import { ArrowDown, ArrowUp, CircleDollarSign, Undo2 } from "lucide-react";
 import type { DailyRevenue } from "@/features/accounting/tax-calc";
+import { useT } from "@/lib/i18n";
 import { formatMoney } from "@/lib/format";
+import { dashboardNs } from "@/messages/dashboard";
 import { cn } from "@/lib/utils";
 import { sameDayLastMonth, ymd } from "./dashboard-date-utils";
 
@@ -27,10 +29,11 @@ function Kpi({ icon, label, value, sub }: { icon: React.ReactNode; label: string
 }
 
 function Change({ value, sub }: { value: number | null; sub: string }) {
+  const t = useT(dashboardNs);
   const up = (value ?? 0) >= 0;
   const Icon = up ? ArrowUp : ArrowDown;
   return (
-    <Kpi label="Doanh thu thuần" sub={sub}
+    <Kpi label={t("today.netRevenue")} sub={sub}
       icon={<Icon className={cn("size-[18px]", up ? "text-[#16a34a]" : "text-[#e5372b]")} strokeWidth={2.2} aria-hidden />}
       value={value == null ? "—" : `${value.toFixed(2)}%`} />
   );
@@ -38,6 +41,7 @@ function Change({ value, sub }: { value: number | null; sub: string }) {
 
 /** "Kết quả bán hàng hôm nay": doanh thu, trả hàng, % doanh thu thuần so với hôm qua và cùng kỳ tháng trước. */
 export function TodaySalesSummaryCard({ rows, invoiceCount, today }: { rows: DailyRevenue[]; invoiceCount?: number; today: Date }) {
+  const t = useT(dashboardNs);
   const d0 = ymd(today);
   const yesterday = ymd(new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1));
   const lastMonth = ymd(sameDayLastMonth(today));
@@ -47,14 +51,14 @@ export function TodaySalesSummaryCard({ rows, invoiceCount, today }: { rows: Dai
 
   return (
     <section className="rounded-lg bg-background px-5 py-4" aria-labelledby="today-title">
-      <h2 id="today-title" className="mb-4 text-[15px] font-semibold">Kết quả bán hàng hôm nay</h2>
+      <h2 id="today-title" className="mb-4 text-[15px] font-semibold">{t("today.title")}</h2>
       <div className="grid grid-cols-2 gap-y-4 sm:flex">
-        <Kpi label="Doanh thu" value={formatMoney(sales)} sub={invoiceCount == null ? undefined : `${invoiceCount} hóa đơn`}
+        <Kpi label={t("today.revenue")} value={formatMoney(sales)} sub={invoiceCount == null ? undefined : t("today.invoiceCount", { count: invoiceCount })}
           icon={<CircleDollarSign className="size-[18px] fill-primary text-white" aria-hidden />} />
-        <Kpi label="Trả hàng" value={formatMoney(returns)}
+        <Kpi label={t("today.returns")} value={formatMoney(returns)}
           icon={<span className="flex size-[18px] items-center justify-center rounded bg-[#ff8a00]"><Undo2 className="size-3 text-white" strokeWidth={3} aria-hidden /></span>} />
-        <Change value={pct(netToday, sumOn(rows, yesterday, net))} sub="So với hôm qua" />
-        <Change value={pct(netToday, sumOn(rows, lastMonth, net))} sub="So với cùng kỳ tháng trước" />
+        <Change value={pct(netToday, sumOn(rows, yesterday, net))} sub={t("today.vsYesterday")} />
+        <Change value={pct(netToday, sumOn(rows, lastMonth, net))} sub={t("today.vsLastMonth")} />
       </div>
     </section>
   );

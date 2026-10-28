@@ -3,7 +3,7 @@
 import { Check, ChevronDown } from "lucide-react";
 import { LocaleFlagIcon } from "@/components/layout/locale-flag-icon";
 import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
+  DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { LOCALES, LOCALE_INFO, useLocale, useSetLocale, useT, type Locale } from "@/lib/i18n";
 import { authNs } from "@/messages/auth";
@@ -29,10 +29,12 @@ export function LoginLanguageSelect() {
       <DropdownMenuContent side="top" align="end" className="w-48">
         {LOCALES.filter((l) => !LOCALE_INFO[l].beta).map(item)}
         <DropdownMenuSeparator />
-        <DropdownMenuLabel className="text-[12px] font-normal text-muted-foreground" title={tn("account.betaHint")}>
-          {tn("account.beta")}
-        </DropdownMenuLabel>
-        {LOCALES.filter((l) => LOCALE_INFO[l].beta).map(item)}
+        <DropdownMenuGroup>
+          <DropdownMenuLabel className="text-[12px] font-normal text-muted-foreground" title={tn("account.betaHint")}>
+            {tn("account.beta")}
+          </DropdownMenuLabel>
+          {LOCALES.filter((l) => LOCALE_INFO[l].beta).map(item)}
+        </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>
   );

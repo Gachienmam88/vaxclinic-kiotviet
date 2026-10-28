@@ -3,8 +3,12 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { api, errorMessage } from "@/lib/api-client";
+import { useT, type TFunction } from "@/lib/i18n";
+import { deliveryNs } from "@/messages/delivery";
 import { refreshDelivery } from "./delivery-queries";
-import { shipmentStatusLabel, type ShipmentStatus, type StatusResult } from "./delivery-types";
+import { SHIPMENT_STATUS_KEY, type ShipmentStatus, type StatusResult } from "./delivery-types";
+
+type DeliveryT = TFunction<typeof deliveryNs.vi>;
 
 /** Tham số "Đã chuyển hoàn": cách hoàn tiền khách đã trả + phí cửa hàng chịu (chỉ khi 1 vận đơn). */
 export type ReturnedOptions = {
@@ -12,18 +16,16 @@ export type ReturnedOptions = {
 };
 
 /** Hỏi xác nhận các bước có hệ quả tiền / kho trước khi đổi trạng thái (Đã chuyển hoàn dùng hộp thoại riêng). */
-export function confirmStatus(to: ShipmentStatus, count: number) {
-  const what = count > 1 ? `${count} vận đơn` : "vận đơn";
-  const extra: Partial<Record<ShipmentStatus, string>> = {
-    DELIVERED: "Tiền thu hộ được ghi nhận khách đã trả, đối tác giao hàng nợ cửa hàng số tiền này.",
-    RETURNING: "Đối tác đang chuyển hàng về, chưa nhập kho. Khi cửa hàng nhận lại hàng, chọn \"Đã chuyển hoàn\".",
-    CANCELLED: "Chỉ hủy vận đơn, hóa đơn giữ nguyên (khách còn nợ phần chưa trả); tạo vận đơn mới ở chi tiết hóa đơn. Muốn hủy bán thì hủy hóa đơn.",
-  };
-  return window.confirm(`Chuyển ${what} sang "${shipmentStatusLabel(to)}"?${extra[to] ? `\n${extra[to]}` : ""}`);
+export function confirmStatus(t: DeliveryT, to: ShipmentStatus, count: number) {
+  const status = t(SHIPMENT_STATUS_KEY[to]);
+  const question = count > 1 ? t("confirmStatus.many", { count, status }) : t("confirmStatus.one", { status });
+  const extra = to === "DELIVERED" || to === "RETURNING" || to === "CANCELLED" ? t(`confirmStatus.${to}`) : "";
+  return window.confirm(extra ? `${question}\n${extra}` : question);
 }
 
 /** Đổi trạng thái 1 hoặc nhiều vận đơn; báo kết quả từng vận đơn lỗi. */
 export function useShipmentStatus(onDone?: () => void) {
+  const t = useT(deliveryNs);
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ ids, status, note, opts }: { ids: string[]; status: ShipmentStatus; note?: string; opts?: ReturnedOptions }) =>
@@ -31,8 +33,8 @@ export function useShipmentStatus(onDone?: () => void) {
     onSuccess: (res, v) => {
       const ok = res.filter((r) => r.ok).length;
       const bad = res.filter((r) => !r.ok);
-      if (ok) toast.success(`Đã chuyển ${ok} vận đơn sang "${shipmentStatusLabel(v.status)}"`);
-      bad.forEach((r) => toast.error(r.message ?? `${r.code ?? "Vận đơn"}: không cập nhật được`));
+      if (ok) toast.success(t("confirmStatus.changed", { count: ok, status: t(SHIPMENT_STATUS_KEY[v.status]) }));
+      bad.forEach((r) => toast.error(r.message ?? t("confirmStatus.failed", { code: r.code ?? t("confirmStatus.shipmentFallback") })));
       refreshDelivery(qc);
       onDone?.();
     },

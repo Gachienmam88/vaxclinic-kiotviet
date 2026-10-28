@@ -3,15 +3,18 @@
 import { ImageIcon } from "lucide-react";
 import { formatMoney, formatNumber } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
+import { productsNs } from "@/messages/products";
 import type { ProductDetail } from "./product-types";
 
 /** Ô thông tin: nhãn xám 12px, giá trị 13px, gạch chân như panel chi tiết KiotViet. */
 export function DetailField({ label, value, strong }: { label: string; value: React.ReactNode; strong?: boolean }) {
+  const t = useT(productsNs);
   return (
     <div className="border-b border-[#e5e7eb] pb-2">
       <div className="mb-1.5 text-xs text-muted-foreground">{label}</div>
       <div className={cn("min-h-5 text-[13px]", strong && "font-bold")}>
-        {value || <span className="text-muted-foreground">Chưa có</span>}
+        {value || <span className="text-muted-foreground">{t("detail.empty")}</span>}
       </div>
     </div>
   );
@@ -25,6 +28,7 @@ const Chip = ({ children, className }: { children: React.ReactNode; className?: 
 export function ProductInfoTab({ p }: { p: ProductDetail }) {
   const base = p.units.find((u) => u.base)!;
   const stock = p.stocks.reduce((s, b) => s + Number(b.quantity), 0);
+  const t = useT(productsNs);
   return (
     <div className="space-y-5">
       <div className="flex gap-3">
@@ -35,29 +39,29 @@ export function ProductInfoTab({ p }: { p: ProductDetail }) {
           <h3 className="flex flex-wrap items-center gap-1.5 text-[15px] font-bold">
             {p.name} {p.units.map((u) => <Chip key={u.id}>{u.unitName}</Chip>)}
           </h3>
-          <p className="text-[13px]"><span className="text-muted-foreground">Nhóm hàng:</span> {p.categoryName}</p>
+          <p className="text-[13px]"><span className="text-muted-foreground">{t("detail.categoryLabel")}</span> {p.categoryName}</p>
           <div className="flex flex-wrap gap-1.5">
-            <Chip>{p.lotManaged ? "Quản lý theo lô, HSD" : "Hàng hóa thường"}</Chip>
-            {base.directSale && <Chip>Bán trực tiếp</Chip>}
-            {!p.loyaltyPoints && <Chip className="bg-orange-50 text-orange-600">Không tích điểm</Chip>}
-            {!p.active && <Chip className="bg-red-50 text-destructive">Ngừng kinh doanh</Chip>}
+            <Chip>{p.lotManaged ? t("detail.lotManagedChip") : t("detail.regularChip")}</Chip>
+            {base.directSale && <Chip>{t("fields.directSale")}</Chip>}
+            {!p.loyaltyPoints && <Chip className="bg-orange-50 text-orange-600">{t("detail.noPoints")}</Chip>}
+            {!p.active && <Chip className="bg-red-50 text-destructive">{t("detail.discontinued")}</Chip>}
           </div>
         </div>
       </div>
       <div className="grid grid-cols-2 gap-x-5 gap-y-3 md:grid-cols-4">
-        <DetailField label="Mã hàng" value={base.code} strong />
-        <DetailField label="Mã vạch" value={base.barcode} />
-        <DetailField label="Tồn kho" value={formatNumber(stock)} />
-        <DetailField label="Định mức tồn" value={`${formatNumber(p.minStock)} - ${formatNumber(p.maxStock)}`} />
-        <DetailField label="Giá vốn" value={formatNumber(p.cost)} />
-        <DetailField label="Giá bán" value={formatMoney(base.price)} />
-        <DetailField label="Tỷ lệ tính thuế"
+        <DetailField label={t("fields.code")} value={base.code} strong />
+        <DetailField label={t("fields.barcode")} value={base.barcode} />
+        <DetailField label={t("fields.stock")} value={formatNumber(stock)} />
+        <DetailField label={t("detail.stockLimits")} value={`${formatNumber(p.minStock)} - ${formatNumber(p.maxStock)}`} />
+        <DetailField label={t("fields.cost")} value={formatNumber(p.cost)} />
+        <DetailField label={t("fields.price")} value={formatMoney(base.price)} />
+        <DetailField label={t("fields.taxRate")}
           value={p.taxRateName && <span title={p.taxRateName}>{p.taxRateName.split(" ")[0]}</span>} />
-        <DetailField label="Áp dụng giảm thuế" value={p.taxReduction ? "Có áp dụng" : "Không áp dụng"} />
-        <DetailField label="Vị trí" value={p.positionName} />
-        <DetailField label="Trọng lượng" value={p.weight ? `${formatNumber(p.weight)} ${p.weightUnit}` : null} />
-        <DetailField label="Tên hàng trên hóa đơn điện tử" value={p.einvoiceName} />
-        <DetailField label="Tên viết tắt" value={p.shortName} />
+        <DetailField label={t("fields.taxReduction")} value={p.taxReduction ? t("fields.taxReductionYes") : t("fields.taxReductionNo")} />
+        <DetailField label={t("fields.position")} value={p.positionName} />
+        <DetailField label={t("fields.weight")} value={p.weight ? `${formatNumber(p.weight)} ${p.weightUnit}` : null} />
+        <DetailField label={t("fields.einvoiceName")} value={p.einvoiceName} />
+        <DetailField label={t("fields.shortName")} value={p.shortName} />
       </div>
     </div>
   );

@@ -2,6 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
+import { useT } from "@/lib/i18n";
+import { commonNs } from "@/messages/common";
+import { hrNs } from "@/messages/hr";
 
 /** BarcodeDetector (Chrome / Android, Safari mới) — chưa có trong lib.dom của TypeScript. */
 type Detector = { detect: (src: HTMLVideoElement) => Promise<{ rawValue: string }[]> };
@@ -18,12 +21,14 @@ export function tokenFromQr(raw: string): string | null {
 
 /** Quét mã QR chi nhánh ngay trong trang bằng camera sau (khi trình duyệt hỗ trợ BarcodeDetector). */
 export function ClockQrScanner({ onToken, onClose }: { onToken: (t: string) => void; onClose: () => void }) {
+  const t = useT(hrNs);
+  const tc = useT(commonNs);
   const video = useRef<HTMLVideoElement>(null);
   const [error, setError] = useState("");
   useEffect(() => {
     const Ctor = (window as unknown as { BarcodeDetector?: DetectorCtor }).BarcodeDetector;
     if (!Ctor) {
-      setError("Trình duyệt chưa hỗ trợ quét mã trong trang. Hãy dùng ứng dụng Camera của điện thoại để quét mã QR tại quầy.");
+      setError(t("scanner.unsupported"));
       return;
     }
     let stream: MediaStream | null = null;
@@ -42,16 +47,16 @@ export function ClockQrScanner({ onToken, onClose }: { onToken: (t: string) => v
           await new Promise((r) => setTimeout(r, 300));
         }
       } catch {
-        setError("Không mở được camera. Hãy cho phép quyền camera hoặc dùng ứng dụng Camera để quét mã.");
+        setError(t("scanner.cameraError"));
       }
     })();
     return () => { stop = true; stream?.getTracks().forEach((t) => t.stop()); };
-  }, [onToken]);
+  }, [onToken, t]);
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-black text-white">
       <div className="flex items-center justify-between p-4">
-        <span className="font-semibold">Quét mã QR tại quầy</span>
-        <button type="button" aria-label="Đóng" onClick={onClose}><X className="size-6" /></button>
+        <span className="font-semibold">{t("scanner.title")}</span>
+        <button type="button" aria-label={tc("actions.close")} onClick={onClose}><X className="size-6" /></button>
       </div>
       {error ? <p className="p-6 text-center">{error}</p> : <video ref={video} playsInline muted className="w-full flex-1 object-cover" />}
     </div>

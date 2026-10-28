@@ -12,6 +12,9 @@ import { CommissionSidebar, type CommissionView } from "@/features/hr/commission
 import { parseCommissionCsv } from "@/features/hr/commission-csv-import";
 import { downloadCsv, useCommissionRules, useCommissionTables, useHrMutation } from "@/features/hr/hr-queries";
 import { api } from "@/lib/api-client";
+import { useT } from "@/lib/i18n";
+import { commonNs } from "@/messages/common";
+import { hrNs } from "@/messages/hr";
 
 const PAGE_SIZE = 100;
 const toolBtn = "flex h-[30px] items-center gap-1 rounded-md border border-[#d9dbe0] bg-white px-2.5 text-[13px] font-semibold hover:border-primary hover:text-primary";
@@ -19,6 +22,8 @@ const pagerBtn = "flex size-7 items-center justify-center rounded-md border bord
 
 /** Bảng hoa hồng (ảnh KiotViet 115): mức hoa hồng theo mặt hàng cho từng bảng, nhân viên áp dụng. */
 export default function CommissionsPage() {
+  const t = useT(hrNs);
+  const tc = useT(commonNs);
   const [view, setView] = useState<CommissionView>("PRODUCTS");
   const [selected, setSelected] = useState<string[] | null>(null);
   const [categoryId, setCategoryId] = useState("");
@@ -30,11 +35,11 @@ export default function CommissionsPage() {
   const fileRef = useRef<HTMLInputElement>(null);
   const { data: tables = [] } = useCommissionTables();
   const { data: rules = [] } = useCommissionRules();
-  useEffect(() => { const t = setTimeout(() => { setQ((codeQ || nameQ).trim()); setPage(0); }, 300); return () => clearTimeout(t); }, [codeQ, nameQ]);
+  useEffect(() => { const timer = setTimeout(() => { setQ((codeQ || nameQ).trim()); setPage(0); }, 300); return () => clearTimeout(timer); }, [codeQ, nameQ]);
 
   // Mặc định hiển thị mọi bảng hoa hồng đang có cho tới khi người dùng tự chọn
-  const selectedIds = selected ?? tables.map((t) => t.id);
-  const shown = tables.filter((t) => selectedIds.includes(t.id));
+  const selectedIds = selected ?? tables.map((tb) => tb.id);
+  const shown = tables.filter((tb) => selectedIds.includes(tb.id));
   const filters = useMemo(() => ({ ...EMPTY_FILTERS, q, categoryIds: categoryId ? [categoryId] : [] }), [q, categoryId]);
   const { data } = useProducts(filters, page, PAGE_SIZE);
   const products = (data?.items ?? []).filter((p) => p.code.toLowerCase().includes(codeQ.trim().toLowerCase())
@@ -49,34 +54,36 @@ export default function CommissionsPage() {
   const importRules = useHrMutation(async (batches: { tableId: string; items: unknown[] }[]) => {
     for (const b of batches) await api(`/hr/commission-tables/${b.tableId}/rules`, { method: "PUT", body: { items: b.items } });
     return batches.reduce((n, b) => n + b.items.length, 0);
-  }, undefined, (n) => toast.success(`Đã import ${n} mức hoa hồng`));
+  }, undefined, (n) => toast.success(t("commissions.toastImported", { count: n })));
 
   const onFile = async (f: File) => {
     const res = parseCommissionCsv(await f.text(), data?.items ?? [], tables);
-    if (res.error) { toast.error(res.error); return; }
-    if (res.skipped.length) toast.warning(`Bỏ qua mã hàng không có trong danh sách đang hiển thị: ${res.skipped.slice(0, 5).join(", ")}`);
+    if (res.error) { toast.error(t(res.error)); return; }
+    if (res.skipped.length) toast.warning(t("commissions.skippedCodes", { codes: res.skipped.slice(0, 5).join(", ") }));
     importRules.mutate(res.batches);
   };
 
   const exportCsv = () => {
     const fmt = (r: Rate) => (r ? `${r.value}${r.rateType === "PERCENT" ? "%" : ""}` : "");
     downloadCsv("bang-hoa-hong.csv", [
-      ["Mã hàng", "Tên hàng", "Đơn vị tính", "Giá bán chung", "Giá vốn", ...shown.map((t) => t.name)],
+      // Tiêu đề giữ tiếng Việt ở mọi ngôn ngữ: file này import lại được (cột "Mã hàng" + tên bảng hoa hồng)
+      ["Mã hàng", "Tên hàng", "Đơn vị tính", "Giá bán chung", "Giá vốn", ...shown.map((tb) => tb.name)],
       ...products.filter((p) => !checked.length || checked.includes(p.id)).map((p) => [p.code, p.name, p.unitName, p.price, p.cost,
-        ...shown.map((t) => fmt(rates.get(`${t.id}|${p.id}`) ?? null))]),
+        ...shown.map((tb) => fmt(rates.get(`${tb.id}|${p.id}`) ?? null))]),
     ]);
   };
 
   return (
     <div className="grid grid-cols-[200px_minmax(0,1fr)] gap-x-2.5 gap-y-2.5">
-      <PageTitle>Bảng hoa hồng</PageTitle>
+      <PageTitle>{t("commissions.title")}</PageTitle>
       <div className="flex h-8 items-center justify-end gap-2">
         {view === "PRODUCTS" && <>
-          <button type="button" className={toolBtn} onClick={() => fileRef.current?.click()} disabled={importRules.isPending}>
-            <LogIn className="size-4" /> Import</button>
-          <input ref={fileRef} type="file" accept=".csv,text/csv" className="hidden" aria-label="Chọn file import"
+          <button type="button" className={toolBtn} onClick={() => fileRef.current?.click()} disabled={importRules.isPending}
+            title={t("commissions.importHint")}>
+            <LogIn className="size-4" /> {t("scheduleImport.button")}</button>
+          <input ref={fileRef} type="file" accept=".csv,text/csv" className="hidden" aria-label={t("commissions.pickFile")}
             onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); e.target.value = ""; }} />
-          <button type="button" className={toolBtn} onClick={exportCsv}><LogOut className="size-4" /> Xuất file</button>
+          <button type="button" className={toolBtn} onClick={exportCsv}><LogOut className="size-4" /> {tc("actions.export")}</button>
         </>}
         <span className="flex size-[30px] items-center justify-center rounded-md border border-[#d9dbe0] bg-white"><Columns3 className="size-4" /></span>
       </div>
@@ -89,10 +96,10 @@ export default function CommissionsPage() {
               onCodeQ={setCodeQ} onNameQ={setNameQ} checked={checked} onChecked={setChecked} />
             {pages > 1 && (
               <div className="flex items-center justify-end gap-2 text-[13px]">
-                <span className="text-muted-foreground">{data?.total ?? 0} hàng hóa · Trang {page + 1}/{pages}</span>
-                <button type="button" className={pagerBtn} aria-label="Trang trước" disabled={page === 0} onClick={() => setPage(page - 1)}>
+                <span className="text-muted-foreground">{t("commissions.pageInfo", { total: data?.total ?? 0, page: page + 1, pages })}</span>
+                <button type="button" className={pagerBtn} aria-label={tc("pager.prev")} disabled={page === 0} onClick={() => setPage(page - 1)}>
                   <ChevronLeft className="size-4" /></button>
-                <button type="button" className={pagerBtn} aria-label="Trang sau" disabled={page + 1 >= pages} onClick={() => setPage(page + 1)}>
+                <button type="button" className={pagerBtn} aria-label={tc("pager.next")} disabled={page + 1 >= pages} onClick={() => setPage(page + 1)}>
                   <ChevronRight className="size-4" /></button>
               </div>
             )}

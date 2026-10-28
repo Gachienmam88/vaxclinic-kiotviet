@@ -6,7 +6,13 @@ export const ORDER_STATUS_OPTIONS = [
   ["DRAFT", "Phiếu tạm"], ["CONFIRMED", "Đã xác nhận"], ["COMPLETED", "Hoàn thành"], ["CANCELLED", "Đã hủy"],
 ] as const;
 
+/** Nhãn tiếng Việt (giữ cho nơi chưa i18n / in ấn). Màn hình dùng ORDER_STATUS_KEY + useT(ordersNs). */
 export const orderStatusLabel = (s: OrderStatus) => ORDER_STATUS_OPTIONS.find(([v]) => v === s)?.[1] ?? s;
+
+/** Khóa i18n (namespace "orders") của từng trạng thái: t(ORDER_STATUS_KEY[s]). */
+export const ORDER_STATUS_KEY = {
+  DRAFT: "status.DRAFT", CONFIRMED: "status.CONFIRMED", COMPLETED: "status.COMPLETED", CANCELLED: "status.CANCELLED",
+} as const satisfies Record<OrderStatus, string>;
 
 /** Màu badge trạng thái: tạm xám, xác nhận xanh dương, hoàn thành xanh lá, hủy đỏ. */
 export const ORDER_STATUS_TONE = { DRAFT: "gray", CONFIRMED: "blue", COMPLETED: "green", CANCELLED: "red" } as const;

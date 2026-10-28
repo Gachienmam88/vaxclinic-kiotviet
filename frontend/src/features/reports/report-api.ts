@@ -70,5 +70,6 @@ export function useReport<T>(path: string, span: Span, extra: ReportParams = {},
 /** Cộng 1 trường số của danh sách. */
 export const sumOf = <T,>(rows: T[], f: (r: T) => number) => rows.reduce((s, r) => s + Number(f(r) || 0), 0);
 
-export const PAYMENT_METHODS: [string, string][] = [["CASH", "Tiền mặt"], ["TRANSFER", "Chuyển khoản"], ["CARD", "Thẻ"], ["EWALLET", "Ví điện tử"]];
-export const SALE_MODES: [string, string][] = [["QUICK", "Bán nhanh"], ["NORMAL", "Bán thường"], ["DELIVERY", "Bán giao hàng"]];
+/** Mã phương thức thanh toán / bán hàng của bộ lọc; nhãn: khóa reports "paymentMethods.<mã>" / "saleModes.<mã>". */
+export const PAYMENT_METHODS = ["CASH", "TRANSFER", "CARD", "EWALLET"] as const;
+export const SALE_MODES = ["QUICK", "NORMAL", "DELIVERY"] as const;

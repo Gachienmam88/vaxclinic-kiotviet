@@ -1,0 +1,190 @@
+{
+  "list": {
+    "title": "Khách hàng",
+    "searchPlaceholder": "Theo mã, tên, số điện thoại",
+    "searchAria": "Tìm khách hàng",
+    "addButton": "Khách hàng",
+    "emptyWhat": "khách hàng",
+    "pagerSummary": "{total} khách hàng · Trang {page}/{pages}",
+    "cols": {
+      "code": "Mã khách hàng",
+      "name": "Tên khách hàng",
+      "phone": "Điện thoại",
+      "debt": "Nợ hiện tại",
+      "totalSales": "Tổng bán",
+      "netSales": "Tổng bán trừ trả hàng"
+    }
+  },
+  "filter": {
+    "group": "Nhóm khách hàng",
+    "allGroups": "Tất cả các nhóm",
+    "createdAt": "Ngày tạo",
+    "createdBy": "Người tạo",
+    "pickCreator": "Chọn người tạo",
+    "type": "Loại khách hàng",
+    "gender": "Giới tính"
+  },
+  "enums": {
+    "customerType": { "PERSONAL": "Cá nhân", "COMPANY": "Công ty" },
+    "gender": { "MALE": "Nam", "FEMALE": "Nữ" },
+    "debtType": {
+      "SALE": "Bán hàng",
+      "SALE_CANCEL": "Hủy hóa đơn",
+      "PAYMENT": "Thanh toán",
+      "PAYMENT_CANCEL": "Hủy phiếu thu",
+      "ADJUST": "Điều chỉnh",
+      "DISCOUNT": "Chiết khấu thanh toán"
+    },
+    "invoiceStatus": { "COMPLETED": "Hoàn thành", "CANCELLED": "Đã hủy" }
+  },
+  "groups": {
+    "title": "Nhóm khách hàng",
+    "addButton": "Nhóm khách hàng",
+    "emptyWhat": "nhóm khách hàng",
+    "cols": { "name": "Tên nhóm", "discount": "Giảm giá", "count": "Số khách hàng", "note": "Ghi chú" },
+    "editAria": "Sửa nhóm {name}",
+    "deleteAria": "Xóa nhóm {name}",
+    "confirmDelete": "Xóa nhóm \"{name}\"?",
+    "confirmDeleteWithCustomers_other": "Xóa nhóm \"{name}\"? {count} khách hàng trong nhóm sẽ chuyển thành chưa có nhóm.",
+    "deleted": "Đã xóa nhóm khách hàng",
+    "deletedUnlinked_other": "Đã xóa nhóm khách hàng, {count} khách được bỏ nhóm"
+  },
+  "groupDialog": {
+    "titleAdd": "Thêm nhóm khách hàng",
+    "titleEdit": "Sửa nhóm khách hàng",
+    "name": "Tên nhóm",
+    "discount": "Giảm giá",
+    "discountAria": "Giảm giá nhóm",
+    "currencyUnit": "VNĐ",
+    "discountHint": "Tự điền vào giảm giá hóa đơn khi chọn khách thuộc nhóm ở màn bán hàng (vẫn sửa được).",
+    "note": "Ghi chú",
+    "added": "Đã thêm nhóm khách hàng",
+    "updated": "Đã cập nhật nhóm khách hàng"
+  },
+  "detail": {
+    "tabSales": "Lịch sử bán/trả hàng",
+    "tabDebt": "Nợ cần thu từ khách",
+    "edit": "Chỉnh sửa"
+  },
+  "info": {
+    "empty": "Chưa có",
+    "createdBy": "Người tạo: {value}",
+    "createdAt": "Ngày tạo: {value}",
+    "group": "Nhóm khách: {value}",
+    "phone": "Điện thoại",
+    "birthday": "Sinh nhật",
+    "gender": "Giới tính",
+    "email": "Email",
+    "facebook": "Facebook",
+    "address": "Địa chỉ",
+    "invoiceInfo": "Thông tin xuất hóa đơn",
+    "noNote": "Chưa có ghi chú"
+  },
+  "debtTab": {
+    "filterAria": "Lọc loại giao dịch",
+    "allTypes": "Tất cả giao dịch",
+    "emptyWhat": "giao dịch",
+    "cols": { "code": "Mã phiếu", "time": "Thời gian", "type": "Loại", "amount": "Giá trị", "balance": "Dư nợ khách hàng" },
+    "exportDebt": "Xuất file công nợ",
+    "pay": "Thanh toán",
+    "adjust": "Điều chỉnh",
+    "discount": "Chiết khấu thanh toán",
+    "createQr": "Tạo QR"
+  },
+  "salesTab": {
+    "emptyWhat": "giao dịch",
+    "cols": { "code": "Mã hóa đơn", "time": "Thời gian", "seller": "Người bán", "total": "Tổng cộng", "status": "Trạng thái" }
+  },
+  "allocation": {
+    "cols": {
+      "code": "Mã hóa đơn",
+      "time": "Thời gian",
+      "invoiceValue": "Giá trị hóa đơn",
+      "paidBefore": "Đã thu trước",
+      "remaining": "Còn cần thu",
+      "collect": "Tiền thu"
+    },
+    "empty": "Không tìm thấy bản ghi nào phù hợp",
+    "collectAria": "Tiền thu {code}",
+    "unallocated": "Tiền chưa phân bổ:"
+  },
+  "debtDialog": {
+    "title": { "payment": "Thanh toán", "discount": "Chiết khấu thanh toán", "adjust": "Điều chỉnh" },
+    "created": {
+      "payment": "Đã tạo phiếu thanh toán",
+      "discount": "Đã tạo phiếu chiết khấu thanh toán",
+      "adjust": "Đã tạo phiếu điều chỉnh"
+    },
+    "currentDebt": "Nợ hiện tại: {amount}",
+    "currentDebtLabel": "Nợ cần thu hiện tại",
+    "adjustDate": "Ngày điều chỉnh",
+    "adjustValue": "Giá trị nợ điều chỉnh",
+    "description": "Mô tả",
+    "time": "Thời gian",
+    "collector": "Người thu",
+    "performer": "Người thực hiện",
+    "method": "Phương thức thanh toán",
+    "amount": "Số tiền",
+    "discountAmount": "Chiết khấu cho khách",
+    "remainingAfterPayment": "Nợ còn: {amount}",
+    "remainingAfterDiscount": "Nợ còn lại: {amount}",
+    "note": "Ghi chú",
+    "notePlaceholder": "Nhập ghi chú",
+    "allocate": "Phân bổ vào hóa đơn",
+    "createAndPrint": "Tạo phiếu thu & In",
+    "createReceipt": "Tạo phiếu thu",
+    "createVoucher": "Tạo phiếu",
+    "printFailed": "Đã tạo phiếu {code} nhưng không in được — in lại tại Sổ quỹ"
+  },
+  "form": {
+    "titleAdd": "Thêm khách hàng",
+    "titleEdit": "Sửa khách hàng",
+    "branch": "Chi nhánh tạo: {name}",
+    "tabGeneral": "Thông tin chung",
+    "tabInvoice": "Thông tin xuất hóa đơn",
+    "added": "Đã thêm khách hàng {code}",
+    "updated": "Đã cập nhật khách hàng",
+    "code": "Mã khách hàng",
+    "codePlaceholder": "Mã mặc định",
+    "name": "Tên khách hàng",
+    "phone": "Điện thoại",
+    "phone2": "Điện thoại 2",
+    "address": "Địa chỉ",
+    "addressPlaceholder": "Số nhà, tòa nhà, ngõ, đường",
+    "area": "Khu vực",
+    "ward": "Phường xã",
+    "group": "Nhóm",
+    "groupAria": "Nhóm khách hàng",
+    "pickGroup": "Chọn nhóm khách hàng",
+    "birthday": "Ngày sinh",
+    "email": "Email",
+    "facebook": "Facebook",
+    "note": "Ghi chú",
+    "invoice": {
+      "customerType": "Loại khách hàng",
+      "personal": "Cá nhân / Hộ kinh doanh",
+      "company": "Doanh nghiệp",
+      "buyerName": "Tên người mua",
+      "buyerNamePlaceholder": "Nhập tên người mua",
+      "taxCode": "Mã số thuế",
+      "taxCodePlaceholder": "Nhập mã số thuế",
+      "address": "Địa chỉ",
+      "addressAria": "Địa chỉ xuất hóa đơn",
+      "province": "Tỉnh/Thành phố",
+      "ward": "Phường/Xã",
+      "companyName": "Tên đơn vị",
+      "companyNamePlaceholder": "Nhập tên đơn vị",
+      "idNumber": "Số CMND/CCCD",
+      "idNumberPlaceholder": "Nhập CCCD/CMND",
+      "passport": "Số hộ chiếu",
+      "passportPlaceholder": "Nhập số hộ chiếu",
+      "email": "Email",
+      "phone": "Số điện thoại",
+      "phonePlaceholder": "Nhập số điện thoại",
+      "bankName": "Tên ngân hàng",
+      "bankNamePlaceholder": "Nhập tên ngân hàng",
+      "bankAccount": "STK ngân hàng",
+      "bankAccountPlaceholder": "Nhập số tài khoản"
+    }
+  }
+}

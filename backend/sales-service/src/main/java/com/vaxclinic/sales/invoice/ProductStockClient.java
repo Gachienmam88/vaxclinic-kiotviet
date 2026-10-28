@@ -1,5 +1,6 @@
 package com.vaxclinic.sales.invoice;
 
+import com.vaxclinic.common.http.InternalRestClientFactory;
 import com.vaxclinic.common.error.ApiError;
 import com.vaxclinic.common.error.BusinessException;
 import com.vaxclinic.common.security.ServiceTokenProvider;
@@ -10,6 +11,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
 
+import java.time.Duration;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -56,8 +58,9 @@ public class ProductStockClient {
     private final RestClient http;
     private final ServiceTokenProvider tokens;
 
-    public ProductStockClient(@Value("${app.product-url}") String productUrl, @Value("${app.jwt.secret}") String secret) {
-        this.http = RestClient.builder().baseUrl(productUrl).build();
+    public ProductStockClient(InternalRestClientFactory httpFactory, @Value("${app.http.stock-read-timeout:10s}") Duration stockReadTimeout,
+                          @Value("${app.product-url}") String productUrl, @Value("${app.jwt.secret}") String secret) {
+        this.http = httpFactory.create(productUrl, stockReadTimeout);
         this.tokens = new ServiceTokenProvider(secret, "sales-service");
     }
 

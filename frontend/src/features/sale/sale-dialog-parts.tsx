@@ -2,15 +2,18 @@
 
 import { Inbox } from "lucide-react";
 import { DatePicker } from "@/components/ui/date-picker";
+import { useT } from "@/lib/i18n";
+import { saleNs } from "@/messages/sale";
 
 /** Đầu bảng xanh của các hộp thoại màn bán hàng (Xử lý đặt hàng, Chọn hóa đơn trả hàng, Đồng bộ phiếu). */
 export const SALE_TABLE_HEAD = "bg-primary-soft text-left text-[13px] font-bold text-white [&_th]:h-9 [&_th]:px-2.5 [&_th]:font-bold";
 
 /** Dòng trống: icon hộp + "Không tìm thấy kết quả nào phù hợp". */
-export function SaleTableEmpty({ colSpan, text = "Không tìm thấy kết quả nào phù hợp" }: { colSpan: number; text?: string }) {
+export function SaleTableEmpty({ colSpan, text }: { colSpan: number; text?: string }) {
+  const t = useT(saleNs);
   return (
     <tr><td colSpan={colSpan} className="py-8 text-center text-[13px] text-[#4b5563]">
-      <Inbox className="mx-auto mb-2 size-7 stroke-[1.5] text-[#6b7280]" />{text}
+      <Inbox className="mx-auto mb-2 size-7 stroke-[1.5] text-[#6b7280]" />{text ?? t("dialogs.noResults")}
     </td></tr>
   );
 }
@@ -37,11 +40,12 @@ export function SaleFilterInput({ placeholder, value, onChange, autoFocus }: {
 
 /** Thẻ "Thời gian": Từ ngày (mặc định 30 ngày trước) + Đến ngày. */
 export function SaleDateRangeCard({ from, to, onChange }: { from: string; to: string; onChange: (from: string, to: string) => void }) {
+  const t = useT(saleNs);
   const cls = "h-[33px] w-full border-0 border-b border-[#c8ccd2] rounded-none px-0 text-[13px] shadow-none";
   return (
-    <SaleFilterCard title="Thời gian">
-      <DatePicker aria-label="Từ ngày" className={cls} value={from} onChange={(v) => onChange(v, to)} />
-      <DatePicker aria-label="Đến ngày" placeholder="Đến ngày" className={cls} value={to} onChange={(v) => onChange(from, v)} />
+    <SaleFilterCard title={t("dialogs.time")}>
+      <DatePicker aria-label={t("dialogs.fromDate")} className={cls} value={from} onChange={(v) => onChange(v, to)} />
+      <DatePicker aria-label={t("dialogs.toDate")} placeholder={t("dialogs.toDate")} className={cls} value={to} onChange={(v) => onChange(from, v)} />
     </SaleFilterCard>
   );
 }

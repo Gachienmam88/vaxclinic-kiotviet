@@ -1,5 +1,6 @@
 package com.vaxclinic.identity.hr.commission;
 
+import com.vaxclinic.common.http.InternalRestClientFactory;
 import com.vaxclinic.common.error.BusinessException;
 import com.vaxclinic.common.security.ServiceTokenProvider;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,8 +28,8 @@ public class SellerRevenueClient {
     private final RestClient http;
     private final ServiceTokenProvider tokens;
 
-    public SellerRevenueClient(@Value("${app.sales-url}") String salesUrl, @Value("${app.jwt.secret}") String secret) {
-        this.http = RestClient.builder().baseUrl(salesUrl).build();
+    public SellerRevenueClient(InternalRestClientFactory httpFactory, @Value("${app.sales-url}") String salesUrl, @Value("${app.jwt.secret}") String secret) {
+        this.http = httpFactory.create(salesUrl);
         this.tokens = new ServiceTokenProvider(secret, "identity-service");
     }
 

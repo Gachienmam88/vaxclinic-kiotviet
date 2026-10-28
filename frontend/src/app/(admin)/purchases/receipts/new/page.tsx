@@ -5,6 +5,8 @@ import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { api, errorMessage } from "@/lib/api-client";
 import { useCurrentUser } from "@/lib/use-current-user";
+import { useT } from "@/lib/i18n";
+import { commonNs } from "@/messages/common";
 import { PurchaseEditor } from "@/features/purchases/purchase-editor";
 import { editorFromReceipt, emptyEditor, type EditorState } from "@/features/purchases/purchase-editor-state";
 import type { Receipt } from "@/features/purchases/purchase-types";
@@ -15,6 +17,7 @@ import { receiptEditorFromInputInvoice } from "@/features/integrations/receipt-f
 function NewReceipt() {
   const params = useSearchParams();
   const { data: me } = useCurrentUser();
+  const tc = useT(commonNs);
   const [initial, setInitial] = useState<EditorState | null>(null);
   const [reference, setReference] = useState<InputInvoice | undefined>();
   const source = params.get("edit") ?? params.get("copyFrom");
@@ -38,7 +41,7 @@ function NewReceipt() {
       .catch((e) => toast.error(errorMessage(e)));
   }, [me, source, params, fromInputInvoice]);
 
-  if (!initial) return <div className="p-6 text-sm text-muted-foreground">Đang tải...</div>;
+  if (!initial) return <div className="p-6 text-sm text-muted-foreground">{tc("status.loading")}</div>;
   return <PurchaseEditor mode="receipt" initial={initial} reference={reference} />;
 }
 

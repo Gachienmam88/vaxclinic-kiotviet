@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { formatNumber, parseNumber } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
+import { hrNs } from "@/messages/hr";
 
 export type Rate = { rateType: "PERCENT" | "AMOUNT"; value: number } | null;
 
@@ -11,6 +13,7 @@ export type Rate = { rateType: "PERCENT" | "AMOUNT"; value: number } | null;
  * Rời ô / đổi đơn vị → onSave (giá trị trống = bỏ hoa hồng của mặt hàng).
  */
 export function CommissionRateCell({ rate, onSave, label }: { rate: Rate; onSave: (r: Rate) => void; label: string }) {
+  const t = useT(hrNs);
   const [text, setText] = useState(rate ? formatNumber(rate.value) : "");
   const [type, setType] = useState<"PERCENT" | "AMOUNT">(rate?.rateType ?? "PERCENT");
   const commit = (nextType: "PERCENT" | "AMOUNT", nextText: string) => {
@@ -25,9 +28,9 @@ export function CommissionRateCell({ rate, onSave, label }: { rate: Rate; onSave
         className="h-6 w-20 rounded border border-transparent border-b-[#d9dbe0] px-1 text-right outline-none hover:border-[#d9dbe0] focus:border-primary"
         onChange={(e) => setText(e.target.value.replace(/[^\d.,]/g, ""))}
         onBlur={() => commit(type, text)} />
-      <button type="button" aria-label={`Đổi đơn vị ${label}`}
+      <button type="button" aria-label={t("commission.switchUnit", { name: label })}
         className={cn("h-6 w-9 rounded text-[11px] font-semibold", type === "PERCENT" ? "bg-primary-tint text-primary" : "bg-[#eff0f3]")}
-        onClick={() => { const t = type === "PERCENT" ? "AMOUNT" : "PERCENT"; setType(t); if (text.trim()) commit(t, text); }}>
+        onClick={() => { const next = type === "PERCENT" ? "AMOUNT" : "PERCENT"; setType(next); if (text.trim()) commit(next, text); }}>
         {type === "PERCENT" ? "%" : "VNĐ"}
       </button>
     </div>

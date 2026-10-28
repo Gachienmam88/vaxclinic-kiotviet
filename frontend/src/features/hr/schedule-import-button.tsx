@@ -6,6 +6,8 @@ import { toast } from "sonner";
 import { api } from "@/lib/api-client";
 import { useHrMutation } from "./hr-queries";
 import { WEEK_BTN } from "./week-toolbar";
+import { useT } from "@/lib/i18n";
+import { hrNs } from "@/messages/hr";
 
 type Row = { employeeCode: string; date: string; shiftName: string };
 
@@ -59,24 +61,25 @@ export function parseScheduleCsv(text: string): { rows: Row[]; bad: number } {
 
 /** Nút "Import" màn Lịch làm việc: chọn file .csv → POST /hr/schedules/import. */
 export function ScheduleImportButton() {
+  const t = useT(hrNs);
   const input = useRef<HTMLInputElement>(null);
   const run = useHrMutation((rows: Row[]) => api<{ created: number; errors: string[] }>("/hr/schedules/import", { method: "POST", body: { rows } }),
     undefined, (r) => {
-      toast.success(`Đã import ${r.created} ca làm việc`);
-      if (r.errors.length) toast.warning(r.errors.slice(0, 5).join("\n") + (r.errors.length > 5 ? `\n… và ${r.errors.length - 5} lỗi khác` : ""));
+      toast.success(t("scheduleImport.toastImported", { count: r.created }));
+      if (r.errors.length) toast.warning(r.errors.slice(0, 5).join("\n") + (r.errors.length > 5 ? `\n${t("scheduleImport.moreErrors", { count: r.errors.length - 5 })}` : ""));
     });
   async function onFile(f: File | undefined) {
     if (!f) return;
     const { rows, bad } = parseScheduleCsv(await f.text());
     if (input.current) input.current.value = "";
-    if (!rows.length) { toast.error("File không có dòng hợp lệ (cần cột Mã nhân viên, Ngày, Ca)"); return; }
-    if (bad) toast.warning(`Bỏ qua ${bad} dòng thiếu mã nhân viên / ngày / ca`);
+    if (!rows.length) { toast.error(t("scheduleImport.noValidRows")); return; }
+    if (bad) toast.warning(t("scheduleImport.skippedRows", { count: bad }));
     run.mutate(rows);
   }
   return (
     <>
-      <button type="button" className={WEEK_BTN} disabled={run.isPending} title="File CSV gồm cột Mã nhân viên, Ngày (dd/MM/yyyy), Ca"
-        onClick={() => input.current?.click()}><FileInput className="size-4" /> Import</button>
+      <button type="button" className={WEEK_BTN} disabled={run.isPending} title={t("scheduleImport.hint")}
+        onClick={() => input.current?.click()}><FileInput className="size-4" /> {t("scheduleImport.button")}</button>
       <input ref={input} type="file" accept=".csv,.txt,text/csv" hidden onChange={(e) => onFile(e.target.files?.[0])} />
     </>
   );

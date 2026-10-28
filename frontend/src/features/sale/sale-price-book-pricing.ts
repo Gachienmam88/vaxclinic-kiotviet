@@ -28,9 +28,10 @@ export function priceBookDropped(books: CatalogPriceBook[], d: DraftInvoice, bra
 
 /**
  * Tính lại giá các dòng theo bảng giá bookId (dòng priceEdited giữ nguyên).
- * Hàng bị bảng giá chặn (BLOCK) → bỏ khỏi giỏ; cảnh báo gộp theo nội dung kèm tên hàng.
+ * Hàng bị bảng giá chặn (BLOCK) → bỏ khỏi giỏ; cảnh báo gộp theo nội dung kèm tên hàng. removedLabel: chữ "đã bỏ khỏi giỏ" đã dịch.
  */
-export function repriceLines(lines: CartLine[], books: CatalogPriceBook[], ctx: PriceContext, bookId: string | null) {
+export function repriceLines(lines: CartLine[], books: CatalogPriceBook[], ctx: PriceContext, bookId: string | null,
+  removedLabel = "đã bỏ khỏi giỏ") {
   const warned = new Map<string, string[]>();
   const note = (msg: string, name: string) => warned.set(msg, [...(warned.get(msg) ?? []), name]);
   const out: CartLine[] = [];
@@ -38,7 +39,7 @@ export function repriceLines(lines: CartLine[], books: CatalogPriceBook[], ctx: 
     if (l.priceEdited) { out.push(l); continue; }
     const unit = l.units.find((u) => u.id === l.unitId) ?? l.units[0];
     const r = resolvePrice(books, { ...ctx, bookId }, unit.id, unit.price);
-    if (!r.allowed) { note(`${r.warning} — đã bỏ khỏi giỏ`, l.productName); continue; }
+    if (!r.allowed) { note(`${r.warning} — ${removedLabel}`, l.productName); continue; }
     if (r.warning) note(r.warning, l.productName);
     out.push({ ...l, unitPrice: r.price, discount: Math.min(l.discount, r.price) });
   }

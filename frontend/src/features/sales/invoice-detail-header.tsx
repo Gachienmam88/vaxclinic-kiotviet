@@ -7,7 +7,10 @@ import { DOC_CODE_LINK_CLASS, DocCodeLink, docCodeHref } from "@/components/ui/d
 import { useSalesChannels } from "@/features/delivery/delivery-queries";
 import { useUserLookup } from "@/features/purchases/purchase-queries";
 import { useBranches, useShopSettings } from "@/features/settings/settings-queries";
-import { STATE_TONE, stateLabel } from "./invoice-filter-model";
+import { useT } from "@/lib/i18n";
+import { renderRichText } from "@/lib/i18n/render-rich-text";
+import { salesNs } from "@/messages/sales";
+import { STATE_TONE } from "./invoice-filter-model";
 import { StatusBadge } from "./invoice-list-kit";
 import type { Invoice, InvoiceState } from "./sales-types";
 
@@ -25,6 +28,7 @@ export type InvoiceInfoDraft = { sellerId: string; at: string; channel: string; 
 export function InvoiceDetailHeader({ inv, state, f, set, editable }: {
   inv: Invoice; state: InvoiceState; f: InvoiceInfoDraft; set: (p: Partial<InvoiceInfoDraft>) => void; editable: boolean;
 }) {
+  const t = useT(salesNs);
   const { data: users = [] } = useUserLookup();
   const { data: branches = [] } = useBranches();
   const { data: channels = [] } = useSalesChannels(true);
@@ -39,27 +43,27 @@ export function InvoiceDetailHeader({ inv, state, f, set, editable }: {
           {inv.customerCode && <><DocCodeLink code={inv.customerCode} kind="/customers" /> - </>}{inv.customerName}</span>
         {inv.customerCode && (
           <Link href={docCodeHref(inv.customerCode, "/customers")!} target="_blank" className={DOC_CODE_LINK_CLASS}
-            aria-label="Mở khách hàng ở tab mới" title="Mở khách hàng ở tab mới"><SquareArrowOutUpRight className="size-4" /></Link>)}
+            aria-label={t("invoices.header.openCustomer")} title={t("invoices.header.openCustomer")}><SquareArrowOutUpRight className="size-4" /></Link>)}
         <span>{inv.code}</span>
-        <StatusBadge tone={STATE_TONE[state]}>{stateLabel(state)}</StatusBadge>
-        {inv.offline && <StatusBadge tone="gray">Bán offline</StatusBadge>}
-        {inv.orderCode && <StatusBadge tone="blue">Từ đơn đặt hàng <DocCodeLink code={inv.orderCode} kind="/orders" /></StatusBadge>}
+        <StatusBadge tone={STATE_TONE[state]}>{t(`enums.invoiceState.${state}`)}</StatusBadge>
+        {inv.offline && <StatusBadge tone="gray">{t("invoices.header.offline")}</StatusBadge>}
+        {inv.orderCode && <StatusBadge tone="blue">{renderRichText(t("invoices.header.fromOrder"), { code: <DocCodeLink code={inv.orderCode} kind="/orders" /> })}</StatusBadge>}
         <span className="ml-auto">{branches.find((b) => b.id === inv.branchId)?.name}</span>
       </div>
       <div className="grid grid-cols-1 gap-x-8 gap-y-2 text-xs md:grid-cols-3">
-        <div className={ROW}><span className={LABEL}>Người tạo:</span>{inv.createdByName}</div>
-        <div className={ROW}><span className={LABEL}>Người bán:</span>
-          <select className={FIELD} aria-label="Người bán" value={f.sellerId} disabled={!editable} onChange={(e) => set({ sellerId: e.target.value })}>
-            {!f.sellerId && <option value="">{inv.sellerName ?? "Chọn người bán"}</option>}
+        <div className={ROW}><span className={LABEL}>{t("invoices.header.createdBy")}</span>{inv.createdByName}</div>
+        <div className={ROW}><span className={LABEL}>{t("invoices.header.seller")}</span>
+          <select className={FIELD} aria-label={t("invoices.filter.seller")} value={f.sellerId} disabled={!editable} onChange={(e) => set({ sellerId: e.target.value })}>
+            {!f.sellerId && <option value="">{inv.sellerName ?? t("invoices.filter.pickSeller")}</option>}
             {users.map((u) => <option key={u.id} value={u.id}>{u.fullName}</option>)}</select></div>
-        <div className={ROW} title={timeLocked ? "Cửa hàng không cho phép thay đổi thời gian giao dịch (Thiết lập → Đơn hàng)" : undefined}>
-          <span className={LABEL}>Ngày bán:</span>
-          <DateTimePicker aria-label="Ngày bán" className={FIELD} value={f.at} disabled={!editable || timeLocked} onChange={(v) => v && set({ at: v })} /></div>
-        <div className={ROW}><span className={LABEL}>Kênh bán:</span>
-          <select className={FIELD} aria-label="Kênh bán" value={f.channel} disabled={!editable} onChange={(e) => set({ channel: e.target.value })}>
+        <div className={ROW} title={timeLocked ? t("invoices.header.timeLocked") : undefined}>
+          <span className={LABEL}>{t("invoices.header.soldAt")}</span>
+          <DateTimePicker aria-label={t("invoices.header.soldAt")} className={FIELD} value={f.at} disabled={!editable || timeLocked} onChange={(v) => v && set({ at: v })} /></div>
+        <div className={ROW}><span className={LABEL}>{t("invoices.header.channel")}</span>
+          <select className={FIELD} aria-label={t("invoices.header.channel")} value={f.channel} disabled={!editable} onChange={(e) => set({ channel: e.target.value })}>
             {!channelOptions.some((c) => c.code === f.channel) && <option value={f.channel}>{inv.salesChannelName}</option>}
             {channelOptions.map((c) => <option key={c.code} value={c.code}>{c.name}</option>)}</select></div>
-        <div className={ROW}><span className={LABEL}>Bảng giá:</span>{inv.priceBookName ?? "Bảng giá chung"}</div>
+        <div className={ROW}><span className={LABEL}>{t("invoices.header.priceBook")}</span>{inv.priceBookName ?? t("invoices.header.defaultPriceBook")}</div>
       </div>
     </>
   );

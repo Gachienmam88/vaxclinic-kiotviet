@@ -5,6 +5,8 @@ import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { api, errorMessage } from "@/lib/api-client";
 import { useCurrentUser } from "@/lib/use-current-user";
+import { useT } from "@/lib/i18n";
+import { commonNs } from "@/messages/common";
 import { StockTakeEditor } from "@/features/inventory/stock-take-editor";
 import { emptyTake, takeEditorFromDoc, type TakeEditorState } from "@/features/inventory/stock-take-editor-state";
 import type { StockTake } from "@/features/inventory/inventory-types";
@@ -12,6 +14,7 @@ import type { StockTake } from "@/features/inventory/inventory-types";
 /** /inventory/stock-takes/new — phiếu kiểm kho mới; ?edit=<id> = mở lại phiếu tạm. */
 function NewStockTake() {
   const params = useSearchParams();
+  const tc = useT(commonNs);
   const { data: me } = useCurrentUser();
   const [initial, setInitial] = useState<TakeEditorState | null>(null);
   const editId = params.get("edit");
@@ -24,7 +27,7 @@ function NewStockTake() {
     load.then(setInitial).catch((e) => toast.error(errorMessage(e)));
   }, [me, editId]);
 
-  if (!initial) return <div className="p-6 text-sm text-muted-foreground">Đang tải...</div>;
+  if (!initial) return <div className="p-6 text-sm text-muted-foreground">{tc("status.loading")}</div>;
   return <StockTakeEditor initial={initial} />;
 }
 

@@ -51,8 +51,6 @@ function TermsPrompt() {
   const accept = useAcceptTerms();
   const t = useT(storeProfileNs);
   const tc = useT(commonNs);
-  const t = useT(storeProfileNs);
-  const tc = useT(commonNs);
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4">
       <div role="dialog" aria-modal="true" aria-label={t("terms.dialogLabel")} className="flex max-h-[90vh] w-full max-w-3xl flex-col rounded-xl bg-background shadow-xl">

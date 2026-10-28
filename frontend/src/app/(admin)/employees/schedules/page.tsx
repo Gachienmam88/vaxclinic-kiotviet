@@ -9,9 +9,14 @@ import { ScheduleWeekGrid } from "@/features/hr/schedule-week-grid";
 import { addDays, downloadCsv, hm, isoDate, useAllEmployees, useSchedules, useShifts } from "@/features/hr/hr-queries";
 import type { EmployeeRow, ScheduleItem } from "@/features/hr/hr-types";
 import { EmployeeSearch, thisMonday, ViewSelect, WEEK_BTN, WeekNavigator, weekDays } from "@/features/hr/week-toolbar";
+import { useT } from "@/lib/i18n";
+import { commonNs } from "@/messages/common";
+import { hrNs } from "@/messages/hr";
 
 /** Lịch làm việc (ảnh KiotViet 112): lưới tuần theo nhân viên hoặc theo ca, Lương dự kiến, Import / Xuất file. */
 export default function SchedulesPage() {
+  const t = useT(hrNs);
+  const tc = useT(commonNs);
   const [monday, setMonday] = useState(thisMonday);
   const [employeeId, setEmployeeId] = useState("");
   const [mode, setMode] = useState<"employee" | "shift">("employee");
@@ -28,30 +33,30 @@ export default function SchedulesPage() {
   const shiftName = (id: string) => shifts.find((s) => s.id === id);
   const removeTitle = (i: ScheduleItem) => {
     const s = shiftName(i.shiftId);
-    return `${all.find((e) => e.id === i.employeeId)?.name ?? "Nhân viên"} · ${s ? `${s.name} (${hm(s.startTime)} - ${hm(s.endTime)})` : "Ca"}`;
+    return `${all.find((e) => e.id === i.employeeId)?.name ?? t("payments.cols.employee")} · ${s ? `${s.name} (${hm(s.startTime)} - ${hm(s.endTime)})` : t("scheduleGrid.shiftFallback")}`;
   };
 
   function exportFile() {
-    const head = ["Mã nhân viên", "Tên nhân viên", ...days.map((d) => `${d.label} ${d.iso.split("-").reverse().join("/")}`), "Lương dự kiến"];
+    const head = [t("employee.code"), t("employee.name"), ...days.map((d) => `${t(d.label)} ${d.iso.split("-").reverse().join("/")}`), t("scheduleGrid.expected")];
     const rows = employees.map((e) => [e.code, e.name, ...days.map((d) => (data?.items ?? [])
       .filter((i) => i.employeeId === e.id && i.date === d.iso)
       .map((i) => { const s = shiftName(i.shiftId); return s ? `${s.name} ${hm(s.startTime)}-${hm(s.endTime)}` : ""; }).join("; ")),
-      data && e.id in data.expected ? data.expected[e.id] : "Chưa thiết lập lương"]);
+      data && e.id in data.expected ? data.expected[e.id] : t("salaryTab.noSalary")]);
     downloadCsv(`lich-lam-viec-${from}.csv`, [head, ...rows]);
   }
 
   return (
     <div className="space-y-2.5">
       <div className="flex flex-wrap items-center gap-2">
-        <h1 className="w-[160px] text-[18px] font-bold">Lịch làm việc</h1>
+        <h1 className="w-[160px] text-[18px] font-bold">{t("schedules.title")}</h1>
         <EmployeeSearch employees={all} value={employeeId} onChange={setEmployeeId} />
         <WeekNavigator monday={monday} onChange={setMonday} />
-        <button type="button" className={WEEK_BTN} onClick={() => setMonday(thisMonday())}>Tuần này</button>
+        <button type="button" className={WEEK_BTN} onClick={() => setMonday(thisMonday())}>{t("week.thisWeek")}</button>
         <div className="ml-auto flex items-center gap-2">
-          <ViewSelect label="Kiểu xem" value={mode} onChange={setMode} icon={<UserRound className="size-3.5" />}
-            options={[["employee", "Xem theo nhân viên"], ["shift", "Xem theo ca"]]} />
+          <ViewSelect label={t("week.viewMode")} value={mode} onChange={setMode} icon={<UserRound className="size-3.5" />}
+            options={[["employee", t("week.byEmployee")], ["shift", t("week.byShift")]]} />
           <ScheduleImportButton />
-          <button type="button" className={WEEK_BTN} onClick={exportFile}><FileOutput className="size-4" /> Xuất file</button>
+          <button type="button" className={WEEK_BTN} onClick={exportFile}><FileOutput className="size-4" /> {tc("actions.export")}</button>
         </div>
       </div>
       <ScheduleWeekGrid mode={mode} days={days} employees={employees} shifts={shifts} data={data}

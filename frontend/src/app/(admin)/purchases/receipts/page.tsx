@@ -10,24 +10,30 @@ import {
   DocStatusBadge, LIST_HEADER_ROW, PurchaseEmptyState, PurchaseListLayout, PurchaseListPager, PurchaseListToolbar,
 } from "@/features/purchases/purchase-list-chrome";
 import { DEFAULT_PURCHASE_FILTERS, deepLinkPurchaseFilters, useReceipts } from "@/features/purchases/purchase-queries";
-import { RECEIPT_STATUS_LABEL } from "@/features/purchases/purchase-types";
+import { receiptStatusLabels } from "@/features/purchases/purchase-types";
 import { ReceiptDetailPanel } from "@/features/purchases/receipt-detail-panel";
 import { formatDateTime, formatMoney } from "@/lib/format";
 import { useCurrentUser } from "@/lib/use-current-user";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
+import { commonNs } from "@/messages/common";
+import { purchasesNs } from "@/messages/purchases";
 
 const COLS = 11;
 const NUM = "text-right";
 
 function ReceiptsPage({ link }: { link: DeepLink }) {
   const { can } = useCurrentUser();
+  const t = useT(purchasesNs);
+  const tc = useT(commonNs);
+  const statusLabels = receiptStatusLabels(t);
   const [filters, setFilters] = useState(link.code ? deepLinkPurchaseFilters(link.code) : DEFAULT_PURCHASE_FILTERS);
   const [search, setSearch] = useState(link.code ?? "");
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(15);
   useEffect(() => {
-    const t = setTimeout(() => { setFilters((f) => ({ ...f, q: search })); setPage(0); }, 300);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => { setFilters((f) => ({ ...f, q: search })); setPage(0); }, 300);
+    return () => clearTimeout(timer);
   }, [search]);
   const { data, isLoading } = useReceipts(filters, page, size);
   const pages = data ? Math.max(1, Math.ceil(data.total / size)) : 1;
@@ -35,25 +41,26 @@ function ReceiptsPage({ link }: { link: DeepLink }) {
   const { open: expanded, setOpen: setExpanded, toggle } = useDeepLinkExpanded(data?.items, link, (r) => [r.code]);
 
   return (
-    <PurchaseListLayout title="Nhập hàng"
-      toolbar={<PurchaseListToolbar search={search} onSearch={setSearch} placeholder="Theo mã phiếu nhập"
-        createLabel={can("inventory.manage") ? "Nhập hàng" : undefined} createHref="/purchases/receipts/new"
-        onExport={data?.items.length ? () => exportReceiptsCsv(data.items) : undefined} />}
-      sidebar={<PurchaseFilterSidebar filters={filters} statusLabels={RECEIPT_STATUS_LABEL} personLabel="Người nhập" showInvoiceNo
+    <PurchaseListLayout title={t("receipts.title")}
+      toolbar={<PurchaseListToolbar search={search} onSearch={setSearch} placeholder={t("receipts.searchPlaceholder")}
+        createLabel={can("inventory.manage") ? t("receipts.create") : undefined} createHref="/purchases/receipts/new"
+        onExport={data?.items.length ? () => exportReceiptsCsv(data.items, t, tc) : undefined} />}
+      sidebar={<PurchaseFilterSidebar filters={filters} statusLabels={statusLabels} personLabel={t("receipts.receiver")} showInvoiceNo
         onChange={applyFilters} />}>
       <div className="min-h-[calc(100vh-190px)] overflow-hidden rounded-lg bg-background">
         <Table>
           <TableHeader>
             <TableRow className={LIST_HEADER_ROW}>
-              <TableHead className="pl-4">Mã nhập hàng</TableHead><TableHead>Thời gian</TableHead><TableHead>Mã NCC</TableHead>
-              <TableHead>Nhà cung cấp</TableHead><TableHead className={NUM}>VAT nhập hàng</TableHead>
-              <TableHead className={NUM}>Cần trả NCC</TableHead><TableHead className={NUM}>Tiền đã trả NCC</TableHead>
-              <TableHead className={NUM}>Tổng tiền hàng</TableHead><TableHead className={NUM}>Giảm giá</TableHead>
-              <TableHead>Số HĐ đầu vào</TableHead><TableHead className="pr-4">Trạng thái</TableHead>
+              <TableHead className="pl-4">{t("receipts.cols.code")}</TableHead><TableHead>{t("receipts.cols.time")}</TableHead>
+              <TableHead>{t("receipts.cols.supplierCode")}</TableHead>
+              <TableHead>{t("receipts.cols.supplier")}</TableHead><TableHead className={NUM}>{t("receipts.cols.vat")}</TableHead>
+              <TableHead className={NUM}>{t("receipts.cols.due")}</TableHead><TableHead className={NUM}>{t("receipts.cols.paid")}</TableHead>
+              <TableHead className={NUM}>{t("receipts.cols.subtotal")}</TableHead><TableHead className={NUM}>{t("receipts.cols.discount")}</TableHead>
+              <TableHead>{t("receipts.cols.inputInvoiceNo")}</TableHead><TableHead className="pr-4">{tc("fields.status")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading && <TableRow><TableCell colSpan={COLS} className="py-8 text-center text-muted-foreground">Đang tải...</TableCell></TableRow>}
+            {isLoading && <TableRow><TableCell colSpan={COLS} className="py-8 text-center text-muted-foreground">{tc("status.loading")}</TableCell></TableRow>}
             {data && !data.items.length && (
               <TableRow className="hover:bg-transparent"><TableCell colSpan={COLS} className="whitespace-normal">
                 <PurchaseEmptyState onWiden={filters.period === "month" ? () => applyFilters({ ...filters, period: "custom", from: "", to: "" }) : undefined} />
@@ -86,7 +93,7 @@ function ReceiptsPage({ link }: { link: DeepLink }) {
                   <TableCell className={NUM}>{formatMoney(r.subtotal)}</TableCell>
                   <TableCell className={NUM}>{formatMoney(r.discount)}</TableCell>
                   <TableCell>{r.inputInvoiceNo}</TableCell>
-                  <TableCell className="pr-4"><DocStatusBadge status={r.status} label={RECEIPT_STATUS_LABEL[r.status]} /></TableCell>
+                  <TableCell className="pr-4"><DocStatusBadge status={r.status} label={statusLabels[r.status]} /></TableCell>
                 </TableRow>
                 {expanded === r.id && (
                   <TableRow className="hover:bg-transparent">
@@ -99,7 +106,7 @@ function ReceiptsPage({ link }: { link: DeepLink }) {
         </Table>
       </div>
       <PurchaseListPager size={size} onSize={(n) => { setSize(n); setPage(0); }} page={page} pages={pages}
-        total={data?.total ?? 0} unit="phiếu" onPage={setPage} />
+        total={data?.total ?? 0} unit={t("chrome.docUnit")} onPage={setPage} />
     </PurchaseListLayout>
   );
 }

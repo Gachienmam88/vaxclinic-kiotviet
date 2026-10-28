@@ -6,6 +6,7 @@ import type { EInvoiceRecord } from "@/features/integrations/integration-queries
  */
 export type EInvoiceState = "NONE" | "PUBLISHED" | "ACCEPTED" | "FAILED";
 
+/** Nhãn tiếng Việt chỉ để tham chiếu; giao diện dịch qua salesNs "enums.einvoiceState.<giá trị>". */
 export const EINVOICE_STATE_OPTIONS: readonly (readonly [EInvoiceState, string])[] = [
   ["NONE", "Chưa phát hành"], ["PUBLISHED", "Đã phát hành"], ["ACCEPTED", "CQT chấp nhận"], ["FAILED", "Phát hành lỗi"],
 ];
@@ -19,11 +20,6 @@ export function einvoiceState(rec: EInvoiceRecord | undefined): EInvoiceState {
   if (rec.status === "FAILED") return "FAILED";
   return rec.inv_code ? "ACCEPTED" : "PUBLISHED";
 }
-
-export const einvoiceLabel = (s: EInvoiceState) => EINVOICE_STATE_OPTIONS.find(([v]) => v === s)?.[1] ?? s;
-
-/** Nhãn bộ lọc nhiều trạng thái "PUBLISHED,ACCEPTED" → "Đã phát hành, CQT chấp nhận". */
-export const einvoiceStatusesLabel = (csv: string) => csv.split(",").map((s) => einvoiceLabel(s as EInvoiceState)).join(", ");
 
 /** "3584-C26MAA" (số - ký hiệu) như KiotViet. */
 export const einvoiceNumber = (rec: EInvoiceRecord) => [rec.inv_no, rec.inv_series].filter(Boolean).join("-");

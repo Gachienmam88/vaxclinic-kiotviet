@@ -1,0 +1,462 @@
+{
+  "cart": {
+    "empty": "No items yet — search (F3) or scan a barcode",
+    "emptyQuickReturn": "Quick return: search (F3) or scan a barcode to add returned items",
+    "notInInvoice": "{name} is not on invoice {code}",
+    "notInPriceBook": "not sold under this price book",
+    "returnMax": "{name}: only {max} left to return"
+  },
+  "channel": {
+    "label": "Sales channel"
+  },
+  "checkout": {
+    "alreadyPaid": "Already paid",
+    "change": "Change",
+    "cod": "Cash on delivery (COD)",
+    "deliveryTime": "Delivery time",
+    "deposited": "Deposit paid",
+    "discount": "Discount",
+    "discountPercent": "Discount ({percent}%)",
+    "due": "Amount due",
+    "invoiceDiscount": "Invoice discount",
+    "invoiceFromOrder": "Invoice from order",
+    "orderNote": "Order note",
+    "orderRef": "Order",
+    "paid": "Amount paid",
+    "pay": "Pay",
+    "payOnDelivery": "Due on delivery",
+    "placeOrder": "Place order",
+    "saveOrder": "Save order",
+    "speakPaid": "Customer paid {amount} dong",
+    "subtotal": "Subtotal",
+    "toDebt": "Added to debt"
+  },
+  "common": {
+    "walkIn": "Walk-in customer"
+  },
+  "customer": {
+    "add": "Add customer",
+    "addOffline": "Offline: cannot add new customers — sell to a walk-in or existing customer",
+    "clear": "Clear customer",
+    "debt": "Debt {amount}",
+    "noResults": "No customers found",
+    "overLimit": "Debt over limit {amount}",
+    "search": "Search customers (F4)"
+  },
+  "delivery": {
+    "address": "Address",
+    "errors": {
+      "noPartner": "No delivery partner selected",
+      "receiverRequired": "Enter the receiver's name, phone and address"
+    },
+    "fee": "Shipping fee",
+    "feePayer": {
+      "label": "Shipping fee paid by"
+    },
+    "noPartners": "No partners — add one under Delivery partners",
+    "note": "Delivery note",
+    "partner": "Delivery partner",
+    "pickPartner": "Select delivery partner",
+    "receiverName": "Receiver name",
+    "receiverPhone": "Phone",
+    "title": "Delivery information",
+    "weight": "Weight (grams)"
+  },
+  "detail": {
+    "category": "Category",
+    "lotLine": "{lot} — exp. {expiry} — stock {qty}",
+    "lots": "Lots in stock (first expired, first out):",
+    "noDesc": "No description",
+    "position": "Location",
+    "price": "Price:",
+    "qty": "Quantity:",
+    "qtyAria": "Line quantity",
+    "stock": "Stock: {qty}",
+    "tabs": {
+      "desc": "Description",
+      "info": "General info"
+    },
+    "taxRate": "Tax rate"
+  },
+  "dialogs": {
+    "cols": {
+      "customer": "Customer",
+      "total": "Total"
+    },
+    "filters": {
+      "productCode": "By product code",
+      "productName": "By product name"
+    },
+    "fromDate": "From date",
+    "noData": "No data yet",
+    "noResults": "No matching results",
+    "time": "Time",
+    "toDate": "To date"
+  },
+  "einvoice": {
+    "box": "E-invoice details",
+    "details": "Details",
+    "emailInvalid": "Invalid email",
+    "fields": {
+      "address": "Address",
+      "buyerName": "Buyer name",
+      "companyName": "Company name",
+      "email": "Email",
+      "phone": "Phone",
+      "taxCode": "Tax code (MST)"
+    },
+    "title": "E-invoice buyer information"
+  },
+  "footer": {
+    "catalogUpdated": "Catalog updated {time}",
+    "modes": {
+      "delivery": "Delivery sale",
+      "normal": "Standard sale",
+      "quick": "Quick sale"
+    }
+  },
+  "grid": {
+    "filter": "Filter products by name"
+  },
+  "header": {
+    "offline": "Offline — documents saved on this device",
+    "sync": "Sync documents",
+    "syncPending_one": "Sync documents — {count} pending",
+    "syncPending_other": "Sync documents — {count} pending"
+  },
+  "import": {
+    "chooseFile": "Choose file",
+    "downloadTemplate": "Download template",
+    "errors": {
+      "areaNotFound": "\"Khu vực\" \"{area}\" not found (2025 list of 34 provinces)",
+      "badDiscount": "Row {row}: invalid \"Giảm giá\"",
+      "badDiscountPercent": "Row {row}: \"Giảm giá (%)\" must be between 0 and 100",
+      "badPrice": "Row {row}: invalid \"Đơn giá\"",
+      "badQty": "Row {row}: \"Số lượng\" must be greater than 0",
+      "customer": "Customer: {message}",
+      "customerCodeNotFound": "customer code {code} not found",
+      "customerPhoneNotFound": "no customer with phone {phone}, and \"Tên khách hàng\" is missing to create one",
+      "emptyFile": "The file has no data",
+      "header": "Wrong header in column {col}: expected \"{name}\" (use the template)",
+      "missingCode": "Row {row}: missing \"Mã hàng\"",
+      "noLines": "No item rows",
+      "productNotFound": "Row {row}: product code {code} not found",
+      "tooManyRows": "{rows} rows, maximum {max} rows per sheet",
+      "tooManySheets": "The file has {sheets} sheets, maximum {max}",
+      "wardNotFound": "\"Phường xã\" \"{ward}\" not found in {province}"
+    },
+    "headersVietnamese": "Keep the Vietnamese column headers exactly as in the template.",
+    "importedSheets_one": "Imported {count} sheet.",
+    "importedSheets_other": "Imported {count} sheets.",
+    "imported_one": "Imported {count} invoice from {file}",
+    "imported_other": "Imported {count} invoices from {file}",
+    "note": "Each import supports up to {sheets} sheets; each sheet is one transaction with up to {rows} rows.",
+    "noteTitle": "Note:",
+    "processData": "Process data ({template})",
+    "readFailed": "Could not read the file: {message}",
+    "sheetRejected": "Sheet “{sheet}” was not imported:",
+    "title": "Import invoices from Excel"
+  },
+  "invoice": {
+    "change": "change {amount}",
+    "editNeedsNetwork": "Offline: editing an invoice requires a connection, please try again",
+    "fromOrderNeedsNetwork": "Offline: creating an invoice from an order requires a connection, please try again",
+    "paid": "Invoice {code} paid",
+    "print": "Print invoice",
+    "savedOffline": "Offline: invoice saved on this device, it will sync when back online",
+    "shipment": "shipment {code}",
+    "updated": "Invoice {code} updated"
+  },
+  "line": {
+    "actions": "Line actions",
+    "addLine": "Add line",
+    "addLineHint": "Add another line of this item",
+    "amount": "Amount",
+    "applyLastPrice": "Apply this customer's last price",
+    "detail": "View details",
+    "discount": "Discount",
+    "discountAria": "Discount per unit",
+    "discountPerUnit": "Discount / {unit}",
+    "discountPercentAria": "Discount (%) per unit",
+    "lastPrice": "Last price: {price}",
+    "note": "Note",
+    "noteAria": "Line note",
+    "notePlaceholder": "Note...",
+    "price": "Unit price",
+    "qty": "Quantity",
+    "remove": "Remove line",
+    "stock": "Stock: {qty}",
+    "unit": "Unit",
+    "viewLastPrices": "View recent prices"
+  },
+  "lot": {
+    "enterNew": "+ Enter new lot",
+    "exists": "Lot {lot} already exists at this branch (expiry {expiry}) — stock will return to it.",
+    "expired": "Lot expired: expired returns should be written off after receipt.",
+    "expiry": "Expiry:",
+    "expiryMismatch": "Lot {lot} exists with expiry {expiry} — the entered expiry does not match.",
+    "lot": "Lot:",
+    "lotNumber": "Lot no.",
+    "newLot": "New lot:",
+    "newLotExpiry": "New lot expiry date",
+    "newLotNumber": "New lot number",
+    "offline": "Offline: lots not loaded",
+    "option": "{lot} · exp. {expiry} · stock {qty}",
+    "pick": "-- Select lot --",
+    "pickExisting": "Choose existing lot",
+    "returnLot": "Returned lot"
+  },
+  "menu": {
+    "endOfDay": "End-of-day report",
+    "import": "Import file",
+    "label": "Menu",
+    "logout": "Log out",
+    "manage": "Management",
+    "orders": "Process orders",
+    "receipt": "Create receipt",
+    "return": "Select invoice to return",
+    "settings": "Settings & Display",
+    "shortcuts": "Shortcuts"
+  },
+  "open": {
+    "copyLabel": "Copy of {code}",
+    "invoiceCancelled": "The invoice has been cancelled",
+    "invoiceFromOrderLabel": "Invoice / {code}",
+    "orderCancelled": "Order {code} has been cancelled",
+    "orderInvoiced": "Order {code} already invoiced {invoice}",
+    "returnLabel": "Return / {code}"
+  },
+  "order": {
+    "created": "Order {code} created",
+    "customerRequired": "Orders require a customer (F4)",
+    "editNeedsNetwork": "Offline: editing an order requires a connection, please try again",
+    "savedOffline": "Offline: order saved on this device, it will sync when back online",
+    "updated": "Order {code} updated",
+    "withDeposit": "{message} — deposit {amount}"
+  },
+  "orderPicker": {
+    "cols": {
+      "code": "Order code"
+    },
+    "filters": {
+      "code": "By order code",
+      "customer": "By customer",
+      "note": "By order note"
+    },
+    "offline": "Offline: processing orders requires a connection"
+  },
+  "payment": {
+    "method": "Payment method",
+    "methods": {
+      "ewalletShort": "Wallet"
+    },
+    "mixed": {
+      "nonCashOverDue": "Transfer / card / wallet cannot exceed the amount due",
+      "title": "Split payment"
+    },
+    "qr": "Pay by QR code"
+  },
+  "priceBook": {
+    "confirmRemove": "The new price book does not include: {names}.\nThese items will be removed from the cart. Change price book anyway?",
+    "general": "General price book",
+    "label": "Price book",
+    "missing": "Price book no longer exists — switched to the general price book",
+    "notApplicable": "Price book \"{name}\" does not apply to this customer / seller — switched to the general price book",
+    "removedFromCart": "removed from cart"
+  },
+  "print": {
+    "autoPrint": "Auto-print invoice",
+    "copies": "Number of copies",
+    "copiesAria": "Number of copies",
+    "mergeLines": "Merge identical items",
+    "template": "Print template",
+    "templateDefault": "Default invoice template",
+    "templateInvoice": "A. Invoice template",
+    "templateStore": "Store invoice template",
+    "title": "Print settings"
+  },
+  "receipt": {
+    "amount": "Received from customer",
+    "amountLabel": "Received from customer:",
+    "amountRequired": "Enter the amount received",
+    "create": "Create receipt",
+    "createPrint": "Create & print",
+    "created": "Receipt {code} created — {amount}",
+    "customerRequired": "Select a customer (F4)",
+    "debtAfter": "Debt after:",
+    "method": "Receipt method",
+    "offline": "Offline: creating a receipt requires a connection",
+    "toDebt": "Deducted from debt",
+    "toInvoices": "Applied to invoices:"
+  },
+  "recentPrice": {
+    "apply": "Apply price"
+  },
+  "returnPicker": {
+    "cols": {
+      "code": "Invoice code",
+      "employee": "Staff"
+    },
+    "filters": {
+      "code": "By invoice code",
+      "customer": "By customer or phone",
+      "lot": "By lot / expiry",
+      "shipmentCode": "By shipment code"
+    },
+    "offline": "Offline: selecting an invoice to return requires a connection",
+    "quickReturn": "Quick return"
+  },
+  "returns": {
+    "created": "Return {code} created",
+    "createdWithRefund": "Return {code} created — refund {amount}",
+    "due": "Refund due",
+    "errors": {
+      "expiryRequired": "{name}: enter the expiry date for the new lot",
+      "lotRequired": "{name}: select the returned lot or enter a new one",
+      "noItems": "No items selected for return",
+      "walkInRefundFull": "Walk-in customer: refund must be paid in full"
+    },
+    "fee": "Return fee",
+    "original": "Original purchase total",
+    "qtyOf": "Return quantity {name}",
+    "quickTitle": "Quick return (no invoice)",
+    "refund": "Refund paid",
+    "returnedQty": "returned {qty}",
+    "savedOffline": "Offline: return saved on this device, it will sync when back online",
+    "submit": "Return",
+    "subtotal": "Returned items total",
+    "title": "Return",
+    "toDebt": "Deducted from customer debt"
+  },
+  "screen": {
+    "autoPrintOff": "Auto-print invoice: off",
+    "autoPrintOn": "Auto-print invoice: on",
+    "loading": "Loading sales screen...",
+    "openFailed": "Could not open {what}: {message}",
+    "qtyModeOff": "Add item: keep cursor in product search",
+    "qtyModeOn": "Add item: move cursor to quantity",
+    "qtyPositive": "Quantity must be greater than 0",
+    "syncedOffline": "Offline document synced → {code}",
+    "walkInMustPayFull": "Walk-in customers must pay in full — select a customer to record debt",
+    "what": {
+      "invoice": "invoice",
+      "order": "order"
+    }
+  },
+  "search": {
+    "addToOrder": "Add to order",
+    "multiSelect": "Multi-select mode",
+    "noResults": "No products found",
+    "off": "off",
+    "on": "on",
+    "placeholder": "Search products (F3)",
+    "scanQuickAdd": "Scan to add products instantly",
+    "selected": "{count} selected"
+  },
+  "seller": {
+    "label": "Seller",
+    "search": "Search seller"
+  },
+  "settings": {
+    "display": "Display",
+    "goods": {
+      "addLineTip": "Show a (+) button on each line to add another line of the same item",
+      "dragDrop": "Drag and drop items",
+      "dragDropTip": "Drag lines to reorder (when sorted by No.)",
+      "image": "Product image",
+      "imageTip": "Products have no images yet",
+      "lineNote": "Item note",
+      "lineNoteTip": "Always show a note box under each line",
+      "merge": "Merge same items",
+      "mergeTip": "Adding an item already in the order increases its quantity instead of adding a line",
+      "scanTip": "Scanning / typing an exact code adds it immediately, no Enter needed",
+      "sortBy": "Sort items by",
+      "sortOrder": "Item order",
+      "stock": "Stock on hand",
+      "stockTip": "Show stock under the product name (in the selling unit)",
+      "suggestPaid": "Suggest amounts paid"
+    },
+    "groups": "Settings groups",
+    "options": "Options",
+    "payment": {
+      "autoCompleteQr": "Auto-complete the sale when QR payment succeeds",
+      "autoCompleteQrTip": "Full QR transfer received (SePay) → the invoice is paid automatically",
+      "defaultMethod": "Default payment method",
+      "paidEqualsDue": "Amount paid defaults to amount due",
+      "paidEqualsDueTip": "Off: new invoices start with amount paid = 0",
+      "speakPaid": "Announce amount paid",
+      "speakPaidTip": "Read the amount paid aloud after checkout (Vietnamese voice if none for your language)"
+    },
+    "price": {
+      "discountTip": "Default discount type for lines",
+      "editAmount": "Edit line amount",
+      "editAmountTip": "Editing the line amount recalculates the unit price",
+      "lastPrice": "Last selling price",
+      "lastPriceTip": "Last price sold to the selected customer, click to apply",
+      "price": "Selling price"
+    },
+    "sort": {
+      "asc": "Ascending",
+      "code": "Product code",
+      "desc": "Descending",
+      "index": "No.",
+      "name": "Product name"
+    },
+    "tabs": {
+      "goods": "Products",
+      "payment": "Payment",
+      "price": "Pricing"
+    }
+  },
+  "shortcuts": {
+    "help": {
+      "autoPrint": "Toggle auto-print",
+      "customerPaid": "Amount paid",
+      "editQty": "Edit item quantity",
+      "findCustomer": "Search customers",
+      "findProduct": "Search products",
+      "fullscreen": "Full screen",
+      "newInvoice": "New invoice",
+      "nextLine": "Move to next item",
+      "pay": "Pay",
+      "prevLine": "Move to previous item",
+      "qtyDown": "Decrease quantity",
+      "qtyMode": "Change quantity entry mode",
+      "qtyUp": "Increase quantity"
+    },
+    "title": "Keyboard shortcuts"
+  },
+  "sync": {
+    "code": "Document code",
+    "confirmRemove": "Remove this document from the device? It will NOT be recorded.",
+    "connection": "Connection:",
+    "error": "Error: {error}",
+    "kind": "Document type",
+    "kinds": {
+      "all": "--All--",
+      "invoice": "Invoice",
+      "order": "Order",
+      "return": "Return"
+    },
+    "offline": "Offline",
+    "online": "Online",
+    "pending": "Waiting to sync",
+    "remove": "Remove from device",
+    "retry": "Resend",
+    "syncAll": "Sync all",
+    "value": "Value"
+  },
+  "tabs": {
+    "addInvoice": "New invoice",
+    "addMenu": "New invoice / order",
+    "addOrder": "New order",
+    "close": "Close {label}",
+    "confirmClose": "Close {label}? The cart will be cleared.",
+    "invoiceN": "Invoice {n}",
+    "label": "Open invoices",
+    "orderN": "Order {n}",
+    "returnN": "Return {n}",
+    "scrollLeft": "Scroll tabs left",
+    "scrollRight": "Scroll tabs right"
+  }
+}

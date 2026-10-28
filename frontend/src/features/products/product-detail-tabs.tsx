@@ -9,7 +9,13 @@ import { useBranches } from "@/features/settings/settings-queries";
 import { formatDate, formatDateTime, formatMoney, formatNumber } from "@/lib/format";
 import { useProductLedger, useProductLots } from "./product-queries";
 import { SUB_TABLE_HEAD_ROW } from "./product-tab-styles";
-import { DOC_TYPE_LABEL, type ProductDetail } from "./product-types";
+import type { ProductDetail } from "./product-types";
+import { useT } from "@/lib/i18n";
+import { commonNs } from "@/messages/common";
+import { productsNs } from "@/messages/products";
+
+/** Loại giao dịch thẻ kho đã có nhãn trong namespace products (docTypes.*); loại lạ hiện mã gốc. */
+const isDocType = (x: string): x is keyof typeof productsNs.vi.docTypes => x in productsNs.vi.docTypes;
 
 function useBranchList() {
   const { data: branches = [] } = useBranches();
@@ -27,26 +33,28 @@ export function LedgerTab({ productId }: { productId: string }) {
   const showBranch = branches.count > 1;
   const showLot = !!data?.items.some((l) => l.lotNumber);
   const cols = 8 + Number(showBranch) + Number(showLot);
+  const t = useT(productsNs);
+  const tc = useT(commonNs);
   return (
     <div className="space-y-2">
       <Table>
         <TableHeader>
           <TableRow className={SUB_TABLE_HEAD_ROW}>
-            <TableHead>Chứng từ</TableHead><TableHead>Thời gian</TableHead><TableHead>Loại giao dịch</TableHead>
-            {showBranch && <TableHead>Chi nhánh</TableHead>}
-            {showLot && <TableHead>Lô</TableHead>}
-            <TableHead className="text-right">Giá GD</TableHead><TableHead className="text-right">Giá vốn</TableHead>
-            <TableHead className="text-right">Số lượng</TableHead><TableHead className="text-right">Tồn cuối</TableHead>
-            <TableHead>Đối tác</TableHead>
+            <TableHead>{t("ledger.doc")}</TableHead><TableHead>{t("ledger.time")}</TableHead><TableHead>{t("ledger.type")}</TableHead>
+            {showBranch && <TableHead>{tc("fields.branch")}</TableHead>}
+            {showLot && <TableHead>{t("fields.lot")}</TableHead>}
+            <TableHead className="text-right">{t("ledger.txPrice")}</TableHead><TableHead className="text-right">{t("fields.cost")}</TableHead>
+            <TableHead className="text-right">{t("fields.quantity")}</TableHead><TableHead className="text-right">{t("ledger.balance")}</TableHead>
+            <TableHead>{t("ledger.partner")}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {!isLoading && !data?.items.length && <ListEmptyRow cols={cols} what="giao dịch" compact />}
+          {!isLoading && !data?.items.length && <ListEmptyRow cols={cols} compact />}
           {data?.items.map((l) => (
             <TableRow key={l.id} className="align-top [&>td]:py-3">
               <TableCell><DocCodeLink code={l.docCode} /></TableCell>
               <TableCell>{formatDateTime(l.occurredAt)}</TableCell>
-              <TableCell>{DOC_TYPE_LABEL[l.docType] ?? l.docType}</TableCell>
+              <TableCell>{isDocType(l.docType) ? t(`docTypes.${l.docType}`) : l.docType}</TableCell>
               {showBranch && <TableCell>{branches.name(l.branchId)}</TableCell>}
               {showLot && <TableCell>{l.lotNumber}</TableCell>}
               <TableCell className="text-right">{formatNumber(l.unitPrice)}</TableCell>
@@ -60,8 +68,8 @@ export function LedgerTab({ productId }: { productId: string }) {
       </Table>
       {pages > 1 && (
         <div className="flex justify-end gap-2">
-          <Button size="sm" variant="outline" className="rounded-md" disabled={page === 0} onClick={() => setPage(page - 1)}>Trước</Button>
-          <Button size="sm" variant="outline" className="rounded-md" disabled={page + 1 >= pages} onClick={() => setPage(page + 1)}>Sau</Button>
+          <Button size="sm" variant="outline" className="rounded-md" disabled={page === 0} onClick={() => setPage(page - 1)}>{tc("pager.prev")}</Button>
+          <Button size="sm" variant="outline" className="rounded-md" disabled={page + 1 >= pages} onClick={() => setPage(page + 1)}>{tc("pager.next")}</Button>
         </div>
       )}
     </div>
@@ -72,13 +80,15 @@ export function LedgerTab({ productId }: { productId: string }) {
 export function StockTab({ product }: { product: ProductDetail }) {
   const branches = useBranchList();
   const { data: lots = [] } = useProductLots(product.id, product.lotManaged);
+  const t = useT(productsNs);
+  const tc = useT(commonNs);
   return (
     <div className="space-y-4">
       <Table>
         <TableHeader>
           <TableRow className={SUB_TABLE_HEAD_ROW}>
-            <TableHead>Chi nhánh</TableHead><TableHead className="text-right">Tồn kho</TableHead>
-            <TableHead className="text-right">KH đặt</TableHead><TableHead className="w-48 pl-4">Trạng thái</TableHead>
+            <TableHead>{tc("fields.branch")}</TableHead><TableHead className="text-right">{t("fields.stock")}</TableHead>
+            <TableHead className="text-right">{t("fields.reserved")}</TableHead><TableHead className="w-48 pl-4">{tc("fields.status")}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -92,7 +102,7 @@ export function StockTab({ product }: { product: ProductDetail }) {
               <TableCell className="text-right">{formatNumber(s.quantity)}</TableCell>
               <TableCell className="text-right">{formatNumber(s.reserved)}</TableCell>
               <TableCell className="pl-4">
-                <span className="rounded bg-[#eff0f3] px-1.5 py-0.5 text-xs">{product.active ? "Đang kinh doanh" : "Ngừng kinh doanh"}</span>
+                <span className="rounded bg-[#eff0f3] px-1.5 py-0.5 text-xs">{product.active ? t("detail.selling") : t("detail.discontinued")}</span>
               </TableCell>
             </TableRow>
           ))}
@@ -102,19 +112,19 @@ export function StockTab({ product }: { product: ProductDetail }) {
         <Table>
           <TableHeader>
             <TableRow className={SUB_TABLE_HEAD_ROW}>
-              <TableHead>Lô</TableHead><TableHead>Hạn sử dụng</TableHead><TableHead>Chi nhánh</TableHead>
-              <TableHead className="text-right">Tồn</TableHead>
+              <TableHead>{t("fields.lot")}</TableHead><TableHead>{t("fields.expiry")}</TableHead><TableHead>{tc("fields.branch")}</TableHead>
+              <TableHead className="text-right">{t("detail.lotStock")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {!lots.length && <ListEmptyRow cols={4} what="lô hàng" compact />}
+            {!lots.length && <ListEmptyRow cols={4} what={t("detail.lotsWhat")} compact />}
             {lots.map((l) => {
               const days = (new Date(l.expiryDate).getTime() - Date.now()) / 86_400_000;
               return (
                 <TableRow key={l.id}>
                   <TableCell className="font-medium">{l.lotNumber}</TableCell>
                   <TableCell className={days < 0 ? "text-destructive" : days < 90 ? "text-orange-600" : ""}>
-                    {formatDate(l.expiryDate)}{days < 0 ? " (hết hạn)" : days < 90 ? " (cận hạn)" : ""}
+                    {formatDate(l.expiryDate)}{days < 0 ? ` (${t("detail.expired")})` : days < 90 ? ` (${t("detail.nearExpiry")})` : ""}
                   </TableCell>
                   <TableCell>{branches.name(l.branchId)}</TableCell>
                   <TableCell className="text-right">{formatNumber(l.quantity)}</TableCell>
@@ -133,14 +143,15 @@ export function UnitsTab({ product }: { product: ProductDetail }) {
   const total = sum(product.stocks.map((s) => s.quantity));
   const reserved = sum(product.stocks.map((s) => s.reserved));
   const baseUnit = product.units.find((u) => u.base)?.unitName;
+  const t = useT(productsNs);
   return (
     <Table>
       <TableHeader>
         <TableRow className={SUB_TABLE_HEAD_ROW}>
-          <TableHead>Mã hàng</TableHead><TableHead>Tên hàng</TableHead><TableHead>Tên hàng trên hóa đơn điện tử</TableHead>
-          <TableHead className="text-right">Giá bán</TableHead><TableHead className="text-right">VAT hàng bán (%)</TableHead>
-          <TableHead>Áp dụng giảm thuế</TableHead><TableHead className="text-right">Giá vốn</TableHead>
-          <TableHead className="text-right">Tồn kho</TableHead><TableHead className="text-right">Khách đặt</TableHead>
+          <TableHead>{t("fields.code")}</TableHead><TableHead>{t("fields.name")}</TableHead><TableHead>{t("fields.einvoiceName")}</TableHead>
+          <TableHead className="text-right">{t("fields.price")}</TableHead><TableHead className="text-right">{t("detail.salesVat")}</TableHead>
+          <TableHead>{t("fields.taxReduction")}</TableHead><TableHead className="text-right">{t("fields.cost")}</TableHead>
+          <TableHead className="text-right">{t("fields.stock")}</TableHead><TableHead className="text-right">{t("fields.reserved")}</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -157,12 +168,12 @@ export function UnitsTab({ product }: { product: ProductDetail }) {
               <TableCell className="max-w-48 min-w-36 whitespace-normal">
                 {product.name} ({u.unitName})
                 {!u.base && <span className="text-muted-foreground"> = {formatNumber(rate)} {baseUnit}</span>}
-                {u.barcode && <div className="text-xs text-muted-foreground">Mã vạch: {u.barcode}</div>}
+                {u.barcode && <div className="text-xs text-muted-foreground">{t("detail.barcodeValue", { barcode: u.barcode })}</div>}
               </TableCell>
               <TableCell className="max-w-48 whitespace-normal">{product.einvoiceName}</TableCell>
               <TableCell className="text-right">{formatMoney(u.price)}</TableCell>
               <TableCell className="max-w-36 text-right whitespace-normal">{product.taxRateName}</TableCell>
-              <TableCell>{product.taxReduction ? "Có áp dụng" : "Không áp dụng"}</TableCell>
+              <TableCell>{product.taxReduction ? t("fields.taxReductionYes") : t("fields.taxReductionNo")}</TableCell>
               <TableCell className="text-right">{formatNumber(Number(product.cost) * rate)}</TableCell>
               <TableCell className="text-right">{formatNumber(total / rate)}</TableCell>
               <TableCell className="text-right">{formatNumber(reserved / rate)}</TableCell>

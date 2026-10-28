@@ -1,5 +1,6 @@
 package com.vaxclinic.integration.einvoice;
 
+import com.vaxclinic.common.http.InternalRestClientFactory;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vaxclinic.common.error.BusinessException;
@@ -10,6 +11,7 @@ import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -38,9 +40,15 @@ public class MisaClient {
     private String cachedFor;
     private Instant cachedUntil = Instant.EPOCH;
 
+    private final InternalRestClientFactory httpFactory;
+    private final Duration externalReadTimeout;
+
     public MisaClient(@Value("${app.misa.test-url}") String testUrl, @Value("${app.misa.prod-url}") String prodUrl,
                       @Value("${app.misa.token-path}") String tokenPath, @Value("${app.misa.publish-path}") String publishPath,
-                      ObjectMapper json) {
+                      ObjectMapper json, InternalRestClientFactory httpFactory,
+                      @Value("${app.http.external-read-timeout:30s}") Duration externalReadTimeout) {
+        this.httpFactory = httpFactory;
+        this.externalReadTimeout = externalReadTimeout;
         this.testUrl = testUrl;
         this.prodUrl = prodUrl;
         this.tokenPath = tokenPath;
@@ -49,7 +57,7 @@ public class MisaClient {
     }
 
     private RestClient http(Account a) {
-        return RestClient.builder().baseUrl("PROD".equals(a.environment()) ? prodUrl : testUrl).build();
+        return httpFactory.create("PROD".equals(a.environment()) ? prodUrl : testUrl, externalReadTimeout);
     }
 
     /** Token MISA sống ~24h; cache 20h theo (môi trường, MST, tài khoản). */

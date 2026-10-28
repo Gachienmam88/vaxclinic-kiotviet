@@ -10,6 +10,9 @@ import type { PageResponse } from "@/lib/api-client";
 import { formatMoney, formatNumber } from "@/lib/format";
 import { PriceBookPriceCell } from "./price-book-price-cell";
 import type { PriceBook, PriceRow } from "./price-book-types";
+import { useT } from "@/lib/i18n";
+import { commonNs } from "@/messages/common";
+import { productsNs } from "@/messages/products";
 
 type Props = {
   data: PageResponse<PriceRow> | undefined;
@@ -24,16 +27,18 @@ type Props = {
 /** Bảng Thiết lập giá: Mã hàng, Tên hàng, Giá vốn, Giá nhập cuối, Giá chung + 1 cột sửa giá cho mỗi bảng giá đang chọn. */
 export function PriceBookTable({ data, isLoading, books, editable, onFormula, onImport, onEdit }: Props) {
   const cols = 5 + books.length;
+  const t = useT(productsNs);
+  const tc = useT(commonNs);
   return (
     <div className="overflow-x-auto rounded-lg bg-background">
       <Table>
         <TableHeader>
           <TableRow className={LIST_HEADER_ROW}>
-            <TableHead className="w-28 pl-4">Mã hàng</TableHead>
-            <TableHead>Tên hàng</TableHead>
-            <TableHead className="text-right">Giá vốn</TableHead>
-            <TableHead className="text-right">Giá nhập cuối</TableHead>
-            <TableHead className="text-right">Giá chung</TableHead>
+            <TableHead className="w-28 pl-4">{t("fields.code")}</TableHead>
+            <TableHead>{t("fields.name")}</TableHead>
+            <TableHead className="text-right">{t("fields.cost")}</TableHead>
+            <TableHead className="text-right">{t("formulaBase.LAST_PURCHASE")}</TableHead>
+            <TableHead className="text-right">{t("formulaBase.BASE_PRICE")}</TableHead>
             {books.map((b) => (
               <TableHead key={b.id} className="pr-4 text-right">
                 {editable ? (
@@ -42,9 +47,9 @@ export function PriceBookTable({ data, isLoading, books, editable, onFormula, on
                       <span className="truncate" title={b.name}>{b.name}</span><ChevronDown className="size-3.5 shrink-0" />
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-48">
-                      <DropdownMenuItem onClick={() => onFormula(b)}>Áp dụng công thức</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => onImport(b)}>Nhập file giá</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => onEdit(b)}>Sửa bảng giá</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => onFormula(b)}>{t("priceBooks.applyFormula")}</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => onImport(b)}>{t("priceBooks.importPrices")}</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => onEdit(b)}>{t("bookForm.editTitle")}</DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 ) : <span className="truncate" title={b.name}>{b.name}</span>}
@@ -54,9 +59,9 @@ export function PriceBookTable({ data, isLoading, books, editable, onFormula, on
         </TableHeader>
         <TableBody>
           {isLoading && (
-            <TableRow><TableCell colSpan={cols} className="py-8 text-center text-muted-foreground">Đang tải...</TableCell></TableRow>
+            <TableRow><TableCell colSpan={cols} className="py-8 text-center text-muted-foreground">{tc("status.loading")}</TableCell></TableRow>
           )}
-          {data && !data.items.length && <ListEmptyRow cols={cols} what="hàng hóa" />}
+          {data && !data.items.length && <ListEmptyRow cols={cols} what={t("list.emptyWhat")} />}
           {data?.items.map((r) => (
             <TableRow key={r.unitId}>
               <TableCell className="pl-4"><DocCodeLink code={r.code} /></TableCell>

@@ -1,0 +1,106 @@
+{
+  "status": {
+    "draft": "Phiếu tạm",
+    "balanced": "Đã cân bằng kho",
+    "completed": "Hoàn thành",
+    "cancelled": "Đã hủy"
+  },
+  "issue": {
+    "damage": {
+      "title": "Xuất hủy",
+      "codeLabel": "Mã xuất hủy",
+      "valueLabel": "Tổng giá trị hủy",
+      "qtyLabel": "SL hủy",
+      "lineValueLabel": "Giá trị hủy",
+      "searchPlaceholder": "Theo mã xuất hủy",
+      "reasonPlaceholder": "VD: Hết hạn sử dụng",
+      "cancelled": "Đã hủy phiếu xuất hủy"
+    },
+    "internal": {
+      "title": "Xuất dùng nội bộ",
+      "codeLabel": "Mã phiếu",
+      "valueLabel": "Tổng giá trị",
+      "qtyLabel": "SL xuất",
+      "lineValueLabel": "Giá trị",
+      "searchPlaceholder": "Theo mã phiếu",
+      "reasonPlaceholder": "VD: Dùng tại phòng tiêm",
+      "cancelled": "Đã hủy phiếu xuất dùng nội bộ"
+    }
+  },
+  "take": {
+    "listTitle": "Phiếu kiểm kho",
+    "create": "Kiểm kho",
+    "searchPlaceholder": "Theo mã phiếu kiểm",
+    "editorTitle": "Kiểm kho",
+    "cancelled": "Đã hủy phiếu kiểm kho",
+    "confirmCancel": "Hủy phiếu kiểm kho {code}?",
+    "tabs": {
+      "all": "Tất cả",
+      "match": "Khớp",
+      "diff": "Lệch",
+      "unchecked": "Chưa kiểm"
+    },
+    "addNewLot": "Thêm lô mới cho {name}",
+    "alreadyOnDoc": "{name} đã có trên phiếu",
+    "clearToChangeBranch": "Xóa hết dòng để đổi chi nhánh",
+    "lotRequired": "{name}: nhập số lô và hạn sử dụng",
+    "noActual": "Chưa nhập số lượng thực tế cho hàng nào",
+    "confirmBalance": "Cân bằng kho theo số thực tế? Phiếu đã cân bằng không sửa / hủy được.",
+    "confirmBalanceUnchecked": "Cân bằng kho theo số thực tế? {unchecked} dòng chưa kiểm sẽ giữ nguyên tồn. Phiếu đã cân bằng không sửa / hủy được.",
+    "savedBalanced": "Đã cân bằng kho phiếu {code}",
+    "lotBadge": "Lô {lot} — HSD {expiry}"
+  },
+  "fields": {
+    "takeCode": "Mã kiểm kho",
+    "time": "Thời gian",
+    "balancedAt": "Ngày cân bằng",
+    "actualQty": "SL thực tế",
+    "actualTotal": "Tổng thực tế",
+    "totalActualQty": "Tổng SL thực tế",
+    "diffTotal": "Tổng chênh lệch",
+    "increaseQty": "SL lệch tăng",
+    "decreaseQty": "SL lệch giảm",
+    "productCode": "Mã hàng",
+    "productName": "Tên hàng",
+    "unit": "ĐVT",
+    "unitFull": "Đơn vị tính",
+    "lotExpiry": "Lô / HSD",
+    "lotNumber": "Số lô",
+    "expiryDate": "Hạn sử dụng",
+    "stock": "Tồn kho",
+    "actual": "Thực tế",
+    "diffQty": "SL lệch",
+    "diffValue": "Giá trị lệch",
+    "cost": "Giá vốn",
+    "reason": "Lý do",
+    "createdBy": "Người tạo",
+    "note": "Ghi chú",
+    "status": "Trạng thái",
+    "branch": "Chi nhánh",
+    "totalQty": "Tổng số lượng",
+    "index": "STT",
+    "unchecked": "Chưa kiểm"
+  },
+  "list": {
+    "unit": "phiếu"
+  },
+  "detail": {
+    "cancel": "Hủy",
+    "openDoc": "Mở phiếu",
+    "confirmCancel": "Hủy phiếu {code}?",
+    "confirmCancelRestock": "Hủy phiếu {code}? Hàng sẽ được nhập lại kho."
+  },
+  "editor": {
+    "back": "Quay lại",
+    "emptyHint": "Tìm hàng hóa theo mã hoặc tên (phím F3) để thêm vào phiếu",
+    "saveDraft": "Lưu tạm",
+    "complete": "Hoàn thành",
+    "autoCode": "Mã phiếu tự động",
+    "removeLine": "Xóa dòng",
+    "noLines": "Phiếu chưa có hàng hóa",
+    "qtyPositive": "Số lượng phải lớn hơn 0",
+    "pickLot": "{name}: chọn lô xuất",
+    "savedCompleted": "Đã hoàn thành phiếu {code}",
+    "savedDraft": "Đã lưu tạm phiếu {code}"
+  }
+}

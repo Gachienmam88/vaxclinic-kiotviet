@@ -1,5 +1,6 @@
 import { api } from "@/lib/api-client";
 import type { Order } from "@/features/orders/order-types";
+import type { SaleT } from "@/messages/sale";
 import { cachedCustomerGroupId, toCartLines } from "./sale-open-invoice";
 import { newId } from "./sale-storage";
 import type { CatalogProduct, DraftInvoice } from "./sale-types";
@@ -10,10 +11,10 @@ import type { CatalogProduct, DraftInvoice } from "./sale-types";
  * - "invoice" (/sale?orderInvoice=<id>): tab hóa đơn mới gắn đơn; tiền cọc trừ vào khách cần trả → THANH TOÁN tạo hóa đơn.
  */
 export async function draftFromOrder(orderId: string, mode: "edit" | "invoice", catalog: CatalogProduct[],
-                                     sellerId: string): Promise<DraftInvoice> {
+                                     sellerId: string, t: SaleT): Promise<DraftInvoice> {
   const o = await api<Order>(`/orders/${orderId}`);
-  if (o.status === "COMPLETED") throw new Error(`Đơn ${o.code} đã tạo hóa đơn ${o.invoiceCode ?? ""}`.trim());
-  if (o.status === "CANCELLED") throw new Error(`Đơn ${o.code} đã hủy`);
+  if (o.status === "COMPLETED") throw new Error(t("open.orderInvoiced", { code: o.code, invoice: o.invoiceCode ?? "" }).trim());
+  if (o.status === "CANCELLED") throw new Error(t("open.orderCancelled", { code: o.code }));
   const ref = { orderId: o.id, code: o.code, deposit: Number(o.deposit) };
   const base = {
     mode: "QUICK" as const, customer: { id: o.customerId, code: o.customerCode ?? "", name: o.customerName, phone: o.customerPhone,
@@ -24,7 +25,7 @@ export async function draftFromOrder(orderId: string, mode: "edit" | "invoice", 
   };
   return mode === "edit"
     ? { ...base, id: o.id, kind: "ORDER", orderOf: ref, label: o.code }
-    : { ...base, id: newId(), kind: "SALE", fromOrder: ref, label: `Hóa đơn / ${o.code}` };
+    : { ...base, id: newId(), kind: "SALE", fromOrder: ref, label: t("open.invoiceFromOrderLabel", { code: o.code }) };
 }
 
 /** ISO → giá trị ô datetime-local (giờ máy). */

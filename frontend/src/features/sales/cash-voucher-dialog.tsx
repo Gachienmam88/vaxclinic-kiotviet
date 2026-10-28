@@ -17,13 +17,22 @@ import { api, errorMessage } from "@/lib/api-client";
 import { useCurrentUser } from "@/lib/use-current-user";
 import { useBankAccounts, useCashCategories } from "./sales-queries";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
+import { useT } from "@/lib/i18n";
+import { renderRichText } from "@/lib/i18n/render-rich-text";
+import { commonNs } from "@/messages/common";
+import { cashbookNs } from "@/messages/cashbook";
+import { salesNs } from "@/messages/sales";
 
 type Props = { type: "RECEIPT" | "PAYMENT"; onClose: () => void };
 
-const PARTNER_TYPES = [["CUSTOMER", "Khách hàng"], ["SUPPLIER", "Nhà cung cấp"], ["EMPLOYEE", "Nhân viên"], ["OTHER", "Khác"]] as const;
+const PARTNER_TYPES = ["CUSTOMER", "SUPPLIER", "EMPLOYEE", "OTHER"] as const;
+const FUNDS = ["CASH", "BANK", "EWALLET"] as const;
 
 /** Tạo phiếu thu / phiếu chi tay trong Sổ quỹ. */
 export function CashVoucherDialog({ type, onClose }: Props) {
+  const t = useT(cashbookNs);
+  const tc = useT(commonNs);
+  const ts = useT(salesNs);
   const qc = useQueryClient();
   const { data: me } = useCurrentUser();
   const { data: users = [] } = useUserLookup();
@@ -43,7 +52,7 @@ export function CashVoucherDialog({ type, onClose }: Props) {
       partnerName: f.partnerName, partnerPhone: f.partnerPhone, collectorId: f.collectorId || null,
       collectorName: users.find((u) => u.id === f.collectorId)?.fullName, accounting: f.accounting, note: f.note } }),
     onSuccess: (v) => {
-      toast.success(`Đã tạo ${receipt ? "phiếu thu" : "phiếu chi"} ${v.code}`);
+      toast.success(t(receipt ? "dialog.createdReceipt" : "dialog.createdPayment", { code: v.code }));
       qc.invalidateQueries({ queryKey: ["cashbook"] });
       qc.invalidateQueries({ queryKey: ["cash-categories"] });
       onClose();
@@ -54,47 +63,47 @@ export function CashVoucherDialog({ type, onClose }: Props) {
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="rounded-lg p-5 sm:max-w-2xl">
-        <DialogHeader><DialogTitle className="text-base font-bold">{receipt ? "Tạo phiếu thu" : "Tạo phiếu chi"}</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle className="text-base font-bold">{t(receipt ? "dialog.titleReceipt" : "dialog.titlePayment")}</DialogTitle></DialogHeader>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-          <div className="grid gap-1.5"><Label>Thời gian</Label><DateTimePicker value={f.at} onChange={(v) => set({ at: v })} /></div>
-          <div className="grid gap-1.5"><Label>{receipt ? "Người thu" : "Người chi"}</Label>
+          <div className="grid gap-1.5"><Label>{t("dialog.time")}</Label><DateTimePicker value={f.at} onChange={(v) => set({ at: v })} /></div>
+          <div className="grid gap-1.5"><Label>{t(receipt ? "dialog.collectorReceipt" : "dialog.collectorPayment")}</Label>
             <NativeSelect value={f.collectorId} onChange={(e) => set({ collectorId: e.target.value })}>
               {users.map((u) => <option key={u.id} value={u.id}>{u.fullName}</option>)}</NativeSelect></div>
-          <div className="grid gap-1.5"><Label>Quỹ tiền</Label>
+          <div className="grid gap-1.5"><Label>{t("dialog.fund")}</Label>
             <NativeSelect value={f.fund} onChange={(e) => set({ fund: e.target.value })}>
-              <option value="CASH">Tiền mặt</option><option value="BANK">Ngân hàng</option><option value="EWALLET">Ví điện tử</option></NativeSelect></div>
+              {FUNDS.map((v) => <option key={v} value={v}>{ts(`enums.fund.${v}`)}</option>)}</NativeSelect></div>
           {f.fund === "BANK" && (
-            <div className="grid gap-1.5"><Label>Tài khoản</Label>
+            <div className="grid gap-1.5"><Label>{t("dialog.account")}</Label>
               <NativeSelect value={f.bankAccountId} onChange={(e) => set({ bankAccountId: e.target.value })}>
-                <option value="">Chọn tài khoản</option>
+                <option value="">{t("dialog.pickAccount")}</option>
                 {banks.map((b) => <option key={b.id} value={b.id}>{b.bankName} - {b.accountNo} - {b.accountName}</option>)}</NativeSelect></div>
           )}
-          <div className="grid gap-1.5"><Label>Loại {receipt ? "thu" : "chi"}</Label>
-            <Input list="cash-categories" placeholder={receipt ? "VD: Thu khác" : "VD: Chi phí điện nước"} value={f.category}
+          <div className="grid gap-1.5"><Label>{t(receipt ? "detail.categoryReceipt" : "detail.categoryPayment")}</Label>
+            <Input list="cash-categories" placeholder={t(receipt ? "dialog.categoryPlaceholderReceipt" : "dialog.categoryPlaceholderPayment")} value={f.category}
               onChange={(e) => set({ category: e.target.value })} />
             <datalist id="cash-categories">{categories.map((c) => <option key={c} value={c} />)}</datalist></div>
-          <div className="grid gap-1.5"><Label>Số tiền</Label><NumberInput value={f.amount} onValueChange={(amount) => set({ amount })} /></div>
-          <div className="grid gap-1.5"><Label>Đối tượng {receipt ? "nộp" : "nhận"}</Label>
+          <div className="grid gap-1.5"><Label>{t("dialog.amount")}</Label><NumberInput value={f.amount} onValueChange={(amount) => set({ amount })} /></div>
+          <div className="grid gap-1.5"><Label>{t(receipt ? "detail.partnerTypeReceipt" : "detail.partnerTypePayment")}</Label>
             <NativeSelect value={f.partnerType} onChange={(e) => set({ partnerType: e.target.value })}>
-              {PARTNER_TYPES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</NativeSelect></div>
+              {PARTNER_TYPES.map((v) => <option key={v} value={v}>{t(`enums.partnerType.${v}`)}</option>)}</NativeSelect></div>
           {f.partnerType === "SUPPLIER" && (
             <p className="rounded-md bg-[#fff4e5] px-3 py-2 text-[13px] text-[#9a5b00] md:col-span-2">
-              Thu / chi với nhà cung cấp hãy tạo tại{" "}
-              <Link href="/purchases/suppliers" className="font-semibold text-primary hover:underline" onClick={onClose}>Mua hàng → Nhà cung cấp</Link>
-              {" "}→ tab &quot;Nợ cần trả nhà cung cấp&quot; → Thanh toán, để công nợ nhà cung cấp và Sổ quỹ luôn khớp nhau.
+              {renderRichText(t("dialog.supplierHint"), {
+                link: <Link href="/purchases/suppliers" className="font-semibold text-primary hover:underline" onClick={onClose}>{t("dialog.supplierLink")}</Link>,
+              })}
             </p>
           )}
-          <div className="grid gap-1.5"><Label>Tên người {receipt ? "nộp" : "nhận"}</Label>
+          <div className="grid gap-1.5"><Label>{t(receipt ? "dialog.partnerNameReceipt" : "dialog.partnerNamePayment")}</Label>
             <Input value={f.partnerName} onChange={(e) => set({ partnerName: e.target.value })} /></div>
-          <div className="grid gap-1.5"><Label>Số điện thoại</Label><Input value={f.partnerPhone} onChange={(e) => set({ partnerPhone: e.target.value })} /></div>
-          <div className="grid gap-1.5 md:col-span-2"><Label>Ghi chú</Label><Input value={f.note} onChange={(e) => set({ note: e.target.value })} /></div>
+          <div className="grid gap-1.5"><Label>{t("dialog.phone")}</Label><Input value={f.partnerPhone} onChange={(e) => set({ partnerPhone: e.target.value })} /></div>
+          <div className="grid gap-1.5 md:col-span-2"><Label>{t("dialog.note")}</Label><Input value={f.note} onChange={(e) => set({ note: e.target.value })} /></div>
           <label className="flex items-center gap-2 text-sm md:col-span-2">
-            <Checkbox checked={f.accounting} onCheckedChange={(v) => set({ accounting: v === true })} /> Hạch toán vào kết quả hoạt động kinh doanh
+            <Checkbox checked={f.accounting} onCheckedChange={(v) => set({ accounting: v === true })} /> {t("dialog.accountingCheck")}
           </label>
         </div>
         <DialogFooter className="-mx-5 -mb-5 rounded-b-lg bg-background px-5 py-3">
-          <Button variant="outline" className="h-8 rounded-md px-3" onClick={onClose}>Bỏ qua</Button>
-          <Button className="h-8 rounded-md px-4" disabled={save.isPending || f.amount <= 0 || !f.category.trim() || f.partnerType === "SUPPLIER"} onClick={() => save.mutate()}>Lưu</Button>
+          <Button variant="outline" className="h-8 rounded-md px-3" onClick={onClose}>{tc("actions.skip")}</Button>
+          <Button className="h-8 rounded-md px-4" disabled={save.isPending || f.amount <= 0 || !f.category.trim() || f.partnerType === "SUPPLIER"} onClick={() => save.mutate()}>{tc("actions.save")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

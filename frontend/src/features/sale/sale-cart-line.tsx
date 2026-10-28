@@ -10,6 +10,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { PriceResolution } from "@/features/products/price-book-resolver";
 import { formatMoney, formatNumber } from "@/lib/format";
+import { useT } from "@/lib/i18n";
+import { saleNs } from "@/messages/sale";
 import { underlineInput } from "./sale-ui-parts";
 import type { SaleSettings } from "./sale-settings";
 import type { CartLine, CatalogUnit } from "./sale-types";
@@ -36,6 +38,7 @@ type Props = {
  */
 export function SaleCartLine({ line: l, index, settings: s, selected, stock, lastPrice, update, onRemove, onAddLine, onSelect,
   onRecentPrice, onDetail, resolveUnit, extra, drag }: Props) {
+  const t = useT(saleNs);
   const [showDiscount, setShowDiscount] = useState(false);
   const [showNote, setShowNote] = useState(false);
   const [percent, setPercent] = useState(s.discountType === "PERCENT");
@@ -50,23 +53,23 @@ export function SaleCartLine({ line: l, index, settings: s, selected, stock, las
       className={`group rounded-lg bg-background px-3 shadow-[0_1px_2px_rgba(0,0,0,0.08)] hover:shadow-[0_1px_4px_rgba(0,0,0,0.16)] ${selected ? "ring-1 ring-primary/60" : ""}`}>
       <div className="grid min-h-11 items-center gap-x-2 text-[13px]" style={{ gridTemplateColumns: cartColumns(s) }}>
         {s.showIndex && <span className="text-center">{index}</span>}
-        <button type="button" aria-label="Xóa dòng" className="grid place-items-center text-[#4b5563] hover:text-destructive" onClick={onRemove}>
+        <button type="button" aria-label={t("line.remove")} className="grid place-items-center text-[#4b5563] hover:text-destructive" onClick={onRemove}>
           <Trash2 className="size-4" /></button>
         {s.showCode && <span className="truncate" title={unit.code}><DocCodeLink code={unit.code} kind="/products" newTab /></span>}
         <div className="min-w-0 py-1">
           <span className="block truncate" title={l.productName}>{l.productName}</span>
           {(s.showStock && stock != null) || (s.showLastPrice && lastPrice != null) ? (
             <span className="flex gap-3 text-xs text-[#6b7280]">
-              {s.showStock && stock != null && <span>Tồn: {formatNumber(stock)}</span>}
-              {s.showLastPrice && lastPrice != null && <button type="button" title="Áp dụng giá bán gần nhất của khách"
+              {s.showStock && stock != null && <span>{t("line.stock", { qty: formatNumber(stock) })}</span>}
+              {s.showLastPrice && lastPrice != null && <button type="button" title={t("line.applyLastPrice")}
                 className="hover:text-primary" onClick={() => update({ unitPrice: lastPrice, discount: 0, priceEdited: true })}>
-                Giá gần nhất: {formatMoney(lastPrice)}</button>}
+                {t("line.lastPrice", { price: formatMoney(lastPrice) })}</button>}
             </span>) : null}
           {extra}
         </div>
         <span>
           {l.units.length > 1 ? (
-            <select aria-label="Đơn vị tính" className={`${badge} appearance-none outline-none`} value={l.unitId}
+            <select aria-label={t("line.unit")} className={`${badge} appearance-none outline-none`} value={l.unitId}
               onChange={(e) => {
                 const u = l.units.find((x) => x.id === e.target.value)!;
                 const r = resolveUnit(u);
@@ -78,43 +81,43 @@ export function SaleCartLine({ line: l, index, settings: s, selected, stock, las
             </select>
           ) : <span className={badge}>{unit.unitName}</span>}
         </span>
-        <NumberInput aria-label="Số lượng" id={`sale-qty-${l.key}`} data-sale-qty="" className={`${underlineInput} text-center`} value={l.quantity}
+        <NumberInput aria-label={t("line.qty")} id={`sale-qty-${l.key}`} data-sale-qty="" className={`${underlineInput} text-center`} value={l.quantity}
           onFocus={onSelect} onValueChange={(quantity) => update({ quantity: Math.max(quantity, 0) })} />
-        {s.showPrice && <NumberInput aria-label="Đơn giá" className={underlineInput} value={l.unitPrice}
+        {s.showPrice && <NumberInput aria-label={t("line.price")} className={underlineInput} value={l.unitPrice}
           onValueChange={(unitPrice) => update({ unitPrice, discount: Math.min(l.discount, unitPrice), priceEdited: true })} />}
         {s.showAmount && (s.editAmount
-          ? <NumberInput aria-label="Thành tiền" className={`${underlineInput} font-bold`} value={amount}
+          ? <NumberInput aria-label={t("line.amount")} className={`${underlineInput} font-bold`} value={amount}
               onValueChange={(v) => l.quantity > 0 && update({ unitPrice: Math.round(v / l.quantity) + l.discount, priceEdited: true })} />
           : <span className="text-right font-bold">{formatMoney(amount)}</span>)}
-        {s.addLine && <button type="button" aria-label="Thêm dòng" title="Thêm dòng cùng hàng" className="grid place-items-center text-[#1f2329] hover:text-primary"
+        {s.addLine && <button type="button" aria-label={t("line.addLine")} title={t("line.addLineHint")} className="grid place-items-center text-[#1f2329] hover:text-primary"
           onClick={onAddLine}><Plus className="size-4" /></button>}
         <DropdownMenu>
-          <DropdownMenuTrigger aria-label="Thao tác dòng hàng" className="grid size-7 place-items-center rounded-full hover:bg-muted">
+          <DropdownMenuTrigger aria-label={t("line.actions")} className="grid size-7 place-items-center rounded-full hover:bg-muted">
             <EllipsisVertical className="size-4" /></DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56 p-1.5">
-            <DropdownMenuItem className={item} onClick={onRecentPrice}><HandCoins /> Xem giá bán gần nhất</DropdownMenuItem>
-            <DropdownMenuItem className={item} onClick={() => setShowDiscount(true)}><BadgePercent /> Giảm giá</DropdownMenuItem>
-            <DropdownMenuItem className={item} onClick={() => setShowNote(true)}><Pencil /> Ghi chú</DropdownMenuItem>
-            <DropdownMenuItem className={item} onClick={onDetail}><Info /> Xem chi tiết</DropdownMenuItem>
+            <DropdownMenuItem className={item} onClick={onRecentPrice}><HandCoins /> {t("line.viewLastPrices")}</DropdownMenuItem>
+            <DropdownMenuItem className={item} onClick={() => setShowDiscount(true)}><BadgePercent /> {t("line.discount")}</DropdownMenuItem>
+            <DropdownMenuItem className={item} onClick={() => setShowNote(true)}><Pencil /> {t("line.note")}</DropdownMenuItem>
+            <DropdownMenuItem className={item} onClick={onDetail}><Info /> {t("line.detail")}</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
       {(showDiscount || l.discount > 0) && (
         <div className="flex items-center justify-end gap-2 pb-2 text-[13px] text-muted-foreground">
-          Giảm giá / {unit.unitName}
+          {t("line.discountPerUnit", { unit: unit.unitName })}
           <span className="flex overflow-hidden rounded text-xs font-semibold">
             {(["VND", "%"] as const).map((m) => (
               <button key={m} type="button" onClick={() => setPercent(m === "%")}
                 className={`px-1.5 py-0.5 ${(m === "%") === percent ? "bg-primary text-white" : "bg-[#eef0f3] text-foreground"}`}>{m}</button>))}
           </span>
-          <NumberInput aria-label={percent ? "Giảm giá (%) mỗi đơn vị" : "Giảm giá mỗi đơn vị"} className={`${underlineInput} w-28 text-foreground`}
+          <NumberInput aria-label={t(percent ? "line.discountPercentAria" : "line.discountAria")} className={`${underlineInput} w-28 text-foreground`}
             value={percent ? pct : l.discount}
             onValueChange={(v) => update({ discount: Math.min(percent ? Math.round((l.unitPrice * Math.min(v, 100)) / 100) : v, l.unitPrice) })} />
         </div>
       )}
       {(s.showLineNote || showNote || l.note) && (
         <div className="pb-2.5" style={{ paddingLeft: s.showIndex ? 60 : 36 }}>
-          <input aria-label="Ghi chú dòng hàng" placeholder="Ghi chú..." value={l.note} autoFocus={showNote && !l.note}
+          <input aria-label={t("line.noteAria")} placeholder={t("line.notePlaceholder")} value={l.note} autoFocus={showNote && !l.note}
             className="h-8 w-full rounded-md border border-transparent px-2 text-xs outline-none placeholder:text-[#8a8f98] hover:border-[#d6d9de] focus:border-primary"
             onChange={(e) => update({ note: e.target.value })} onBlur={() => setShowNote(false)} />
         </div>

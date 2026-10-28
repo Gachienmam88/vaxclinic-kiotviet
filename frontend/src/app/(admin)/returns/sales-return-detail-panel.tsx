@@ -11,8 +11,11 @@ import { DETAIL_BTN, DETAIL_PANEL, DETAIL_TAB, DETAIL_TABS_LIST, StatusBadge, SU
 import { SALES_KEYS } from "@/features/sales/sales-queries";
 import { api, errorMessage } from "@/lib/api-client";
 import { formatDateTime, formatMoney, formatNumber } from "@/lib/format";
+import { useT } from "@/lib/i18n";
 import { useCurrentUser } from "@/lib/use-current-user";
 import { cn } from "@/lib/utils";
+import { commonNs } from "@/messages/common";
+import { salesNs } from "@/messages/sales";
 import { salesReturnData } from "@/features/print/print-data";
 import { PrintButton } from "@/features/print/print-button";
 
@@ -23,35 +26,39 @@ type Detail = SalesReturnItem & { createdByName: string; discount: number; note:
 
 /** Chi tiết phiếu khách trả hàng mở dưới dòng (bố cục giống chi tiết hóa đơn). */
 export function SalesReturnDetailPanel({ id, onClose }: { id: string; onClose?: () => void }) {
+  const t = useT(salesNs);
+  const tc = useT(commonNs);
   const qc = useQueryClient();
   const { can } = useCurrentUser();
   const { data: r } = useQuery({ queryKey: ["sales-return", id], queryFn: () => api<Detail>(`/sales-returns/${id}`) });
   const cancel = useMutation({
     mutationFn: () => api(`/sales-returns/${id}/cancel`, { method: "POST" }),
-    onSuccess: () => { toast.success("Đã hủy phiếu trả hàng"); [...SALES_KEYS, ["sales-returns"], ["sales-return"]].forEach((k) => qc.invalidateQueries({ queryKey: k })); },
+    onSuccess: () => { toast.success(t("returns.detail.cancelled")); [...SALES_KEYS, ["sales-returns"], ["sales-return"]].forEach((k) => qc.invalidateQueries({ queryKey: k })); },
     onError: (e) => toast.error(errorMessage(e)),
   });
-  if (!r) return <div className={cn(DETAIL_PANEL, "p-6 text-muted-foreground")}>Đang tải...</div>;
+  if (!r) return <div className={cn(DETAIL_PANEL, "p-6 text-muted-foreground")}>{tc("status.loading")}</div>;
   const done = r.status === "COMPLETED";
-  const totals = [["Tổng tiền hàng trả", r.subtotal], ["Giảm giá", r.discount], ["Phí trả hàng", r.fee], ["Cần trả khách", r.total]] as const;
+  const totals = [[t("returns.detail.subtotal"), r.subtotal], [t("returns.detail.discount"), r.discount], [t("returns.detail.fee"), r.fee],
+    [t("returns.detail.total"), r.total]] as const;
   return (
     <div className={DETAIL_PANEL}>
       <Tabs defaultValue="info" className="gap-0">
-        <DetailTabsList onActiveTabClick={onClose} variant="line" className={DETAIL_TABS_LIST}><TabsTrigger value="info" className={DETAIL_TAB}>Thông tin</TabsTrigger></DetailTabsList>
+        <DetailTabsList onActiveTabClick={onClose} variant="line" className={DETAIL_TABS_LIST}><TabsTrigger value="info" className={DETAIL_TAB}>{tc("detailTabs.info")}</TabsTrigger></DetailTabsList>
         <TabsContent value="info">
           <div className="space-y-4 p-4">
             <div className="flex flex-wrap items-center gap-3">
               <span className="text-base font-bold">{r.customerName}</span><span>{r.code}</span>
-              <StatusBadge tone={done ? "green" : "red"}>{done ? "Đã trả" : "Đã hủy"}</StatusBadge>
+              <StatusBadge tone={done ? "green" : "red"}>{t(`enums.returnStatus.${r.status}`)}</StatusBadge>
             </div>
             <div className="grid grid-cols-1 gap-x-8 gap-y-2 text-xs md:grid-cols-3">
-              <div><span className="inline-block w-24">Người tạo:</span>{r.createdByName}</div>
-              <div><span className="inline-block w-24">Thời gian:</span>{formatDateTime(r.returnedAt)}</div>
-              <div><span className="inline-block w-24">Mã hóa đơn:</span><DocCodeLink code={r.invoiceCode} kind="/invoices" /></div>
+              <div><span className="inline-block w-24">{t("returns.detail.createdBy")}</span>{r.createdByName}</div>
+              <div><span className="inline-block w-24">{t("returns.detail.time")}</span>{formatDateTime(r.returnedAt)}</div>
+              <div><span className="inline-block w-24">{t("returns.detail.invoiceCode")}</span><DocCodeLink code={r.invoiceCode} kind="/invoices" /></div>
             </div>
             <table className="w-full text-[13px]">
-              <thead className={SUB_HEAD}><tr><th className="pl-2.5">Mã hàng</th><th>Tên hàng</th><th>Lô nhập lại</th>
-                <th className="text-right">Số lượng</th><th className="text-right">Giá trả</th><th className="pr-2.5 text-right">Thành tiền</th></tr></thead>
+              <thead className={SUB_HEAD}><tr><th className="pl-2.5">{t("invoices.lines.productCode")}</th><th>{t("invoices.lines.productName")}</th>
+                <th>{t("returns.detail.lotsBack")}</th><th className="text-right">{t("invoices.lines.quantity")}</th>
+                <th className="text-right">{t("returns.detail.returnPrice")}</th><th className="pr-2.5 text-right">{t("invoices.lines.amount")}</th></tr></thead>
               <tbody>{r.lines.map((l) => (
                 <tr key={l.id} className="border-b border-[#eff0f3] [&_td]:px-2 [&_td]:py-2.5">
                   <td><DocCodeLink code={l.productCode} kind="/products" /></td><td>{l.productName} ({l.unitName})</td><td>{l.lots}</td>
@@ -59,17 +66,17 @@ export function SalesReturnDetailPanel({ id, onClose }: { id: string; onClose?: 
                   <td className="text-right font-bold">{formatMoney(l.amount)}</td></tr>))}</tbody>
             </table>
             <div className="flex flex-col-reverse gap-4 md:flex-row md:items-start">
-              <p className="text-muted-foreground">{r.note || "Chưa có ghi chú"}</p>
+              <p className="text-muted-foreground">{r.note || t("returns.detail.noNote")}</p>
               <div className="w-[260px] shrink-0 space-y-2.5 md:ml-auto">
                 {totals.map(([k, v]) => <div key={k} className="grid grid-cols-[1fr_100px] gap-4 text-right"><span>{k}</span><span>{formatMoney(v)}</span></div>)}
-                <div className="grid grid-cols-[1fr_100px] gap-4 text-right"><span>Đã trả khách</span><b>{formatMoney(r.refunded)}</b></div>
+                <div className="grid grid-cols-[1fr_100px] gap-4 text-right"><span>{t("returns.detail.refunded")}</span><b>{formatMoney(r.refunded)}</b></div>
               </div>
             </div>
           </div>
           <div className="flex items-center gap-2 border-t px-4 py-2.5">
             {done && can("sales.cancel") && (
               <Button variant="ghost" className={DETAIL_BTN} disabled={cancel.isPending}
-                onClick={() => confirm(`Hủy phiếu ${r.code}? Hàng sẽ bị xuất lại khỏi kho.`) && cancel.mutate()}><Trash2 className="size-4" /> Hủy</Button>)}
+                onClick={() => confirm(t("returns.detail.confirmCancel", { code: r.code })) && cancel.mutate()}><Trash2 className="size-4" /> {t("returns.detail.cancel")}</Button>)}
             <span className="ml-auto"><PrintButton type="SALES_RETURN" data={salesReturnData(r)} /></span>
           </div>
         </TabsContent>

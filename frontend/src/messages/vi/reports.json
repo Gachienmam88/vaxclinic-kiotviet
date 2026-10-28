@@ -110,12 +110,6 @@
     "thisMonth": "Tháng này",
     "overdue": "Đã quá hạn"
   },
-  "orderStatus": {
-    "DRAFT": "Phiếu tạm",
-    "CONFIRMED": "Đã xác nhận",
-    "COMPLETED": "Hoàn thành",
-    "CANCELLED": "Đã hủy"
-  },
   "viewer": {
     "undo": "Hoàn tác",
     "redo": "Làm lại",

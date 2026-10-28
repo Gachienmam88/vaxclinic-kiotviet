@@ -1,0 +1,70 @@
+{
+  "page": {
+    "hello": "こんにちは、{name} さん",
+    "role": "ロール: {role}",
+    "branches": "勤務店舗: {branches}",
+    "noRevenuePermission": "このアカウントには売上レポートの閲覧権限がありません。",
+    "loadingRevenue": "売上を読み込み中..."
+  },
+  "period": {
+    "today": "今日",
+    "yesterday": "昨日",
+    "last7": "過去7日間",
+    "thisMonth": "今月",
+    "lastMonth": "先月"
+  },
+  "today": {
+    "title": "本日の販売実績",
+    "revenue": "売上",
+    "invoiceCount_other": "{count} 件",
+    "returns": "返品",
+    "netRevenue": "純売上",
+    "vsYesterday": "前日比",
+    "vsLastMonth": "前月同日比"
+  },
+  "revenue": {
+    "title": "純売上",
+    "periodLabel": "売上の期間",
+    "chartType": "グラフの種類",
+    "byDay": "日別",
+    "byHour": "時間別",
+    "byWeekday": "曜日別",
+    "needInvoicePermission": "時間別の集計には売上伝票の閲覧権限が必要です。",
+    "loadFailed": "売上伝票データを読み込めませんでした。",
+    "tooMany": "売上伝票が {max} 件を超えています。時間別表示には期間を短くしてください。",
+    "hourlyNote": "時間別: 売上伝票の合計（{period}）、返品控除前。"
+  },
+  "weekday": {
+    "mon": "月",
+    "tue": "火",
+    "wed": "水",
+    "thu": "木",
+    "fri": "金",
+    "sat": "土",
+    "sun": "日"
+  },
+  "top": {
+    "title": "売れ筋トップ10",
+    "byNet": "純売上順",
+    "periodLabel": "売れ筋の期間",
+    "empty": "販売データがありません"
+  },
+  "activity": {
+    "title": "最近のアクティビティ",
+    "viewAll": "すべて表示",
+    "empty": "アクティビティはありません",
+    "system": "システム",
+    "line": "{user}: {action}{doc}"
+  },
+  "timeAgo": {
+    "justNow": "たった今",
+    "minutes_other": "{count} 分前",
+    "hours_other": "{count} 時間前",
+    "days_other": "{count} 日前"
+  },
+  "short": {
+    "thousand": "{n}千",
+    "million": "{n}百万",
+    "billion": "{n}十億"
+  }
+}

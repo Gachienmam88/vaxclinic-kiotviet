@@ -14,6 +14,9 @@ import { api, type PageResponse } from "@/lib/api-client";
 import { formatDateTime } from "@/lib/format";
 import { DatePicker } from "@/components/ui/date-picker";
 import { DocCodeLink } from "@/components/ui/doc-code-link";
+import { useT } from "@/lib/i18n";
+import { commonNs } from "@/messages/common";
+import { settingsNs } from "@/messages/settings";
 
 type AuditLog = { id: number; occurredAt: string; userName: string | null; feature: string; action: string; docCode: string | null; detail: string | null };
 
@@ -31,6 +34,8 @@ const PAGE = 20;
 /** Thiết lập → Lịch sử thao tác: ai làm gì, lúc nào (hóa đơn, phiếu thu chi, nhập hàng, thiết lập...). */
 export default function AuditLogsPage() {
   const { data: users = [] } = useUserLookup();
+  const t = useT(settingsNs);
+  const tc = useT(commonNs);
   const { data: features = [] } = useQuery({ queryKey: ["audit-features"], queryFn: () => api<string[]>("/audit-logs/features") });
   const [f, setF] = useState({ userId: "", feature: "", from: "", to: "", q: "" });
   const [page, setPage] = useState(0);
@@ -48,7 +53,7 @@ export default function AuditLogsPage() {
 
   async function exportFile() {
     const res = await fetch(`/api/backend/audit-logs/export?${params}`, { headers: { Accept: "text/csv" } });
-    if (!res.ok) { toast.error("Không xuất được file"); return; }
+    if (!res.ok) { toast.error(t("auditLogs.exportFailed")); return; }
     const url = URL.createObjectURL(await res.blob());
     const a = document.createElement("a");
     a.href = url; a.download = "lich-su-thao-tac.csv"; a.click();
@@ -56,25 +61,25 @@ export default function AuditLogsPage() {
   }
 
   return (
-    <SettingsPage hint={<>Rà soát thao tác của nhân viên theo từng tính năng để xác định dấu vết thay đổi khi cần.</>}>
-      <SettingsCard title="Lịch sử thao tác" description="Theo dõi tất cả thao tác của nhân viên trên hệ thống.">
+    <SettingsPage hint={t("auditLogs.hint")}>
+      <SettingsCard title={t("auditLogs.title")} description={t("auditLogs.description")}>
         <div className="flex flex-wrap items-center gap-2 px-4 pt-3 text-[13px]">
-          <div className="w-44"><NativeSelect aria-label="Nhân viên" value={f.userId} onChange={(e) => set("userId", e.target.value)}>
-            <option value="">Tất cả nhân viên</option>{users.map((u) => <option key={u.id} value={u.id}>{u.fullName}</option>)}</NativeSelect></div>
-          <div className="w-44"><NativeSelect aria-label="Tính năng" value={f.feature} onChange={(e) => set("feature", e.target.value)}>
-            <option value="">Tất cả tính năng</option>{features.map((x) => <option key={x}>{x}</option>)}</NativeSelect></div>
-          <DatePicker className="h-8 w-36" value={f.from} onChange={(v) => set("from", v)} title="Từ ngày" aria-label="Từ ngày" />
-          <DatePicker className="h-8 w-36" value={f.to} onChange={(v) => set("to", v)} title="Đến ngày" aria-label="Đến ngày" />
-          <Input className="h-8 w-56" placeholder="Mã chứng từ, nội dung" value={f.q} onChange={(e) => set("q", e.target.value)} aria-label="Tìm mã chứng từ, nội dung" />
-          <Button variant="outline" size="sm" className="ml-auto" onClick={exportFile}><Download className="size-4" /> Xuất file</Button>
+          <div className="w-44"><NativeSelect aria-label={t("auditLogs.employee")} value={f.userId} onChange={(e) => set("userId", e.target.value)}>
+            <option value="">{t("auditLogs.allEmployees")}</option>{users.map((u) => <option key={u.id} value={u.id}>{u.fullName}</option>)}</NativeSelect></div>
+          <div className="w-44"><NativeSelect aria-label={t("auditLogs.feature")} value={f.feature} onChange={(e) => set("feature", e.target.value)}>
+            <option value="">{t("auditLogs.allFeatures")}</option>{features.map((x) => <option key={x}>{x}</option>)}</NativeSelect></div>
+          <DatePicker className="h-8 w-36" value={f.from} onChange={(v) => set("from", v)} title={t("auditLogs.from")} aria-label={t("auditLogs.from")} />
+          <DatePicker className="h-8 w-36" value={f.to} onChange={(v) => set("to", v)} title={t("auditLogs.to")} aria-label={t("auditLogs.to")} />
+          <Input className="h-8 w-56" placeholder={t("auditLogs.searchPlaceholder")} value={f.q} onChange={(e) => set("q", e.target.value)} aria-label={t("auditLogs.searchLabel")} />
+          <Button variant="outline" size="sm" className="ml-auto" onClick={exportFile}><Download className="size-4" /> {tc("actions.export")}</Button>
         </div>
         <div className="p-4">
           <table className={T.table}>
             <thead className={T.head}><tr>
-              <th className="w-40">Nhân viên</th><th className="w-40">Tính năng</th><th className="w-40">Thời gian</th><th>Chi tiết</th>
+              <th className="w-40">{t("auditLogs.employee")}</th><th className="w-40">{t("auditLogs.feature")}</th><th className="w-40">{t("auditLogs.colTime")}</th><th>{t("auditLogs.colDetail")}</th>
             </tr></thead>
             <tbody>
-              {data && !data.items.length && <ListEmptyRow cols={4} what="lịch sử thao tác" compact />}
+              {data && !data.items.length && <ListEmptyRow cols={4} what={t("auditLogs.emptyWhat")} compact />}
               {data?.items.map((l) => (
                 <tr key={l.id} className={T.row}>
                   <td>{l.userName}</td>
@@ -86,9 +91,9 @@ export default function AuditLogsPage() {
             </tbody>
           </table>
           <div className="mt-3 flex items-center justify-end gap-2 text-[13px]">
-            <span className="text-muted-foreground">Tổng {data?.total ?? 0} thao tác — trang {page + 1}/{pages}</span>
-            <Button size="sm" variant="outline" disabled={page === 0} onClick={() => setPage(page - 1)}>Trước</Button>
-            <Button size="sm" variant="outline" disabled={page + 1 >= pages} onClick={() => setPage(page + 1)}>Sau</Button>
+            <span className="text-muted-foreground">{t("auditLogs.totalPages", { total: data?.total ?? 0, page: page + 1, pages })}</span>
+            <Button size="sm" variant="outline" disabled={page === 0} onClick={() => setPage(page - 1)}>{t("common.prev")}</Button>
+            <Button size="sm" variant="outline" disabled={page + 1 >= pages} onClick={() => setPage(page + 1)}>{t("common.next")}</Button>
           </div>
         </div>
       </SettingsCard>

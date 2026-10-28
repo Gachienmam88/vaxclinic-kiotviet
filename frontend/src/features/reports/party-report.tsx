@@ -4,7 +4,9 @@ import { useState } from "react";
 import { downloadCsv } from "@/features/accounting/tax-calc";
 import { ymd } from "@/features/dashboard/dashboard-date-utils";
 import { useUserLookup } from "@/features/purchases/purchase-queries";
-import { COLUMNS, fromSales, withTotal } from "./products-report-tables";
+import { useT } from "@/lib/i18n";
+import { reportsNs, type ReportsT } from "@/messages/reports";
+import { fromSales, productColumns, withTotal } from "./products-report-tables";
 import { BarChart, ChartCard, EmptyChart, PieChart } from "./report-charts";
 import { useChannelOptions } from "./report-filter-options";
 import { spanOf, useReport, type DebtRow, type ProductRow, type SummaryRow } from "./report-api";
@@ -17,17 +19,21 @@ import { profitColumns, revenueColumns, summaryLines, top10 } from "./summary-ta
 import { DocCodeLink } from "@/components/ui/doc-code-link";
 
 export type PartyConcern = "sales" | "products" | "debt" | "profit";
+/** Chữ của 1 báo cáo đối tượng (đã dịch). noun: danh từ chèn trong câu ("khách hàng" / "customers"). */
+export type PartyText = {
+  title: string; noun: string; concerns: [PartyConcern, string][]; titles: Partial<Record<PartyConcern, string>>; chartTitle: string;
+  firstCol: string; codeCol?: string; note?: string;
+};
 export type PartyConfig = {
-  page: string; title: string; noun: string; groupBy: "CUSTOMER" | "SELLER" | "CHANNEL"; productsBy?: "CUSTOMER" | "SELLER";
-  concerns: [PartyConcern, string][]; titles: Partial<Record<PartyConcern, string>>; chartTitle: string; pie?: boolean;
-  firstCol: string; codeCol?: string; filters: ("customer" | "seller" | "channel")[]; note?: string;
+  page: string; groupBy: "CUSTOMER" | "SELLER" | "CHANNEL"; productsBy?: "CUSTOMER" | "SELLER"; pie?: boolean;
+  filters: ("customer" | "seller" | "channel")[]; text: (t: ReportsT) => PartyText;
 };
 
 const debtMoney = (key: keyof DebtRow, label: string): ReportColumn<DebtRow> => ({ key, label, type: "money", value: (r) => r[key] as number });
-export const DEBT_COLUMNS = (codeLabel: string, nameLabel: string): ReportColumn<DebtRow>[] => [
+export const debtColumns = (t: ReportsT, codeLabel: string, nameLabel: string): ReportColumn<DebtRow>[] => [
   { key: "code", label: codeLabel, value: (r) => r.code, render: (r) => <b><DocCodeLink code={r.code} /></b> },
-  { key: "name", label: nameLabel, value: (r) => r.name }, debtMoney("opening", "Nợ đầu kỳ"), debtMoney("debit", "Ghi nợ"),
-  debtMoney("credit", "Ghi có"), debtMoney("closing", "Nợ cuối kỳ"),
+  { key: "name", label: nameLabel, value: (r) => r.name }, debtMoney("opening", t("cols.openingDebt")), debtMoney("debit", t("cols.debit")),
+  debtMoney("credit", t("cols.credit")), debtMoney("closing", t("cols.closingDebt")),
 ];
 export function debtLines(rows: DebtRow[], label: string): ReportLine<DebtRow>[] {
   if (!rows.length) return [];
@@ -38,6 +44,8 @@ export function debtLines(rows: DebtRow[], label: string): ReportLine<DebtRow>[]
 
 /** Báo cáo theo đối tượng bán hàng (khách hàng / nhân viên / kênh bán): biểu đồ Top 10 hoặc tròn, báo cáo theo mối quan tâm. */
 export function PartyReport({ cfg }: { cfg: PartyConfig }) {
+  const t = useT(reportsNs);
+  const tx = cfg.text(t);
   const [mode, setMode] = useState<ViewMode>("chart");
   const [concern, setConcern] = useState<PartyConcern>("sales");
   const [time, setTime] = useState<TimeValue>({ mode: "preset", preset: "thisWeek" });
@@ -54,21 +62,22 @@ export function PartyReport({ cfg }: { cfg: PartyConfig }) {
   const prodQ = useReport<ProductRow[]>("/reports/sales/products", span, { ...params, by: cfg.productsBy }, concern === "products");
   const debtQ = useReport<DebtRow[]>("/reports/customers/debt", span, { customerId: customer?.id }, concern === "debt");
   const rows = sumQ.data ?? [];
-  const sumLabel = `SL ${cfg.noun}: ${rows.length}`;
+  const sumLabel = t("party.countOf", { noun: tx.noun, n: rows.length });
   const prodRows = (prodQ.data ?? []).map(fromSales).sort((a, b) => a.dim.localeCompare(b.dim) || b.v.net - a.v.net);
-  const table = concern === "sales" ? asTable(revenueColumns(cfg.firstCol, cfg.codeCol), summaryLines(rows, sumLabel))
-    : concern === "profit" ? asTable(profitColumns(cfg.firstCol, cfg.codeCol), summaryLines(rows, sumLabel))
-      : concern === "products" ? asTable(COLUMNS[cfg.productsBy === "SELLER" ? "seller" : "customer"], withTotal(prodRows, `SL ${cfg.noun}: ${new Set(prodRows.map((r) => r.dim)).size}`))
-        : asTable(DEBT_COLUMNS("Mã khách hàng", "Tên khách hàng"), debtLines(debtQ.data ?? [], `SL khách hàng: ${(debtQ.data ?? []).length}`));
+  const table = concern === "sales" ? asTable(revenueColumns(t, tx.firstCol, tx.codeCol), summaryLines(rows, sumLabel))
+    : concern === "profit" ? asTable(profitColumns(t, tx.firstCol, tx.codeCol), summaryLines(rows, sumLabel))
+      : concern === "products" ? asTable(productColumns(t)[cfg.productsBy === "SELLER" ? "seller" : "customer"],
+          withTotal(prodRows, t("party.countOf", { noun: tx.noun, n: new Set(prodRows.map((r) => r.dim)).size })))
+        : asTable(debtColumns(t, t("cols.customerCode"), t("cols.customerName")), debtLines(debtQ.data ?? [], t("party.customerCount", { n: (debtQ.data ?? []).length })));
   const active = concern === "products" ? prodQ : concern === "debt" ? debtQ : sumQ;
-  const exportCsv = () => { const t = linesToCsv(table.columns, table.lines); downloadCsv(`${cfg.page}-${concern}-${ymd(range.from)}.csv`, t.header, t.rows); };
+  const exportCsv = () => { const csv = linesToCsv(table.columns, table.lines); downloadCsv(`${cfg.page}-${concern}-${ymd(range.from)}.csv`, csv.header, csv.rows); };
 
   const chart = () => {
     const items = concern === "debt" ? (debtQ.data ?? []).map((d) => ({ label: d.name, value: Number(d.closing) }))
       : concern === "products" ? prodRows.map((r) => ({ label: `${r.dim} - ${r.name}`, value: r.v.net }))
         : rows.map((r) => ({ label: r.name, value: concern === "profit" ? Number(r.revenue) - Number(r.returnValue) - Number(r.cogs) : Number(r.revenue) - Number(r.returnValue) }));
-    const title = concern === "debt" ? "Top 10 khách hàng nợ nhiều nhất" : concern === "profit" ? `Top 10 ${cfg.noun} mang lại lợi nhuận cao nhất`
-      : concern === "products" ? `Top 10 ${cfg.noun} theo hàng bán (doanh thu thuần)` : cfg.chartTitle;
+    const title = concern === "debt" ? t("party.chartDebt") : concern === "profit" ? t("party.chartProfit", { noun: tx.noun })
+      : concern === "products" ? t("party.chartProducts", { noun: tx.noun }) : tx.chartTitle;
     return (
       <ChartCard title={title}>
         {cfg.pie && concern === "sales" ? <PieChart items={items} /> : top10(items).length ? <BarChart items={top10(items)} /> : <EmptyChart />}
@@ -76,21 +85,22 @@ export function PartyReport({ cfg }: { cfg: PartyConfig }) {
   };
 
   return (
-    <ReportLayout title={cfg.title} sidebar={<>
+    <ReportLayout title={tx.title} sidebar={<>
       <ViewModeFilter value={mode} onChange={setMode} />
-      <SelectFilter title="Mối quan tâm" value={concern} onChange={(v) => setConcern(v as PartyConcern)} options={cfg.concerns} />
+      <SelectFilter title={t("filters.concern")} value={concern} onChange={(v) => setConcern(v as PartyConcern)} options={tx.concerns} />
       <BranchFilter value={branch} onChange={setBranch} />
       <TimeFilter value={time} onChange={setTime} />
       {cfg.filters.includes("customer") && <CustomerFilter value={customer} onChange={setCustomer} />}
-      {cfg.filters.includes("seller") && <SelectFilter title="Người bán" value={seller} onChange={setSeller} placeholder="Chọn người bán" options={users.map((u) => [u.id, u.fullName] as const)} />}
-      {cfg.filters.includes("channel") && <SelectFilter title="Kênh bán" value={channel} onChange={setChannel} placeholder="Chọn kênh bán" options={channels} />}
+      {cfg.filters.includes("seller") && <SelectFilter title={t("filters.seller")} value={seller} onChange={setSeller} placeholder={t("filters.pickSeller")} options={users.map((u) => [u.id, u.fullName] as const)} />}
+      {cfg.filters.includes("channel") && <SelectFilter title={t("filters.channel")} value={channel} onChange={setChannel} placeholder={t("filters.pickChannel")} options={channels} />}
     </>}>
       {mode === "chart" ? chart() : (
-        <ReportViewer title={cfg.titles[concern] ?? ""} meta={[rangeText(range), concern === "debt" ? "Chi nhánh: Tất cả (sổ công nợ theo khách)" : `Chi nhánh: ${branchLabel}`]}
-          note={concern === "products" ? "(Đã phân bổ giảm giá hóa đơn, giảm giá phiếu trả)" : cfg.note}
+        <ReportViewer title={tx.titles[concern] ?? ""}
+          meta={[rangeText(t, range), concern === "debt" ? t("party.debtBranchMeta") : t("common.branchMeta", { branch: branchLabel })]}
+          note={concern === "products" ? t("common.allocatedDiscount") : tx.note}
           landscape={concern === "profit" || concern === "products"} loading={active.isFetching} onRefresh={() => active.refetch()}
           onExport={table.lines.length ? exportCsv : undefined}>
-          {active.isError ? <p className="rp-empty">Không tải được báo cáo</p> : <ReportTable columns={table.columns} lines={table.lines} />}
+          {active.isError ? <p className="rp-empty">{t("common.loadError")}</p> : <ReportTable columns={table.columns} lines={table.lines} />}
         </ReportViewer>)}
     </ReportLayout>
   );

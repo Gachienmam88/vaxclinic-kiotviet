@@ -38,8 +38,8 @@ public class NotificationClient {
     private final RestClient http;
     private final ServiceTokenProvider tokens;
 
-    public NotificationClient(String identityUrl, ServiceTokenProvider tokens) {
-        this.http = RestClient.builder().baseUrl(identityUrl).build();
+    public NotificationClient(RestClient http, ServiceTokenProvider tokens) {
+        this.http = http;
         this.tokens = tokens;
     }
 

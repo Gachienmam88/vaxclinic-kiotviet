@@ -24,8 +24,8 @@ public class HttpAuditLogger implements AuditLogger {
     private final ServiceTokenProvider tokens;
     private final LinkedBlockingDeque<AuditEvent> queue = new LinkedBlockingDeque<>();
 
-    public HttpAuditLogger(String identityUrl, ServiceTokenProvider tokens) {
-        this.http = RestClient.builder().baseUrl(identityUrl).build();
+    public HttpAuditLogger(RestClient http, ServiceTokenProvider tokens) {
+        this.http = http;
         this.tokens = tokens;
         Thread t = new Thread(this::loop, "audit-sender");
         t.setDaemon(true);

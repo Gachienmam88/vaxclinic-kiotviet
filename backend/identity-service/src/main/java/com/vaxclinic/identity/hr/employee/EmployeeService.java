@@ -1,5 +1,6 @@
 package com.vaxclinic.identity.hr.employee;
 
+import com.vaxclinic.common.search.AccentInsensitiveSql;
 import com.vaxclinic.common.error.BusinessException;
 import com.vaxclinic.common.web.PageResponse;
 import com.vaxclinic.identity.hr.HrActor;
@@ -62,7 +63,7 @@ public class EmployeeService {
             args.add(branchId);
         }
         if (q != null && !q.isBlank()) {
-            sql.append(" and (e.code ilike ? or e.name ilike ? or e.timekeeping_code ilike ? or e.phone ilike ?)");
+            sql.append(" and (e.code ilike ? or " + AccentInsensitiveSql.like("e.name", "?") + " or e.timekeeping_code ilike ? or e.phone ilike ?)");
             String like = "%" + q.trim().replace("%", "\\%").replace("_", "\\_") + "%";
             for (int i = 0; i < 4; i++) {
                 args.add(like);

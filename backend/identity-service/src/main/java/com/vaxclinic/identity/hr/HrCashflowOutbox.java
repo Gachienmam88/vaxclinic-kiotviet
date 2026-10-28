@@ -2,6 +2,7 @@ package com.vaxclinic.identity.hr;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.vaxclinic.common.http.InternalRestClientFactory;
 import com.vaxclinic.common.security.ServiceTokenProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,11 +39,11 @@ public class HrCashflowOutbox {
     private final RestClient http;
     private final ServiceTokenProvider tokens;
 
-    public HrCashflowOutbox(JdbcTemplate jdbc, ObjectMapper json, @Value("${app.sales-url}") String salesUrl,
+    public HrCashflowOutbox(InternalRestClientFactory httpFactory, JdbcTemplate jdbc, ObjectMapper json, @Value("${app.sales-url}") String salesUrl,
                             @Value("${app.jwt.secret}") String secret) {
         this.jdbc = jdbc;
         this.json = json;
-        this.http = RestClient.builder().baseUrl(salesUrl).build();
+        this.http = httpFactory.create(salesUrl);
         this.tokens = new ServiceTokenProvider(secret, "identity-service");
     }
 

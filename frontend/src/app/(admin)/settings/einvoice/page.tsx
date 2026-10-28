@@ -11,6 +11,9 @@ import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/features/products/product-form-sections";
 import { SettingRow, SettingsCard, SettingsPage } from "@/features/settings/settings-shell";
 import { api, errorMessage } from "@/lib/api-client";
+import { useT } from "@/lib/i18n";
+import { commonNs } from "@/messages/common";
+import { settingsNs } from "@/messages/settings";
 
 type Settings = { configured: boolean; environment: "TEST" | "PROD"; appId?: string; taxCode?: string; username?: string;
   invSeries?: string; invoiceName: string; sendEmail?: boolean };
@@ -18,6 +21,8 @@ type Settings = { configured: boolean; environment: "TEST" | "PROD"; appId?: str
 /** Thiết lập kết nối MISA meInvoice — hóa đơn khởi tạo từ máy tính tiền. */
 export default function EInvoiceSettingsPage() {
   const qc = useQueryClient();
+  const t = useT(settingsNs);
+  const tc = useT(commonNs);
   const { data } = useQuery({ queryKey: ["einvoice-settings"], queryFn: () => api<Settings>("/einvoice/settings") });
   const [f, setF] = useState({ environment: "TEST", appId: "", taxCode: "", username: "", password: "", invSeries: "",
     invoiceName: "Hóa đơn bán hàng", sendEmail: false });
@@ -30,45 +35,46 @@ export default function EInvoiceSettingsPage() {
 
   const save = useMutation({
     mutationFn: () => api("/einvoice/settings", { method: "PUT", body: f }),
-    onSuccess: () => { toast.success("Đã lưu thiết lập"); setF((x) => ({ ...x, password: "" })); qc.invalidateQueries({ queryKey: ["einvoice-settings"] }); },
+    onSuccess: () => { toast.success(t("einvoice.saved")); setF((x) => ({ ...x, password: "" })); qc.invalidateQueries({ queryKey: ["einvoice-settings"] }); },
     onError: (e) => toast.error(errorMessage(e)),
   });
   const test = useMutation({
     mutationFn: () => api("/einvoice/settings/test", { method: "POST" }),
-    onSuccess: () => toast.success("Kết nối MISA meInvoice thành công"),
+    onSuccess: () => toast.success(t("einvoice.testOk")),
     onError: (e) => toast.error(errorMessage(e)),
   });
 
   return (
-    <SettingsPage toc={[{ id: "einvoice", label: "Hóa đơn điện tử" }, { id: "connection", label: "Thiết lập kết nối" }]}>
-      <SettingsCard id="einvoice" title="Hóa đơn điện tử" description="Xuất hóa đơn điện tử khởi tạo từ máy tính tiền qua MISA meInvoice (không cần USB Token)."
+    <SettingsPage toc={[{ id: "einvoice", label: t("einvoice.tocEInvoice") }, { id: "connection", label: t("einvoice.tocConnection") }]}>
+      <SettingsCard id="einvoice" title={t("einvoice.title")}
+        description={<>{t("einvoice.description")}<span className="mt-1 block text-xs">{tc("legal.vietnameseOnly")}</span></>}
         action={<span className={data?.configured ? "rounded bg-primary-tint px-1.5 py-0.5 text-xs text-primary" : "rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground"}>
-          {data?.configured ? "Đã kết nối" : "Chưa kết nối"}</span>}>
-        <SettingRow title="Nhà cung cấp hóa đơn điện tử"
-          description={<>MISA meInvoice. AppID do MISA cấp khi đăng ký tích hợp. Nên chạy thử ở môi trường <b>Thử nghiệm</b> trước khi chuyển sang Chính thức.</>} />
+          {data?.configured ? t("einvoice.connected") : t("einvoice.notConnected")}</span>}>
+        <SettingRow title={t("einvoice.provider")}
+          description={<>{t("einvoice.providerDescBefore")} <b>{t("einvoice.providerDescTest")}</b> {t("einvoice.providerDescAfter")}</>} />
       </SettingsCard>
-      <SettingsCard id="connection" title="Thiết lập kết nối hóa đơn điện tử" description="Thông tin tài khoản meInvoice và ký hiệu hóa đơn dùng khi phát hành.">
+      <SettingsCard id="connection" title={t("einvoice.connectionTitle")} description={t("einvoice.connectionDesc")}>
         <div className="space-y-4 px-5 py-4 text-[13px]">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div className="grid gap-1.5"><Label>Môi trường</Label>
+            <div className="grid gap-1.5"><Label>{t("einvoice.environment")}</Label>
               <NativeSelect value={f.environment} onChange={(e) => setF({ ...f, environment: e.target.value })}>
-                <option value="TEST">Thử nghiệm (testapi.meinvoice.vn)</option><option value="PROD">Chính thức (api.meinvoice.vn)</option></NativeSelect></div>
-            <div className="grid gap-1.5"><Label>AppID (MISA cấp)</Label><Input {...bind("appId")} /></div>
-            <div className="grid gap-1.5"><Label>Mã số thuế</Label><Input {...bind("taxCode")} /></div>
-            <div className="grid gap-1.5"><Label>Tài khoản meInvoice</Label><Input {...bind("username")} /></div>
-            <div className="grid gap-1.5"><Label>Mật khẩu {data?.configured && "(bỏ trống nếu giữ nguyên)"}</Label>
+                <option value="TEST">{t("einvoice.envTest")}</option><option value="PROD">{t("einvoice.envProd")}</option></NativeSelect></div>
+            <div className="grid gap-1.5"><Label>{t("einvoice.appId")}</Label><Input {...bind("appId")} /></div>
+            <div className="grid gap-1.5"><Label>{t("einvoice.taxCode")}</Label><Input {...bind("taxCode")} /></div>
+            <div className="grid gap-1.5"><Label>{t("einvoice.username")}</Label><Input {...bind("username")} /></div>
+            <div className="grid gap-1.5"><Label>{t("einvoice.password")} {data?.configured && t("einvoice.passwordKeep")}</Label>
               <Input type="password" autoComplete="new-password" {...bind("password")} /></div>
-            <div className="grid gap-1.5"><Label>Ký hiệu hóa đơn</Label><Input placeholder="VD: 2C26MAA" {...bind("invSeries")} /></div>
-            <div className="grid gap-1.5 md:col-span-2"><Label>Tên hóa đơn</Label>
+            <div className="grid gap-1.5"><Label>{t("einvoice.series")}</Label><Input placeholder={t("einvoice.seriesPlaceholder")} {...bind("invSeries")} /></div>
+            <div className="grid gap-1.5 md:col-span-2"><Label title={tc("legal.vietnameseOnly")}>{t("einvoice.invoiceName")}</Label>
               <NativeSelect value={f.invoiceName} onChange={(e) => setF({ ...f, invoiceName: e.target.value })}>
                 <option>Hóa đơn bán hàng</option><option>Hóa đơn giá trị gia tăng</option></NativeSelect></div>
             <label className="flex items-center gap-2 md:col-span-2">
               <Checkbox checked={f.sendEmail} onCheckedChange={(v) => setF({ ...f, sendEmail: v === true })} />
-              Tự gửi email hóa đơn cho khách (khi khách có email)</label>
+              {t("einvoice.sendEmail")}</label>
           </div>
           <div className="flex justify-end gap-2 border-t border-[#eceef1] pt-3">
-            <Button variant="outline" disabled={!data?.configured || test.isPending} onClick={() => test.mutate()}><PlugZap className="size-4" /> Kiểm tra kết nối</Button>
-            <Button disabled={save.isPending || (!data?.configured && !f.password)} onClick={() => save.mutate()}><Save className="size-4" /> Lưu</Button>
+            <Button variant="outline" disabled={!data?.configured || test.isPending} onClick={() => test.mutate()}><PlugZap className="size-4" /> {t("einvoice.test")}</Button>
+            <Button disabled={save.isPending || (!data?.configured && !f.password)} onClick={() => save.mutate()}><Save className="size-4" /> {tc("actions.save")}</Button>
           </div>
         </div>
       </SettingsCard>

@@ -9,10 +9,13 @@ import {
 } from "@/features/purchases/purchase-list-chrome";
 import { formatDateTime, formatMoney } from "@/lib/format";
 import { useCurrentUser } from "@/lib/use-current-user";
+import { useT } from "@/lib/i18n";
+import { commonNs } from "@/messages/common";
+import { inventoryNs } from "@/messages/inventory";
 import { cn } from "@/lib/utils";
 import { exportStockIssuesCsv } from "./inventory-csv-export";
 import { defaultInventoryFilters, useStockIssues } from "./inventory-queries";
-import { ISSUE_CONFIG, ISSUE_STATUS_LABEL, type IssueType } from "./inventory-types";
+import { ISSUE_CONFIG, ISSUE_STATUS_KEY, type IssueType } from "./inventory-types";
 import { StockIssueDetailPanel } from "./stock-issue-detail-panel";
 import { useInventoryExpanded, useInventoryListState } from "./use-inventory-list-state";
 
@@ -20,29 +23,33 @@ const COLS = 6;
 
 function StockIssueList({ type, link }: { type: IssueType; link: DeepLink }) {
   const cfg = ISSUE_CONFIG[type];
+  const t = useT(inventoryNs);
+  const tc = useT(commonNs);
+  const title = t(`issue.${cfg.msg}.title`);
+  const statusLabels = Object.fromEntries(Object.entries(ISSUE_STATUS_KEY).map(([k, v]) => [k, t(v)]));
   const { can } = useCurrentUser();
-  const s = useInventoryListState(defaultInventoryFilters(["DRAFT", "COMPLETED"]), link, Object.keys(ISSUE_STATUS_LABEL));
+  const s = useInventoryListState(defaultInventoryFilters(["DRAFT", "COMPLETED"]), link, Object.keys(ISSUE_STATUS_KEY));
   const { data, isLoading } = useStockIssues(type, s.filters, s.page, s.size);
   const pages = data ? Math.max(1, Math.ceil(data.total / s.size)) : 1;
   const x = useInventoryExpanded(data?.items, link);
 
   return (
-    <PurchaseListLayout title={cfg.title}
-      toolbar={<PurchaseListToolbar search={s.search} onSearch={s.setSearch} placeholder={`Theo ${cfg.codeLabel.toLowerCase()}`}
-        createLabel={can("inventory.manage") ? cfg.title : undefined} createHref={`${cfg.listPath}/new`}
-        onExport={data?.items.length ? () => exportStockIssuesCsv(type, data.items, s.branchName) : undefined} />}
-      sidebar={<PurchaseFilterSidebar filters={s.filters} statusLabels={ISSUE_STATUS_LABEL} onChange={s.applyFilters} />}>
+    <PurchaseListLayout title={title}
+      toolbar={<PurchaseListToolbar search={s.search} onSearch={s.setSearch} placeholder={t(`issue.${cfg.msg}.searchPlaceholder`)}
+        createLabel={can("inventory.manage") ? title : undefined} createHref={`${cfg.listPath}/new`}
+        onExport={data?.items.length ? () => exportStockIssuesCsv(t, type, data.items, s.branchName) : undefined} />}
+      sidebar={<PurchaseFilterSidebar filters={s.filters} statusLabels={statusLabels} onChange={s.applyFilters} />}>
       <div className="min-h-[calc(100vh-190px)] overflow-hidden rounded-lg bg-background">
         <Table>
           <TableHeader>
             <TableRow className={LIST_HEADER_ROW}>
-              <TableHead className="pl-4">{cfg.codeLabel}</TableHead><TableHead className="text-right">{cfg.valueLabel}</TableHead>
-              <TableHead>Thời gian</TableHead><TableHead>Chi nhánh</TableHead><TableHead>Ghi chú</TableHead>
-              <TableHead className="pr-4">Trạng thái</TableHead>
+              <TableHead className="pl-4">{t(`issue.${cfg.msg}.codeLabel`)}</TableHead><TableHead className="text-right">{t(`issue.${cfg.msg}.valueLabel`)}</TableHead>
+              <TableHead>{t("fields.time")}</TableHead><TableHead>{t("fields.branch")}</TableHead><TableHead>{t("fields.note")}</TableHead>
+              <TableHead className="pr-4">{t("fields.status")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading && <TableRow><TableCell colSpan={COLS} className="py-8 text-center text-muted-foreground">Đang tải...</TableCell></TableRow>}
+            {isLoading && <TableRow><TableCell colSpan={COLS} className="py-8 text-center text-muted-foreground">{tc("status.loading")}</TableCell></TableRow>}
             {data && !data.items.length && (
               <TableRow className="hover:bg-transparent"><TableCell colSpan={COLS} className="whitespace-normal">
                 <PurchaseEmptyState onWiden={s.filters.period === "month" ? () => s.applyFilters({ ...s.filters, period: "custom", from: "", to: "" }) : undefined} />
@@ -58,7 +65,7 @@ function StockIssueList({ type, link }: { type: IssueType; link: DeepLink }) {
                   <TableCell className="text-right">{formatMoney(d.totalValue)}</TableCell>
                   <TableCell>{formatDateTime(d.issuedAt)}</TableCell><TableCell>{s.branchName(d.branchId)}</TableCell>
                   <TableCell className="max-w-64 truncate" title={d.note ?? ""}>{d.note}</TableCell>
-                  <TableCell className="pr-4"><DocStatusBadge status={d.status} label={ISSUE_STATUS_LABEL[d.status]} /></TableCell>
+                  <TableCell className="pr-4"><DocStatusBadge status={d.status} label={t(ISSUE_STATUS_KEY[d.status])} /></TableCell>
                 </TableRow>
                 {x.expanded === d.id && (
                   <TableRow className="hover:bg-transparent">
@@ -71,7 +78,7 @@ function StockIssueList({ type, link }: { type: IssueType; link: DeepLink }) {
         </Table>
       </div>
       <PurchaseListPager size={s.size} onSize={s.setSize} page={s.page} pages={pages}
-        total={data?.total ?? 0} unit="phiếu" onPage={s.setPage} />
+        total={data?.total ?? 0} unit={t("list.unit")} onPage={s.setPage} />
     </PurchaseListLayout>
   );
 }

@@ -10,8 +10,11 @@ import { useEInvoiceRecords } from "@/features/integrations/integration-queries"
 import { fromLocalInput, toLocalInput } from "@/features/purchases/purchase-line-form";
 import { useUserLookup } from "@/features/purchases/purchase-queries";
 import { api, errorMessage } from "@/lib/api-client";
+import { useT } from "@/lib/i18n";
 import { useCurrentUser } from "@/lib/use-current-user";
 import { cn } from "@/lib/utils";
+import { commonNs } from "@/messages/common";
+import { salesNs } from "@/messages/sales";
 import { InvoiceDetailFooter } from "./invoice-detail-footer";
 import { InvoiceDetailHeader, type InvoiceInfoDraft } from "./invoice-detail-header";
 import { InvoiceLinesTable, InvoicePaymentHistory, InvoiceTotals } from "./invoice-detail-sections";
@@ -26,6 +29,8 @@ import { SALES_KEYS, useInvoice } from "./sales-queries";
  * thẻ Hoá đơn điện tử, vận đơn, dòng hàng, tổng) + tab Lịch sử thanh toán. Bấm lại tab đang mở = thu gọn.
  */
 export function InvoiceDetailPanel({ id, onClose }: { id: string; onClose?: () => void }) {
+  const t = useT(salesNs);
+  const tc = useT(commonNs);
   const qc = useQueryClient();
   const { can } = useCurrentUser();
   const { data: inv } = useInvoice(id);
@@ -43,16 +48,16 @@ export function InvoiceDetailPanel({ id, onClose }: { id: string; onClose?: () =
         sellerName: users.find((u) => u.id === edit!.sellerId)?.fullName, soldAt: timeChanged ? fromLocalInput(edit!.at) : null,
         note: edit!.note, salesChannel: edit!.channel } });
     },
-    onSuccess: () => { toast.success("Đã lưu hóa đơn"); setEdit(null); refresh(); },
+    onSuccess: () => { toast.success(t("invoices.detail.saved")); setEdit(null); refresh(); },
     onError: (e) => toast.error(errorMessage(e)),
   });
   const cancel = useMutation({
     mutationFn: () => api(`/invoices/${id}/cancel`, { method: "POST" }),
-    onSuccess: () => { toast.success("Đã hủy hóa đơn, hàng đã hoàn lại kho"); refresh(); },
+    onSuccess: () => { toast.success(t("invoices.detail.cancelled")); refresh(); },
     onError: (e) => toast.error(errorMessage(e)),
   });
 
-  if (!inv) return <div className={cn(DETAIL_PANEL, "p-6 text-muted-foreground")}>Đang tải...</div>;
+  if (!inv) return <div className={cn(DETAIL_PANEL, "p-6 text-muted-foreground")}>{tc("status.loading")}</div>;
   const f: InvoiceInfoDraft = edit ?? { sellerId: inv.sellerId ?? "", at: toLocalInput(inv.soldAt), channel: inv.salesChannel ?? "DIRECT", note: inv.note ?? "" };
   const set = (p: Partial<InvoiceInfoDraft>) => setEdit({ ...f, ...p });
   const active = inv.status === "COMPLETED";
@@ -61,8 +66,8 @@ export function InvoiceDetailPanel({ id, onClose }: { id: string; onClose?: () =
     <div className={DETAIL_PANEL}>
       <Tabs defaultValue="info" className="gap-0">
         <DetailTabsList onActiveTabClick={onClose} variant="line" className={DETAIL_TABS_LIST}>
-          <TabsTrigger value="info" className={DETAIL_TAB}>Thông tin</TabsTrigger>
-          <TabsTrigger value="payments" className={DETAIL_TAB}>Lịch sử thanh toán</TabsTrigger>
+          <TabsTrigger value="info" className={DETAIL_TAB}>{tc("detailTabs.info")}</TabsTrigger>
+          <TabsTrigger value="payments" className={DETAIL_TAB}>{t("invoices.detail.tabPayments")}</TabsTrigger>
         </DetailTabsList>
         <TabsContent value="info">
           <div className="space-y-4 p-4">
@@ -72,7 +77,7 @@ export function InvoiceDetailPanel({ id, onClose }: { id: string; onClose?: () =
             <InvoiceLinesTable inv={inv} />
             <div className="flex flex-col-reverse gap-4 md:flex-row md:items-start">
               <textarea className="mt-6 min-h-24 w-full max-w-[750px] rounded-md border px-3 py-2 outline-none placeholder:text-muted-foreground focus-visible:border-primary disabled:bg-muted/40"
-                placeholder="Ghi chú..." aria-label="Ghi chú" value={f.note} disabled={!active} onChange={(e) => set({ note: e.target.value })} />
+                placeholder={t("invoices.detail.notePlaceholder")} aria-label={tc("fields.note")} value={f.note} disabled={!active} onChange={(e) => set({ note: e.target.value })} />
               <div className="md:ml-auto"><InvoiceTotals inv={inv} /></div>
             </div>
           </div>

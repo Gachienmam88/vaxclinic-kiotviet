@@ -6,14 +6,12 @@ import { useCurrentUser } from "@/lib/use-current-user";
 import { ProductFilterMultiSelect } from "./product-filter-multi-select";
 import { flattenCategoryTree, useCategories } from "./product-queries";
 import type { PriceBook, PriceRowFilters } from "./price-book-types";
+import type { StockFilter } from "./product-types";
+import { useT } from "@/lib/i18n";
+import { productsNs } from "@/messages/products";
 
-const STOCK_OPTIONS = [
-  { value: "ALL", label: "Tất cả" },
-  { value: "BELOW_MIN", label: "Dưới định mức tồn" },
-  { value: "ABOVE_MAX", label: "Vượt định mức tồn" },
-  { value: "IN_STOCK", label: "Còn hàng trong kho" },
-  { value: "OUT_OF_STOCK", label: "Hết hàng trong kho" },
-];
+/** Nhãn: t(`filter.stockOptions.${value}`). */
+const STOCK_OPTIONS: StockFilter[] = ["ALL", "BELOW_MIN", "ABOVE_MAX", "IN_STOCK", "OUT_OF_STOCK"];
 
 type Props = {
   books: PriceBook[];
@@ -36,16 +34,17 @@ export function PriceBookSidebar({ books, selected, onSelect, onCreate, onEdit, 
   const manage = can("catalog.manage");
   const set = (patch: Partial<PriceRowFilters>) => onFilters({ ...filters, ...patch });
   const expired = (b: PriceBook) => Date.parse(b.validTo) < Date.now();
+  const t = useT(productsNs);
 
   return (
     <aside className="w-[200px] shrink-0 space-y-4 rounded-lg bg-background p-2.5">
       <section className="space-y-2">
         <Title action={manage && (
-          <button type="button" aria-label="Thêm bảng giá" title="Thêm bảng giá" className="text-primary" onClick={onCreate}>
+          <button type="button" aria-label={t("bookForm.createTitle")} title={t("bookForm.createTitle")} className="text-primary" onClick={onCreate}>
             <Plus className="size-4" />
           </button>
-        )}>Bảng giá</Title>
-        {!books.length && <p className="text-xs text-muted-foreground">Chưa có bảng giá. Bấm + để thêm.</p>}
+        )}>{t("priceBooks.books")}</Title>
+        {!books.length && <p className="text-xs text-muted-foreground">{t("priceBooks.noBooks")}</p>}
         <ul className="max-h-72 space-y-0.5 overflow-y-auto">
           {books.map((b) => (
             <li key={b.id} className="group flex items-center gap-2 rounded px-1 py-1 text-[13px] hover:bg-muted">
@@ -54,11 +53,11 @@ export function PriceBookSidebar({ books, selected, onSelect, onCreate, onEdit, 
               <span className="min-w-0 flex-1 truncate" title={b.name}>
                 {b.name}
                 {(!b.active || expired(b)) && (
-                  <span className="ml-1 text-xs text-muted-foreground">({expired(b) ? "hết hạn" : "chưa áp dụng"})</span>
+                  <span className="ml-1 text-xs text-muted-foreground">({expired(b) ? t("detail.expired") : t("priceBooks.inactive")})</span>
                 )}
               </span>
               {manage && (
-                <button type="button" aria-label={`Sửa ${b.name}`} title="Sửa bảng giá"
+                <button type="button" aria-label={t("priceBooks.editAria", { name: b.name })} title={t("bookForm.editTitle")}
                   className="text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-primary focus-visible:opacity-100"
                   onClick={() => onEdit(b)}>
                   <Pencil className="size-3.5" />
@@ -70,19 +69,19 @@ export function PriceBookSidebar({ books, selected, onSelect, onCreate, onEdit, 
         <label className="flex items-center gap-2 text-[13px]">
           <Checkbox checked={filters.inBookOnly} disabled={!selected.length}
             onCheckedChange={(v) => set({ inBookOnly: v === true })} />
-          Chỉ hàng có trong bảng giá
+          {t("priceBooks.inBookOnly")}
         </label>
       </section>
       <section className="space-y-2">
-        <Title>Nhóm hàng</Title>
-        <ProductFilterMultiSelect placeholder="Chọn nhóm hàng" options={flattenCategoryTree(categories)}
+        <Title>{t("fields.category")}</Title>
+        <ProductFilterMultiSelect placeholder={t("filter.pickCategory")} options={flattenCategoryTree(categories)}
           value={filters.categoryIds} onChange={(categoryIds) => set({ categoryIds })} />
       </section>
       <section className="space-y-2">
-        <Title>Tồn kho</Title>
-        <select aria-label="Tiêu chí tồn" value={filters.stock} onChange={(e) => set({ stock: e.target.value })}
+        <Title>{t("fields.stock")}</Title>
+        <select aria-label={t("filter.stockCriteria")} value={filters.stock} onChange={(e) => set({ stock: e.target.value })}
           className="h-8 w-full rounded-md border border-input bg-background px-2 text-sm">
-          {STOCK_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+          {STOCK_OPTIONS.map((v) => <option key={v} value={v}>{t(`filter.stockOptions.${v}`)}</option>)}
         </select>
       </section>
     </aside>

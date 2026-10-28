@@ -10,10 +10,6 @@
  */
 export const THRESHOLD = 1_000_000_000;
 
-export const GROUPS: Record<number, string> = {
-  1: "Nhóm 1: Từ 1 tỷ trở xuống", 2: "Nhóm 2: Trên 1 tỷ - 3 tỷ", 3: "Nhóm 3: Trên 3 tỷ - 50 tỷ", 4: "Nhóm 4: Trên 50 tỷ",
-};
-
 export const PROFIT_RATE: Record<number, number> = { 1: 0, 2: 15, 3: 17, 4: 20 };
 
 /** Mã thuế dòng hàng không chịu GTGT: KCT, KKKNT, HKD_KCT_* (VD "KCT GTGT, 1,5% TNCN"). */
@@ -25,6 +21,7 @@ export type DailyExpense = { date: string; category: string; amount: number };
 /** sectorOf: mặt hàng → mã ngành (đã xét nhóm hàng, nhóm cha, ngành mặc định). */
 export type TaxConfig = { vatEnabled: boolean; sectors: Sector[]; sectorOf: (productId: string) => string; defaultTaxCode: string | null };
 export type ProfileConfig = { revenueGroup: number; pitMethod: "REVENUE" | "PROFIT" };
+/** label: "Tháng 3" / "Quý 2" — tiếng Việt cố định (dùng trong sổ kế toán & CSV kê khai); giao diện dùng periodLabel(). */
 export type Period = { label: string; from: string; to: string };
 
 export type SectorTax = { sector: Sector; revenue: number; vatRevenue: number; exemptRevenue: number; vat: number; pitBase: number; pit: number };

@@ -16,11 +16,14 @@ import { exportReceiptLinesCsv } from "./purchase-csv-export";
 import { fromLocalInput, toLocalInput } from "./purchase-line-form";
 import { DocStatusBadge, OUTLINE_GRAY_BTN } from "./purchase-list-chrome";
 import { useReceipt, useUserLookup } from "./purchase-queries";
-import { RECEIPT_STATUS_LABEL } from "./purchase-types";
+import { receiptStatusLabels } from "./purchase-types";
 import { ReceiptLinesTable, ReceiptSummary } from "./receipt-lines-table";
 import { receiptData } from "@/features/print/print-data";
 import { PrintButton } from "@/features/print/print-button";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
+import { useT } from "@/lib/i18n";
+import { commonNs } from "@/messages/common";
+import { purchasesNs } from "@/messages/purchases";
 
 const FIELD = "h-[30px] w-full max-w-[180px] rounded-md border border-[#d1d5db] bg-background px-2 text-[13px] outline-none focus-visible:border-primary disabled:opacity-60";
 
@@ -43,22 +46,24 @@ export function ReceiptDetailPanel({ id, onClose }: { id: string; onClose?: () =
   const { data: branches = [] } = useBranches();
   const [info, setInfo] = useState<{ at: string; receiverId: string; invoiceNo: string; note: string } | null>(null);
   const manage = can("inventory.manage");
+  const t = useT(purchasesNs);
+  const tc = useT(commonNs);
 
   const refresh = () => { qc.invalidateQueries({ queryKey: ["purchase-receipts"] }); qc.invalidateQueries({ queryKey: ["purchase-receipt", id] }); };
   const saveInfo = useMutation({
     mutationFn: () => api(`/purchase-receipts/${id}/info`, { method: "PATCH", body: {
       receivedAt: fromLocalInput(info!.at), receiverId: info!.receiverId || null,
       receiverName: users.find((u) => u.id === info!.receiverId)?.fullName, inputInvoiceNo: info!.invoiceNo, note: info!.note } }),
-    onSuccess: () => { toast.success("Đã lưu phiếu nhập"); refresh(); },
+    onSuccess: () => { toast.success(t("detail.toastSaved")); refresh(); },
     onError: (e) => toast.error(errorMessage(e)),
   });
   const cancel = useMutation({
     mutationFn: () => api(`/purchase-receipts/${id}/cancel`, { method: "POST" }),
-    onSuccess: () => { toast.success("Đã hủy phiếu nhập"); refresh(); qc.invalidateQueries({ queryKey: ["products"] }); },
+    onSuccess: () => { toast.success(t("detail.toastCancelled")); refresh(); qc.invalidateQueries({ queryKey: ["products"] }); },
     onError: (e) => toast.error(errorMessage(e)),
   });
 
-  if (!r) return <div className="border border-primary bg-background p-6 text-sm text-muted-foreground">Đang tải...</div>;
+  if (!r) return <div className="border border-primary bg-background p-6 text-sm text-muted-foreground">{tc("status.loading")}</div>;
   const f = info ?? { at: toLocalInput(r.receivedAt), receiverId: r.receiverId ?? "", invoiceNo: r.inputInvoiceNo ?? "", note: r.note ?? "" };
   const setF = (p: Partial<typeof f>) => setInfo({ ...f, ...p });
   const editable = manage && r.status !== "CANCELLED";
@@ -71,28 +76,28 @@ export function ReceiptDetailPanel({ id, onClose }: { id: string; onClose?: () =
       <div className="space-y-4 p-4">
         <div className="flex items-center gap-3">
           <span className="text-base font-bold">{r.code}</span>
-          <DocStatusBadge status={r.status} label={RECEIPT_STATUS_LABEL[r.status]} />
+          <DocStatusBadge status={r.status} label={receiptStatusLabels(t)[r.status]} />
           <span className="ml-auto">{branches.find((b) => b.id === r.branchId)?.name}</span>
         </div>
         <div className="grid grid-cols-1 gap-x-8 gap-y-1.5 md:grid-cols-3">
-          <Info label="Người tạo">{r.createdByName}</Info>
-          <Info label="Người nhập">
-            <select aria-label="Người nhập" className={FIELD} value={f.receiverId} disabled={!editable} onChange={(e) => setF({ receiverId: e.target.value })}>
+          <Info label={tc("fields.createdBy")}>{r.createdByName}</Info>
+          <Info label={t("receipts.receiver")}>
+            <select aria-label={t("receipts.receiver")} className={FIELD} value={f.receiverId} disabled={!editable} onChange={(e) => setF({ receiverId: e.target.value })}>
               {users.map((u) => <option key={u.id} value={u.id}>{u.fullName}</option>)}
             </select>
           </Info>
-          <Info label="Ngày nhập">
-            <DateTimePicker aria-label="Ngày nhập" className={FIELD} value={f.at} disabled={!editable} onChange={(v) => setF({ at: v })} />
+          <Info label={t("detail.receiveDate")}>
+            <DateTimePicker aria-label={t("detail.receiveDate")} className={FIELD} value={f.at} disabled={!editable} onChange={(v) => setF({ at: v })} />
           </Info>
-          <Info label="Tên NCC"><span className="block truncate" title={r.supplierName ?? ""}>{r.supplierName && r.supplierCode
+          <Info label={t("detail.supplierName")}><span className="block truncate" title={r.supplierName ?? ""}>{r.supplierName && r.supplierCode
             ? <DocCodeLink code={r.supplierName} to={docCodeHref(r.supplierCode) ?? undefined} /> : (r.supplierName ?? "—")}</span></Info>
-          <Info label="Số HĐ đầu vào">
-            <input aria-label="Số hóa đơn đầu vào" className={FIELD} value={f.invoiceNo} disabled={!editable} onChange={(e) => setF({ invoiceNo: e.target.value })} />
+          <Info label={t("receipts.cols.inputInvoiceNo")}>
+            <input aria-label={t("filter.inputInvoiceNo")} className={FIELD} value={f.invoiceNo} disabled={!editable} onChange={(e) => setF({ invoiceNo: e.target.value })} />
           </Info>
         </div>
         <ReceiptLinesTable r={r} />
         <div className="flex items-end gap-6">
-          <Textarea className="h-[95px] max-w-[720px] resize-none rounded-md" placeholder="Ghi chú..." value={f.note} disabled={!editable}
+          <Textarea className="h-[95px] max-w-[720px] resize-none rounded-md" placeholder={t("detail.notePlaceholder")} value={f.note} disabled={!editable}
             onChange={(e) => setF({ note: e.target.value })} />
           <ReceiptSummary r={r} />
         </div>
@@ -100,23 +105,23 @@ export function ReceiptDetailPanel({ id, onClose }: { id: string; onClose?: () =
       {manage && <div className="flex flex-wrap items-center gap-1 border-t border-[#e5e7eb] px-2 py-2.5">
         {r.status !== "CANCELLED" && (
           <Button variant="ghost" disabled={cancel.isPending}
-            onClick={() => confirm(r.status === "COMPLETED" ? `Hủy phiếu ${r.code}? Hàng sẽ bị trừ khỏi kho.` : `Hủy phiếu tạm ${r.code}?`) && cancel.mutate()}>
-            <Trash2 className="size-4" /> Hủy</Button>
+            onClick={() => confirm(t(r.status === "COMPLETED" ? "detail.confirmCancelCompleted" : "detail.confirmCancelDraft", { code: r.code })) && cancel.mutate()}>
+            <Trash2 className="size-4" /> {tc("actions.cancel")}</Button>
         )}
-        <Button variant="ghost" onClick={() => router.push(`/purchases/receipts/new?copyFrom=${r.id}`)}><Copy className="size-4" /> Sao chép</Button>
-        <Button variant="ghost" onClick={() => exportReceiptLinesCsv(r)}><FileOutput className="size-4" /> Xuất file</Button>
+        <Button variant="ghost" onClick={() => router.push(`/purchases/receipts/new?copyFrom=${r.id}`)}><Copy className="size-4" /> {tc("actions.copy")}</Button>
+        <Button variant="ghost" onClick={() => exportReceiptLinesCsv(r, t)}><FileOutput className="size-4" /> {tc("actions.export")}</Button>
         <div className="ml-auto flex flex-wrap gap-2">
           {r.status === "DRAFT" && (
             <Button className="h-[30px] rounded-md px-3" onClick={() => router.push(`/purchases/receipts/new?edit=${r.id}`)}>
-              <ExternalLink className="size-4" /> Mở phiếu</Button>
+              <ExternalLink className="size-4" /> {t("detail.openDoc")}</Button>
           )}
           {editable && (
             <Button variant="outline" className={OUTLINE_GRAY_BTN} disabled={!info || saveInfo.isPending} onClick={() => saveInfo.mutate()}>
-              <Save className="size-4" /> Lưu</Button>
+              <Save className="size-4" /> {tc("actions.save")}</Button>
           )}
           {r.status === "COMPLETED" && (
             <Button variant="outline" className={OUTLINE_GRAY_BTN} onClick={() => router.push(`/purchases/returns/new?receiptId=${r.id}`)}>
-              <Undo2 className="size-4" /> Trả hàng nhập</Button>
+              <Undo2 className="size-4" /> {t("returns.create")}</Button>
           )}
           <PrintButton type="PURCHASE_RECEIPT" data={receiptData(r)} branchId={r.branchId} />
         </div>

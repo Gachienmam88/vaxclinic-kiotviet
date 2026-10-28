@@ -7,6 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { kvDialog, kvDialogBody, kvDialogFooter, kvDialogHeader, kvDialogTitle, kvFooterBtn } from "@/features/sales/customer-ui-primitives";
 import { api, errorMessage } from "@/lib/api-client";
+import { useT } from "@/lib/i18n";
+import { commonNs } from "@/messages/common";
+import { deliveryNs } from "@/messages/delivery";
 import { refreshDelivery } from "./delivery-queries";
 import type { ShipmentDetail } from "./delivery-types";
 import { areaFromServer } from "./delivery-address";
@@ -14,6 +17,8 @@ import { ShipmentDeliveryFields, type DeliveryForm } from "./shipment-delivery-f
 
 /** Sửa thông tin giao (người nhận, địa chỉ, đối tác, trọng lượng, phí) — chỉ khi Chờ xử lý / Đang lấy hàng. */
 export function ShipmentEditDialog({ detail, onClose }: { detail: ShipmentDetail; onClose: () => void }) {
+  const t = useT(deliveryNs);
+  const tc = useT(commonNs);
   const qc = useQueryClient();
   const s = detail.item;
   const [v, setV] = useState<DeliveryForm>({ partnerId: s.partnerId, receiverName: s.receiverName, receiverPhone: s.receiverPhone,
@@ -21,20 +26,20 @@ export function ShipmentEditDialog({ detail, onClose }: { detail: ShipmentDetail
     feePayer: s.feePayer, note: detail.note ?? "" });
   const save = useMutation({
     mutationFn: () => api(`/shipments/${s.id}`, { method: "PUT", body: { ...v, weightGram: v.weightGram || null } }),
-    onSuccess: () => { toast.success(`Đã cập nhật vận đơn ${s.code}`); refreshDelivery(qc); onClose(); },
+    onSuccess: () => { toast.success(t("form.updated", { code: s.code })); refreshDelivery(qc); onClose(); },
     onError: (e) => toast.error(errorMessage(e)),
   });
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className={`${kvDialog} sm:max-w-[560px]`}>
-        <DialogHeader className={kvDialogHeader}><DialogTitle className={kvDialogTitle}>Sửa vận đơn {s.code}</DialogTitle></DialogHeader>
+        <DialogHeader className={kvDialogHeader}><DialogTitle className={kvDialogTitle}>{t("form.editTitle", { code: s.code })}</DialogTitle></DialogHeader>
         <form id="shipment-edit-form" className={`${kvDialogBody} grid grid-cols-2 gap-x-3`} onSubmit={(e) => { e.preventDefault(); save.mutate(); }}>
           <ShipmentDeliveryFields v={v} set={(p) => setV({ ...v, ...p })} />
         </form>
         <DialogFooter className={kvDialogFooter}>
-          <Button variant="outline" className={kvFooterBtn} onClick={onClose}>Bỏ qua</Button>
-          <Button type="submit" form="shipment-edit-form" className={kvFooterBtn} disabled={save.isPending}>Lưu</Button>
+          <Button variant="outline" className={kvFooterBtn} onClick={onClose}>{tc("actions.skip")}</Button>
+          <Button type="submit" form="shipment-edit-form" className={kvFooterBtn} disabled={save.isPending}>{tc("actions.save")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -43,6 +43,7 @@ export const STATE_TONE: Record<InvoiceState, "green" | "red" | "blue" | "gray">
   PROCESSING: "blue", COMPLETED: "green", FAILED_DELIVERY: "gray", CANCELLED: "red",
 };
 
+/** Nhãn tiếng Việt — chỉ dùng cho file CSV (giữ tiêu đề / giá trị tiếng Việt cho kế toán). Giao diện: enumLabel(t, salesNs, "enums.invoiceState", s). */
 export const stateLabel = (s: InvoiceState) => STATE_OPTIONS.find(([v]) => v === s)?.[1] ?? s;
 
 /** Trạng thái hiển thị của 1 hóa đơn chi tiết — cùng quy tắc với InvoiceFilterSql.STATE (sales-service). */

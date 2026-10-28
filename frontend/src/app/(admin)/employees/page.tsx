@@ -16,6 +16,9 @@ import { downloadCsv, useEmployee, useEmployees } from "@/features/hr/hr-queries
 import { salaryTypeLabel } from "@/features/hr/hr-types";
 import { formatMoney } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
+import { commonNs } from "@/messages/common";
+import { hrNs } from "@/messages/hr";
 
 const PAGE_SIZE = 20;
 const COLS = 9;
@@ -24,6 +27,8 @@ const pagerBtn = "flex size-7 items-center justify-center rounded-md border bord
 
 /** Danh sách nhân viên (ảnh KiotViet 111). ?create=1 mở popup thêm nhân viên (từ màn Khởi tạo); ?code=NV… lọc mã + mở chi tiết (mọi trạng thái). */
 function EmployeesPage({ link }: { link: DeepLink }) {
+  const t = useT(hrNs);
+  const tc = useT(commonNs);
   const sp = useSearchParams();
   const [search, setSearch] = useState(link.code ?? "");
   const [q, setQ] = useState(link.code ?? "");
@@ -34,7 +39,7 @@ function EmployeesPage({ link }: { link: DeepLink }) {
   const [creating, setCreating] = useState(sp.get("create") === "1");
   const [salaryFor, setSalaryFor] = useState<string | null>(null);
   const { data: salaryEmp } = useEmployee(salaryFor);
-  useEffect(() => { const t = setTimeout(() => { setQ(search); setPage(0); }, 300); return () => clearTimeout(t); }, [search]);
+  useEffect(() => { const timer = setTimeout(() => { setQ(search); setPage(0); }, 300); return () => clearTimeout(timer); }, [search]);
 
   const params = useMemo(() => {
     const p = new URLSearchParams({ page: String(page), size: String(PAGE_SIZE) });
@@ -47,26 +52,28 @@ function EmployeesPage({ link }: { link: DeepLink }) {
   const { data } = useEmployees(params);
   const row = useDeepLinkExpanded(data?.items, link, (e) => [e.code]);
   const pages = data ? Math.max(1, Math.ceil(data.total / PAGE_SIZE)) : 1;
+  // Tiêu đề cột file xuất theo ngôn ngữ đang chọn (dữ liệu giữ nguyên)
   const exportCsv = () => downloadCsv("danh-sach-nhan-vien.csv", [
-    ["Mã nhân viên", "Mã chấm công", "Tên nhân viên", "Số điện thoại", "Số CMND/CCCD", "Phòng ban", "Chức danh", "Loại lương", "Mức lương", "Nợ và tạm ứng", "Ghi chú"],
+    [t("employee.code"), t("employee.timekeepingCode"), t("employee.name"), t("employee.phone"), t("employee.idNumber"), t("catalog.department"),
+      t("catalog.jobTitle"), t("salaryTab.salaryType"), t("salaryTab.amount"), t("employee.debt"), tc("fields.note")],
     ...(data?.items ?? []).map((e) => [e.code, e.timekeepingCode, e.name, e.phone, e.idNumber, e.departmentName, e.jobTitleName,
-      salaryTypeLabel(e.salaryType), e.salaryType ? e.salaryAmount : "", e.debt, e.note]),
+      salaryTypeLabel(t, e.salaryType), e.salaryType ? e.salaryAmount : "", e.debt, e.note]),
   ]);
 
   return (
     <div className="grid grid-cols-[166px_minmax(0,1fr)] gap-x-2.5 gap-y-2.5">
-      <h1 className="flex h-8 items-center text-[18px] font-bold whitespace-nowrap">Danh sách nhân viên</h1>
+      <h1 className="flex h-8 items-center text-[18px] font-bold whitespace-nowrap">{t("list.title")}</h1>
       <div className="flex h-8 items-center gap-2">
         <div className="relative h-[30px] w-[300px] max-w-full">
           <Search className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
           <input className="size-full rounded-md border border-[#d9dbe0] bg-white pr-2.5 pl-8 text-[13px] outline-none placeholder:text-muted-foreground focus:border-primary"
-            placeholder="Tìm theo mã, tên nhân viên" aria-label="Tìm nhân viên" value={search} onChange={(e) => setSearch(e.target.value)} />
+            placeholder={t("attendance.searchEmployee")} aria-label={t("week.searchEmployee")} value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
         <button type="button" onClick={() => setCreating(true)} className={cn(btn, "ml-auto border-primary text-primary hover:bg-primary/5")}>
-          <Plus className="size-4" /> Nhân viên
+          <Plus className="size-4" /> {t("list.add")}
         </button>
-        <Link href="/employees/timesheets" className={cn(btn, "border-[#d9dbe0] hover:border-primary")}><ClipboardCheck className="size-4" /> Duyệt yêu cầu</Link>
-        <button type="button" onClick={exportCsv} className={cn(btn, "border-[#d9dbe0] hover:border-primary")} aria-label="Xuất file"><Download className="size-4" /></button>
+        <Link href="/employees/timesheets" className={cn(btn, "border-[#d9dbe0] hover:border-primary")}><ClipboardCheck className="size-4" /> {t("list.approveRequests")}</Link>
+        <button type="button" onClick={exportCsv} className={cn(btn, "border-[#d9dbe0] hover:border-primary")} aria-label={tc("actions.export")}><Download className="size-4" /></button>
       </div>
 
       <EmployeeListFilterSidebar value={filters} onChange={(v) => { setFilters(v); setPage(0); setAnyStatus(false); }} />
@@ -75,26 +82,26 @@ function EmployeesPage({ link }: { link: DeepLink }) {
         <div className="min-h-[470px] overflow-hidden rounded-lg bg-white">
           <Table className="text-[12px]">
             <TableHeader><TableRow className={LIST_HEAD_ROW}>
-              <TableHead className="w-9 pl-3"><input type="checkbox" aria-label="Chọn tất cả" className="size-3.5" /></TableHead>
-              <TableHead className="w-8" /><TableHead>Mã nhân viên</TableHead><TableHead>Mã chấm công</TableHead>
-              <TableHead>Tên nhân viên</TableHead><TableHead className="w-8" /><TableHead>Số điện thoại</TableHead>
-              <TableHead>Số CMND/CCCD</TableHead><TableHead className="text-right">Nợ và tạm ứng</TableHead><TableHead className="pr-4">Ghi chú</TableHead>
+              <TableHead className="w-9 pl-3"><input type="checkbox" aria-label={t("commissionGrid.selectAll")} className="size-3.5" /></TableHead>
+              <TableHead className="w-8" /><TableHead>{t("employee.code")}</TableHead><TableHead>{t("employee.timekeepingCode")}</TableHead>
+              <TableHead>{t("employee.name")}</TableHead><TableHead className="w-8" /><TableHead>{t("employee.phone")}</TableHead>
+              <TableHead>{t("employee.idNumber")}</TableHead><TableHead className="text-right">{t("employee.debt")}</TableHead><TableHead className="pr-4">{tc("fields.note")}</TableHead>
             </TableRow></TableHeader>
             <TableBody>
-              {data && !data.items.length && <ListEmptyRow cols={COLS + 1} what="nhân viên" />}
+              {data && !data.items.length && <ListEmptyRow cols={COLS + 1} what={t("list.emptyWhat")} />}
               {data?.items.map((e) => {
                 const open = row.open === e.id;
                 return (
                   <Fragment key={e.id}>
                     <TableRow aria-expanded={open} onClick={() => row.toggle(e.id)}
                       className={cn("h-[30px] cursor-pointer", open && "bg-primary-tint font-semibold hover:bg-primary-tint")}>
-                      <TableCell className="pl-3" onClick={(ev) => ev.stopPropagation()}><input type="checkbox" aria-label={`Chọn ${e.name}`} className="size-3.5" /></TableCell>
+                      <TableCell className="pl-3" onClick={(ev) => ev.stopPropagation()}><input type="checkbox" aria-label={t("commissionGrid.selectAria", { code: e.name })} className="size-3.5" /></TableCell>
                       <TableCell><span className="flex size-[18px] items-center justify-center rounded-full bg-primary-tint-strong text-primary"><UserRound className="size-3" /></span></TableCell>
                       <TableCell>{e.code}</TableCell><TableCell>{e.timekeepingCode}</TableCell>
                       <TableCell className="uppercase">{e.name}</TableCell>
                       <TableCell>
                         {!e.salaryType && (
-                          <button type="button" title="Chưa thiết lập lương" aria-label="Chưa thiết lập lương"
+                          <button type="button" title={t("salaryTab.noSalary")} aria-label={t("salaryTab.noSalary")}
                             onClick={(ev) => { ev.stopPropagation(); setSalaryFor(e.id); }}>
                             <TriangleAlert className="size-4 text-[#f59e0b]" />
                           </button>
@@ -116,9 +123,9 @@ function EmployeesPage({ link }: { link: DeepLink }) {
           </Table>
         </div>
         <div className="flex items-center justify-end gap-2 text-[13px]">
-          <span className="text-muted-foreground">{data?.total ?? 0} nhân viên · Trang {page + 1}/{pages}</span>
-          <button type="button" className={pagerBtn} aria-label="Trang trước" disabled={page === 0} onClick={() => setPage(page - 1)}><ChevronLeft className="size-4" /></button>
-          <button type="button" className={pagerBtn} aria-label="Trang sau" disabled={page + 1 >= pages} onClick={() => setPage(page + 1)}><ChevronRight className="size-4" /></button>
+          <span className="text-muted-foreground">{t("list.pageInfo", { total: data?.total ?? 0, page: page + 1, pages })}</span>
+          <button type="button" className={pagerBtn} aria-label={tc("pager.prev")} disabled={page === 0} onClick={() => setPage(page - 1)}><ChevronLeft className="size-4" /></button>
+          <button type="button" className={pagerBtn} aria-label={tc("pager.next")} disabled={page + 1 >= pages} onClick={() => setPage(page + 1)}><ChevronRight className="size-4" /></button>
         </div>
       </div>
       {creating && <EmployeeFormDialog onClose={() => setCreating(false)} />}

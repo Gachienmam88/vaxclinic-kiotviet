@@ -10,21 +10,14 @@ export type TimePreset =
   | "thisQuarter" | "lastQuarter" | "thisYear" | "lastYear";
 
 /**
- * Nhóm mốc theo cột như popup chọn thời gian của KiotViet. Màn báo cáo dịch bằng khóa reports "presetGroups.<id>";
- * title (tiếng Việt) giữ lại cho nơi khác đang dùng (features/sales).
+ * Nhóm mốc theo cột như popup chọn thời gian của KiotViet. Nhãn dịch bằng namespace reports:
+ * t(`presetGroups.${id}`) và t(`presets.${mốc}`) (dùng ở báo cáo và bộ lọc Hóa đơn features/sales).
  */
-export const PRESET_GROUPS: { id: "day" | "month" | "year"; title: string; items: TimePreset[] }[] = [
-  { id: "day", title: "Theo ngày và tuần", items: ["today", "yesterday", "thisWeek", "lastWeek", "last7"] },
-  { id: "month", title: "Theo tháng và quý", items: ["thisMonth", "lastMonth", "last30", "thisQuarter", "lastQuarter"] },
-  { id: "year", title: "Theo năm", items: ["thisYear", "lastYear"] },
+export const PRESET_GROUPS: { id: "day" | "month" | "year"; items: TimePreset[] }[] = [
+  { id: "day", items: ["today", "yesterday", "thisWeek", "lastWeek", "last7"] },
+  { id: "month", items: ["thisMonth", "lastMonth", "last30", "thisQuarter", "lastQuarter"] },
+  { id: "year", items: ["thisYear", "lastYear"] },
 ];
-
-/** Nhãn tiếng Việt (nơi khác đang dùng); màn báo cáo dịch bằng khóa reports "presets.<mốc>". */
-export const PRESET_LABELS: Record<TimePreset, string> = {
-  today: "Hôm nay", yesterday: "Hôm qua", thisWeek: "Tuần này", lastWeek: "Tuần trước", last7: "7 ngày qua",
-  thisMonth: "Tháng này", lastMonth: "Tháng trước", last30: "30 ngày qua", thisQuarter: "Quý này", lastQuarter: "Quý trước",
-  thisYear: "Năm nay", lastYear: "Năm trước",
-};
 
 export type DateRange = { from: Date; to: Date };
 

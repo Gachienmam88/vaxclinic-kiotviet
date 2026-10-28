@@ -1,5 +1,6 @@
 package com.vaxclinic.sales.common;
 
+import com.vaxclinic.common.http.InternalRestClientFactory;
 import com.vaxclinic.common.error.BusinessException;
 import com.vaxclinic.common.security.ServiceTokenProvider;
 import com.vaxclinic.common.settings.ShopSettings;
@@ -23,10 +24,10 @@ public class SalesRules {
     private final RestClient integration;
     private final ServiceTokenProvider tokens;
 
-    public SalesRules(ShopSettingsClient settings, @Value("${app.integration-url}") String integrationUrl,
+    public SalesRules(InternalRestClientFactory httpFactory, ShopSettingsClient settings, @Value("${app.integration-url}") String integrationUrl,
                       @Value("${app.jwt.secret}") String secret) {
         this.settings = settings;
-        this.integration = RestClient.builder().baseUrl(integrationUrl).build();
+        this.integration = httpFactory.create(integrationUrl);
         this.tokens = new ServiceTokenProvider(secret, "sales-service");
     }
 

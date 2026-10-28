@@ -1,5 +1,6 @@
 import { toast } from "sonner";
 import type { PriceResolution } from "@/features/products/price-book-resolver";
+import type { SaleT } from "@/messages/sale";
 import { newId } from "./sale-storage";
 import type { CatalogProduct, CatalogUnit } from "./sale-types";
 import type { SaleTabs } from "./use-sale-tabs";
@@ -11,7 +12,7 @@ import type { SaleTabs } from "./use-sale-tabs";
  *   lấy giá theo bảng giá đang chọn (bảng giá chặn hàng ngoài bảng → không thêm + cảnh báo; có cảnh báo → vẫn thêm).
  * Trả về key dòng vừa thêm / tăng (để đưa con trỏ vào ô số lượng khi bật chế độ nhập số lượng).
  */
-export function addProductToTab(tabs: SaleTabs, p: CatalogProduct, unitId: string, resolve: (u: CatalogUnit) => PriceResolution,
+export function addProductToTab(t: SaleT, tabs: SaleTabs, p: CatalogProduct, unitId: string, resolve: (u: CatalogUnit) => PriceResolution,
                                 merge = true): string | null {
   const d = tabs.active;
   if (!d) return null;
@@ -19,9 +20,9 @@ export function addProductToTab(tabs: SaleTabs, p: CatalogProduct, unitId: strin
   if (d.returnOf) {
     const r = d.returnOf;
     const line = r.lines.find((l) => l.productCode === unit.code) ?? r.lines.find((l) => p.units.some((u) => u.code === l.productCode));
-    if (!line) { toast.error(`${p.name} không có trong hóa đơn ${r.code}`); return null; }
+    if (!line) { toast.error(t("cart.notInInvoice", { name: p.name, code: r.code })); return null; }
     const max = line.sold - line.returned;
-    if (line.quantity >= max) { toast.error(`${line.productName}: chỉ còn trả được ${max}`); return null; }
+    if (line.quantity >= max) { toast.error(t("cart.returnMax", { name: line.productName, max })); return null; }
     tabs.update({ returnOf: { ...r, lines: r.lines.map((l) => (l === line ? { ...l, quantity: l.quantity + 1 } : l)) } });
     return null;
   }
@@ -32,7 +33,7 @@ export function addProductToTab(tabs: SaleTabs, p: CatalogProduct, unitId: strin
     return existing.key;
   }
   const r = resolve(unit);
-  if (!r.allowed) { toast.warning(`${p.name}: ${r.warning ?? "không được bán theo bảng giá này"}`); return null; }
+  if (!r.allowed) { toast.warning(`${p.name}: ${r.warning ?? t("cart.notInPriceBook")}`); return null; }
   if (r.warning) toast.warning(`${p.name}: ${r.warning}`);
   const key = newId();
   tabs.setLines((lines) => [{ key, productId: p.id, productName: p.name, unitId: unit.id, units: p.units, quantity: 1,

@@ -13,6 +13,9 @@ import type { EmployeeRow } from "./hr-types";
 import { WEEKDAY_SHORT } from "./hr-types";
 import { ShiftFormDialog } from "./shift-form-dialog";
 import { DatePicker } from "@/components/ui/date-picker";
+import { useT } from "@/lib/i18n";
+import { commonNs } from "@/messages/common";
+import { hrNs } from "@/messages/hr";
 
 /**
  * Thêm lịch làm việc cho 1 nhân viên vào 1 ngày: chọn ca (nhiều ca), lặp lại hàng tuần theo thứ + ngày kết thúc,
@@ -21,6 +24,8 @@ import { DatePicker } from "@/components/ui/date-picker";
 export function ScheduleAddDialog({ employee, date, employees, onClose }: {
   employee: EmployeeRow; date: string; employees: EmployeeRow[]; onClose: () => void;
 }) {
+  const t = useT(hrNs);
+  const tc = useT(commonNs);
   const { data: shifts = [] } = useShifts();
   const active = shifts.filter((s) => s.active);
   const dow = (parseIso(date).getDay() + 6) % 7 + 1;
@@ -38,7 +43,7 @@ export function ScheduleAddDialog({ employee, date, employees, onClose }: {
     body: { employeeIds: [employee.id, ...others], shiftIds, date, repeatWeekly: repeat, weekdays: repeat ? weekdays : undefined,
       until: repeat ? until : undefined },
   }), undefined, (r) => {
-    toast.success(r.created ? `Đã xếp ${r.created} ca làm việc` : "Các ca này đã có trong lịch");
+    toast.success(r.created ? t("scheduleAdd.toastCreated", { count: r.created }) : t("scheduleAdd.toastExists"));
     onClose();
   });
 
@@ -48,14 +53,14 @@ export function ScheduleAddDialog({ employee, date, employees, onClose }: {
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
-        <DialogHeader><DialogTitle>Thêm lịch làm việc</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{t("scheduleAdd.title")}</DialogTitle></DialogHeader>
         <p className="text-[13px]"><span className="font-semibold">{employee.name}</span>
           <span className="text-muted-foreground"> · {employee.code} · {dmy(date)}</span></p>
         <section className="space-y-2">
-          <div className="flex items-center justify-between text-[13px] font-semibold">Chọn ca làm việc
-            <button type="button" className="text-[12px] font-normal text-primary hover:underline" onClick={() => setCreatingShift(true)}>Tạo ca</button>
+          <div className="flex items-center justify-between text-[13px] font-semibold">{t("scheduleAdd.pickShifts")}
+            <button type="button" className="text-[12px] font-normal text-primary hover:underline" onClick={() => setCreatingShift(true)}>{t("scheduleAdd.createShift")}</button>
           </div>
-          {!active.length && <p className="text-[13px] text-muted-foreground">Chưa có ca làm việc. Bấm &quot;Tạo ca&quot; để thêm.</p>}
+          {!active.length && <p className="text-[13px] text-muted-foreground">{t("scheduleAdd.noShifts")}</p>}
           <div className="grid grid-cols-2 gap-2">
             {active.map((s) => (
               <label key={s.id} className={cn(box, shiftIds.includes(s.id) && "border-primary bg-primary-tint")}>
@@ -66,25 +71,25 @@ export function ScheduleAddDialog({ employee, date, employees, onClose }: {
           </div>
         </section>
         <section className="space-y-2 text-[13px]">
-          <div className="flex items-center justify-between font-semibold">Lặp lại hàng tuần
-            <SettingSwitch checked={repeat} onCheckedChange={setRepeat} aria-label="Lặp lại hàng tuần" /></div>
+          <div className="flex items-center justify-between font-semibold">{t("scheduleAdd.repeatWeekly")}
+            <SettingSwitch checked={repeat} onCheckedChange={setRepeat} aria-label={t("scheduleAdd.repeatWeekly")} /></div>
           {repeat && (
             <div className="space-y-2">
               <div className="flex gap-1.5">
                 {WEEKDAY_SHORT.map((w, i) => (
                   <button key={w} type="button" aria-pressed={weekdays.includes(i + 1)}
                     onClick={() => setWeekdays(weekdays.includes(i + 1) ? weekdays.filter((d) => d !== i + 1) : [...weekdays, i + 1])}
-                    className={cn("size-8 rounded-full border text-xs", weekdays.includes(i + 1) ? "border-primary bg-primary text-white" : "hover:border-primary")}>{w}</button>
+                    className={cn("size-8 rounded-full border text-xs", weekdays.includes(i + 1) ? "border-primary bg-primary text-white" : "hover:border-primary")}>{t(w)}</button>
                 ))}
               </div>
-              <label className="flex items-center gap-2">Kết thúc
+              <label className="flex items-center gap-2">{t("scheduleAdd.until")}
                 <DatePicker className="h-8 w-40" value={until} min={date} onChange={(v) => setUntil(v)} /></label>
             </div>
           )}
         </section>
         <section className="space-y-2 text-[13px]">
-          <p className="font-semibold">Áp dụng cho nhân viên khác <span className="font-normal text-muted-foreground">({others.length} đã chọn)</span></p>
-          <Input className="h-8" placeholder="Tìm theo mã, tên nhân viên" value={otherQ} onChange={(e) => setOtherQ(e.target.value)} />
+          <p className="font-semibold">{t("scheduleAdd.others")} <span className="font-normal text-muted-foreground">({t("scheduleAdd.selected", { count: others.length })})</span></p>
+          <Input className="h-8" placeholder={t("attendance.searchEmployee")} value={otherQ} onChange={(e) => setOtherQ(e.target.value)} />
           <div className="max-h-36 space-y-1 overflow-y-auto">
             {candidates.slice(0, 100).map((e) => (
               <label key={e.id} className="flex cursor-pointer items-center gap-2 px-1 py-0.5 hover:bg-[#f3f6fa]">
@@ -95,8 +100,8 @@ export function ScheduleAddDialog({ employee, date, employees, onClose }: {
           </div>
         </section>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Bỏ qua</Button>
-          <Button disabled={!shiftIds.length || (repeat && (!weekdays.length || !until)) || save.isPending} onClick={() => save.mutate(undefined)}>Lưu</Button>
+          <Button variant="outline" onClick={onClose}>{tc("actions.skip")}</Button>
+          <Button disabled={!shiftIds.length || (repeat && (!weekdays.length || !until)) || save.isPending} onClick={() => save.mutate(undefined)}>{tc("actions.save")}</Button>
         </DialogFooter>
         {creatingShift && <ShiftFormDialog initialMode="create" onClose={() => setCreatingShift(false)}
           onSaved={(s) => setShiftIds((ids) => [...ids, s.id])} />}

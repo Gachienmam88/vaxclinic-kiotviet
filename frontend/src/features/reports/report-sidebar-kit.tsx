@@ -5,6 +5,8 @@ import { X } from "lucide-react";
 import { FILTER_FIELD, FilterSection, FilterSidebar, PageTitle, PillGroup } from "@/features/sales/invoice-list-kit";
 import { useCustomers } from "@/features/sales/sales-queries";
 import { useCurrentUser } from "@/lib/use-current-user";
+import { useT } from "@/lib/i18n";
+import { reportsNs } from "@/messages/reports";
 
 /** Bộ khung trang báo cáo: tiêu đề + sidebar lọc bên trái + vùng biểu đồ / báo cáo bên phải. */
 export function ReportLayout({ title, sidebar, children }: { title: string; sidebar: React.ReactNode; children: React.ReactNode }) {
@@ -23,9 +25,11 @@ export type ViewMode = "chart" | "report";
 
 /** Kiểu hiển thị: Biểu đồ / Báo cáo (reportOnly: chỉ có nút Báo cáo). */
 export function ViewModeFilter({ value, onChange, reportOnly }: { value: ViewMode; onChange: (v: ViewMode) => void; reportOnly?: boolean }) {
-  const opts = reportOnly ? ([["report", "Báo cáo"]] as const) : ([["chart", "Biểu đồ"], ["report", "Báo cáo"]] as const);
+  const t = useT(reportsNs);
+  const report = ["report", t("filters.report")] as const;
+  const opts = reportOnly ? [report] : [["chart", t("filters.chart")] as const, report];
   return (
-    <FilterSection title="Kiểu hiển thị">
+    <FilterSection title={t("filters.viewMode")}>
       <PillGroup value={value} options={opts} onChange={(v) => onChange(v as ViewMode)} />
       <hr className="mt-3" />
     </FilterSection>
@@ -70,24 +74,25 @@ export type PickedCustomer = { id: string; label: string } | null;
 
 /** Khách hàng: gõ mã / tên / SĐT → chọn 1 khách trong danh sách gợi ý. */
 export function CustomerFilter({ value, onChange }: { value: PickedCustomer; onChange: (c: PickedCustomer) => void }) {
+  const t = useT(reportsNs);
   const [q, setQ] = useState("");
   const [debounced, setDebounced] = useState("");
   useEffect(() => { const t = setTimeout(() => setDebounced(q.trim()), 300); return () => clearTimeout(t); }, [q]);
   const { data } = useCustomers(new URLSearchParams({ q: debounced, size: "8" }));
   const show = !value && debounced.length > 0;
   return (
-    <FilterSection title="Khách hàng">
+    <FilterSection title={t("filters.customer")}>
       {value ? (
         <div className="flex h-[30px] items-center justify-between rounded-md border bg-primary-tint px-2 text-[13px]">
           <span className="truncate">{value.label}</span>
-          <button type="button" aria-label="Bỏ chọn khách" onClick={() => { onChange(null); setQ(""); }}><X className="size-3.5" /></button>
+          <button type="button" aria-label={t("filters.clearCustomer")} onClick={() => { onChange(null); setQ(""); }}><X className="size-3.5" /></button>
         </div>
       ) : (
         <div className="relative">
-          <input className={FILTER_FIELD} placeholder="Theo mã, tên, số điện thoại" aria-label="Khách hàng" value={q} onChange={(e) => setQ(e.target.value)} />
+          <input className={FILTER_FIELD} placeholder={t("filters.customerPlaceholder")} aria-label={t("filters.customer")} value={q} onChange={(e) => setQ(e.target.value)} />
           {show && (
             <div className="absolute inset-x-0 top-8 z-30 max-h-64 overflow-y-auto rounded-md border bg-background shadow-lg">
-              {!data?.items.length && <p className="p-2 text-xs text-muted-foreground">Không tìm thấy khách hàng</p>}
+              {!data?.items.length && <p className="p-2 text-xs text-muted-foreground">{t("filters.customerNotFound")}</p>}
               {data?.items.map((c) => (
                 <button key={c.id} type="button" className="block w-full px-2 py-1.5 text-left text-xs hover:bg-primary-tint"
                   onClick={() => onChange({ id: c.id, label: `${c.name} (${c.code})` })}>
@@ -100,10 +105,11 @@ export function CustomerFilter({ value, onChange }: { value: PickedCustomer; onC
 
 /** Chi nhánh của người dùng (chỉ hiện khi làm việc ở > 1 chi nhánh). Rỗng = tất cả chi nhánh được làm việc. */
 export function BranchFilter({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const t = useT(reportsNs);
   const { data } = useCurrentUser();
   const branches = data?.user.branches ?? [];
   if (branches.length < 2) return null;
-  return <SelectFilter title="Chi nhánh" value={value} onChange={onChange} placeholder="Tất cả chi nhánh" options={branches.map((b) => [b.id, b.name] as const)} />;
+  return <SelectFilter title={t("filters.branch")} value={value} onChange={onChange} placeholder={t("filters.allBranches")} options={branches.map((b) => [b.id, b.name] as const)} />;
 }
 
 /** Tên chi nhánh in trên báo cáo: chi nhánh đang lọc, hoặc tất cả chi nhánh người dùng làm việc. */

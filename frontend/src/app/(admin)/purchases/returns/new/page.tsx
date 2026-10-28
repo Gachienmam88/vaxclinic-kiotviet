@@ -5,6 +5,8 @@ import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { api, errorMessage } from "@/lib/api-client";
 import { useCurrentUser } from "@/lib/use-current-user";
+import { useT } from "@/lib/i18n";
+import { commonNs } from "@/messages/common";
 import { PurchaseEditor } from "@/features/purchases/purchase-editor";
 import {
   editorFromReturn, emptyEditor, returnEditorFromReceipt, type EditorState,
@@ -15,6 +17,7 @@ import type { PurchaseReturn, Receipt } from "@/features/purchases/purchase-type
 function NewReturn() {
   const params = useSearchParams();
   const { data: me } = useCurrentUser();
+  const tc = useT(commonNs);
   const [initial, setInitial] = useState<EditorState | null>(null);
   const receiptId = params.get("receiptId");
   const editId = params.get("edit");
@@ -29,7 +32,7 @@ function NewReturn() {
     load.then(setInitial).catch((e) => toast.error(errorMessage(e)));
   }, [me, receiptId, editId]);
 
-  if (!initial) return <div className="p-6 text-sm text-muted-foreground">Đang tải...</div>;
+  if (!initial) return <div className="p-6 text-sm text-muted-foreground">{tc("status.loading")}</div>;
   return <PurchaseEditor mode="return" initial={initial} />;
 }
 

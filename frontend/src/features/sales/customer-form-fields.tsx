@@ -6,6 +6,9 @@ import { VnAddressFields } from "@/components/ui/vn-address-fields";
 import { cn } from "@/lib/utils";
 import type { CustomerGroup } from "./sales-types";
 import { DatePicker } from "@/components/ui/date-picker";
+import { useT } from "@/lib/i18n";
+import { commonNs } from "@/messages/common";
+import { customersNs } from "@/messages/customers";
 
 export const TEXT_FIELDS = ["code", "name", "phone", "phone2", "email", "facebook", "birthday", "address", "province", "ward",
   "groupId", "note", "buyerName", "companyName", "taxCode", "invoiceAddress", "invoiceProvince", "invoiceWard",
@@ -35,12 +38,13 @@ function Row({ label, required, top, children }: { label: string; required?: boo
 
 /** Khu vực (Tỉnh/Thành phố) → Phường/Xã của địa chỉ chính hoặc địa chỉ xuất hóa đơn (lưu cả mã + tên). */
 function AreaRows({ f, setF, invoice }: Pick<FieldProps, "f" | "setF"> & { invoice?: boolean }) {
+  const t = useT(customersNs);
   const k = invoice
     ? { p: "invoiceProvince", w: "invoiceWard", pc: "invoiceProvinceCode", wc: "invoiceWardCode" } as const
     : { p: "province", w: "ward", pc: "provinceCode", wc: "wardCode" } as const;
   return (
     <VnAddressFields hideAddress idPrefix={invoice ? "customer-invoice" : "customer"} controlClassName={line}
-      labels={{ province: invoice ? "Tỉnh/Thành phố" : "Khu vực", ward: invoice ? "Phường/Xã" : "Phường xã" }}
+      labels={{ province: invoice ? t("form.invoice.province") : t("form.area"), ward: invoice ? t("form.invoice.ward") : t("form.ward") }}
       value={{ address: "", provinceCode: f[k.pc], provinceName: f[k.p], wardCode: f[k.wc], wardName: f[k.w] }}
       onChange={(v) => setF((x) => ({ ...x, [k.p]: v.provinceName, [k.w]: v.wardName, [k.pc]: v.provinceCode, [k.wc]: v.wardCode }))}
       renderRow={(key, label, control) => <Row key={key} label={label}>{control}</Row>} />
@@ -59,35 +63,37 @@ function Radio({ checked, onChange, label }: { checked: boolean; onChange: () =>
 
 /** Tab "Thông tin chung" — thứ tự trường theo màn KiotViet. */
 export function CustomerGeneralFields({ f, setF, bind, req, groups }: FieldProps) {
+  const t = useT(customersNs);
+  const tc = useT(commonNs);
   return (
     <div className="flex gap-6">
       <div className="flex w-[95px] shrink-0 justify-center pt-1" aria-hidden>
         <div className="flex size-[95px] items-center justify-center rounded-full bg-[#eff0f3]"><UserRound className="size-8 fill-[#4b5563] text-[#4b5563]" /></div>
       </div>
       <Col>
-        <Row label="Mã khách hàng"><Input placeholder="Mã mặc định" {...bind("code")} className={line} /></Row>
-        <Row label="Tên khách hàng"><Input required autoFocus placeholder="Bắt buộc" {...bind("name")} className={line} /></Row>
-        <Row label="Điện thoại" required={req("phone")}><Input {...bind("phone")} className={line} /></Row>
-        <Row label=""><Input placeholder="Điện thoại 2" aria-label="Điện thoại 2" {...bind("phone2")} className={line} /></Row>
-        <Row label="Địa chỉ" required={req("address")} top><textarea placeholder="Số nhà, tòa nhà, ngõ, đường" {...bind("address")} className={area} /></Row>
+        <Row label={t("form.code")}><Input placeholder={t("form.codePlaceholder")} {...bind("code")} className={line} /></Row>
+        <Row label={t("form.name")}><Input required autoFocus placeholder={tc("status.required")} {...bind("name")} className={line} /></Row>
+        <Row label={t("form.phone")} required={req("phone")}><Input {...bind("phone")} className={line} /></Row>
+        <Row label=""><Input placeholder={t("form.phone2")} aria-label={t("form.phone2")} {...bind("phone2")} className={line} /></Row>
+        <Row label={t("form.address")} required={req("address")} top><textarea placeholder={t("form.addressPlaceholder")} {...bind("address")} className={area} /></Row>
         <AreaRows f={f} setF={setF} />
       </Col>
       <Col>
-        <Row label="Nhóm" required={req("group")}>
-          <select aria-label="Nhóm khách hàng" {...bind("groupId")} className={cn(line, "w-full outline-none", !f.groupId && "text-muted-foreground")}>
-            <option value="">Chọn nhóm khách hàng</option>
+        <Row label={t("form.group")} required={req("group")}>
+          <select aria-label={t("form.groupAria")} {...bind("groupId")} className={cn(line, "w-full outline-none", !f.groupId && "text-muted-foreground")}>
+            <option value="">{t("form.pickGroup")}</option>
             {groups.map((g) => <option key={g.id} value={g.id} className="text-foreground">{g.name}</option>)}
           </select></Row>
-        <Row label="Ngày sinh" required={req("birthday") || req("gender")}>
+        <Row label={t("form.birthday")} required={req("birthday") || req("gender")}>
           <div className="flex items-center gap-4">
-            <DatePicker aria-label="Ngày sinh" value={f.birthday} onChange={(v) => setF((x) => ({ ...x, birthday: v }))} className={cn(line, "w-[126px]")} />
-            <Radio label="Nam" checked={f.gender === "MALE"} onChange={() => setF((x) => ({ ...x, gender: "MALE" }))} />
-            <Radio label="Nữ" checked={f.gender === "FEMALE"} onChange={() => setF((x) => ({ ...x, gender: "FEMALE" }))} />
+            <DatePicker aria-label={t("form.birthday")} value={f.birthday} onChange={(v) => setF((x) => ({ ...x, birthday: v }))} className={cn(line, "w-[126px]")} />
+            <Radio label={t("enums.gender.MALE")} checked={f.gender === "MALE"} onChange={() => setF((x) => ({ ...x, gender: "MALE" }))} />
+            <Radio label={t("enums.gender.FEMALE")} checked={f.gender === "FEMALE"} onChange={() => setF((x) => ({ ...x, gender: "FEMALE" }))} />
           </div>
         </Row>
-        <Row label="Email" required={req("email")}><Input type="email" {...bind("email")} className={line} /></Row>
-        <Row label="Facebook" required={req("facebook")}><Input {...bind("facebook")} className={line} /></Row>
-        <Row label="Ghi chú" top><textarea aria-label="Ghi chú" {...bind("note")} className={area} /></Row>
+        <Row label={t("form.email")} required={req("email")}><Input type="email" {...bind("email")} className={line} /></Row>
+        <Row label={t("form.facebook")} required={req("facebook")}><Input {...bind("facebook")} className={line} /></Row>
+        <Row label={t("form.note")} top><textarea aria-label={t("form.note")} {...bind("note")} className={area} /></Row>
       </Col>
     </div>
   );
@@ -95,28 +101,29 @@ export function CustomerGeneralFields({ f, setF, bind, req, groups }: FieldProps
 
 /** Tab "Thông tin xuất hóa đơn". */
 export function CustomerInvoiceFields({ f, setF, bind }: FieldProps) {
+  const t = useT(customersNs);
   return (
     <div className="flex gap-9">
       <Col>
-        <Row label="Loại khách hàng">
+        <Row label={t("form.invoice.customerType")}>
           <div className="flex h-[30px] items-center gap-3">
-            <Radio label="Cá nhân / Hộ kinh doanh" checked={f.customerType === "PERSONAL"} onChange={() => setF((x) => ({ ...x, customerType: "PERSONAL" }))} />
-            <Radio label="Doanh nghiệp" checked={f.customerType === "COMPANY"} onChange={() => setF((x) => ({ ...x, customerType: "COMPANY" }))} />
+            <Radio label={t("form.invoice.personal")} checked={f.customerType === "PERSONAL"} onChange={() => setF((x) => ({ ...x, customerType: "PERSONAL" }))} />
+            <Radio label={t("form.invoice.company")} checked={f.customerType === "COMPANY"} onChange={() => setF((x) => ({ ...x, customerType: "COMPANY" }))} />
           </div>
         </Row>
-        <Row label="Tên người mua"><Input placeholder="Nhập tên người mua" {...bind("buyerName")} className={line} /></Row>
-        <Row label="Mã số thuế"><Input placeholder="Nhập mã số thuế" {...bind("taxCode")} className={line} /></Row>
-        <Row label="Địa chỉ" top><textarea aria-label="Địa chỉ xuất hóa đơn" {...bind("invoiceAddress")} className={area} /></Row>
+        <Row label={t("form.invoice.buyerName")}><Input placeholder={t("form.invoice.buyerNamePlaceholder")} {...bind("buyerName")} className={line} /></Row>
+        <Row label={t("form.invoice.taxCode")}><Input placeholder={t("form.invoice.taxCodePlaceholder")} {...bind("taxCode")} className={line} /></Row>
+        <Row label={t("form.invoice.address")} top><textarea aria-label={t("form.invoice.addressAria")} {...bind("invoiceAddress")} className={area} /></Row>
         <AreaRows f={f} setF={setF} invoice />
       </Col>
       <Col>
-        <Row label="Tên đơn vị"><Input placeholder="Nhập tên đơn vị" {...bind("companyName")} className={line} /></Row>
-        <Row label="Số CMND/CCCD"><Input placeholder="Nhập CCCD/CMND" {...bind("idNumber")} className={line} /></Row>
-        <Row label="Số hộ chiếu"><Input placeholder="Nhập số hộ chiếu" {...bind("passport")} className={line} /></Row>
-        <Row label="Email"><Input type="email" placeholder="email@example.com" {...bind("invoiceEmail")} className={line} /></Row>
-        <Row label="Số điện thoại"><Input placeholder="Nhập số điện thoại" {...bind("invoicePhone")} className={line} /></Row>
-        <Row label="Tên ngân hàng"><Input placeholder="Nhập tên ngân hàng" {...bind("bankName")} className={line} /></Row>
-        <Row label="STK ngân hàng"><Input placeholder="Nhập số tài khoản" {...bind("bankAccount")} className={line} /></Row>
+        <Row label={t("form.invoice.companyName")}><Input placeholder={t("form.invoice.companyNamePlaceholder")} {...bind("companyName")} className={line} /></Row>
+        <Row label={t("form.invoice.idNumber")}><Input placeholder={t("form.invoice.idNumberPlaceholder")} {...bind("idNumber")} className={line} /></Row>
+        <Row label={t("form.invoice.passport")}><Input placeholder={t("form.invoice.passportPlaceholder")} {...bind("passport")} className={line} /></Row>
+        <Row label={t("form.invoice.email")}><Input type="email" placeholder="email@example.com" {...bind("invoiceEmail")} className={line} /></Row>
+        <Row label={t("form.invoice.phone")}><Input placeholder={t("form.invoice.phonePlaceholder")} {...bind("invoicePhone")} className={line} /></Row>
+        <Row label={t("form.invoice.bankName")}><Input placeholder={t("form.invoice.bankNamePlaceholder")} {...bind("bankName")} className={line} /></Row>
+        <Row label={t("form.invoice.bankAccount")}><Input placeholder={t("form.invoice.bankAccountPlaceholder")} {...bind("bankAccount")} className={line} /></Row>
       </Col>
     </div>
   );

@@ -13,7 +13,9 @@ import { InvoiceListTable } from "@/features/sales/invoice-list-table";
 import { InvoiceListToolbar } from "@/features/sales/invoice-list-toolbar";
 import { useInvoices } from "@/features/sales/sales-queries";
 import { errorMessage } from "@/lib/api-client";
+import { useT } from "@/lib/i18n";
 import { useCurrentUser } from "@/lib/use-current-user";
+import { salesNs } from "@/messages/sales";
 
 /** Không có hóa đơn nào được đánh dấu: lọc theo id rỗng để server trả danh sách trống. */
 const NO_ID = "00000000-0000-0000-0000-000000000000";
@@ -24,6 +26,7 @@ const NO_ID = "00000000-0000-0000-0000-000000000000";
  * (Hồ sơ cửa hàng → Hóa đơn điện tử).
  */
 function InvoicesPage({ code, id, einvoice }: { code: string | null; id: string | null; einvoice: string | null }) {
+  const t = useT(salesNs);
   const deepLink = !!(code || id);
   const { data: me } = useCurrentUser();
   const fav = useInvoiceFavourites(me?.user.id);
@@ -38,7 +41,7 @@ function InvoicesPage({ code, id, einvoice }: { code: string | null; id: string 
   const [size, setSize] = useState(15);
   // undefined = người dùng chưa mở / đóng dòng nào → mở sẵn hóa đơn của link sâu
   const [expanded, setExpanded] = useState<string | null | undefined>(id ?? undefined);
-  useEffect(() => { const t = setTimeout(() => { setQ(search); setPage(0); }, 300); return () => clearTimeout(t); }, [search]);
+  useEffect(() => { const timer = setTimeout(() => { setQ(search); setPage(0); }, 300); return () => clearTimeout(timer); }, [search]);
 
   const ids = linkId ? [linkId] : favOnly ? (fav.ids.length ? fav.ids : [NO_ID]) : undefined;
   const params = useMemo(() => invoiceListParams(filters, q, page, size, ids), [filters, q, page, size, ids?.join()]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -55,7 +58,7 @@ function InvoicesPage({ code, id, einvoice }: { code: string | null; id: string 
   return (
     <div className="flex gap-2.5">
       <div className="space-y-3">
-        <PageTitle>Hóa đơn</PageTitle>
+        <PageTitle>{t("invoices.title")}</PageTitle>
         <InvoiceFilterSidebar value={filters} onChange={changeFilters} />
       </div>
       <div className="min-w-0 flex-1 space-y-3">
@@ -66,7 +69,7 @@ function InvoicesPage({ code, id, einvoice }: { code: string | null; id: string 
             favOnly={favOnly} onFavOnly={() => { setFavOnly(!favOnly); setPage(0); }}
             onWiden={filters.time.mode !== "all" ? () => changeFilters({ ...filters, time: { mode: "all" } }) : undefined} />
         </div>
-        <ListPager total={data?.total ?? 0} page={page} size={size} unit="hóa đơn" onPage={setPage} onSize={(s) => { setSize(s); setPage(0); }} />
+        <ListPager total={data?.total ?? 0} page={page} size={size} unit={t("invoices.unit")} onPage={setPage} onSize={(s) => { setSize(s); setPage(0); }} />
       </div>
     </div>
   );

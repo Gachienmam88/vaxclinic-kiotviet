@@ -11,25 +11,30 @@ import { CustomerDetailSalesTab } from "./customer-detail-sales-tab";
 import { CustomerFormDialog } from "./customer-form-dialog";
 import { kvTabsList, kvTabsTrigger } from "./customer-ui-primitives";
 import { useCustomer } from "./sales-queries";
+import { useT } from "@/lib/i18n";
+import { commonNs } from "@/messages/common";
+import { customersNs } from "@/messages/customers";
 
 /** Chi tiết khách hàng mở dưới dòng: Thông tin | Lịch sử bán/trả hàng | Nợ cần thu từ khách. */
 export function CustomerDetailPanel({ id, onClose }: { id: string; onClose?: () => void }) {
+  const t = useT(customersNs);
+  const tc = useT(commonNs);
   const { data: c } = useCustomer(id);
   const [editing, setEditing] = useState(false);
-  if (!c) return <div className="border border-primary bg-white p-6 text-[13px] text-muted-foreground">Đang tải...</div>;
+  if (!c) return <div className="border border-primary bg-white p-6 text-[13px] text-muted-foreground">{tc("status.loading")}</div>;
   return (
     <div className="border border-primary bg-white px-5 pb-4">
       <Tabs defaultValue="info">
         <DetailTabsList onActiveTabClick={onClose} variant="line" className={kvTabsList}>
-          <TabsTrigger value="info" className={kvTabsTrigger}>Thông tin</TabsTrigger>
-          <TabsTrigger value="sales" className={kvTabsTrigger}>Lịch sử bán/trả hàng</TabsTrigger>
-          <TabsTrigger value="debt" className={kvTabsTrigger}>Nợ cần thu từ khách</TabsTrigger>
+          <TabsTrigger value="info" className={kvTabsTrigger}>{tc("detailTabs.info")}</TabsTrigger>
+          <TabsTrigger value="sales" className={kvTabsTrigger}>{t("detail.tabSales")}</TabsTrigger>
+          <TabsTrigger value="debt" className={kvTabsTrigger}>{t("detail.tabDebt")}</TabsTrigger>
         </DetailTabsList>
         <TabsContent value="info" className="pt-4">
           <CustomerDetailInfoTab c={c} />
           <div className="mt-4 flex justify-end border-t pt-3">
             <Button className="h-8 rounded-md px-3 text-[13px] font-semibold" onClick={() => setEditing(true)}>
-              <PencilLine className="size-4" /> Chỉnh sửa
+              <PencilLine className="size-4" /> {t("detail.edit")}
             </Button>
           </div>
         </TabsContent>

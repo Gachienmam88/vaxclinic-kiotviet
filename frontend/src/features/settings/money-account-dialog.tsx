@@ -10,6 +10,9 @@ import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/features/products/product-form-sections";
 import type { BankAccount } from "@/features/sales/sales-types";
 import { api, errorMessage } from "@/lib/api-client";
+import { useT } from "@/lib/i18n";
+import { commonNs } from "@/messages/common";
+import { settingsNs } from "@/messages/settings";
 
 /** Mã BIN (NAPAS) các ngân hàng phổ biến — dùng tạo VietQR. Ngân hàng khác: nhập BIN tay. */
 export const BANKS = [
@@ -22,6 +25,8 @@ const WALLETS = ["MoMo", "ZaloPay", "VNPay", "ShopeePay", "Viettel Money"];
 /** Thêm / sửa tài khoản thu chi: ngân hàng (có mã BIN để tạo VietQR) hoặc ví điện tử. */
 export function MoneyAccountDialog({ kind, account, onClose }: { kind: "BANK" | "EWALLET"; account?: BankAccount; onClose: () => void }) {
   const qc = useQueryClient();
+  const t = useT(settingsNs);
+  const tc = useT(commonNs);
   const bank = kind === "BANK";
   const [f, setF] = useState({
     bankName: account?.bankName ?? (bank ? "VietinBank" : "MoMo"), bankBin: account?.bankBin ?? (bank ? "970415" : ""),
@@ -29,7 +34,7 @@ export function MoneyAccountDialog({ kind, account, onClose }: { kind: "BANK" | 
   });
   const save = useMutation({
     mutationFn: () => api(account ? `/bank-accounts/${account.id}` : "/bank-accounts", { method: account ? "PUT" : "POST", body: { ...f, kind } }),
-    onSuccess: () => { toast.success(account ? "Đã cập nhật tài khoản" : "Đã thêm tài khoản"); qc.invalidateQueries({ queryKey: ["bank-accounts"] }); onClose(); },
+    onSuccess: () => { toast.success(account ? t("moneyAccount.updated") : t("moneyAccount.added")); qc.invalidateQueries({ queryKey: ["bank-accounts"] }); onClose(); },
     onError: (e) => toast.error(errorMessage(e)),
   });
   const bind = (k: keyof typeof f) => ({ value: f[k], onChange: (e: React.ChangeEvent<HTMLInputElement>) => setF({ ...f, [k]: e.target.value }) });
@@ -37,9 +42,9 @@ export function MoneyAccountDialog({ kind, account, onClose }: { kind: "BANK" | 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="sm:max-w-lg">
-        <DialogHeader><DialogTitle>{account ? "Sửa" : "Thêm"} {bank ? "tài khoản ngân hàng" : "ví điện tử"}</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{t(bank ? (account ? "moneyAccount.editBank" : "moneyAccount.addBank") : (account ? "moneyAccount.editWallet" : "moneyAccount.addWallet"))}</DialogTitle></DialogHeader>
         <div className="grid grid-cols-2 gap-3 text-sm">
-          <div className="grid gap-1.5"><Label>{bank ? "Ngân hàng" : "Ví điện tử"}</Label>
+          <div className="grid gap-1.5"><Label>{bank ? t("moneyAccount.bank") : t("moneyAccount.wallet")}</Label>
             {bank ? (
               <NativeSelect value={BANKS.some(([n]) => n === f.bankName) ? f.bankName : ""} onChange={(e) =>
                 setF({ ...f, bankName: e.target.value, bankBin: BANKS.find(([n]) => n === e.target.value)?.[1] ?? f.bankBin })}>
@@ -49,15 +54,15 @@ export function MoneyAccountDialog({ kind, account, onClose }: { kind: "BANK" | 
               <><Input list="wallet-names" {...bind("bankName")} /><datalist id="wallet-names">{WALLETS.map((w) => <option key={w} value={w} />)}</datalist></>
             )}</div>
           {bank
-            ? <div className="grid gap-1.5"><Label>Mã BIN (NAPAS)</Label><Input {...bind("bankBin")} /></div>
+            ? <div className="grid gap-1.5"><Label>{t("moneyAccount.bin")}</Label><Input {...bind("bankBin")} /></div>
             : <div />}
-          <div className="grid gap-1.5"><Label>{bank ? "Số tài khoản" : "Số điện thoại / mã ví"} *</Label><Input {...bind("accountNo")} /></div>
-          <div className="grid gap-1.5"><Label>{bank ? "Chủ tài khoản" : "Chủ ví"} *</Label><Input {...bind("accountName")} /></div>
-          <div className="col-span-2 grid gap-1.5"><Label>Ghi chú</Label><Input {...bind("note")} /></div>
+          <div className="grid gap-1.5"><Label>{bank ? t("moneyAccount.accountNo") : t("moneyAccount.walletNo")} *</Label><Input {...bind("accountNo")} /></div>
+          <div className="grid gap-1.5"><Label>{bank ? t("moneyAccount.holder") : t("moneyAccount.walletHolder")} *</Label><Input {...bind("accountName")} /></div>
+          <div className="col-span-2 grid gap-1.5"><Label>{t("moneyAccount.note")}</Label><Input {...bind("note")} /></div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Bỏ qua</Button>
-          <Button disabled={!f.bankName.trim() || !f.accountNo.trim() || !f.accountName.trim() || save.isPending} onClick={() => save.mutate()}>Lưu</Button>
+          <Button variant="outline" onClick={onClose}>{tc("actions.skip")}</Button>
+          <Button disabled={!f.bankName.trim() || !f.accountNo.trim() || !f.accountName.trim() || save.isPending} onClick={() => save.mutate()}>{tc("actions.save")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

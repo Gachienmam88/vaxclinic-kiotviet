@@ -13,14 +13,12 @@ import {
 } from "./product-queries";
 import type { StockFilter } from "./product-types";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
+import { useT } from "@/lib/i18n";
+import { commonNs } from "@/messages/common";
+import { productsNs } from "@/messages/products";
 
-const STOCK_OPTIONS: { value: StockFilter; label: string }[] = [
-  { value: "ALL", label: "Tất cả" },
-  { value: "BELOW_MIN", label: "Dưới định mức tồn" },
-  { value: "ABOVE_MAX", label: "Vượt định mức tồn" },
-  { value: "IN_STOCK", label: "Còn hàng trong kho" },
-  { value: "OUT_OF_STOCK", label: "Hết hàng trong kho" },
-];
+/** Nhãn: t(`filter.stockOptions.${value}`). */
+const STOCK_OPTIONS: StockFilter[] = ["ALL", "BELOW_MIN", "ABOVE_MAX", "IN_STOCK", "OUT_OF_STOCK"];
 
 type Props = { filters: ProductFilters; onChange: (f: ProductFilters) => void };
 
@@ -69,56 +67,59 @@ export function ProductFilterSidebar({ filters, onChange }: Props) {
   const { data: taxRates = [] } = useTaxRates();
   const set = (patch: Partial<ProductFilters>) => onChange({ ...filters, ...patch });
   const [customTime, setCustomTime] = useState(!!(filters.createdFrom || filters.createdTo));
+  const t = useT(productsNs);
+  const tc = useT(commonNs);
+  const stockOptions = STOCK_OPTIONS.map((value) => ({ value, label: t(`filter.stockOptions.${value}`) }));
 
   async function createCategory() {
-    try { await promptCreateCategory(qc); } catch (e) { toast.error(errorMessage(e)); }
+    try { await promptCreateCategory(qc, t("form.promptNewCategory")); } catch (e) { toast.error(errorMessage(e)); }
   }
 
   return (
     <aside className="w-[200px] shrink-0 space-y-4 rounded-lg bg-background p-2.5">
-      <Section title="Nhóm hàng" action={can("catalog.manage") && (
-        <button type="button" className="text-[13px] text-primary hover:underline" onClick={createCategory}>Tạo mới</button>
+      <Section title={t("fields.category")} action={can("catalog.manage") && (
+        <button type="button" className="text-[13px] text-primary hover:underline" onClick={createCategory}>{t("form.createNew")}</button>
       )}>
-        <ProductFilterMultiSelect placeholder="Chọn nhóm hàng" options={flattenCategoryTree(categories)}
+        <ProductFilterMultiSelect placeholder={t("filter.pickCategory")} options={flattenCategoryTree(categories)}
           value={filters.categoryIds} onChange={(categoryIds) => set({ categoryIds })} />
       </Section>
-      <Section title="Tỷ lệ tính thuế">
-        <ProductFilterMultiSelect placeholder="Chọn thuế suất" options={taxRates}
+      <Section title={t("fields.taxRate")}>
+        <ProductFilterMultiSelect placeholder={t("filter.pickTaxRate")} options={taxRates}
           value={filters.taxRateIds} onChange={(taxRateIds) => set({ taxRateIds })} />
       </Section>
-      <Section title="Áp dụng giảm thuế">
+      <Section title={t("fields.taxReduction")}>
         <Pills value={filters.taxReduction} onChange={(v) => set({ taxReduction: v })}
-          options={[{ value: "all", label: "Tất cả" }, { value: "yes", label: "Có" }, { value: "no", label: "Không" }]} />
+          options={[{ value: "all", label: tc("status.all") }, { value: "yes", label: tc("status.yes") }, { value: "no", label: tc("status.no") }]} />
       </Section>
-      <Section title="Tồn kho">
+      <Section title={t("fields.stock")}>
         <div className="space-y-1">
-          <div className="text-xs text-muted-foreground">Tiêu chí tồn</div>
-          <Select value={filters.stock} items={STOCK_OPTIONS}
+          <div className="text-xs text-muted-foreground">{t("filter.stockCriteria")}</div>
+          <Select value={filters.stock} items={stockOptions}
             onValueChange={(v) => set({ stock: (v ?? "ALL") as StockFilter })}>
             <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
             <SelectContent>
-              {STOCK_OPTIONS.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+              {stockOptions.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>
       </Section>
-      <Section title="Thời gian tạo">
+      <Section title={t("filter.createdTime")}>
         <div>
-          <Radio label="Toàn thời gian" checked={!customTime}
+          <Radio label={t("filter.allTime")} checked={!customTime}
             onSelect={() => { setCustomTime(false); set({ createdFrom: "", createdTo: "" }); }} />
-          <Radio label="Tùy chỉnh" checked={customTime} onSelect={() => setCustomTime(true)} />
+          <Radio label={tc("calendar.custom")} checked={customTime} onSelect={() => setCustomTime(true)} />
           {customTime && (
             <div className="mt-1">
-              <DateRangePicker placeholder="Chọn khoảng ngày" value={{ from: filters.createdFrom, to: filters.createdTo }}
+              <DateRangePicker placeholder={tc("calendar.pickRange")} value={{ from: filters.createdFrom, to: filters.createdTo }}
                 onChange={(r) => set({ createdFrom: r.from, createdTo: r.to })} />
             </div>
           )}
         </div>
       </Section>
-      <Section title="Trạng thái hàng hóa">
+      <Section title={t("filter.productStatus")}>
         <Pills value={filters.active} onChange={(v) => set({ active: v })}
-          options={[{ value: "yes", label: "Đang kinh doanh" }, { value: "no", label: "Ngừng kinh doanh" },
-            { value: "all", label: "Tất cả" }]} />
+          options={[{ value: "yes", label: t("detail.selling") }, { value: "no", label: t("detail.discontinued") },
+            { value: "all", label: tc("status.all") }]} />
       </Section>
     </aside>
   );

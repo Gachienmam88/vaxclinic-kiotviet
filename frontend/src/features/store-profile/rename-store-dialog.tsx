@@ -5,27 +5,22 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { STORE_KEY } from "@/features/auth/store-access-dialog";
 import { api, errorMessage } from "@/lib/api-client";
+import { useT } from "@/lib/i18n";
+import { storeProfileNs } from "@/messages/store-profile";
+import { renderRichText } from "@/lib/i18n/render-rich-text";
 import { FlowFooter, FlowStepper, useVerifyStep } from "./store-flow-parts";
 import type { StoreProfile } from "./store-profile-queries";
 
-const STEPS = ["Thông tin lưu ý", "Nhập tên mới", "Xác thực"];
-
-/** Các tác động của việc đổi tên (ảnh 182) — viết lại cho hệ thống nội bộ. */
-const WARNINGS: { title: string; points: string[] }[] = [
-  { title: "Toàn bộ thiết bị bị đăng xuất ngay lập tức", points: [
-    "Tất cả nhân viên đang đăng nhập trên web và máy bán hàng tại quầy sẽ bị đăng xuất, kể cả bạn.",
-    "Bạn có trách nhiệm thông báo tên gian hàng mới cho toàn bộ nhân viên trước hoặc ngay sau khi đổi.",
-  ] },
-  { title: "Các liên kết đang dùng sẽ không còn hoạt động", points: [
-    "Link đăng nhập cũ, bookmark trên trình duyệt có chứa tên cũ sẽ không vào được. Cần cập nhật và thông báo link mới.",
-  ] },
-  { title: "Tên cũ không được giữ lại sau khi đổi", points: [
-    "Muốn dùng lại tên cũ phải đổi tên thêm một lần nữa (mọi thiết bị lại bị đăng xuất).",
-  ] },
-];
+/** Các tác động của việc đổi tên (ảnh 182) — khóa rename.warnings.<id>.title + các ý (namespace store-profile). */
+const WARNINGS = [
+  { id: "loggedOut", points: ["rename.warnings.loggedOut.p1", "rename.warnings.loggedOut.p2"] },
+  { id: "links", points: ["rename.warnings.links.p1"] },
+  { id: "oldName", points: ["rename.warnings.oldName.p1"] },
+] as const;
 
 /** "Đổi tên gian hàng": lưu ý + xác nhận đã đọc → tên mới (địa chỉ truy cập) → Xác thực. Xong → về trang đăng nhập. */
 export function RenameStoreDialog({ profile, onClose }: { profile: StoreProfile; onClose: () => void }) {
+  const t = useT(storeProfileNs);
   const [step, setStep] = useState(0);
   const [agreed, setAgreed] = useState(false);
   const [code, setCode] = useState("");
@@ -53,47 +48,47 @@ export function RenameStoreDialog({ profile, onClose }: { profile: StoreProfile;
   return (
     <Dialog open onOpenChange={(o) => !o && !saving && onClose()}>
       <DialogContent className="max-h-[90vh] gap-3 overflow-y-auto sm:max-w-[600px]">
-        <DialogHeader><DialogTitle className="text-[17px] font-semibold">Đổi tên gian hàng</DialogTitle></DialogHeader>
-        <FlowStepper steps={STEPS} current={step} />
+        <DialogHeader><DialogTitle className="text-[17px] font-semibold">{t("rename.title")}</DialogTitle></DialogHeader>
+        <FlowStepper steps={[t("rename.steps.notes"), t("rename.steps.newName"), t("rename.steps.verify")]} current={step} />
         {step === 0 && (
           <div className="space-y-3 text-[13px]">
-            <p>Trước khi đổi tên gian hàng, hãy hiểu rõ các tác động sẽ xảy ra.</p>
+            <p>{t("rename.intro")}</p>
             <ol className="divide-y divide-border rounded-lg border border-border">
               {WARNINGS.map((w, i) => (
-                <li key={w.title} className="flex gap-2.5 px-3 py-3">
+                <li key={w.id} className="flex gap-2.5 px-3 py-3">
                   <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-semibold text-primary">{i + 1}</span>
                   <div>
-                    <p className="font-semibold">{w.title}</p>
-                    <ul className="mt-1 list-disc space-y-0.5 pl-4 text-muted-foreground">{w.points.map((p) => <li key={p}>{p}</li>)}</ul>
+                    <p className="font-semibold">{t(`rename.warnings.${w.id}.title`)}</p>
+                    <ul className="mt-1 list-disc space-y-0.5 pl-4 text-muted-foreground">{w.points.map((p) => <li key={p}>{t(p)}</li>)}</ul>
                   </div>
                 </li>
               ))}
             </ol>
             <label className="flex items-center gap-2">
               <input type="checkbox" className="size-4 accent-primary" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} />
-              Tôi đã đọc và hiểu rõ các tác động của việc đổi tên gian hàng
+              {t("rename.agree")}
             </label>
           </div>
         )}
         {step === 1 && (
           <div className="space-y-2 text-[13px]">
-            <p>Tên hiện tại: <b>{profile.accessCode}</b></p>
+            <p>{renderRichText(t("rename.currentName"), { name: <b>{profile.accessCode}</b> })}</p>
             <label className="grid gap-1">
-              <span className="text-xs text-muted-foreground">Tên gian hàng mới (địa chỉ truy cập nhập ở bước đầu khi đăng nhập)</span>
-              <Input autoFocus value={code} maxLength={40} placeholder="VD: vacxinso1yenlac"
+              <span className="text-xs text-muted-foreground">{t("rename.newLabel")}</span>
+              <Input autoFocus value={code} maxLength={40} placeholder={t("rename.placeholder")}
                 onChange={(e) => setCode(e.target.value.toLowerCase().replace(/[^a-z0-9]/g, ""))} />
             </label>
-            <p className="text-xs text-muted-foreground">Chỉ gồm chữ thường không dấu và số, 3–40 ký tự, khác tên hiện tại.</p>
+            <p className="text-xs text-muted-foreground">{t("rename.rule")}</p>
           </div>
         )}
         {step === 2 && (
           <div className="space-y-3">
-            <p className="text-[13px]">Đổi tên gian hàng <b>{profile.accessCode}</b> thành <b>{code}</b>.</p>
+            <p className="text-[13px]">{renderRichText(t("rename.summary"), { from: <b>{profile.accessCode}</b>, to: <b>{code}</b> })}</p>
             {verify.fields}
             {error && <p className="text-xs text-destructive">{error}</p>}
           </div>
         )}
-        <FlowFooter onCancel={onClose} nextLabel={step === 2 ? "Đổi tên" : "Tiếp tục"}
+        <FlowFooter onCancel={onClose} nextLabel={step === 2 ? t("rename.submit") : t("flow.next")}
           disabled={(step === 0 && !agreed) || (step === 1 && !codeValid) || (step === 2 && (!verify.valid || verify.pending || saving))}
           onNext={() => (step < 2 ? setStep(step + 1) : void submit())} />
       </DialogContent>

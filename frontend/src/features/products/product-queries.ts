@@ -90,9 +90,9 @@ export function flattenCategoryTree(categories: Category[]) {
   return out;
 }
 
-/** Hỏi tên rồi tạo nhóm hàng mới (POST /categories); trả về id nhóm vừa tạo, hoặc null nếu bỏ qua. */
-export async function promptCreateCategory(qc: QueryClient): Promise<string | null> {
-  const name = prompt("Tên nhóm hàng mới")?.trim();
+/** Hỏi tên (promptText đã dịch) rồi tạo nhóm hàng mới (POST /categories); trả về id nhóm vừa tạo, hoặc null nếu bỏ qua. */
+export async function promptCreateCategory(qc: QueryClient, promptText: string): Promise<string | null> {
+  const name = prompt(promptText)?.trim();
   if (!name) return null;
   const c = await api<{ id: string }>("/categories", { method: "POST", body: { name } });
   await qc.invalidateQueries({ queryKey: ["categories"] });

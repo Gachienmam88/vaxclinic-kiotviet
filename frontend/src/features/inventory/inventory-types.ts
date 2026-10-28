@@ -4,23 +4,21 @@ export type TakeStatus = "DRAFT" | "BALANCED" | "CANCELLED";
 export type IssueStatus = "DRAFT" | "COMPLETED" | "CANCELLED";
 export type IssueType = "DAMAGE" | "INTERNAL";
 
-export const TAKE_STATUS_LABEL: Record<TakeStatus, string> = {
-  DRAFT: "Phiếu tạm", BALANCED: "Đã cân bằng kho", CANCELLED: "Đã hủy",
-};
-export const ISSUE_STATUS_LABEL: Record<IssueStatus, string> = {
-  DRAFT: "Phiếu tạm", COMPLETED: "Hoàn thành", CANCELLED: "Đã hủy",
-};
+/** Khóa nhãn trạng thái (namespace inventory) — dịch lúc render: t(TAKE_STATUS_KEY[s]). */
+export const TAKE_STATUS_KEY = {
+  DRAFT: "status.draft", BALANCED: "status.balanced", CANCELLED: "status.cancelled",
+} as const satisfies Record<TakeStatus, string>;
+export const ISSUE_STATUS_KEY = {
+  DRAFT: "status.draft", COMPLETED: "status.completed", CANCELLED: "status.cancelled",
+} as const satisfies Record<IssueStatus, string>;
 
-/** Nhãn + đường dẫn theo loại phiếu xuất (KiotViet: "Mã xuất hủy / SL hủy" vs "Mã phiếu / SL xuất"). */
+/**
+ * Theo loại phiếu xuất (KiotViet: "Mã xuất hủy / SL hủy" vs "Mã phiếu / SL xuất"): `msg` = nhóm khóa nhãn trong
+ * namespace inventory (issue.damage.* / issue.internal.*), đường dẫn và tên file CSV.
+ */
 export const ISSUE_CONFIG = {
-  DAMAGE: {
-    title: "Xuất hủy", codeLabel: "Mã xuất hủy", valueLabel: "Tổng giá trị hủy", qtyLabel: "SL hủy",
-    lineValueLabel: "Giá trị hủy", listPath: "/inventory/damages", file: "xuat-huy",
-  },
-  INTERNAL: {
-    title: "Xuất dùng nội bộ", codeLabel: "Mã phiếu", valueLabel: "Tổng giá trị", qtyLabel: "SL xuất",
-    lineValueLabel: "Giá trị", listPath: "/inventory/internal-use", file: "xuat-dung-noi-bo",
-  },
+  DAMAGE: { msg: "damage", listPath: "/inventory/damages", file: "xuat-huy" },
+  INTERNAL: { msg: "internal", listPath: "/inventory/internal-use", file: "xuat-dung-noi-bo" },
 } as const;
 
 export type TakeLine = {

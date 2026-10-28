@@ -1,5 +1,6 @@
 package com.vaxclinic.product.purchase;
 
+import com.vaxclinic.common.search.AccentInsensitiveSql;
 import com.vaxclinic.common.error.BusinessException;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -73,7 +74,7 @@ public class SupplierListQuery {
         }
         StringBuilder where = new StringBuilder(" where true");
         if (f.q() != null && !f.q().isBlank()) {
-            where.append(" and (s.code ilike :q or s.name ilike :q or s.phone like :q or s.tax_code like :q)");
+            where.append(" and (s.code ilike :q or " + AccentInsensitiveSql.like("s.name", ":q") + " or s.phone like :q or s.tax_code like :q)");
             p.addValue("q", "%" + f.q().trim().replace("%", "\\%").replace("_", "\\_") + "%");
         }
         if (f.docCode() != null && !f.docCode().isBlank()) {

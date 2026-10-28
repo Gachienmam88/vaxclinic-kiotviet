@@ -3,6 +3,8 @@
 import { useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
+import { useT } from "@/lib/i18n";
+import { saleNs, type SaleT } from "@/messages/sale";
 import { draftCopyOfInvoice, draftFromInvoice } from "./sale-open-invoice";
 import { draftFromOrder } from "./sale-open-order";
 import { SALE_ROUTE } from "./sale-storage";
@@ -16,20 +18,21 @@ import type { CatalogProduct, DraftInvoice } from "./sale-types";
 export function useSaleUrlDrafts(userId: string | undefined, catalog: CatalogProduct[], loadedAt: string | null, open: (d: DraftInvoice) => void) {
   const params = useSearchParams();
   const router = useRouter();
+  const t = useT(saleNs);
   useEffect(() => {
     const editId = params.get("edit"), returnId = params.get("return"), copyId = params.get("copy");
     const orderId = params.get("order") ?? params.get("orderInvoice");
     if (!userId || !(editId || returnId || orderId || copyId) || ((editId || orderId || copyId) && !loadedAt)) return;
-    const draft = orderId ? draftFromOrder(orderId, params.get("order") ? "edit" : "invoice", catalog, userId)
-      : copyId ? draftCopyOfInvoice(copyId, catalog, userId)
-        : draftFromInvoice((editId ?? returnId)!, editId ? "edit" : "return", catalog, userId);
+    const draft = orderId ? draftFromOrder(orderId, params.get("order") ? "edit" : "invoice", catalog, userId, t)
+      : copyId ? draftCopyOfInvoice(copyId, catalog, userId, t)
+        : draftFromInvoice((editId ?? returnId)!, editId ? "edit" : "return", catalog, userId, t);
     draft.then((dr) => { open(dr); router.replace(SALE_ROUTE); })
-      .catch((e) => toast.error(`Không mở được ${orderId ? "đơn đặt hàng" : "hóa đơn"}: ${(e as Error).message}`));
+      .catch((e) => toast.error(t("screen.openFailed", { what: t(orderId ? "screen.what.order" : "screen.what.invoice"), message: (e as Error).message })));
     // eslint-disable-next-line react-hooks/exhaustive-deps -- chạy 1 lần khi có đủ user + danh mục
   }, [userId, params, loadedAt]);
 }
 
 /** Mở 1 đơn / hóa đơn chọn từ hộp thoại (Xử lý đặt hàng, Chọn hóa đơn trả hàng) — cần mạng. */
-export function openPicked(load: Promise<DraftInvoice>, open: (d: DraftInvoice) => void, what: string) {
-  load.then(open).catch((e) => toast.error(`Không mở được ${what}: ${(e as Error).message}`));
+export function openPicked(load: Promise<DraftInvoice>, open: (d: DraftInvoice) => void, what: string, t: SaleT) {
+  load.then(open).catch((e) => toast.error(t("screen.openFailed", { what, message: (e as Error).message })));
 }

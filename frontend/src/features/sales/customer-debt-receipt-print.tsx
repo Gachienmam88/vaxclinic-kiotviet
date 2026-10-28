@@ -5,12 +5,15 @@ import { usePrinter } from "@/features/print/print-button";
 import { voucherData, type VoucherDoc } from "@/features/print/print-data";
 import { api } from "@/lib/api-client";
 import type { CashPage } from "./sales-types";
+import { useT } from "@/lib/i18n";
+import { customersNs } from "@/messages/customers";
 
 /**
  * "Tạo phiếu thu & In": sau khi thu nợ, API trả mã phiếu → tìm phiếu trong Sổ quỹ theo mã,
- * lấy chi tiết rồi in theo mẫu "Phiếu thu" của cửa hàng (dùng lại bộ in sẵn có).
+ * lấy chi tiết rồi in theo mẫu "Phiếu thu" của cửa hàng (dùng lại bộ in sẵn có). Nội dung bản in luôn tiếng Việt.
  */
 export function useDebtReceiptPrinter() {
+  const t = useT(customersNs);
   const print = usePrinter();
   return async (code: string, branchId?: string | null) => {
     try {
@@ -20,7 +23,7 @@ export function useDebtReceiptPrinter() {
       const detail = await api<{ voucher: VoucherDoc }>(`/cashbook/${item.id}`);
       print("CASH_RECEIPT", voucherData(detail.voucher), branchId);
     } catch {
-      toast.error(`Đã tạo phiếu ${code} nhưng không in được — in lại tại Sổ quỹ`);
+      toast.error(t("debtDialog.printFailed", { code }));
     }
   };
 }

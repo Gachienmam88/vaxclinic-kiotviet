@@ -41,7 +41,6 @@ export function useVerifyStep(purpose: VerifyPurpose, twoFactor: boolean) {
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const t = useT(storeProfileNs);
-  const t = useT(storeProfileNs);
   const valid = twoFactor ? /^\d{6}$/.test(value) : value.length > 0;
 
   async function submit(): Promise<string | null> {

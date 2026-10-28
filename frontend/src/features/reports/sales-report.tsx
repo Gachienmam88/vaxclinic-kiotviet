@@ -14,27 +14,29 @@ import { dayChart, dayKey, profitColumns, revenueColumns, summaryLines } from ".
 import { useCurrentUser } from "@/lib/use-current-user";
 import { useChannelOptions, usePriceBookOptions } from "./report-filter-options";
 import { DocCodeLink } from "@/components/ui/doc-code-link";
+import { useT } from "@/lib/i18n";
+import { reportsNs, type ReportsT } from "@/messages/reports";
 
 type Concern = "time" | "profit" | "discount" | "returns" | "seller" | "branch";
-const CONCERNS: [Concern, string][] = [["time", "Thời gian"], ["profit", "Lợi nhuận"], ["discount", "Giảm giá HĐ"], ["returns", "Trả hàng"],
-  ["seller", "Nhân viên"], ["branch", "Chi nhánh"]];
-const TITLES: Record<Concern, string> = {
-  time: "Báo cáo bán hàng theo thời gian", profit: "Báo cáo lợi nhuận theo thời gian", discount: "Báo cáo giảm giá hóa đơn",
-  returns: "Báo cáo trả hàng", seller: "Báo cáo bán hàng theo nhân viên", branch: "Báo cáo bán hàng theo chi nhánh",
-};
+/** Mối quan tâm; nhãn "sales.concerns.<…>", tiêu đề "sales.titles.<…>", biểu đồ "sales.charts.<…>". */
+const CONCERNS: Concern[] = ["time", "profit", "discount", "returns", "seller", "branch"];
 const GROUP: Partial<Record<Concern, string>> = { time: "DAY", profit: "DAY", seller: "SELLER", branch: "BRANCH" };
 
 type DocAgg = { code: string; time: string; customer: string; qty: number; subtotal: number; discount: number; revenue: number; fee: number; paid: number };
-const docAgg = (d: DocRow): DocAgg => ({ code: d.code, time: new Date(d.time).toLocaleString("vi-VN"), customer: d.customerName ?? "Khách lẻ",
+const docAgg = (t: ReportsT, d: DocRow): DocAgg => ({ code: d.code, time: new Date(d.time).toLocaleString("vi-VN"), customer: d.customerName ?? t("common.walkIn"),
   qty: Math.abs(d.qty), subtotal: Math.abs(d.subtotal), discount: Math.abs(d.discount), revenue: Math.abs(d.revenue), fee: d.fee, paid: Math.abs(d.paid) });
 const dm = (key: keyof DocAgg, label: string, type: "money" | "qty" = "money"): ReportColumn<DocAgg> => ({ key, label, type, value: (r) => r[key] });
-const DOC_COLS = { code: { key: "code", label: "Mã chứng từ", value: (r: DocAgg) => r.code, render: (r: DocAgg) => <DocCodeLink code={r.code} /> },
-  time: { key: "time", label: "Thời gian", value: (r: DocAgg) => r.time }, customer: { key: "customer", label: "Khách hàng", value: (r: DocAgg) => r.customer } };
-const DISCOUNT_COLS: ReportColumn<DocAgg>[] = [DOC_COLS.code, DOC_COLS.time, DOC_COLS.customer, dm("subtotal", "Tổng tiền hàng"), dm("discount", "Giảm giá HĐ"), dm("revenue", "Doanh thu")];
-const RETURN_COLS: ReportColumn<DocAgg>[] = [DOC_COLS.code, DOC_COLS.time, DOC_COLS.customer, dm("qty", "SL", "qty"), dm("revenue", "Giá trị trả"), dm("fee", "Phí trả hàng"), dm("paid", "Đã trả khách")];
+/** Cột bảng chứng từ: Giảm giá HĐ hoặc Trả hàng (nhãn theo ngôn ngữ). */
+function docColumns(t: ReportsT, discount: boolean): ReportColumn<DocAgg>[] {
+  const head: ReportColumn<DocAgg>[] = [{ key: "code", label: t("cols.docCode"), value: (r) => r.code, render: (r) => <DocCodeLink code={r.code} /> },
+    { key: "time", label: t("cols.time"), value: (r) => r.time }, { key: "customer", label: t("cols.customer"), value: (r) => r.customer }];
+  return discount ? [...head, dm("subtotal", t("cols.subtotal")), dm("discount", t("cols.invoiceDiscount")), dm("revenue", t("cols.revenue"))]
+    : [...head, dm("qty", t("cols.qty"), "qty"), dm("revenue", t("cols.returnValue")), dm("fee", t("cols.returnFee")), dm("paid", t("cols.refunded"))];
+}
 
 /** Báo cáo bán hàng: Biểu đồ (Doanh thu thuần theo ngày...) / Báo cáo, Mối quan tâm Thời gian, Lợi nhuận, Giảm giá HĐ, Trả hàng, Nhân viên, Chi nhánh. */
 export function SalesReport() {
+  const t = useT(reportsNs);
   const [mode, setMode] = useState<ViewMode>("chart");
   const [concern, setConcern] = useState<Concern>("time");
   const [time, setTime] = useState<TimeValue>({ mode: "preset", preset: "thisWeek" });
@@ -55,45 +57,46 @@ export function SalesReport() {
   const docs = (docQ.data ?? []).filter((d) => (concern === "discount" ? d.kind === "INVOICE" && Number(d.discount) > 0 : d.kind === "RETURN"));
   const branchName = (r: SummaryRow) => me?.user.branches.find((b) => b.id === r.key)?.name ?? r.key;
 
-  const table = concern === "time" ? asTable(revenueColumns("Thời gian"), summaryLines(rows, `Tổng: ${rows.length} ngày`, (r) => r.key.split("-").reverse().join("/")))
-    : concern === "profit" ? asTable(profitColumns("Thời gian"), summaryLines(rows, "Tổng", (r) => r.key.split("-").reverse().join("/")))
-      : concern === "seller" ? asTable(profitColumns("Người bán"), summaryLines(rows, `SL nhân viên: ${rows.length}`))
-        : concern === "branch" ? asTable(profitColumns("Chi nhánh"), summaryLines(rows, `SL chi nhánh: ${rows.length}`, branchName))
-          : asTable(concern === "discount" ? DISCOUNT_COLS : RETURN_COLS, docs.length ? [
-            { id: "sum", kind: "sum" as const, label: `${concern === "discount" ? "SL hóa đơn" : "SL phiếu trả"}: ${docs.length}`,
-              data: docs.map(docAgg).reduce((a, d) => ({ ...a, qty: a.qty + d.qty, subtotal: a.subtotal + d.subtotal, discount: a.discount + d.discount,
-                revenue: a.revenue + d.revenue, fee: a.fee + d.fee, paid: a.paid + d.paid }), { ...docAgg(docs[0]), code: "", time: "", customer: "", qty: 0, subtotal: 0, discount: 0, revenue: 0, fee: 0, paid: 0 }) },
-            ...docs.map((d) => ({ id: d.id, kind: "row" as const, data: docAgg(d) }))] : []);
+  const table = concern === "time" ? asTable(revenueColumns(t, t("cols.time")), summaryLines(rows, t("sales.sumDays", { n: rows.length }), (r) => r.key.split("-").reverse().join("/")))
+    : concern === "profit" ? asTable(profitColumns(t, t("cols.time")), summaryLines(rows, t("common.total"), (r) => r.key.split("-").reverse().join("/")))
+      : concern === "seller" ? asTable(profitColumns(t, t("cols.seller")), summaryLines(rows, t("sales.sellerCount", { n: rows.length })))
+        : concern === "branch" ? asTable(profitColumns(t, t("cols.branch")), summaryLines(rows, t("sales.branchCount", { n: rows.length }), branchName))
+          : asTable(docColumns(t, concern === "discount"), docs.length ? [
+            { id: "sum", kind: "sum" as const, label: t(concern === "discount" ? "sales.invoiceCount" : "sales.returnCount", { n: docs.length }),
+              data: docs.map((d) => docAgg(t, d)).reduce((a, d) => ({ ...a, qty: a.qty + d.qty, subtotal: a.subtotal + d.subtotal, discount: a.discount + d.discount,
+                revenue: a.revenue + d.revenue, fee: a.fee + d.fee, paid: a.paid + d.paid }), { ...docAgg(t, docs[0]), code: "", time: "", customer: "", qty: 0, subtotal: 0, discount: 0, revenue: 0, fee: 0, paid: 0 }) },
+            ...docs.map((d) => ({ id: d.id, kind: "row" as const, data: docAgg(t, d) }))] : []);
 
   const chart = () => {
-    const label = timeLabel(time);
+    const period = timeLabel(t, time);
     if (concern === "seller" || concern === "branch") {
       const items = rows.map((r) => ({ label: concern === "branch" ? branchName(r) : r.name, value: Number(r.revenue) - Number(r.returnValue) }));
-      return <ChartCard title={`Doanh thu thuần theo ${concern === "branch" ? "chi nhánh" : "nhân viên"} ${label}`}>{items.length ? <BarChart items={items} /> : <EmptyChart />}</ChartCard>;
+      return <ChartCard title={t(`sales.charts.${concern}`, { period })}>{items.length ? <BarChart items={items} /> : <EmptyChart />}</ChartCard>;
     }
     const values = new Map<string, number>();
     if (group) rows.forEach((r) => values.set(r.key, concern === "profit" ? Number(r.revenue) - Number(r.returnValue) - Number(r.cogs) : Number(r.revenue) - Number(r.returnValue)));
     else docs.forEach((d) => values.set(dayKey(d.time), (values.get(dayKey(d.time)) ?? 0) + Math.abs(Number(concern === "discount" ? d.discount : d.revenue))));
-    const titles: Record<string, string> = { time: "Doanh thu thuần", profit: "Lợi nhuận gộp", discount: "Giảm giá hóa đơn", returns: "Giá trị trả hàng" };
-    return <ChartCard title={`${titles[concern]} ${label}`}><ColumnChart items={dayChart(range, values)} /></ChartCard>;
+    return <ChartCard title={t(`sales.charts.${concern}`, { period })}><ColumnChart items={dayChart(range, values)} /></ChartCard>;
   };
   const active = group ? sumQ : docQ;
-  const exportCsv = () => { const t = linesToCsv(table.columns, table.lines); downloadCsv(`bao-cao-ban-hang-${concern}-${ymd(range.from)}.csv`, t.header, t.rows); };
+  const exportCsv = () => { const csv = linesToCsv(table.columns, table.lines); downloadCsv(`bao-cao-ban-hang-${concern}-${ymd(range.from)}.csv`, csv.header, csv.rows); };
 
   return (
-    <ReportLayout title="Báo cáo bán hàng" sidebar={<>
+    <ReportLayout title={t("sales.title")} sidebar={<>
       <ViewModeFilter value={mode} onChange={setMode} />
-      <SelectFilter title="Mối quan tâm" value={concern} onChange={(v) => setConcern(v as Concern)} options={CONCERNS} />
+      <SelectFilter title={t("filters.concern")} value={concern} onChange={(v) => setConcern(v as Concern)}
+        options={CONCERNS.map((c) => [c, t(`sales.concerns.${c}`)] as const)} />
       <BranchFilter value={branch} onChange={setBranch} />
-      <SelectFilter title="Bảng giá" value={priceBook} onChange={setPriceBook} placeholder="Chọn bảng giá" options={priceBooks} />
+      <SelectFilter title={t("filters.priceBook")} value={priceBook} onChange={setPriceBook} placeholder={t("filters.pickPriceBook")} options={priceBooks} />
       <TimeFilter value={time} onChange={setTime} />
-      <SelectFilter title="Phương thức bán hàng" value={saleMode} onChange={setSaleMode} placeholder="Chọn phương thức bán hàng" options={SALE_MODES} />
-      <SelectFilter title="Kênh bán" value={channel} onChange={setChannel} placeholder="Chọn kênh bán" options={channels} />
+      <SelectFilter title={t("filters.saleMode")} value={saleMode} onChange={setSaleMode} placeholder={t("filters.pickSaleMode")}
+        options={SALE_MODES.map((m) => [m, t(`saleModes.${m}`)] as const)} />
+      <SelectFilter title={t("filters.channel")} value={channel} onChange={setChannel} placeholder={t("filters.pickChannel")} options={channels} />
     </>}>
       {mode === "chart" ? chart() : (
-        <ReportViewer title={TITLES[concern]} meta={[rangeText(range), `Chi nhánh: ${branchLabel}`]} landscape={concern !== "time"}
+        <ReportViewer title={t(`sales.titles.${concern}`)} meta={[rangeText(t, range), t("common.branchMeta", { branch: branchLabel })]} landscape={concern !== "time"}
           loading={active.isFetching} onRefresh={() => active.refetch()} onExport={table.lines.length ? exportCsv : undefined}>
-          {active.isError ? <p className="rp-empty">Không tải được báo cáo</p> : <ReportTable columns={table.columns} lines={table.lines} />}
+          {active.isError ? <p className="rp-empty">{t("common.loadError")}</p> : <ReportTable columns={table.columns} lines={table.lines} />}
         </ReportViewer>)}
     </ReportLayout>
   );

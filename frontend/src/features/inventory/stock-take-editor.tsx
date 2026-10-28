@@ -11,6 +11,8 @@ import { useBranches } from "@/features/settings/settings-queries";
 import { api, errorMessage } from "@/lib/api-client";
 import { formatMoney, formatNumber } from "@/lib/format";
 import { useCurrentUser } from "@/lib/use-current-user";
+import { useT } from "@/lib/i18n";
+import { inventoryNs } from "@/messages/inventory";
 import { cn } from "@/lib/utils";
 import { InventoryEditorShell, PANEL_FIELD, PanelRow } from "./inventory-editor-shell";
 import {
@@ -18,11 +20,12 @@ import {
 } from "./stock-take-editor-state";
 import { StockTakeLineTable } from "./stock-take-line-table";
 
-const TABS: [TakeTab, string][] = [["all", "Tất cả"], ["match", "Khớp"], ["diff", "Lệch"], ["unchecked", "Chưa kiểm"]];
+const TABS = ["all", "match", "diff", "unchecked"] as const satisfies readonly TakeTab[];
 const LIST = "/inventory/stock-takes";
 
 /** Màn kiểm kho toàn trang: chọn hàng (hàng theo lô → mỗi lô 1 dòng), nhập thực tế, Lưu tạm / Hoàn thành (cân bằng kho). */
 export function StockTakeEditor({ initial }: { initial: TakeEditorState }) {
+  const tr = useT(inventoryNs);
   const router = useRouter();
   const qc = useQueryClient();
   const { data: me } = useCurrentUser();
@@ -37,7 +40,7 @@ export function StockTakeEditor({ initial }: { initial: TakeEditorState }) {
   async function pick(p: ProductDetail) {
     try {
       const added = await rowsForProduct(p, state.branchId, state.rows);
-      if (!added.length) toast.info(`${p.name} đã có trên phiếu`);
+      if (!added.length) toast.info(tr("take.alreadyOnDoc", { name: p.name }));
       setState((s) => ({ ...s, rows: [...s.rows, ...added] }));
       if (p.lotManaged) setLastLotProduct(p);
     } catch (e) { toast.error(errorMessage(e)); }
@@ -49,7 +52,7 @@ export function StockTakeEditor({ initial }: { initial: TakeEditorState }) {
       return api<{ id: string; code: string }>(`${url}?complete=${complete}`, { method: state.id ? "PUT" : "POST", body: takeRequest(state) });
     },
     onSuccess: (doc, complete) => {
-      toast.success(`${complete ? "Đã cân bằng kho" : "Đã lưu tạm"} phiếu ${doc.code}`);
+      toast.success(tr(complete ? "take.savedBalanced" : "editor.savedDraft", { code: doc.code }));
       qc.invalidateQueries({ queryKey: ["stock-takes"] });
       qc.invalidateQueries({ queryKey: ["stock-take", doc.id] });
       qc.invalidateQueries({ queryKey: ["products"] });
@@ -59,33 +62,33 @@ export function StockTakeEditor({ initial }: { initial: TakeEditorState }) {
   });
 
   function submit(complete: boolean) {
-    if (!state.rows.length) return toast.error("Phiếu chưa có hàng hóa");
+    if (!state.rows.length) return toast.error(tr("editor.noLines"));
     const badLot = state.rows.find((r) => r.lotManaged && (!r.lotNumber.trim() || (r.newLot && r.actual && !r.expiryDate)));
-    if (badLot) return toast.error(`${badLot.productName}: nhập số lô và hạn sử dụng`);
+    if (badLot) return toast.error(tr("take.lotRequired", { name: badLot.productName }));
     if (complete) {
       const unchecked = state.rows.filter((r) => r.actual == null).length;
-      if (unchecked === state.rows.length) return toast.error("Chưa nhập số lượng thực tế cho hàng nào");
-      if (!confirm(`Cân bằng kho theo số thực tế?${unchecked ? ` ${unchecked} dòng chưa kiểm sẽ giữ nguyên tồn.` : ""} Phiếu đã cân bằng không sửa / hủy được.`)) return;
+      if (unchecked === state.rows.length) return toast.error(tr("take.noActual"));
+      if (!confirm(unchecked ? tr("take.confirmBalanceUnchecked", { unchecked }) : tr("take.confirmBalance"))) return;
     }
     save.mutate(complete);
   }
 
   const count = (k: TakeTab) => (k === "all" ? state.rows.length : state.rows.filter((r) => tabOf(r) === k).length);
   return (
-    <InventoryEditorShell title="Kiểm kho" listPath={LIST} onPick={pick} empty={!state.rows.length}
+    <InventoryEditorShell title={tr("take.editorTitle")} listPath={LIST} onPick={pick} empty={!state.rows.length}
       saving={save.isPending} onSave={submit}
       toolbar={state.rows.length > 0 && (
         <div className="flex items-center gap-1.5">
-          {TABS.map(([k, label]) => (
+          {TABS.map((k) => (
             <button key={k} type="button" onClick={() => setTab(k)}
               className={cn("h-[30px] rounded-md border px-3 text-[13px]", tab === k ? "border-primary bg-primary-tint-light font-medium text-primary" : "border-[#d1d5db] bg-background")}>
-              {label} ({count(k)})
+              {tr(`take.tabs.${k}`)} ({count(k)})
             </button>
           ))}
           {lastLotProduct && (
             <button type="button" className="ml-auto flex items-center gap-1 text-[13px] text-primary hover:underline"
               onClick={() => set({ rows: [...state.rows, newLotRow(lastLotProduct)] })}>
-              <Plus className="size-4" /> Thêm lô mới cho {lastLotProduct.name}
+              <Plus className="size-4" /> {tr("take.addNewLot", { name: lastLotProduct.name })}
             </button>
           )}
         </div>
@@ -93,20 +96,20 @@ export function StockTakeEditor({ initial }: { initial: TakeEditorState }) {
       panel={(
         <div className="space-y-1.5">
           {myBranches.length > 1 && (
-            <select aria-label="Chi nhánh" className={cn(PANEL_FIELD, "mb-2.5")} value={state.branchId} disabled={state.rows.length > 0}
-              title={state.rows.length ? "Xóa hết dòng để đổi chi nhánh" : undefined} onChange={(e) => set({ branchId: e.target.value })}>
+            <select aria-label={tr("fields.branch")} className={cn(PANEL_FIELD, "mb-2.5")} value={state.branchId} disabled={state.rows.length > 0}
+              title={state.rows.length ? tr("take.clearToChangeBranch") : undefined} onChange={(e) => set({ branchId: e.target.value })}>
               {myBranches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
             </select>
           )}
-          <PanelRow label="Mã kiểm kho">
-            <div className={cn(PANEL_FIELD, "flex items-center text-left", !state.code && "text-muted-foreground")}>{state.code ?? "Mã phiếu tự động"}</div>
+          <PanelRow label={tr("fields.takeCode")}>
+            <div className={cn(PANEL_FIELD, "flex items-center text-left", !state.code && "text-muted-foreground")}>{state.code ?? tr("editor.autoCode")}</div>
           </PanelRow>
-          <PanelRow label="Trạng thái"><span className="block text-left">Phiếu tạm</span></PanelRow>
-          <PanelRow label="Tổng SL thực tế">{formatNumber(t.actualQty)}</PanelRow>
-          <PanelRow label="SL lệch tăng"><span className="text-[#0d9f4f]">{formatNumber(t.increase)}</span></PanelRow>
-          <PanelRow label="SL lệch giảm"><span className="text-destructive">{formatNumber(t.decrease)}</span></PanelRow>
-          <PanelRow label="Tổng chênh lệch" strong><span className="font-bold text-primary">{formatMoney(t.diffValue)}</span></PanelRow>
-          <Textarea aria-label="Ghi chú" className="mt-2.5 min-h-[58px] rounded-md" placeholder="Ghi chú" value={state.note}
+          <PanelRow label={tr("fields.status")}><span className="block text-left">{tr("status.draft")}</span></PanelRow>
+          <PanelRow label={tr("fields.totalActualQty")}>{formatNumber(t.actualQty)}</PanelRow>
+          <PanelRow label={tr("fields.increaseQty")}><span className="text-[#0d9f4f]">{formatNumber(t.increase)}</span></PanelRow>
+          <PanelRow label={tr("fields.decreaseQty")}><span className="text-destructive">{formatNumber(t.decrease)}</span></PanelRow>
+          <PanelRow label={tr("fields.diffTotal")} strong><span className="font-bold text-primary">{formatMoney(t.diffValue)}</span></PanelRow>
+          <Textarea aria-label={tr("fields.note")} className="mt-2.5 min-h-[58px] rounded-md" placeholder={tr("fields.note")} value={state.note}
             onChange={(e) => set({ note: e.target.value })} />
         </div>
       )}>

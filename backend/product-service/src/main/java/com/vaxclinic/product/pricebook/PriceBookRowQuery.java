@@ -1,5 +1,6 @@
 package com.vaxclinic.product.pricebook;
 
+import com.vaxclinic.common.search.AccentInsensitiveSql;
 import com.vaxclinic.common.error.BusinessException;
 import com.vaxclinic.common.web.PageResponse;
 import com.vaxclinic.product.pricebook.PriceBookDtos.PriceRow;
@@ -49,7 +50,7 @@ public class PriceBookRowQuery {
                 where not p.deleted and p.active""");
         p.addValue("branchId", f.branchId());
         if (f.q() != null && !f.q().isBlank()) {
-            w.append(" and (p.name ilike :q or u.code ilike :q or u.barcode ilike :q)");
+            w.append(" and (" + AccentInsensitiveSql.like("p.name", ":q") + " or u.code ilike :q or u.barcode ilike :q)");
             p.addValue("q", "%" + f.q().trim() + "%");
         }
         if (f.categoryIds() != null && !f.categoryIds().isEmpty()) {

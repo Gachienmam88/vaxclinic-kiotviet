@@ -22,16 +22,17 @@ function splitLine(line: string, sep: string) {
 /**
  * Đọc file CSV import hoa hồng: cột "Mã hàng" + mỗi cột tên bảng hoa hồng (giá trị "5%" = 5% doanh thu,
  * "5000" = 5.000đ / đơn vị bán, "x" hoặc "-" = bỏ hoa hồng, trống = giữ nguyên). Mã hàng đối chiếu với danh sách đang tải.
+ * `error` là khóa chuỗi namespace hr (commissionImport.*) — trang gọi t() để hiển thị.
  */
 export function parseCommissionCsv(text: string, products: ProductListItem[], tables: CommissionTable[]) {
   const lines = text.replace(/^﻿/, "").split(/\r?\n/).filter((l) => l.trim());
-  if (lines.length < 2) return { error: "File không có dữ liệu", batches: [], skipped: [] as string[] };
+  if (lines.length < 2) return { error: "commissionImport.noData" as const, batches: [], skipped: [] as string[] };
   const sep = lines[0].includes(";") && !lines[0].includes(",") ? ";" : ",";
   const head = splitLine(lines[0], sep).map((h) => h.toLowerCase());
   const codeCol = head.findIndex((h) => h === "mã hàng" || h === "ma hang" || h === "code");
-  if (codeCol < 0) return { error: "Thiếu cột \"Mã hàng\"", batches: [], skipped: [] as string[] };
+  if (codeCol < 0) return { error: "commissionImport.missingCodeColumn" as const, batches: [], skipped: [] as string[] };
   const cols = tables.map((t) => ({ table: t, col: head.indexOf(t.name.toLowerCase()) })).filter((c) => c.col >= 0);
-  if (!cols.length) return { error: "Không có cột nào trùng tên bảng hoa hồng", batches: [], skipped: [] as string[] };
+  if (!cols.length) return { error: "commissionImport.noTableColumn" as const, batches: [], skipped: [] as string[] };
   const byCode = new Map(products.map((p) => [p.code.toUpperCase(), p.id]));
   const items = new Map<string, Item[]>(cols.map((c) => [c.table.id, []]));
   const skipped: string[] = [];
@@ -51,5 +52,5 @@ export function parseCommissionCsv(text: string, products: ProductListItem[], ta
     }
   }
   const batches = [...items.entries()].filter(([, v]) => v.length).map(([tableId, v]) => ({ tableId, items: v }));
-  return { error: batches.length ? null : "Không có mức hoa hồng nào để import", batches, skipped };
+  return { error: batches.length ? null : "commissionImport.noRates" as const, batches, skipped };
 }

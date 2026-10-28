@@ -12,6 +12,13 @@ export type SupplierGroup = { id: string; name: string; note: string | null; sup
 
 export type SupplierDebtType = "PURCHASE" | "PURCHASE_RETURN" | "PAYMENT" | "DISCOUNT" | "ADJUSTMENT";
 
+/** Nhãn loại giao dịch trên màn hình (khóa namespace "purchases"). */
+export const SUPPLIER_DEBT_TYPE_KEY = {
+  PURCHASE: "suppliers.debtType.purchase", PURCHASE_RETURN: "suppliers.debtType.purchaseReturn",
+  PAYMENT: "suppliers.debtType.payment", ADJUSTMENT: "suppliers.debtType.adjustment", DISCOUNT: "suppliers.debtType.discount",
+} as const satisfies Record<SupplierDebtType, string>;
+
+/** Nhãn tiếng Việt cố định cho file CSV công nợ (sổ công nợ dùng đối chiếu kế toán → giữ tiếng Việt mọi ngôn ngữ). */
 export const SUPPLIER_DEBT_TYPE_LABEL: Record<SupplierDebtType, string> = {
   PURCHASE: "Nhập hàng", PURCHASE_RETURN: "Trả hàng nhập", PAYMENT: "Thanh toán", ADJUSTMENT: "Điều chỉnh",
   DISCOUNT: "Chiết khấu thanh toán",
@@ -40,7 +47,10 @@ export type SupplierDebtDoc = {
   allocations: SupplierDocAllocation[]; unallocated: number;
 };
 
-export const SUPPLIER_PAYMENT_METHODS = [["CASH", "Tiền mặt"], ["TRANSFER", "Chuyển khoản"], ["EWALLET", "Ví điện tử"]] as const;
+/** [mã, khóa nhãn trong namespace "purchases"]. */
+export const SUPPLIER_PAYMENT_METHODS = [
+  ["CASH", "payMethods.cash"], ["TRANSFER", "payMethods.transfer"], ["EWALLET", "payMethods.ewallet"],
+] as const;
 
 /** Bộ lọc màn danh sách NCC (sidebar trái). Chuỗi rỗng = không lọc. */
 export type SupplierFilters = {

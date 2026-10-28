@@ -9,11 +9,16 @@ import { api } from "@/lib/api-client";
 import { payPeriodOf, useHrMutation, useHrSettings } from "./hr-queries";
 import type { PayrollDetail } from "./hr-types";
 import { DatePicker } from "@/components/ui/date-picker";
+import { useT } from "@/lib/i18n";
+import { commonNs } from "@/messages/common";
+import { hrNs } from "@/messages/hr";
 
 const field = "h-[30px] w-full rounded-md border border-[#d9dbe0] bg-white px-2.5 text-[13px] outline-none focus:border-primary";
 
 /** "+ Bảng tính lương": tên (tùy chọn), kỳ hạn trả Hàng tháng, kỳ làm việc (mặc định kỳ lương hiện tại), chi nhánh. */
 export function PayrollCreateDialog({ onClose }: { onClose: () => void }) {
+  const t = useT(hrNs);
+  const tc = useT(commonNs);
   const router = useRouter();
   const { data: settings } = useHrSettings();
   const { data: branches = [] } = useBranches();
@@ -28,7 +33,7 @@ export function PayrollCreateDialog({ onClose }: { onClose: () => void }) {
     () => api<PayrollDetail>("/hr/payrolls", {
       method: "POST", body: { name: name.trim() || null, periodStart: periodFrom, periodEnd: periodTo, branchId: branchId || null },
     }),
-    "Đã tạo bảng tính lương",
+    t("payrollCreate.toastCreated"),
     (d) => { onClose(); router.push(`/employees/payrolls/${d.payroll.id}`); },
   );
   /** Đổi ngày bắt đầu → tự đặt ngày kết thúc = cuối kỳ 1 tháng. */
@@ -44,29 +49,29 @@ export function PayrollCreateDialog({ onClose }: { onClose: () => void }) {
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="sm:max-w-md">
-        <DialogHeader><DialogTitle>Thêm bảng tính lương</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{t("payrollCreate.title")}</DialogTitle></DialogHeader>
         <div className="grid grid-cols-[120px_1fr] items-center gap-x-3 gap-y-3 text-[13px]">
-          <label htmlFor="pr-name">Tên bảng lương</label>
-          <input id="pr-name" className={field} placeholder="Mặc định: Bảng lương tháng ..." value={name} onChange={(e) => setName(e.target.value)} />
-          <span>Kỳ hạn trả</span>
-          <select className={field} aria-label="Kỳ hạn trả" value="MONTHLY" onChange={() => undefined}><option value="MONTHLY">Hàng tháng</option></select>
-          <span>Kỳ làm việc</span>
+          <label htmlFor="pr-name">{t("payrollCreate.name")}</label>
+          <input id="pr-name" className={field} placeholder={t("payrollCreate.namePlaceholder")} value={name} onChange={(e) => setName(e.target.value)} />
+          <span>{t("payrollCreate.payCycle")}</span>
+          <select className={field} aria-label={t("payrollCreate.payCycle")} value="MONTHLY" onChange={() => undefined}><option value="MONTHLY">{t("payrollCreate.monthly")}</option></select>
+          <span>{t("payrollCreate.workPeriod")}</span>
           <div className="flex items-center gap-2">
-            <DatePicker aria-label="Từ ngày" className={field} value={periodFrom} onChange={(v) => changeFrom(v)} />
+            <DatePicker aria-label={t("holiday.from")} className={field} value={periodFrom} onChange={(v) => changeFrom(v)} />
             <span>-</span>
-            <DatePicker aria-label="Đến ngày" className={field} value={periodTo} onChange={(v) => setTo(v)} />
+            <DatePicker aria-label={t("payrollCreate.toDate")} className={field} value={periodTo} onChange={(v) => setTo(v)} />
           </div>
-          <label htmlFor="pr-branch">Chi nhánh</label>
+          <label htmlFor="pr-branch">{tc("fields.branch")}</label>
           <select id="pr-branch" className={field} value={branchId} onChange={(e) => setBranchId(e.target.value)}>
-            <option value="">Tất cả chi nhánh</option>
+            <option value="">{t("payrollCreate.allBranches")}</option>
             {branches.filter((b) => b.active).map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
           </select>
         </div>
-        <p className="text-xs text-muted-foreground">Lương được tính từ các ca chấm công đã duyệt của nhân viên đã thiết lập lương.</p>
+        <p className="text-xs text-muted-foreground">{t("payrollCreate.hint")}</p>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Bỏ qua</Button>
+          <Button variant="outline" onClick={onClose}>{tc("actions.skip")}</Button>
           <Button disabled={!periodFrom || !periodTo || create.isPending} onClick={() => create.mutate(undefined)}>
-            {create.isPending ? "Đang tính lương..." : "Tạo bảng lương"}
+            {create.isPending ? t("payrollCreate.computing") : t("payrollCreate.submit")}
           </Button>
         </DialogFooter>
       </DialogContent>

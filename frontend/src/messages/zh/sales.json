@@ -1,0 +1,241 @@
+{
+  "enums": {
+    "paymentMethod": {
+      "CASH": "现金",
+      "TRANSFER": "转账",
+      "CARD": "刷卡",
+      "EWALLET": "电子钱包"
+    },
+    "fund": {
+      "CASH": "现金",
+      "BANK": "银行",
+      "EWALLET": "电子钱包",
+      "ALL": "全部资金"
+    },
+    "invoiceState": {
+      "PROCESSING": "处理中",
+      "COMPLETED": "已完成",
+      "FAILED_DELIVERY": "配送失败",
+      "CANCELLED": "已作废"
+    },
+    "einvoiceState": {
+      "NONE": "未开具",
+      "PUBLISHED": "已开具",
+      "ACCEPTED": "税务机关已接受",
+      "FAILED": "开具失败"
+    },
+    "einvoiceNature": {
+      "ORIGINAL": "原始",
+      "ADJUST": "调整",
+      "REPLACE": "替换"
+    },
+    "voucherStatus": {
+      "PAID": "已付款",
+      "CANCELLED": "已作废"
+    },
+    "returnStatus": {
+      "COMPLETED": "已退货",
+      "CANCELLED": "已作废"
+    },
+    "refundMethod": {
+      "CASH": "现金退款",
+      "TRANSFER": "转账退款",
+      "CREDIT": "留作客户余额（预付款）"
+    }
+  },
+  "listKit": {
+    "time": "时间",
+    "thisMonth": "本月",
+    "allTime": "全部时间"
+  },
+  "pager": {
+    "rangeWithUnit": "{from} - {to}，共 {total} {unit}",
+    "rows_other": "{count} 行"
+  },
+  "invoices": {
+    "title": "销售单",
+    "unit": "张",
+    "emptyWhat": "销售单",
+    "filter": {
+      "delivery": "配送",
+      "noDelivery": "不配送",
+      "withDelivery": "配送",
+      "invoiceState": "销售单状态",
+      "returnState": "退货状态",
+      "noReturn": "无退货",
+      "hasReturn": "有退货",
+      "einvoiceStatus": "电子发票状态",
+      "nature": "发票性质",
+      "pickStatus": "选择状态",
+      "paymentMethod": "付款方式",
+      "createdBy": "创建人",
+      "pickCreator": "选择创建人",
+      "seller": "销售员",
+      "pickSeller": "选择销售员",
+      "pickPreset": "选择时间段"
+    },
+    "columns": {
+      "code": "销售单号",
+      "soldAt": "时间",
+      "returnCodes": "退货单号",
+      "customerCode": "客户编码",
+      "customerName": "客户",
+      "sellerName": "销售员",
+      "subtotal": "商品总额",
+      "discount": "折扣",
+      "total": "应付金额",
+      "paid": "客户已付",
+      "paymentMethod": "付款",
+      "state": "状态"
+    },
+    "table": {
+      "showAll": "显示全部销售单",
+      "favOnly": "仅显示已标星的销售单",
+      "mark": "标星",
+      "unmark": "取消标星"
+    },
+    "toolbar": {
+      "searchCode": "按销售单号",
+      "searchProduct": "按商品编码、名称",
+      "searchCustomer": "按客户编码、姓名、电话",
+      "searchNote": "按备注",
+      "advanced": "高级搜索",
+      "clearFilter": "清除筛选",
+      "create": "新建",
+      "newInvoice": "销售单",
+      "exportSummary": "导出汇总",
+      "exportDetail": "导出明细",
+      "columns": "选择显示列",
+      "orderSettings": "订单设置",
+      "exportVietnameseNote": "导出文件保留越南语列标题（供会计/税务使用）。"
+    },
+    "detail": {
+      "tabPayments": "付款记录",
+      "saved": "销售单已保存",
+      "cancelled": "销售单已作废，商品已退回库存",
+      "notePlaceholder": "备注..."
+    },
+    "header": {
+      "openCustomer": "在新标签页打开客户",
+      "offline": "离线销售",
+      "fromOrder": "来自预订单 {code}",
+      "createdBy": "创建人：",
+      "seller": "销售员：",
+      "soldAt": "销售日期：",
+      "timeLocked": "本店不允许修改交易时间（设置 → 订单）",
+      "channel": "销售渠道：",
+      "priceBook": "价格表：",
+      "defaultPriceBook": "通用价格表"
+    },
+    "lines": {
+      "productCode": "商品编码",
+      "productName": "商品名称",
+      "quantity": "数量",
+      "unitPrice": "单价",
+      "discount": "折扣",
+      "price": "售价",
+      "amount": "金额",
+      "lots": "批次：{lots}"
+    },
+    "totals": {
+      "subtotal": "商品总额（{qty}）",
+      "invoiceDiscount": "整单折扣",
+      "taxCut": "减税",
+      "total": "应付金额",
+      "paid": "客户已付"
+    },
+    "payments": {
+      "code": "单号",
+      "time": "时间",
+      "createdBy": "创建人",
+      "voucherAmount": "单据金额",
+      "method": "方式",
+      "status": "状态",
+      "allocated": "收/付金额",
+      "emptyWhat": "收款单"
+    },
+    "footer": {
+      "cancel": "作废",
+      "confirmCancel": "作废销售单 {code}？商品将退回库存。",
+      "copy": "复制",
+      "edit": "编辑",
+      "return": "退货",
+      "more": "更多操作",
+      "editTax": "修改商品税率",
+      "editTaxPublished": "{label}（已开具电子发票）"
+    },
+    "einvoice": {
+      "title": "电子发票",
+      "number": "发票：",
+      "lookup": "查询电子发票",
+      "lookupTitle": "查询（代码 {code}）",
+      "issuedAt": "开具日期：",
+      "buyer": "购买方：",
+      "nature": "发票性质：",
+      "taxAuthorityCode": "税务机关代码（Mã CQT）："
+    },
+    "taxDialog": {
+      "title": "修改商品税率",
+      "vat": "增值税 (%)",
+      "taxRate": "税率",
+      "taxRateOf": "{code} 的税率",
+      "notChosen": "-- 未选择 --",
+      "saved": "税率已保存"
+    }
+  },
+  "refund": {
+    "account": "付款账户",
+    "none": "-- 不选择 --"
+  },
+  "qr": {
+    "title": "扫码支付",
+    "noBank": "尚无银行账户，请在 设置 → 银行账户 中添加。",
+    "account": "账户",
+    "amount": "金额",
+    "imageAlt": "转账二维码",
+    "generating": "生成中...",
+    "received": "已收款",
+    "waiting": "等待客户转账（附言 {code}）",
+    "receivedToast": "已收到转账 {amount}đ",
+    "download": "下载二维码",
+    "or": "或",
+    "copy": "复制二维码",
+    "copied": "二维码已复制",
+    "autoHint": "已开启扫码收款通知，收到转账后系统将自动确认。"
+  },
+  "returns": {
+    "title": "退货",
+    "unit": "张",
+    "emptyWhat": "退货单",
+    "status": "状态",
+    "searchPlaceholder": "按退货单号、销售单号、客户名称",
+    "exportTitle": "将当前行导出为CSV（越南语标题）",
+    "columns": {
+      "code": "退货单号",
+      "time": "时间",
+      "invoiceCode": "销售单号",
+      "customer": "客户",
+      "subtotal": "商品总额",
+      "fee": "退货手续费",
+      "total": "应退金额",
+      "refunded": "已退金额",
+      "status": "状态"
+    },
+    "detail": {
+      "cancelled": "退货单已作废",
+      "createdBy": "创建人：",
+      "time": "时间：",
+      "invoiceCode": "销售单号：",
+      "lotsBack": "退回批次",
+      "returnPrice": "退货单价",
+      "noNote": "暂无备注",
+      "subtotal": "退货商品总额",
+      "discount": "折扣",
+      "fee": "退货手续费",
+      "total": "应退金额",
+      "refunded": "已退金额",
+      "cancel": "作废",
+      "confirmCancel": "作废退货单 {code}？商品将重新出库。"
+    }
+  }
+}

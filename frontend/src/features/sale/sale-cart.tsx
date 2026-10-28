@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { ShoppingBasket } from "lucide-react";
 import { toast } from "sonner";
+import { useT } from "@/lib/i18n";
+import { saleNs } from "@/messages/sale";
 import { SaleCartLine } from "./sale-cart-line";
 import { SaleProductDetailDrawer } from "./sale-product-detail-drawer";
 import { SaleQuickReturnLot } from "./sale-quick-return-lot";
@@ -36,6 +38,7 @@ export function displayLines(lines: CartLine[], s: Pick<SaleSettings, "sortField
 /** Giỏ hàng: mỗi dòng 1 thẻ trắng; kéo thả đổi thứ tự (khi bật và đang xếp theo số thứ tự). */
 export function SaleCart({ lines, customerId, onChange, resolveUnit, products, branchId, quickReturn, selectedKey, onSelect }: Props) {
   const { settings: s } = useSaleSettings();
+  const t = useT(saleNs);
   const [dialog, setDialog] = useState<{ kind: "price" | "info"; line: CartLine } | null>(null);
   const [dragKey, setDragKey] = useState<string | null>(null);
   const lastPrice = useSaleLastPrices(customerId, lines.map((l) => l.productId), s.showLastPrice && !quickReturn);
@@ -56,7 +59,7 @@ export function SaleCart({ lines, customerId, onChange, resolveUnit, products, b
   function addLine(l: CartLine) {
     const unit = l.units.find((u) => u.id === l.unitId) ?? l.units[0];
     const r = resolveUnit(unit);
-    if (!r.allowed) { toast.warning(`${l.productName}: ${r.warning ?? "không được bán theo bảng giá này"}`); return; }
+    if (!r.allowed) { toast.warning(`${l.productName}: ${r.warning ?? t("cart.notInPriceBook")}`); return; }
     onChange((all) => [{ ...l, key: newId(), quantity: 1, unitPrice: r.price, discount: 0, note: "", priceEdited: false, lotNumber: null, lotExpiry: null }, ...all]);
   }
 
@@ -64,7 +67,7 @@ export function SaleCart({ lines, customerId, onChange, resolveUnit, products, b
     return (
       <div className="flex h-full flex-col items-center justify-center gap-3 text-[13px] text-muted-foreground">
         <ShoppingBasket className="size-14 stroke-1 text-[#c4c8ce]" />
-        {quickReturn ? "Trả nhanh: tìm hàng (F3) hoặc quét mã vạch để thêm hàng khách trả" : "Chưa có hàng hóa — tìm hàng (F3) hoặc quét mã vạch"}
+        {t(quickReturn ? "cart.emptyQuickReturn" : "cart.empty")}
       </div>
     );
   }

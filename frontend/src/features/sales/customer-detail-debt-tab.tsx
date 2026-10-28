@@ -13,11 +13,18 @@ import { DebtDialog } from "./debt-dialogs";
 import { QrPaymentDialog } from "./qr-payment-dialog";
 import { useCustomerDebts } from "./sales-queries";
 import { DEBT_TYPE_LABEL, type Customer } from "./sales-types";
+import { useT } from "@/lib/i18n";
+import { customersNs } from "@/messages/customers";
+import { enumLabel } from "./i18n-enum-label";
 
 const actionBtn = "h-8 rounded-md px-3 text-[13px] font-semibold";
 
-/** Tab "Nợ cần thu từ khách": sổ công nợ (lọc theo loại giao dịch) + Thanh toán / Điều chỉnh / Chiết khấu / Tạo QR. */
+/**
+ * Tab "Nợ cần thu từ khách": sổ công nợ (lọc theo loại giao dịch) + Thanh toán / Điều chỉnh / Chiết khấu / Tạo QR.
+ * File CSV công nợ là sổ kế toán → giữ tiêu đề cột tiếng Việt ở mọi ngôn ngữ; nội dung CK QR (ASCII) cũng giữ nguyên.
+ */
 export function CustomerDetailDebtTab({ c }: { c: Customer }) {
+  const t = useT(customersNs);
   const { data = [] } = useCustomerDebts(c.id);
   const { can } = useCurrentUser();
   const [dialog, setDialog] = useState<"payment" | "discount" | "adjust" | null>(null);
@@ -29,35 +36,35 @@ export function CustomerDetailDebtTab({ c }: { c: Customer }) {
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
-        <select aria-label="Lọc loại giao dịch" value={docType} onChange={(e) => setDocType(e.target.value)}
+        <select aria-label={t("debtTab.filterAria")} value={docType} onChange={(e) => setDocType(e.target.value)}
           className="h-8 w-[150px] rounded-md border border-[#d9dbe0] bg-white px-2.5 text-[13px] outline-none focus:border-primary">
-          <option value="">Tất cả giao dịch</option>
-          {Object.entries(DEBT_TYPE_LABEL).map(([v, label]) => <option key={v} value={v}>{label}</option>)}
+          <option value="">{t("debtTab.allTypes")}</option>
+          {Object.keys(DEBT_TYPE_LABEL).map((v) => <option key={v} value={v}>{enumLabel(t, customersNs, "enums.debtType", v)}</option>)}
         </select>
       </div>
       <table className={kvSubTable}>
-        <thead className={kvSubHead}><tr><th>Mã phiếu</th><th>Thời gian</th><th>Loại</th>
-          <th className="text-right">Giá trị</th><th className="text-right">Dư nợ khách hàng</th></tr></thead>
+        <thead className={kvSubHead}><tr><th>{t("debtTab.cols.code")}</th><th>{t("debtTab.cols.time")}</th><th>{t("debtTab.cols.type")}</th>
+          <th className="text-right">{t("debtTab.cols.amount")}</th><th className="text-right">{t("debtTab.cols.balance")}</th></tr></thead>
         <tbody>
-          {!rows.length && <ListEmptyRow cols={5} what="giao dịch" compact />}
+          {!rows.length && <ListEmptyRow cols={5} what={t("debtTab.emptyWhat")} compact />}
           {rows.map((d) => (
             <tr key={d.id} className={kvSubRow}>
               <td><DocCodeLink code={d.docCode} /></td><td>{formatDateTime(d.occurredAt)}</td>
-              <td>{DEBT_TYPE_LABEL[d.docType] ?? d.docType}</td>
+              <td>{enumLabel(t, customersNs, "enums.debtType", d.docType)}</td>
               <td className="text-right">{formatMoney(d.amount)}</td><td className="text-right">{formatMoney(d.balanceAfter)}</td>
             </tr>
           ))}
         </tbody>
       </table>
       <div className="flex flex-wrap items-center gap-2 border-t pt-3">
-        <CsvExportButton label="Xuất file công nợ" disabled={!rows.length} onClick={exportCsv} />
+        <CsvExportButton label={t("debtTab.exportDebt")} disabled={!rows.length} onClick={exportCsv} />
         <div className="ml-auto flex flex-wrap gap-2">
-          <Button className={actionBtn} onClick={() => setDialog("payment")}><CircleDollarSign className="size-4" /> Thanh toán</Button>
+          <Button className={actionBtn} onClick={() => setDialog("payment")}><CircleDollarSign className="size-4" /> {t("debtTab.pay")}</Button>
           {can("cashbook.manage") && <>
-            <Button variant="outline" className={actionBtn} onClick={() => setDialog("adjust")}><PencilLine className="size-4" /> Điều chỉnh</Button>
-            <Button variant="outline" className={actionBtn} onClick={() => setDialog("discount")}><Calculator className="size-4" /> Chiết khấu thanh toán</Button>
+            <Button variant="outline" className={actionBtn} onClick={() => setDialog("adjust")}><PencilLine className="size-4" /> {t("debtTab.adjust")}</Button>
+            <Button variant="outline" className={actionBtn} onClick={() => setDialog("discount")}><Calculator className="size-4" /> {t("debtTab.discount")}</Button>
           </>}
-          <Button variant="outline" className={actionBtn} onClick={() => setQr(true)}><QrCode className="size-4" /> Tạo QR</Button>
+          <Button variant="outline" className={actionBtn} onClick={() => setQr(true)}><QrCode className="size-4" /> {t("debtTab.createQr")}</Button>
         </div>
       </div>
       {dialog && <DebtDialog kind={dialog} customer={c} onClose={() => setDialog(null)} />}

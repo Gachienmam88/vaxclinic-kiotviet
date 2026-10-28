@@ -26,6 +26,9 @@ import { useSupplierPaymentPrinter } from "./supplier-payment-print";
 import { useInvalidateSuppliers, useUnpaidReceipts } from "./supplier-queries";
 import { SUPPLIER_PAYMENT_METHODS, type SupplierDebtDoc, type SupplierRow } from "./supplier-types";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
+import { useT } from "@/lib/i18n";
+import { commonNs } from "@/messages/common";
+import { purchasesNs } from "@/messages/purchases";
 
 const select = "h-8 w-full rounded-md border border-[#d9dbe0] bg-white px-2.5 text-[13px] outline-none focus:border-primary";
 
@@ -38,6 +41,8 @@ export function SupplierPaymentDialog({ kind, supplier, onClose }: { kind: "paym
   const invalidate = useInvalidateSuppliers();
   const printVoucher = useSupplierPaymentPrinter();
   const { data: me } = useCurrentUser();
+  const t = useT(purchasesNs);
+  const tc = useT(commonNs);
   const { data: users = [] } = useUserLookup();
   const { data: accounts = [] } = useBankAccounts();
   const { data: receipts } = useUnpaidReceipts(supplier.id);
@@ -64,7 +69,7 @@ export function SupplierPaymentDialog({ kind, supplier, onClose }: { kind: "paym
       allocations: allocate ? allocationPayload(alloc) : null,
     } }),
     onSuccess: (doc, print) => {
-      toast.success(`Đã tạo ${pay ? "phiếu chi" : "phiếu chiết khấu"} ${doc.code}`);
+      toast.success(t(pay ? "suppliers.payment.toastPayment" : "suppliers.payment.toastDiscount", { code: doc.code }));
       invalidate();
       if (print) printVoucher(doc, supplier.phone);
       onClose();
@@ -79,58 +84,58 @@ export function SupplierPaymentDialog({ kind, supplier, onClose }: { kind: "paym
     setManual(next);
     setAmount(sumAllocation(next));
   };
-  const amountInput = <NumberInput autoFocus aria-label={pay ? "Số tiền" : "Chiết khấu từ nhà cung cấp"} className={kvInput}
+  const amountInput = <NumberInput autoFocus aria-label={pay ? t("suppliers.payment.amount") : t("suppliers.payment.discountFromSupplier")} className={kvInput}
     value={amount} onValueChange={onAmount} />;
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className={cn(kvDialog, "flex max-h-[92vh] flex-col sm:max-w-[857px]")}>
         <DialogHeader className={cn(kvDialogHeader, "gap-1")}>
-          <DialogTitle className={kvDialogTitle}>{pay ? "Thanh toán" : "Chiết khấu thanh toán"}</DialogTitle>
+          <DialogTitle className={kvDialogTitle}>{pay ? t("suppliers.payment.titlePay") : t("suppliers.doc.titleDiscount")}</DialogTitle>
           <p className="flex items-center gap-1.5 text-[12px] text-foreground/70">
-            {supplier.name} <span>·</span> <KvChip>Nợ hiện tại: {formatMoney(supplier.debt)}</KvChip></p>
+            {supplier.name} <span>·</span> <KvChip>{t("suppliers.payment.currentDebt", { amount: formatMoney(supplier.debt) })}</KvChip></p>
         </DialogHeader>
         <div className={cn(kvDialogBody, "overflow-y-auto")}>
           <div className="grid grid-cols-1 gap-x-4 gap-y-3 md:grid-cols-2">
-            <div className="grid gap-1.5"><Label className={kvLabel}>Thời gian</Label>
-              <DateTimePicker aria-label="Thời gian" className={kvInput} value={at} onChange={(v) => setAt(v)} /></div>
-            <div className="grid gap-1.5"><Label className={kvLabel}>{pay ? "Người chi" : "Người thực hiện"}</Label>
-              <select className={select} aria-label={pay ? "Người chi" : "Người thực hiện"} value={staffId} onChange={(e) => setStaffId(e.target.value)}>
+            <div className="grid gap-1.5"><Label className={kvLabel}>{t("receipts.cols.time")}</Label>
+              <DateTimePicker aria-label={t("receipts.cols.time")} className={kvInput} value={at} onChange={(v) => setAt(v)} /></div>
+            <div className="grid gap-1.5"><Label className={kvLabel}>{pay ? t("suppliers.payment.payer") : t("suppliers.doc.performer")}</Label>
+              <select className={select} aria-label={pay ? t("suppliers.payment.payer") : t("suppliers.doc.performer")} value={staffId} onChange={(e) => setStaffId(e.target.value)}>
                 {users.map((u) => <option key={u.id} value={u.id}>{u.fullName}</option>)}
               </select></div>
             {pay && <>
-              <div className="grid gap-1.5"><Label className={kvLabel}>Phương thức thanh toán</Label>
-                <select className={select} aria-label="Phương thức thanh toán" value={method} onChange={(e) => { setMethod(e.target.value); setAccountId(""); }}>
-                  {SUPPLIER_PAYMENT_METHODS.filter(([v]) => v !== "EWALLET" || wallets.length).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+              <div className="grid gap-1.5"><Label className={kvLabel}>{t("panel.paymentMethod")}</Label>
+                <select className={select} aria-label={t("panel.paymentMethod")} value={method} onChange={(e) => { setMethod(e.target.value); setAccountId(""); }}>
+                  {SUPPLIER_PAYMENT_METHODS.filter(([v]) => v !== "EWALLET" || wallets.length).map(([v, l]) => <option key={v} value={v}>{t(l)}</option>)}
                 </select></div>
               {method !== "CASH" ? (
-                <div className="grid gap-1.5"><Label className={kvLabel}>{method === "TRANSFER" ? "Tài khoản ngân hàng" : "Ví điện tử"}</Label>
-                  <select className={select} aria-label="Tài khoản" value={accountId} onChange={(e) => setAccountId(e.target.value)}>
-                    <option value="">Chọn tài khoản</option>
+                <div className="grid gap-1.5"><Label className={kvLabel}>{method === "TRANSFER" ? t("suppliers.payment.bankAccount") : t("payMethods.ewallet")}</Label>
+                  <select className={select} aria-label={t("suppliers.payment.account")} value={accountId} onChange={(e) => setAccountId(e.target.value)}>
+                    <option value="">{t("suppliers.payment.pickAccount")}</option>
                     {methodAccounts.map((b) => <option key={b.id} value={b.id}>{b.bankName} - {b.accountNo} - {b.accountName}</option>)}
                   </select></div>
               ) : <div />}
-              <div className="grid gap-1.5"><Label className={kvLabel}>Số tiền</Label>{amountInput}</div>
-              <div className="grid gap-1.5"><Label className={kvLabel}>Nợ còn</Label>
-                <Input readOnly aria-label="Nợ còn" className={cn(kvInput, "bg-[#eff0f3] text-right")} value={formatMoney(supplier.debt - amount)} /></div>
+              <div className="grid gap-1.5"><Label className={kvLabel}>{t("suppliers.payment.amount")}</Label>{amountInput}</div>
+              <div className="grid gap-1.5"><Label className={kvLabel}>{t("suppliers.payment.debtLeft")}</Label>
+                <Input readOnly aria-label={t("suppliers.payment.debtLeft")} className={cn(kvInput, "bg-[#eff0f3] text-right")} value={formatMoney(supplier.debt - amount)} /></div>
             </>}
             {!pay && (
-              <div className="grid gap-1.5 md:col-span-2"><Label className={kvLabel}>Chiết khấu từ nhà cung cấp</Label>{amountInput}
-                <span className="text-right text-[11px] text-muted-foreground">Còn nợ: {formatMoney(supplier.debt - amount)}</span></div>
+              <div className="grid gap-1.5 md:col-span-2"><Label className={kvLabel}>{t("suppliers.payment.discountFromSupplier")}</Label>{amountInput}
+                <span className="text-right text-[11px] text-muted-foreground">{t("suppliers.payment.stillOwed", { amount: formatMoney(supplier.debt - amount) })}</span></div>
             )}
-            <div className="grid gap-1.5 md:col-span-2"><Label className={kvLabel}>Ghi chú</Label>
-              <Input placeholder="Nhập ghi chú" aria-label="Ghi chú" className={kvInput} value={note} onChange={(e) => setNote(e.target.value)} /></div>
+            <div className="grid gap-1.5 md:col-span-2"><Label className={kvLabel}>{tc("fields.note")}</Label>
+              <Input placeholder={t("suppliers.doc.notePlaceholder")} aria-label={tc("fields.note")} className={kvInput} value={note} onChange={(e) => setNote(e.target.value)} /></div>
           </div>
           <label className="flex w-fit cursor-pointer items-center gap-2 py-1 text-[13px]">
-            <Checkbox checked={allocate} onCheckedChange={(v) => setAllocate(v === true)} /> Phân bổ vào phiếu nhập
+            <Checkbox checked={allocate} onCheckedChange={(v) => setAllocate(v === true)} /> {t("suppliers.payment.allocate")}
           </label>
           {allocate && <SupplierAllocationTable kind={kind} receipts={receipts} alloc={alloc} unallocated={Math.max(amount - allocated, 0)}
             onRow={onRow} onOpen={setViewReceipt} />}
         </div>
         <DialogFooter className={kvDialogFooter}>
-          <Button variant="outline" className={kvFooterBtn} onClick={onClose}>Bỏ qua</Button>
-          {pay && <Button variant="outline" className={kvFooterBtn} disabled={invalid} onClick={() => save.mutate(true)}>Tạo phiếu chi &amp; In</Button>}
-          <Button className={kvFooterBtn} disabled={invalid} onClick={() => save.mutate(false)}>{pay ? "Tạo phiếu chi" : "Tạo phiếu"}</Button>
+          <Button variant="outline" className={kvFooterBtn} onClick={onClose}>{tc("actions.skip")}</Button>
+          {pay && <Button variant="outline" className={kvFooterBtn} disabled={invalid} onClick={() => save.mutate(true)}>{t("suppliers.payment.createAndPrint")}</Button>}
+          <Button className={kvFooterBtn} disabled={invalid} onClick={() => save.mutate(false)}>{pay ? t("suppliers.payment.createPayment") : t("suppliers.payment.createDoc")}</Button>
         </DialogFooter>
       </DialogContent>
       {viewReceipt && <ReceiptViewDialog id={viewReceipt} onClose={() => setViewReceipt(null)} />}

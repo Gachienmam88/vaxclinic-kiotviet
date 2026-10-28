@@ -5,10 +5,12 @@ import { ChevronRight } from "lucide-react";
 import { ymd } from "@/features/dashboard/dashboard-date-utils";
 import { FILTER_FIELD, FilterSection, RadioOption } from "@/features/sales/invoice-list-kit";
 import { cn } from "@/lib/utils";
-import { dmy, PRESET_GROUPS, PRESET_LABELS, timeRange, type TimeValue } from "./report-time-presets";
+import { dmy, PRESET_GROUPS, timeRange, type TimePreset, type TimeValue } from "./report-time-presets";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { DatePicker } from "@/components/ui/date-picker";
 import { TimePicker } from "@/components/ui/time-picker";
+import { useT } from "@/lib/i18n";
+import { reportsNs } from "@/messages/reports";
 
 const BOX = "flex h-[30px] w-full items-center justify-between rounded-md border bg-background px-2 text-left text-[13px] hover:border-primary";
 
@@ -25,16 +27,17 @@ function useOutside(open: boolean, close: () => void) {
 }
 
 /** Popup chọn mốc thời gian (3 cột như KiotViet). */
-function PresetPopup({ value, onPick }: { value: string | null; onPick: (p: keyof typeof PRESET_LABELS) => void }) {
+function PresetPopup({ value, onPick }: { value: string | null; onPick: (p: TimePreset) => void }) {
+  const t = useT(reportsNs);
   return (
     <div className="absolute top-8 left-0 z-30 flex gap-4 rounded-md border bg-background p-3 shadow-lg">
       {PRESET_GROUPS.map((g) => (
-        <div key={g.title} className="w-[110px] space-y-1">
-          <p className="pb-1 text-xs font-semibold whitespace-nowrap">{g.title}</p>
+        <div key={g.id} className="w-[110px] space-y-1">
+          <p className="pb-1 text-xs font-semibold whitespace-nowrap">{t(`presetGroups.${g.id}`)}</p>
           {g.items.map((p) => (
             <button key={p} type="button" onClick={() => onPick(p)}
               className={cn("block h-7 w-full rounded border px-2 text-left text-xs hover:border-primary", value === p && "border-primary bg-primary text-white")}>
-              {PRESET_LABELS[p]}</button>))}
+              {t(`presets.${p}`)}</button>))}
         </div>))}
     </div>
   );
@@ -43,16 +46,17 @@ function PresetPopup({ value, onPick }: { value: string | null; onPick: (p: keyo
 /**
  * Bộ lọc Thời gian: (•) mốc có sẵn [Tuần này >] / ( ) Tùy chỉnh [từ – đến].
  */
-export function TimeFilter({ title = "Thời gian", value, onChange }: { title?: string; value: TimeValue; onChange: (v: TimeValue) => void }) {
+export function TimeFilter({ title, value, onChange }: { title?: string; value: TimeValue; onChange: (v: TimeValue) => void }) {
+  const t = useT(reportsNs);
   const [open, setOpen] = useState(false);
   const ref = useOutside(open, () => setOpen(false));
   const r = timeRange(value);
   return (
-    <FilterSection title={title}>
+    <FilterSection title={title ?? t("filters.time")}>
       <RadioOption checked={value.mode === "preset"} onSelect={() => onChange({ mode: "preset", preset: value.mode === "preset" ? value.preset : "thisWeek" })}>
         <div ref={ref} className="relative flex-1">
           <button type="button" className={BOX} onClick={() => setOpen(!open)}>
-            {value.mode === "preset" ? PRESET_LABELS[value.preset] : "Chọn mốc"} <ChevronRight className="size-3.5 text-muted-foreground" /></button>
+            {value.mode === "preset" ? t(`presets.${value.preset}`) : t("filters.pickPreset")} <ChevronRight className="size-3.5 text-muted-foreground" /></button>
           {open && <PresetPopup value={value.mode === "preset" ? value.preset : null}
             onPick={(preset) => { onChange({ mode: "preset", preset }); setOpen(false); }} />}
         </div>
@@ -81,18 +85,19 @@ export function dayRange(v: DayValue): { from: Date; to: Date; label: string } {
 }
 
 export function DayFilter({ value, onChange }: { value: DayValue; onChange: (v: DayValue) => void }) {
+  const t = useT(reportsNs);
   const today = ymd(new Date());
   const day = value.mode === "day" ? value : { mode: "day" as const, day: today, fromTime: "", toTime: "" };
   const tf = "h-[30px] w-full rounded-md border bg-background px-1.5 text-[13px] outline-none focus-visible:border-primary";
   return (
-    <FilterSection title="Thời gian">
+    <FilterSection title={t("filters.time")}>
       <RadioOption checked={value.mode === "day"} onSelect={() => onChange(day)}>
-        <DatePicker aria-label="Ngày" className={FILTER_FIELD} value={day.day} onChange={(v) => v && onChange({ ...day, day: v })} />
+        <DatePicker aria-label={t("filters.day")} className={FILTER_FIELD} value={day.day} onChange={(v) => v && onChange({ ...day, day: v })} />
       </RadioOption>
       <div className="grid grid-cols-2 gap-1.5 pl-6">
-        <TimePicker aria-label="Từ giờ" title="Từ" placeholder="Từ" className={tf} value={day.fromTime} disabled={value.mode !== "day"}
+        <TimePicker aria-label={t("filters.fromTime")} title={t("filters.from")} placeholder={t("filters.from")} className={tf} value={day.fromTime} disabled={value.mode !== "day"}
           onChange={(v) => onChange({ ...day, fromTime: v })} />
-        <TimePicker aria-label="Đến giờ" title="Đến" placeholder="Đến" className={tf} value={day.toTime} disabled={value.mode !== "day"}
+        <TimePicker aria-label={t("filters.toTime")} title={t("filters.to")} placeholder={t("filters.to")} className={tf} value={day.toTime} disabled={value.mode !== "day"}
           onChange={(v) => onChange({ ...day, toTime: v })} />
       </div>
       <RadioOption checked={value.mode === "custom"} onSelect={() => onChange({ mode: "custom", from: day.day, to: day.day })}>

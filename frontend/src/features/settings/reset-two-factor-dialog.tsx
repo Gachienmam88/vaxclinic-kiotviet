@@ -8,7 +8,10 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { api, errorMessage } from "@/lib/api-client";
+import { useT } from "@/lib/i18n";
 import { useCurrentUser, type User } from "@/lib/use-current-user";
+import { commonNs } from "@/messages/common";
+import { settingsNs } from "@/messages/settings";
 
 type Props = { user: User; onOpenChange: (open: boolean) => void; onDone: () => void };
 
@@ -19,6 +22,8 @@ type Props = { user: User; onOpenChange: (open: boolean) => void; onDone: () => 
 export function ResetTwoFactorDialog({ user, onOpenChange, onDone }: Props) {
   const qc = useQueryClient();
   const { data: me } = useCurrentUser();
+  const t = useT(settingsNs);
+  const tc = useT(commonNs);
   const useCode = !!me?.twoFactorEnabled;
   const [secret, setSecret] = useState("");
 
@@ -27,7 +32,7 @@ export function ResetTwoFactorDialog({ user, onOpenChange, onDone }: Props) {
       method: "POST", body: useCode ? { code: secret.trim() } : { password: secret },
     }),
     onSuccess: () => {
-      toast.success(`Đã đặt lại xác thực 2 lớp cho ${user.fullName}`);
+      toast.success(t("reset2fa.done", { name: user.fullName }));
       qc.invalidateQueries({ queryKey: ["users"] });
       onDone();
     },
@@ -38,15 +43,14 @@ export function ResetTwoFactorDialog({ user, onOpenChange, onDone }: Props) {
     <Dialog open onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Đặt lại xác thực 2 lớp</DialogTitle>
+          <DialogTitle>{t("reset2fa.title")}</DialogTitle>
           <DialogDescription>
-            Tài khoản {user.username} sẽ tắt xác thực 2 lớp, mất toàn bộ mã khôi phục và bị đăng xuất khỏi mọi thiết bị.
-            Người dùng cần bật lại xác thực 2 lớp sau khi đăng nhập.
+            {t("reset2fa.description", { username: user.username })}
           </DialogDescription>
         </DialogHeader>
         <form id="reset-2fa-form" className="grid gap-1.5" onSubmit={(e) => { e.preventDefault(); reset.mutate(); }}>
           <Label htmlFor="reset-2fa-secret">
-            {useCode ? "Mã xác thực 2 lớp của bạn" : "Mật khẩu đăng nhập của bạn"}
+            {useCode ? t("reset2fa.yourCode") : t("reset2fa.yourPassword")}
           </Label>
           <Input id="reset-2fa-secret" required autoFocus
             type={useCode ? "text" : "password"} inputMode={useCode ? "numeric" : undefined}
@@ -54,8 +58,8 @@ export function ResetTwoFactorDialog({ user, onOpenChange, onDone }: Props) {
             value={secret} onChange={(e) => setSecret(e.target.value)} />
         </form>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Bỏ qua</Button>
-          <Button type="submit" form="reset-2fa-form" disabled={reset.isPending || !secret.trim()}>Đặt lại</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>{tc("actions.skip")}</Button>
+          <Button type="submit" form="reset-2fa-form" disabled={reset.isPending || !secret.trim()}>{t("reset2fa.submit")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -1,0 +1,70 @@
+{
+  "page": {
+    "hello": "您好，{name}",
+    "role": "角色：{role}",
+    "branches": "工作门店：{branches}",
+    "noRevenuePermission": "该账户无权查看营业额报表。",
+    "loadingRevenue": "正在加载营业额..."
+  },
+  "period": {
+    "today": "今天",
+    "yesterday": "昨天",
+    "last7": "近7天",
+    "thisMonth": "本月",
+    "lastMonth": "上月"
+  },
+  "today": {
+    "title": "今日销售结果",
+    "revenue": "营业额",
+    "invoiceCount_other": "{count} 张销售单",
+    "returns": "退货",
+    "netRevenue": "净营业额",
+    "vsYesterday": "较昨天",
+    "vsLastMonth": "较上月同期"
+  },
+  "revenue": {
+    "title": "净营业额",
+    "periodLabel": "营业额期间",
+    "chartType": "图表类型",
+    "byDay": "按日",
+    "byHour": "按小时",
+    "byWeekday": "按星期",
+    "needInvoicePermission": "按小时统计需要查看销售单的权限。",
+    "loadFailed": "无法加载销售单数据。",
+    "tooMany": "销售单超过 {max} 张，请缩短时间范围以按小时查看。",
+    "hourlyNote": "按小时：销售单合计（{period}），未扣除退货。"
+  },
+  "weekday": {
+    "mon": "周一",
+    "tue": "周二",
+    "wed": "周三",
+    "thu": "周四",
+    "fri": "周五",
+    "sat": "周六",
+    "sun": "周日"
+  },
+  "top": {
+    "title": "畅销商品前10",
+    "byNet": "按净营业额",
+    "periodLabel": "畅销商品期间",
+    "empty": "暂无销售数据"
+  },
+  "activity": {
+    "title": "最近动态",
+    "viewAll": "查看全部",
+    "empty": "暂无动态",
+    "system": "系统",
+    "line": "{user}：{action}{doc}"
+  },
+  "timeAgo": {
+    "justNow": "刚刚",
+    "minutes_other": "{count} 分钟前",
+    "hours_other": "{count} 小时前",
+    "days_other": "{count} 天前"
+  },
+  "short": {
+    "thousand": "{n}千",
+    "million": "{n}百万",
+    "billion": "{n}十亿"
+  }
+}

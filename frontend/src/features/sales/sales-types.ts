@@ -97,6 +97,7 @@ export type BankAccount = {
   kind?: "BANK" | "EWALLET"; note?: string | null;
 };
 
+/** Nhãn tiếng Việt dùng cho bản in / CSV kế toán. Giao diện: salesNs "enums.paymentMethod.<value>" (enumLabel). */
 export const PAYMENT_METHODS = [
   { value: "CASH", label: "Tiền mặt" }, { value: "TRANSFER", label: "Chuyển khoản" },
   { value: "CARD", label: "Thẻ" }, { value: "EWALLET", label: "Ví điện tử" },
@@ -104,4 +105,5 @@ export const PAYMENT_METHODS = [
 
 export const methodLabel = (m: string | null) => PAYMENT_METHODS.find((x) => x.value === m)?.label ?? "";
 
+/** Nhãn tiếng Việt cho bản in. Giao diện: salesNs "enums.fund.<value>". */
 export const FUND_LABEL: Record<string, string> = { CASH: "Tiền mặt", BANK: "Ngân hàng", EWALLET: "Ví điện tử", ALL: "Tổng quỹ" };

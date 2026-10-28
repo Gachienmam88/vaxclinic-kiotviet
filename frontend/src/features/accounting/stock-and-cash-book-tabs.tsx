@@ -8,6 +8,10 @@ import { NativeSelect } from "@/features/products/product-form-sections";
 import { api } from "@/lib/api-client";
 import { formatDate, formatDateTime, formatMoney, formatNumber } from "@/lib/format";
 import { downloadCsv, type Period } from "./tax-calc";
+import { useT } from "@/lib/i18n";
+import { commonNs } from "@/messages/common";
+import { accountingNs } from "@/messages/accounting";
+import { periodLabel } from "./accounting-labels";
 import { DocCodeLink } from "@/components/ui/doc-code-link";
 
 type StockLine = { productId: string; productCode: string; productName: string; unitName: string; openingQty: number; openingValue: number;
@@ -15,8 +19,13 @@ type StockLine = { productId: string; productCode: string; productName: string; 
 
 const branchQuery = (ids: string[]) => ids.map((b) => `&branchIds=${b}`).join("");
 
-/** Sổ chi tiết vật liệu, dụng cụ, sản phẩm, hàng hóa (S2d-HKD): đầu kỳ – nhập – xuất – cuối kỳ. */
+/**
+ * Sổ chi tiết vật liệu, dụng cụ, sản phẩm, hàng hóa (S2d-HKD): đầu kỳ – nhập – xuất – cuối kỳ.
+ * Cột / dòng của sổ và CSV giữ tiếng Việt (sổ kế toán theo mẫu); thanh công cụ được dịch. Sổ tiền S2e-HKD cũng vậy.
+ */
 export function StockBookTab({ period, branchIds }: { period: Period; branchIds: string[] }) {
+  const t = useT(accountingNs);
+  const tc = useT(commonNs);
   const { data = [], isLoading } = useQuery({
     queryKey: ["stock-book", period.from, period.to, branchIds.join()],
     queryFn: () => api<StockLine[]>(`/accounting/stock/summary?from=${period.from}&to=${period.to}${branchQuery(branchIds)}`),
@@ -28,14 +37,14 @@ export function StockBookTab({ period, branchIds }: { period: Period; branchIds:
     data.map((l) => [l.productCode, l.productName, l.unitName, ...cols.map(([, f]) => Number(f(l)))]));
   return (
     <div className="space-y-3 text-sm">
-      <div className="flex items-center"><span className="text-muted-foreground">Mẫu S2d-HKD — {period.label}. Giá trị nhập theo giá mua (gồm VAT), xuất theo giá vốn bình quân.</span>
-        <Button variant="outline" size="sm" className="ml-auto" onClick={exportCsv}><Download className="size-4" /> Xuất file</Button></div>
+      <div className="flex items-center"><span className="text-muted-foreground">{t("books.stockNote", { code: "S2d-HKD", period: periodLabel(t, period) })}</span>
+        <Button variant="outline" size="sm" className="ml-auto" onClick={exportCsv}><Download className="size-4" /> {tc("actions.export")}</Button></div>
       <div className="overflow-x-auto">
         <table className="w-full border">
           <thead className="bg-muted/60"><tr><th className="border px-2 py-1.5 text-left">Mã hàng</th><th className="border px-2 text-left">Tên hàng</th>
             <th className="border px-2">ĐVT</th>{cols.map(([h]) => <th key={h} className="border px-2 text-right">{h}</th>)}</tr></thead>
           <tbody>
-            {isLoading && <tr><td colSpan={11} className="py-6 text-center text-muted-foreground">Đang tải...</td></tr>}
+            {isLoading && <tr><td colSpan={11} className="py-6 text-center text-muted-foreground">{tc("status.loading")}</td></tr>}
             {data.map((l) => (
               <tr key={l.productId}><td className="border px-2 py-1"><DocCodeLink code={l.productCode} className="print:text-inherit" /></td><td className="border px-2">{l.productName}</td>
                 <td className="border px-2 text-center">{l.unitName}</td>
@@ -55,6 +64,8 @@ type CashPage = { items: CashItem[]; total: number; summary: { opening: number; 
 
 /** Sổ chi tiết tiền (S2e-HKD): tiền mặt / tiền gửi ngân hàng — tồn đầu, thu, chi, tồn cuối (lấy từ Sổ quỹ). */
 export function CashBookTab({ period, branchIds }: { period: Period; branchIds: string[] }) {
+  const t = useT(accountingNs);
+  const tc = useT(commonNs);
   const [fund, setFund] = useState("CASH");
   const from = new Date(`${period.from}T00:00:00+07:00`).toISOString();
   const to = new Date(new Date(`${period.to}T00:00:00+07:00`).getTime() + 86_400_000).toISOString();
@@ -82,10 +93,10 @@ export function CashBookTab({ period, branchIds }: { period: Period; branchIds: 
   return (
     <div className="space-y-3 text-sm">
       <div className="flex items-center gap-2"><div className="w-48"><NativeSelect value={fund} onChange={(e) => setFund(e.target.value)}>
-        <option value="CASH">Tiền mặt</option><option value="BANK">Tiền gửi ngân hàng</option></NativeSelect></div>
-        <span className="text-muted-foreground">Mẫu S2e-HKD — {period.label} ({formatDate(period.from)} – {formatDate(period.to)})</span>
-        {branchIds.length > 1 && <span className="text-xs text-destructive">Sổ tiền tính toàn bộ chi nhánh</span>}
-        <Button variant="outline" size="sm" className="ml-auto" onClick={exportCsv}><Download className="size-4" /> Xuất file</Button></div>
+        <option value="CASH">{t("books.fundCash")}</option><option value="BANK">{t("books.fundBank")}</option></NativeSelect></div>
+        <span className="text-muted-foreground">{t("books.formPeriod", { code: "S2e-HKD", period: periodLabel(t, period), from: formatDate(period.from), to: formatDate(period.to) })}</span>
+        {branchIds.length > 1 && <span className="text-xs text-destructive">{t("books.cashAllBranches")}</span>}
+        <Button variant="outline" size="sm" className="ml-auto" onClick={exportCsv}><Download className="size-4" /> {tc("actions.export")}</Button></div>
       <table className="w-full border">
         <thead className="bg-muted/60"><tr><th className="border px-2 py-1.5 text-left">Ngày</th><th className="border px-2 text-left">Số hiệu</th>
           <th className="border px-2 text-left">Diễn giải</th><th className="border px-2 text-right">Thu</th><th className="border px-2 text-right">Chi</th><th className="border px-2 text-right">Tồn</th></tr></thead>

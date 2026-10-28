@@ -1,16 +1,22 @@
+import type viPrint from "@/messages/vi/print.json";
+
 /** 6 loại mẫu in A5: trường dùng được, dữ liệu mẫu để xem trước, mẫu mặc định. */
 export type PrintType = "INVOICE" | "SALES_RETURN" | "CASH_RECEIPT" | "CASH_PAYMENT" | "PURCHASE_RECEIPT" | "PURCHASE_RETURN";
 
-type Def = { label: string; group: string; fields: [string, string][]; lineFields: [string, string][]; template: string };
+/** Khóa nhãn trường trong namespace print: hiển thị bằng t(`fields.${label}`) (mã trường {Ten_Truong} giữ nguyên). */
+export type PrintFieldLabel = keyof typeof viPrint.fields;
+type Field = [string, PrintFieldLabel];
+/** label/group: tiếng Việt (giữ cho chỗ cũ); UI đa ngôn ngữ dùng t(`types.${type}`) / t(`groups.${groupKey}`) của namespace print. */
+type Def = { label: string; group: string; groupKey: keyof typeof viPrint.groups; fields: Field[]; lineFields: Field[]; template: string };
 
-const STORE: [string, string][] = [
-  ["Logo", "Logo cửa hàng"], ["Ten_Cua_Hang", "Tên cửa hàng"], ["Dia_Chi_Cua_Hang", "Địa chỉ cửa hàng"],
-  ["Dien_Thoai_Cua_Hang", "Điện thoại cửa hàng"], ["MST_Cua_Hang", "MST cửa hàng"], ["Ten_Chi_Nhanh", "Chi nhánh"],
-  ["Ngay", "Ngày in"], ["Thang", "Tháng in"], ["Nam", "Năm in"], ["Nguoi_Tao", "Người tạo"],
+const STORE: Field[] = [
+  ["Logo", "storeLogo"], ["Ten_Cua_Hang", "storeName"], ["Dia_Chi_Cua_Hang", "storeAddress"],
+  ["Dien_Thoai_Cua_Hang", "storePhone"], ["MST_Cua_Hang", "storeTaxCode"], ["Ten_Chi_Nhanh", "branch"],
+  ["Ngay", "printDay"], ["Thang", "printMonth"], ["Nam", "printYear"], ["Nguoi_Tao", "createdBy"],
 ];
-const LINE: [string, string][] = [
-  ["STT", "STT"], ["Ma_Hang", "Mã hàng"], ["Ten_Hang", "Tên hàng"], ["Don_Vi", "Đơn vị"], ["So_Luong", "Số lượng"],
-  ["Don_Gia", "Đơn giá"], ["Thanh_Tien", "Thành tiền"], ["So_Lo", "Số lô"],
+const LINE: Field[] = [
+  ["STT", "lineNo"], ["Ma_Hang", "productCode"], ["Ten_Hang", "productName"], ["Don_Vi", "unit"], ["So_Luong", "quantity"],
+  ["Don_Gia", "unitPrice"], ["Thanh_Tien", "amount"], ["So_Lo", "lotNumber"],
 ];
 
 const HEADER = `<table><tr>
@@ -46,14 +52,14 @@ const VOUCHER = (title: string, person: string, signer: string) => `${HEADER}
 
 export const PRINT_DEFS: Record<PrintType, Def> = {
   INVOICE: {
-    label: "Hóa đơn", group: "Đơn hàng",
-    fields: [...STORE, ["Ma_Hoa_Don", "Mã hóa đơn"], ["Ngay_Ban", "Ngày bán"], ["Khach_Hang", "Khách hàng"],
-      ["Ma_Khach_Hang", "Mã khách hàng"], ["SDT_Khach_Hang", "SĐT khách hàng"], ["Dia_Chi_Khach_Hang", "Địa chỉ khách hàng"],
-      ["Dia_Chi_Giao_Hang", "Địa chỉ giao hàng"], ["Nguoi_Ban", "Người bán"],
-      ["Tong_So_Luong", "Tổng số lượng"], ["Tong_Tien_Hang", "Tổng tiền hàng"], ["Giam_Gia", "Giảm giá hóa đơn"],
-      ["Tong_Cong", "Tổng cộng"], ["Tong_Cong_Bang_Chu", "Tổng cộng bằng chữ"], ["Khach_Da_Tra", "Khách đã trả"],
-      ["Con_No", "Còn nợ"], ["PT_Thanh_Toan", "Phương thức thanh toán"], ["Ghi_Chu", "Ghi chú"]],
-    lineFields: [...LINE, ["Chiet_Khau", "Giảm giá dòng"]],
+    label: "Hóa đơn", group: "Đơn hàng", groupKey: "orders",
+    fields: [...STORE, ["Ma_Hoa_Don", "invoiceCode"], ["Ngay_Ban", "soldAt"], ["Khach_Hang", "customer"],
+      ["Ma_Khach_Hang", "customerCode"], ["SDT_Khach_Hang", "customerPhone"], ["Dia_Chi_Khach_Hang", "customerAddress"],
+      ["Dia_Chi_Giao_Hang", "shippingAddress"], ["Nguoi_Ban", "seller"],
+      ["Tong_So_Luong", "totalQuantity"], ["Tong_Tien_Hang", "subtotal"], ["Giam_Gia", "invoiceDiscount"],
+      ["Tong_Cong", "total"], ["Tong_Cong_Bang_Chu", "totalInWords"], ["Khach_Da_Tra", "customerPaid"],
+      ["Con_No", "remainingDebt"], ["PT_Thanh_Toan", "paymentMethod"], ["Ghi_Chu", "note"]],
+    lineFields: [...LINE, ["Chiet_Khau", "lineDiscount"]],
     template: `${HEADER}
 <h2 class="c" style="margin-top:8px">HÓA ĐƠN BÁN HÀNG</h2>
 <p class="c">Số: <b>{Ma_Hoa_Don}</b> — {Ngay_Ban}</p>
@@ -72,11 +78,11 @@ ${SIGN("Khách hàng", "Người bán hàng")}
 <p class="c" style="margin-top:8px"><i>Cảm ơn quý khách, hẹn gặp lại!</i></p>`,
   },
   SALES_RETURN: {
-    label: "Trả hàng", group: "Đơn hàng",
-    fields: [...STORE, ["Ma_Tra_Hang", "Mã trả hàng"], ["Ma_Hoa_Don", "Mã hóa đơn"], ["Ngay_Tra", "Ngày trả"],
-      ["Khach_Hang", "Khách hàng"], ["Tong_Tien_Hang", "Tổng tiền hàng trả"], ["Giam_Gia", "Giảm giá"],
-      ["Phi_Tra_Hang", "Phí trả hàng"], ["Can_Tra_Khach", "Cần trả khách"], ["Da_Tra_Khach", "Đã trả khách"],
-      ["Can_Tra_Khach_Bang_Chu", "Cần trả khách bằng chữ"], ["Ghi_Chu", "Ghi chú"]],
+    label: "Trả hàng", group: "Đơn hàng", groupKey: "orders",
+    fields: [...STORE, ["Ma_Tra_Hang", "returnCode"], ["Ma_Hoa_Don", "invoiceCode"], ["Ngay_Tra", "returnedAt"],
+      ["Khach_Hang", "customer"], ["Tong_Tien_Hang", "returnSubtotal"], ["Giam_Gia", "discount"],
+      ["Phi_Tra_Hang", "returnFee"], ["Can_Tra_Khach", "dueToCustomer"], ["Da_Tra_Khach", "paidToCustomer"],
+      ["Can_Tra_Khach_Bang_Chu", "dueToCustomerInWords"], ["Ghi_Chu", "note"]],
     lineFields: LINE,
     template: `${HEADER}
 <h2 class="c" style="margin-top:8px">PHIẾU TRẢ HÀNG</h2>
@@ -92,28 +98,28 @@ ${LINES_TABLE()}
 ${SIGN("Khách hàng", "Người lập phiếu")}`,
   },
   CASH_RECEIPT: {
-    label: "Phiếu thu", group: "Sổ quỹ",
-    fields: [...STORE, ["Ma_Phieu", "Mã phiếu"], ["Ngay_Tao", "Ngày tạo"], ["Doi_Tuong", "Người nộp"],
-      ["SDT_Doi_Tuong", "SĐT người nộp"], ["Loai_Thu_Chi", "Lý do nộp"], ["So_Tien", "Số tiền"],
-      ["So_Tien_Bang_Chu", "Số tiền bằng chữ"], ["Quy", "Hình thức"], ["Ghi_Chu", "Ghi chú"]],
+    label: "Phiếu thu", group: "Sổ quỹ", groupKey: "cashbook",
+    fields: [...STORE, ["Ma_Phieu", "voucherCode"], ["Ngay_Tao", "createdAt"], ["Doi_Tuong", "payer"],
+      ["SDT_Doi_Tuong", "payerPhone"], ["Loai_Thu_Chi", "receiptReason"], ["So_Tien", "moneyAmount"],
+      ["So_Tien_Bang_Chu", "moneyInWords"], ["Quy", "fund"], ["Ghi_Chu", "note"]],
     lineFields: [],
     template: VOUCHER("PHIẾU THU", "người nộp", "Người nộp tiền"),
   },
   CASH_PAYMENT: {
-    label: "Phiếu chi", group: "Sổ quỹ",
-    fields: [...STORE, ["Ma_Phieu", "Mã phiếu"], ["Ngay_Tao", "Ngày tạo"], ["Doi_Tuong", "Người nhận"],
-      ["SDT_Doi_Tuong", "SĐT người nhận"], ["Loai_Thu_Chi", "Lý do chi"], ["So_Tien", "Số tiền"],
-      ["So_Tien_Bang_Chu", "Số tiền bằng chữ"], ["Quy", "Hình thức"], ["Ghi_Chu", "Ghi chú"]],
+    label: "Phiếu chi", group: "Sổ quỹ", groupKey: "cashbook",
+    fields: [...STORE, ["Ma_Phieu", "voucherCode"], ["Ngay_Tao", "createdAt"], ["Doi_Tuong", "payee"],
+      ["SDT_Doi_Tuong", "payeePhone"], ["Loai_Thu_Chi", "paymentReason"], ["So_Tien", "moneyAmount"],
+      ["So_Tien_Bang_Chu", "moneyInWords"], ["Quy", "fund"], ["Ghi_Chu", "note"]],
     lineFields: [],
     template: VOUCHER("PHIẾU CHI", "người nhận", "Người nhận tiền"),
   },
   PURCHASE_RECEIPT: {
-    label: "Nhập hàng", group: "Hàng hóa",
-    fields: [...STORE, ["Ma_Phieu", "Mã phiếu"], ["Ngay_Nhap", "Ngày nhập"], ["Nha_Cung_Cap", "Nhà cung cấp"],
-      ["So_HD_Dau_Vao", "Số hóa đơn đầu vào"], ["Tong_So_Luong", "Tổng số lượng"], ["Tong_Tien_Hang", "Tổng tiền hàng"],
-      ["Chiet_Khau", "Chiết khấu"], ["Thue_VAT", "Thuế VAT"], ["Can_Tra_NCC", "Cần trả NCC"], ["Da_Tra_NCC", "Đã trả NCC"],
-      ["Ghi_Chu", "Ghi chú"]],
-    lineFields: [...LINE, ["Han_Dung", "Hạn sử dụng"]],
+    label: "Nhập hàng", group: "Hàng hóa", groupKey: "products",
+    fields: [...STORE, ["Ma_Phieu", "voucherCode"], ["Ngay_Nhap", "receivedAt"], ["Nha_Cung_Cap", "supplier"],
+      ["So_HD_Dau_Vao", "inputInvoiceNo"], ["Tong_So_Luong", "totalQuantity"], ["Tong_Tien_Hang", "subtotal"],
+      ["Chiet_Khau", "purchaseDiscount"], ["Thue_VAT", "vat"], ["Can_Tra_NCC", "dueToSupplier"], ["Da_Tra_NCC", "paidToSupplier"],
+      ["Ghi_Chu", "note"]],
+    lineFields: [...LINE, ["Han_Dung", "expiry"]],
     template: `${HEADER}
 <h2 class="c" style="margin-top:8px">PHIẾU NHẬP HÀNG</h2>
 <p class="c">Mã phiếu: <b>{Ma_Phieu}</b> — {Ngay_Nhap}</p>
@@ -129,10 +135,10 @@ ${LINES_TABLE("<th>Lô / HSD</th>", "<td>{So_Lo} {Han_Dung}</td>")}
 ${SIGN("Nhà cung cấp", "Người lập")}`,
   },
   PURCHASE_RETURN: {
-    label: "Trả hàng nhập", group: "Hàng hóa",
-    fields: [...STORE, ["Ma_Phieu", "Mã phiếu"], ["Ma_Phieu_Nhap", "Mã phiếu nhập"], ["Ngay_Tra", "Ngày trả"],
-      ["Nha_Cung_Cap", "Nhà cung cấp"], ["Tong_Tien_Hang", "Tổng tiền hàng trả"], ["Giam_Gia", "Giảm giá"],
-      ["Thue_VAT", "Thuế VAT"], ["NCC_Can_Tra", "NCC cần trả"], ["NCC_Da_Tra", "NCC đã trả"], ["Ghi_Chu", "Ghi chú"]],
+    label: "Trả hàng nhập", group: "Hàng hóa", groupKey: "products",
+    fields: [...STORE, ["Ma_Phieu", "voucherCode"], ["Ma_Phieu_Nhap", "receiptCode"], ["Ngay_Tra", "returnedAt"],
+      ["Nha_Cung_Cap", "supplier"], ["Tong_Tien_Hang", "returnSubtotal"], ["Giam_Gia", "discount"],
+      ["Thue_VAT", "vat"], ["NCC_Can_Tra", "supplierDue"], ["NCC_Da_Tra", "supplierPaid"], ["Ghi_Chu", "note"]],
     lineFields: LINE,
     template: `${HEADER}
 <h2 class="c" style="margin-top:8px">PHIẾU TRẢ HÀNG NHẬP</h2>

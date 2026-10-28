@@ -5,20 +5,23 @@ import { formatMoney } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { hm } from "./hr-queries";
 import type { EmployeeRow, ScheduleItem, ScheduleWeek, Shift } from "./hr-types";
-import { DayHeader, todayIso } from "./week-toolbar";
+import { DayHeader, todayIso, type WeekDay } from "./week-toolbar";
 import { DocCodeLink } from "@/components/ui/doc-code-link";
+import { useT } from "@/lib/i18n";
+import { hrNs } from "@/messages/hr";
 
-type Day = { iso: string; day: number; label: string };
+type Day = WeekDay;
 
 const HEAD = "h-[33px] border-b border-r border-[#e5e7eb] bg-white px-2 text-center last:border-r-0";
 const CELL = "group relative h-[51px] border-r border-b border-[#e5e7eb] p-1 align-top last:border-r-0";
 
 /** Chip 1 ca trong ô lịch: tên ca + giờ, nút x để xóa. */
 function ShiftChip({ title, sub, onRemove }: { title: string; sub: string; onRemove: () => void }) {
+  const t = useT(hrNs);
   return (
     <div className="mb-1 flex items-start gap-1 rounded bg-primary-tint px-1.5 py-0.5 text-[11px] leading-4 text-primary">
       <span className="min-w-0 flex-1 truncate"><span className="font-semibold">{title}</span> <span className="text-foreground/70">{sub}</span></span>
-      <button type="button" aria-label={`Xóa ${title}`} onClick={onRemove} className="opacity-0 group-hover:opacity-100 hover:text-destructive">
+      <button type="button" aria-label={t("nameList.remove", { name: title })} onClick={onRemove} className="opacity-0 group-hover:opacity-100 hover:text-destructive">
         <X className="size-3" /></button>
     </div>
   );
@@ -40,6 +43,7 @@ export function ScheduleWeekGrid({ mode, days, employees, shifts, data, onAdd, o
   mode: "employee" | "shift"; days: Day[]; employees: EmployeeRow[]; shifts: Shift[]; data?: ScheduleWeek;
   onAdd: (employee: EmployeeRow, date: string) => void; onRemove: (item: ScheduleItem) => void;
 }) {
+  const t = useT(hrNs);
   const today = todayIso();
   const items = data?.items ?? [];
   const shiftOf = (id: string) => shifts.find((s) => s.id === id);
@@ -52,12 +56,12 @@ export function ScheduleWeekGrid({ mode, days, employees, shifts, data, onAdd, o
         <colgroup><col className="w-[117px]" />{days.map((d) => <col key={d.iso} />)}{mode === "employee" && <col className="w-[117px]" />}</colgroup>
         <thead>
           <tr>
-            <th className={cn(HEAD, "h-[33px] text-left font-semibold")}>{mode === "employee" ? "Nhân viên" : "Ca làm việc"}</th>
+            <th className={cn(HEAD, "h-[33px] text-left font-semibold")}>{mode === "employee" ? t("payments.cols.employee") : t("shift.title")}</th>
             {days.map((d) => <th key={d.iso} className={HEAD}><DayHeader label={d.label} day={d.day} today={d.iso === today} /></th>)}
             {mode === "employee" && (
               <th className={cn(HEAD, "text-right font-semibold")}>
-                <span className="inline-flex items-center gap-1">Lương dự kiến
-                  <span title="Lương cơ bản nếu nhân viên làm đủ các ca đã xếp trong tuần (đã nhân hệ số ngày lễ)"><Info className="size-3 text-muted-foreground" /></span>
+                <span className="inline-flex items-center gap-1">{t("scheduleGrid.expected")}
+                  <span title={t("scheduleGrid.expectedHint")}><Info className="size-3 text-muted-foreground" /></span>
                 </span>
               </th>
             )}
@@ -79,14 +83,14 @@ export function ScheduleWeekGrid({ mode, days, employees, shifts, data, onAdd, o
                 <td key={d.iso} className={CELL}>
                   {items.filter((i) => i.employeeId === e.id && i.date === d.iso).map((i) => {
                     const s = shiftOf(i.shiftId);
-                    return <ShiftChip key={i.id} title={s?.name ?? "Ca"} sub={s ? `${hm(s.startTime)}-${hm(s.endTime)}` : ""} onRemove={() => onRemove(i)} />;
+                    return <ShiftChip key={i.id} title={s?.name ?? t("scheduleGrid.shiftFallback")} sub={s ? `${hm(s.startTime)}-${hm(s.endTime)}` : ""} onRemove={() => onRemove(i)} />;
                   })}
-                  {e.status === "WORKING" && <AddButton label={`Thêm lịch ${e.name} ngày ${d.iso}`} onClick={() => onAdd(e, d.iso)} />}
+                  {e.status === "WORKING" && <AddButton label={t("scheduleGrid.addAria", { name: e.name, date: d.iso })} onClick={() => onAdd(e, d.iso)} />}
                 </td>
               ))}
               <td className="border-b border-[#e5e7eb] px-2 py-1.5 text-right align-top">
                 {data && e.id in data.expected ? <span className="font-semibold">{formatMoney(data.expected[e.id])}</span>
-                  : <span className="text-[10px] text-muted-foreground">Chưa thiết lập lương</span>}
+                  : <span className="text-[10px] text-muted-foreground">{t("salaryTab.noSalary")}</span>}
               </td>
             </tr>
           ))}
@@ -99,17 +103,17 @@ export function ScheduleWeekGrid({ mode, days, employees, shifts, data, onAdd, o
                 <td key={d.iso} className={CELL}>
                   {items.filter((i) => i.shiftId === s.id && i.date === d.iso && shownIds.has(i.employeeId)).map((i) => {
                     const emp = empOf(i.employeeId);
-                    return <ShiftChip key={i.id} title={emp?.name ?? "Nhân viên"} sub={emp?.code ?? ""} onRemove={() => onRemove(i)} />;
+                    return <ShiftChip key={i.id} title={emp?.name ?? t("payments.cols.employee")} sub={emp?.code ?? ""} onRemove={() => onRemove(i)} />;
                   })}
                 </td>
               ))}
             </tr>
           ))}
           {mode === "employee" && !employees.length && (
-            <tr><td colSpan={days.length + 2} className="py-10 text-center text-muted-foreground">Chưa có nhân viên đang làm việc</td></tr>
+            <tr><td colSpan={days.length + 2} className="py-10 text-center text-muted-foreground">{t("scheduleGrid.noEmployees")}</td></tr>
           )}
           {mode === "shift" && !shifts.length && (
-            <tr><td colSpan={days.length + 1} className="py-10 text-center text-muted-foreground">Chưa có ca làm việc</td></tr>
+            <tr><td colSpan={days.length + 1} className="py-10 text-center text-muted-foreground">{t("scheduleGrid.noShifts")}</td></tr>
           )}
         </tbody>
       </table>

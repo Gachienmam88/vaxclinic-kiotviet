@@ -1,5 +1,6 @@
 package com.vaxclinic.integration.einvoice;
 
+import com.vaxclinic.common.http.InternalRestClientFactory;
 import com.vaxclinic.common.error.BusinessException;
 import com.vaxclinic.common.security.ServiceTokenProvider;
 import com.vaxclinic.integration.common.SecretCipher;
@@ -39,12 +40,12 @@ public class EInvoiceService {
     private final RestClient sales;
     private final ServiceTokenProvider tokens;
 
-    public EInvoiceService(JdbcTemplate jdbc, SecretCipher cipher, MisaClient misa,
+    public EInvoiceService(InternalRestClientFactory httpFactory, JdbcTemplate jdbc, SecretCipher cipher, MisaClient misa,
                            @Value("${app.sales-url}") String salesUrl, @Value("${app.jwt.secret}") String secret) {
         this.jdbc = jdbc;
         this.cipher = cipher;
         this.misa = misa;
-        this.sales = RestClient.builder().baseUrl(salesUrl).build();
+        this.sales = httpFactory.create(salesUrl);
         this.tokens = new ServiceTokenProvider(secret, "integration-service");
     }
 

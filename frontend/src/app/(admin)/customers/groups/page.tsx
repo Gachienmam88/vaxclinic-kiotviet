@@ -16,9 +16,14 @@ import { api, errorMessage } from "@/lib/api-client";
 import { formatNumber } from "@/lib/format";
 import { useCurrentUser } from "@/lib/use-current-user";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
+import { commonNs } from "@/messages/common";
+import { customersNs } from "@/messages/customers";
 
 /** Khách hàng → Nhóm khách hàng. Xóa nhóm: khách trong nhóm chuyển thành "chưa có nhóm" (không xóa khách). */
 export default function CustomerGroupsPage() {
+  const t = useT(customersNs);
+  const tc = useT(commonNs);
   const qc = useQueryClient();
   const { can } = useCurrentUser();
   const { data: groups } = useCustomerGroups();
@@ -28,30 +33,30 @@ export default function CustomerGroupsPage() {
   const remove = useMutation({
     mutationFn: (id: string) => api<{ unlinkedCustomers: number }>(`/customer-groups/${id}`, { method: "DELETE" }),
     onSuccess: (r) => {
-      toast.success(`Đã xóa nhóm khách hàng${r.unlinkedCustomers ? `, ${r.unlinkedCustomers} khách được bỏ nhóm` : ""}`);
+      toast.success(r.unlinkedCustomers ? t("groups.deletedUnlinked", { count: r.unlinkedCustomers }) : t("groups.deleted"));
       ["customer-groups", "customers", "customer"].forEach((k) => qc.invalidateQueries({ queryKey: [k] }));
     },
     onError: (e) => toast.error(errorMessage(e)),
   });
   const askDelete = (g: CustomerGroup) => confirm(g.customerCount
-    ? `Xóa nhóm "${g.name}"? ${g.customerCount} khách hàng trong nhóm sẽ chuyển thành chưa có nhóm.`
-    : `Xóa nhóm "${g.name}"?`) && remove.mutate(g.id);
+    ? t("groups.confirmDeleteWithCustomers", { name: g.name, count: g.customerCount })
+    : t("groups.confirmDelete", { name: g.name })) && remove.mutate(g.id);
 
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2">
-        <PageTitle>Nhóm khách hàng</PageTitle>
+        <PageTitle>{t("groups.title")}</PageTitle>
         {manage && <Button variant="outline" className={cn(TOOLBAR_BTN, "ml-auto")} onClick={() => setDialog({})}>
-          <Plus className="size-4" /> Nhóm khách hàng</Button>}
+          <Plus className="size-4" /> {t("groups.addButton")}</Button>}
       </div>
       <div className="overflow-x-auto rounded-lg bg-background">
         <Table>
           <TableHeader><TableRow className={LIST_HEAD_ROW}>
-            <TableHead className="pl-4">Tên nhóm</TableHead><TableHead className="text-right">Giảm giá</TableHead>
-            <TableHead className="text-right">Số khách hàng</TableHead><TableHead>Ghi chú</TableHead><TableHead className="w-24 pr-4" />
+            <TableHead className="pl-4">{t("groups.cols.name")}</TableHead><TableHead className="text-right">{t("groups.cols.discount")}</TableHead>
+            <TableHead className="text-right">{t("groups.cols.count")}</TableHead><TableHead>{t("groups.cols.note")}</TableHead><TableHead className="w-24 pr-4" />
           </TableRow></TableHeader>
           <TableBody>
-            {groups && !groups.length && <ListEmptyRow cols={5} what="nhóm khách hàng" />}
+            {groups && !groups.length && <ListEmptyRow cols={5} what={t("groups.emptyWhat")} />}
             {groups?.map((g) => (
               <TableRow key={g.id}>
                 <TableCell className="pl-4 font-medium">{g.name}</TableCell>
@@ -59,9 +64,9 @@ export default function CustomerGroupsPage() {
                 <TableCell className="text-right">{formatNumber(g.customerCount)}</TableCell>
                 <TableCell className="whitespace-normal text-muted-foreground">{g.note}</TableCell>
                 <TableCell className="pr-4 text-right">{manage && <>
-                  <Button size="icon-sm" variant="ghost" title="Sửa" aria-label={`Sửa nhóm ${g.name}`} onClick={() => setDialog({ group: g })}>
+                  <Button size="icon-sm" variant="ghost" title={tc("actions.edit")} aria-label={t("groups.editAria", { name: g.name })} onClick={() => setDialog({ group: g })}>
                     <Pencil className="size-4" /></Button>
-                  <Button size="icon-sm" variant="ghost" title="Xóa" aria-label={`Xóa nhóm ${g.name}`} className="text-destructive"
+                  <Button size="icon-sm" variant="ghost" title={tc("actions.delete")} aria-label={t("groups.deleteAria", { name: g.name })} className="text-destructive"
                     disabled={remove.isPending} onClick={() => askDelete(g)}><Trash2 className="size-4" /></Button>
                 </>}</TableCell>
               </TableRow>))}

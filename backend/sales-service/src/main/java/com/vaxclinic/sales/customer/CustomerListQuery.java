@@ -1,5 +1,6 @@
 package com.vaxclinic.sales.customer;
 
+import com.vaxclinic.common.search.AccentInsensitiveSql;
 import com.vaxclinic.sales.customer.CustomerDtos.CustomerListItem;
 import com.vaxclinic.sales.customer.CustomerDtos.CustomerListResponse;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -29,7 +30,7 @@ public class CustomerListQuery {
         var p = new MapSqlParameterSource();
         var w = new StringBuilder(" from customers c left join customer_groups g on g.id = c.group_id where c.active");
         if (f.q() != null && !f.q().isBlank()) {
-            w.append(" and (c.code ilike :q or c.name ilike :q or c.phone ilike :q or c.phone2 ilike :q)");
+            w.append(" and (c.code ilike :q or " + AccentInsensitiveSql.like("c.name", ":q") + " or c.phone ilike :q or c.phone2 ilike :q)");
             p.addValue("q", "%" + f.q().trim() + "%");
         }
         if (f.groupId() != null) {
