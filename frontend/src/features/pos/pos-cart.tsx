@@ -53,8 +53,10 @@ export function PosCart({ lines, customerId, onChange }: Props) {
               <DropdownMenu>
                 <DropdownMenuTrigger aria-label="Thêm" className="rounded p-1 hover:bg-muted"><EllipsisVertical className="size-4" /></DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setDialog({ kind: "price", line: l })}>Xem giá bán gần nhất</DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setShowDiscount({ ...showDiscount, [l.key]: true })}>Giảm giá</DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setShowNote({ ...showNote, [l.key]: true })}>Ghi chú</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setDialog({ kind: "info", line: l })}>Xem chi tiết</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
