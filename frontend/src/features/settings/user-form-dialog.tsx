@@ -33,8 +33,8 @@ export function UserFormDialog({ open, onOpenChange, user }: Props) {
   const save = useMutation({
     mutationFn: async () => {
       if (!user) return api("/users", { method: "POST", body: form });
-      const { username: _u, password, ...update } = form;
-      await api(`/users/${user.id}`, { method: "PUT", body: update });
+      const { fullName, phone, roleId, branchIds, active, password } = form;
+      await api(`/users/${user.id}`, { method: "PUT", body: { fullName, phone, roleId, branchIds, active } });
       if (password) await api(`/users/${user.id}/reset-password`, { method: "POST", body: { password } });
     },
     onSuccess: () => {
