@@ -26,6 +26,9 @@ const NAV: NavItem[] = [
       { href: "/purchases/suppliers", label: "Nhà cung cấp" },
     ],
   },
+  { href: "/invoices", label: "Đơn hàng", perm: "sales.perform", children: [{ href: "/invoices", label: "Hóa đơn" }] },
+  { href: "/customers", label: "Khách hàng", perm: "patient.view" },
+  { href: "/cashbook", label: "Sổ quỹ", perm: "cashbook.manage" },
 ];
 
 const navClass = (active: boolean) =>
