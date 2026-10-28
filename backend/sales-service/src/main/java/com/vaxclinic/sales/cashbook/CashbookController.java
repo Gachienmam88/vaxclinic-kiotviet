@@ -119,6 +119,28 @@ public class CashbookController {
         return banks.save(b);
     }
 
+    /** Nội dung mã VietQR cho tài khoản (frontend vẽ thành ảnh QR). */
+    @GetMapping("/api/bank-accounts/{id}/vietqr")
+    public Map<String, String> vietQr(@PathVariable UUID id, @RequestParam(defaultValue = "0") long amount,
+                                      @RequestParam(required = false) String info) {
+        BankAccount b = banks.findById(id)
+                .orElseThrow(() -> BusinessException.notFound("BANK_ACCOUNT_NOT_FOUND", "Không tìm thấy tài khoản"));
+        if (b.getBankBin() == null || b.getBankBin().isBlank()) {
+            throw BusinessException.badRequest("BANK_BIN_MISSING", "Tài khoản chưa có mã ngân hàng (BIN) để tạo QR");
+        }
+        return Map.of("payload", VietQrPayload.build(b.getBankBin(), b.getAccountNo(), Math.max(amount, 0), info),
+                "bankName", b.getBankName(), "accountNo", b.getAccountNo(), "accountName", b.getAccountName());
+    }
+
+    @PostMapping("/api/bank-accounts/{id}/deactivate")
+    @PreAuthorize("hasAuthority('cashbook.manage')")
+    public void deactivateBankAccount(@PathVariable UUID id) {
+        banks.findById(id).ifPresent(b -> {
+            b.setActive(false);
+            banks.save(b);
+        });
+    }
+
     @PostMapping("/internal/cashflows")
     @PreAuthorize("hasAuthority('internal')")
     public void inbound(@RequestBody CashbookService.InboundCashflow in) {
