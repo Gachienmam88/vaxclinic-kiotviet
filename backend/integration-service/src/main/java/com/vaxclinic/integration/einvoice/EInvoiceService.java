@@ -64,8 +64,8 @@ public class EInvoiceService {
         if (!existing.isEmpty() && "PUBLISHED".equals(existing.get(0).get("status"))) {
             return existing.get(0);
         }
+        MisaClient.Account account = account(); // trước: báo "chưa thiết lập" rõ ràng khi chưa có dòng cấu hình
         var settings = jdbc.queryForMap("select * from einvoice_settings where id = 1");
-        MisaClient.Account account = account();
         SalesInvoice inv = sales.get().uri("/internal/invoices/{id}", invoiceId)
                 .header("Authorization", "Bearer " + tokens.token()).retrieve().body(SalesInvoice.class);
         if (inv == null || !"COMPLETED".equals(inv.status())) {
