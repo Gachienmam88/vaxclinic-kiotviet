@@ -1,7 +1,24 @@
 import { api } from "@/lib/api-client";
 import type { Invoice } from "@/features/sales/sales-types";
 import { newId } from "./pos-storage";
-import type { CatalogProduct, DraftInvoice } from "./pos-types";
+import type { CartLine, CatalogProduct, DraftInvoice } from "./pos-types";
+
+type SavedLine = {
+  productId: string; unitId: string; productCode: string; productName: string; unitName: string;
+  quantity: number; unitPrice: number; discount: number; note: string | null; taxCode: string | null;
+};
+
+/** Dòng hóa đơn / đơn đặt hàng đã lưu → dòng giỏ hàng (đơn vị lấy từ danh mục; hàng đã ngừng bán giữ đơn vị cũ). */
+export function toCartLines(lines: SavedLine[], catalog: CatalogProduct[]): CartLine[] {
+  return lines.map((l) => {
+    const p = catalog.find((x) => x.id === l.productId);
+    const units = p?.units.length ? p.units
+      : [{ id: l.unitId, code: l.productCode, barcode: null, unitName: l.unitName, conversionRate: 1, price: Number(l.unitPrice) }];
+    return { key: newId(), productId: l.productId, productName: l.productName, unitId: l.unitId, units,
+      quantity: Number(l.quantity), unitPrice: Number(l.unitPrice), discount: Number(l.discount), note: l.note ?? "",
+      taxCode: l.taxCode ?? p?.taxCode ?? null };
+  });
+}
 
 /**
  * Mở 1 hóa đơn đã bán lên màn bán hàng:
@@ -25,18 +42,14 @@ export async function draftFromInvoice(invoiceId: string, mode: "edit" | "return
       },
     };
   }
+  // Hóa đơn từ đơn đặt hàng: tiền cọc đã phân bổ sẵn → "Khách thanh toán" chỉ là phiếu TT{mã HĐ}
+  const paid = inv.orderId
+    ? inv.payments.filter((p) => p.code === `TT${inv.code}` && p.status === "PAID").reduce((s, p) => s + Number(p.allocated), 0)
+    : Number(inv.paid);
   return {
     id: inv.id, kind: "EDIT", editOf: { invoiceId: inv.id, code: inv.code, revision: inv.revision },
     label: `Update_${inv.code}`, mode: "QUICK", customer, sellerId: inv.sellerId ?? sellerId,
-    discount: Number(inv.discount), paid: Number(inv.paid), paymentMethod: (inv.paymentMethod ?? "CASH") as DraftInvoice["paymentMethod"],
-    note: inv.note ?? "",
-    lines: inv.lines.map((l) => {
-      const p = catalog.find((x) => x.id === l.productId);
-      const units = p?.units.length ? p.units
-        : [{ id: l.unitId, code: l.productCode, barcode: null, unitName: l.unitName, conversionRate: 1, price: Number(l.unitPrice) }];
-      return { key: newId(), productId: l.productId, productName: l.productName, unitId: l.unitId, units,
-        quantity: Number(l.quantity), unitPrice: Number(l.unitPrice), discount: Number(l.discount), note: l.note ?? "",
-        taxCode: l.taxCode ?? p?.taxCode ?? null };
-    }),
+    discount: Number(inv.discount), paid, paymentMethod: (inv.paymentMethod ?? "CASH") as DraftInvoice["paymentMethod"],
+    note: inv.note ?? "", lines: toCartLines(inv.lines, catalog),
   };
 }
