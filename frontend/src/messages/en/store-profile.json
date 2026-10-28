@@ -1,0 +1,291 @@
+{
+  "shell": {
+    "navLabel": "Store profile",
+    "groups": {
+      "store": "Store",
+      "einvoice": "E-invoices & Digital signatures",
+      "other": "Other"
+    },
+    "items": {
+      "storeInfo": "Store information",
+      "einvoice": "E-invoices",
+      "certificates": "Digital signatures",
+      "terms": "Terms of use"
+    }
+  },
+  "info": {
+    "tabs": {
+      "general": "General",
+      "history": "Change history"
+    },
+    "history": {
+      "time": "Time",
+      "user": "Performed by",
+      "content": "Details",
+      "empty": "No changes yet"
+    }
+  },
+  "general": {
+    "profileSection": "Profile information",
+    "storeSection": "Store information",
+    "fields": {
+      "businessType": "Business type",
+      "birthDate": "Date of birth",
+      "representative": "Representative",
+      "idNumber": "ID card/Passport",
+      "phone": "Phone",
+      "idIssueDate": "Issue date",
+      "email": "Email",
+      "gender": "Gender",
+      "idIssuePlace": "Place of issue",
+      "address": "Address",
+      "accessCode": "Store ID",
+      "storeName": "Store name",
+      "industry": "Industry",
+      "owner": "Store owner",
+      "branchCount": "Number of branches",
+      "status": "Status"
+    },
+    "statusPaused": "Suspended until {date}",
+    "statusInUse": "In use",
+    "reopen": "Reopen store",
+    "pause": "Suspend store",
+    "pauseUsed": "This store has already used its one-time suspension",
+    "update": "Update",
+    "reopenedToast": "Store reopened"
+  },
+  "businessTypes": {
+    "PERSONAL": "Individual",
+    "HOUSEHOLD": "Household business",
+    "ENTERPRISE": "Enterprise"
+  },
+  "genders": {
+    "MALE": "Male",
+    "FEMALE": "Female"
+  },
+  "flow": {
+    "cancel": "Cancel",
+    "skip": "Skip",
+    "next": "Continue",
+    "confirm": "Confirm",
+    "back": "Back"
+  },
+  "verify": {
+    "hintTotp": "To confirm it is you, enter the 6-digit code shown in your authenticator app (Google Authenticator, Microsoft Authenticator...).",
+    "hintPassword": "To confirm it is you, enter your current login password.",
+    "noSms": "The system does not send OTP codes by SMS. Turn on two-factor authentication in the account menu to verify with an app instead of your password.",
+    "codePlaceholder": "6-digit verification code",
+    "codeLabel": "Verification code",
+    "password": "Password"
+  },
+  "updateChoice": {
+    "title": "What would you like to update?",
+    "prompt": "Choose the information to update:",
+    "ownerOnly": "Only the store owner can do this.",
+    "options": {
+      "profile": {
+        "title": "Update profile information",
+        "hint": "Email, ID number, Representative, Date of birth, Address,..."
+      },
+      "phone": {
+        "title": "Update the store owner's phone number"
+      },
+      "rename": {
+        "title": "Rename store",
+        "hint": "Changes the system access address"
+      },
+      "transfer": {
+        "title": "Transfer store ownership",
+        "hint": "Hand over store ownership to another administrator. Requires verification by the current owner."
+      }
+    }
+  },
+  "pause": {
+    "title": "What is store suspension?",
+    "intro": "Suspending the store temporarily locks it when you don't need it, while keeping all data intact. During the suspension, no employee can use any feature of the system.",
+    "termsTitle": "Suspension period:",
+    "term1": "The suspension lasts up to 2 months. The store reopens automatically on the reopening date you choose.",
+    "term2": "The store owner can reopen the store before the suspension ends.",
+    "term3": "Data, settings and accounts are kept unchanged during the suspension.",
+    "onceNote": "Note: a store can be suspended only once during its lifetime.",
+    "dateLabel": "Automatic reopening date (up to {days} days from today)",
+    "dateError": "Choose a date from tomorrow up to {days} days later",
+    "submit": "Suspend",
+    "toast": "Store suspended"
+  },
+  "transfer": {
+    "title": "Transfer store ownership",
+    "steps": {
+      "pickRecipient": "Choose recipient",
+      "verify": "Verify"
+    },
+    "intro": "After the transfer you will no longer be able to rename, suspend or transfer the store. The recipient must be an active administrator.",
+    "noCandidates": "There are no other administrators. First create an account with the System administrator role in Settings → Users.",
+    "recipient": "Recipient:",
+    "submit": "Transfer",
+    "toast": "Store ownership transferred"
+  },
+  "phone": {
+    "title": "Change phone number",
+    "steps": {
+      "verify": "Verify",
+      "newPhone": "New number",
+      "confirm": "Confirm"
+    },
+    "current": "Current phone number",
+    "none": "None",
+    "newLabel": "Store owner's new phone number",
+    "placeholder": "E.g. 0912345678",
+    "invalid": "The phone number must have 10 digits, start with 0 and differ from the current one",
+    "confirmPrompt": "Confirm changing the store owner's phone number:",
+    "currentShort": "Current number",
+    "newShort": "New number",
+    "usageNote": "The new number is used in store information and print template headers.",
+    "toast": "Store owner's phone number updated"
+  },
+  "profileUpdate": {
+    "title": "Update profile information",
+    "pickGender": "Select gender",
+    "province": "Province/City",
+    "addressRequired": "Address *",
+    "verifyNote": "To complete the update, the system needs to verify the account owner. Click \"Continue\" to go to the verification step.",
+    "toast": "Profile information updated"
+  },
+  "rename": {
+    "title": "Rename store",
+    "steps": {
+      "notes": "Important notes",
+      "newName": "New name",
+      "verify": "Verify"
+    },
+    "intro": "Before renaming the store, make sure you understand the consequences.",
+    "warnings": {
+      "loggedOut": {
+        "title": "All devices are logged out immediately",
+        "p1": "Every employee signed in on the web and at the POS terminals will be logged out, including you.",
+        "p2": "You are responsible for telling all employees the new store name before or right after the change."
+      },
+      "links": {
+        "title": "Existing links will stop working",
+        "p1": "Old login links and browser bookmarks containing the old name will no longer work. Update them and share the new link."
+      },
+      "oldName": {
+        "title": "The old name is not kept after the change",
+        "p1": "To use the old name again you must rename the store once more (all devices are logged out again)."
+      }
+    },
+    "agree": "I have read and understood the consequences of renaming the store",
+    "currentName": "Current name: {name}",
+    "newLabel": "New store name (the access address entered in the first login step)",
+    "placeholder": "E.g. vacxinso1yenlac",
+    "rule": "Lowercase letters without accents and digits only, 3–40 characters, different from the current name.",
+    "summary": "Rename store {from} to {to}.",
+    "submit": "Rename"
+  },
+  "certificates": {
+    "title": "Digital signatures",
+    "add": "Add digital signature",
+    "empty": "No digital signatures yet",
+    "confirmDelete": "Delete digital signature \"{name}\"?",
+    "fields": {
+      "subjectName": "Subject name",
+      "taxCode": "Tax code",
+      "representative": "Representative",
+      "activatedOn": "Activation date",
+      "expiresOn": "Expiry date",
+      "certStatus": "Certificate status",
+      "active": "Operating status",
+      "signatureType": "Signature type",
+      "provider": "Provider",
+      "serialNumber": "Serial number",
+      "publicCert": "Public certificate",
+      "issuer": "Issuing authority (Issuer)"
+    },
+    "tabs": {
+      "general": "General",
+      "cert": "Certificate"
+    },
+    "uploaded": "Uploaded (.cer)",
+    "notUploaded": "Not uploaded — entered manually",
+    "activeOn": "Active",
+    "activeOff": "Inactive",
+    "signatureTypes": {
+      "USB_TOKEN": "USB Token",
+      "HSM": "HSM",
+      "RMS": "RMS (Remote signing)"
+    },
+    "certStatuses": {
+      "PENDING": "Pending approval",
+      "APPROVED": "Approved",
+      "REVOKED": "Revoked"
+    },
+    "form": {
+      "titleEdit": "Edit digital signature",
+      "titleAdd": "Add digital signature",
+      "savedCert": "Certificate saved",
+      "uploadHint": "Upload the public certificate (.cer, .crt) to fill in the details automatically",
+      "privateKeyWarning": "Use the public certificate file only. Never upload the private key (.pfx, .p12, .key).",
+      "pickFile": "Choose file",
+      "providerPlaceholder": "E.g. IntrustCA, Viettel-CA, VNPT-CA",
+      "parseError": "Could not read the certificate",
+      "toast": "Digital signatures saved"
+    }
+  },
+  "einvoice": {
+    "account": "Account: {account}",
+    "active": "Active",
+    "notConnected": "Not connected — set up MISA meInvoice",
+    "viewInvoices": "View invoice list",
+    "issuer": "Issuer",
+    "totalQuantity": "Total quota",
+    "published": "Total invoices issued",
+    "remaining": "Remaining",
+    "serviceExpiry": "Service expiry date",
+    "packagesTitle": "Invoice packages",
+    "addPackage": "Add package",
+    "cols": {
+      "name": "Package name",
+      "quantity": "Total e-invoices",
+      "used": "Used",
+      "remaining": "Remaining",
+      "start": "Start date",
+      "end": "Expiry date",
+      "status": "Status"
+    },
+    "editPackage": "Edit package",
+    "deletePackage": "Delete package",
+    "confirmDelete": "Delete package \"{name}\"?",
+    "empty": "No invoice packages yet. Click \"Add package\" to enter a purchased package.",
+    "note": "Invoice packages are entered manually according to your contract with the issuer (the system is not yet connected to MISA's quota API). \"Used\" is the number of invoices issued from the system, allocated by issue date to packages that are still valid.",
+    "unallocated": "{amount} invoices were issued outside the validity period / beyond the quantity of the entered packages.",
+    "statuses": {
+      "NOT_STARTED": "Not yet valid",
+      "ACTIVE": "Valid",
+      "EXPIRED": "Expired"
+    },
+    "packageDialog": {
+      "titleEdit": "Edit invoice package",
+      "titleAdd": "Add invoice package",
+      "name": "Package name *",
+      "namePlaceholder": "E.g. 5,000-invoice package 2026",
+      "quantity": "Total e-invoices *",
+      "start": "Start date *",
+      "end": "Expiry date *",
+      "toast": "Invoice package saved"
+    }
+  },
+  "terms": {
+    "acceptedAt": "You accepted version {version} on {time}.",
+    "vietnameseOnlyNote": "The Terms of Use are provided in Vietnamese only.",
+    "dialogLabel": "Terms of use",
+    "agreeCheckbox": "I have read and agree to the Terms of Use",
+    "agreeButton": "I agree"
+  },
+  "paused": {
+    "title": "Store is suspended",
+    "body": "The store is temporarily locked and all data is kept. It will reopen automatically on {date}.",
+    "ownerHint": "You are the store owner and can reopen it early.",
+    "staffHint": "Contact the store owner if it needs to be reopened early.",
+    "reopen": "Reopen store"
+  }
+}
