@@ -103,6 +103,7 @@ public class PurchaseReceiptService {
                 stock.apply(p, new Movement(r.getBranchId(), baseQty.negate(), line.getLotNumber(), null,
                         DocType.PURCHASE_CANCEL, r.getId(), r.getCode(), lineCost(r, line), supplierName(r), actor.id()));
             }
+            cashflows.receiptCancelled(r);
         }
         r.setStatus(DocStatus.CANCELLED);
         r.setCancelledAt(Instant.now());
