@@ -1,0 +1,99 @@
+{
+  "page": {
+    "title": {
+      "CASH": "收支（现金）",
+      "BANK": "收支（银行）",
+      "EWALLET": "收支（电子钱包）",
+      "ALL": "收支（全部资金）"
+    },
+    "searchPlaceholder": "按单号",
+    "newReceipt": "收款单",
+    "newPayment": "付款单",
+    "exportTitle": "将当前显示的行导出为 CSV（列标题为越南语）",
+    "summary": { "opening": "期初余额", "receipts": "收入合计", "payments": "支出合计", "closing": "期末余额" },
+    "cols": { "code": "单号", "time": "时间", "category": "收支类别", "partner": "付款人/收款人", "amount": "金额" },
+    "emptyWhat": "收付款单",
+    "unit": "张单据"
+  },
+  "enums": {
+    "status": { "PAID": "已支付", "CANCELLED": "已作废" },
+    "voucherType": { "RECEIPT": "收款单", "PAYMENT": "付款单" },
+    "partnerType": {
+      "CUSTOMER": "客户",
+      "SUPPLIER": "供应商",
+      "EMPLOYEE": "员工",
+      "DELIVERY_PARTNER": "配送合作方",
+      "OTHER": "其他"
+    }
+  },
+  "detail": {
+    "accounting": "计入损益",
+    "noAccounting": "不计入损益",
+    "createdBy": "创建人：{name}",
+    "collectorReceipt": "收款人：{name}",
+    "collectorPayment": "付款经办：{name}",
+    "time": "时间：{time}",
+    "sourceDoc": "原始单据：{code}",
+    "amount": "金额",
+    "categoryReceipt": "收入类别",
+    "categoryPayment": "支出类别",
+    "partnerTypeReceipt": "付款方类型",
+    "partnerTypePayment": "收款方类型",
+    "method": "支付方式",
+    "partnerReceipt": "付款人",
+    "partnerPayment": "收款人",
+    "linkedReceipt": "此收款单已关联销售单 {invoices}",
+    "linkedReceiptAuto": "此自动收款单已关联销售单 {invoices}",
+    "linkedPayment": "此付款单已关联销售单 {invoices}",
+    "linkedPaymentAuto": "此自动付款单已关联销售单 {invoices}",
+    "allocCols": { "code": "单号", "time": "时间", "voucherValue": "单据金额", "collected": "收款金额" },
+    "noNote": "暂无备注",
+    "autoHint": {
+      "INVOICE": "自动生成的单据，如需作废请作废原销售单。",
+      "DELIVERY": "自动生成的单据，如需作废请在配送合作方中作废原对账单。",
+      "PURCHASE": "自动生成的单据，如需作废请作废原进货单。"
+    },
+    "cancel": "作废",
+    "confirmCancel": "作废单据 {code}？",
+    "cancelled": "已作废单据"
+  },
+  "dialog": {
+    "titleReceipt": "创建收款单",
+    "titlePayment": "创建付款单",
+    "time": "时间",
+    "collectorReceipt": "收款人",
+    "collectorPayment": "付款经办",
+    "fund": "资金账户",
+    "account": "账户",
+    "pickAccount": "选择账户",
+    "categoryPlaceholderReceipt": "例：其他收入",
+    "categoryPlaceholderPayment": "例：水电费",
+    "amount": "金额",
+    "supplierHint": "与供应商的收付款请在 {link} →“应付供应商”标签 → 付款 中创建，以保证供应商欠款与收支一致。",
+    "supplierLink": "采购 → 供应商",
+    "partnerNameReceipt": "付款人姓名",
+    "partnerNamePayment": "收款人姓名",
+    "phone": "电话",
+    "note": "备注",
+    "accountingCheck": "计入经营损益",
+    "createdReceipt": "已创建收款单 {code}",
+    "createdPayment": "已创建付款单 {code}"
+  },
+  "filter": {
+    "fund": "资金账户",
+    "docType": "单据类型",
+    "category": "收支类别",
+    "pickCategory": "选择收支类别",
+    "status": "状态",
+    "accounting": "计入损益",
+    "createdBy": "创建人",
+    "pickCreator": "选择创建人",
+    "employee": "员工",
+    "employeeAria": "收付款员工",
+    "pickEmployee": "选择员工",
+    "partner": "付款人/收款人",
+    "partnerTypeAria": "付款人/收款人类型",
+    "partnerPlaceholder": "姓名或电话",
+    "partnerAria": "付款人/收款人姓名或电话"
+  }
+}
