@@ -3,10 +3,13 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { FileOutput, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { DeepLinkRoute, useDeepLinkExpanded, type DeepLink } from "@/components/ui/deep-link-route";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ListEmptyRow } from "@/components/ui/list-empty-state";
 import { usePartners } from "@/features/delivery/delivery-queries";
 import { PartnerDetailPanel } from "@/features/delivery/partner-detail-panel";
 import { PartnerFormDialog } from "@/features/delivery/partner-form-dialog";
+import { useSettlementOwner } from "@/features/delivery/use-settlement-owner";
 import { FilterSection, FilterSidebar, LIST_HEAD_ROW, ListSearch, PageTitle, RadioOption, TOOLBAR_BTN } from "@/features/sales/invoice-list-kit";
 import { downloadCsv, ListPager } from "@/features/sales/invoice-list-pager";
 import { formatMoney } from "@/lib/format";
@@ -20,16 +23,17 @@ const DEBT: [string, string][] = [["", "Tất cả"], ["OWING", "Đối tác cò
 /**
  * Đối tác giao hàng (KiotViet): danh sách + dòng tổng (tổng đơn, phí giao hàng, cần thu hộ, nợ hiện tại), lọc trạng thái / công nợ,
  * thêm / sửa, chi tiết mở dưới dòng (vận đơn, sổ nợ, thanh toán, đối soát).
+ * Link sâu: ?code=DT000001 (lọc theo mã, mở chi tiết) hoặc ?code=DS000001 (mở đối tác sở hữu phiếu → tab Lịch sử thanh toán).
  */
-export default function DeliveryPartnersPage() {
+function DeliveryPartnersPage({ link }: { link: DeepLink }) {
+  const settlementCode = link.code && /^DS\d/i.test(link.code) ? link.code : null;
   const { can } = useCurrentUser();
-  const [search, setSearch] = useState("");
-  const [q, setQ] = useState("");
+  const [search, setSearch] = useState(settlementCode ? "" : link.code ?? "");
+  const [q, setQ] = useState(settlementCode ? "" : link.code ?? "");
   const [active, setActive] = useState("");
   const [debt, setDebt] = useState("");
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(15);
-  const [expanded, setExpanded] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   useEffect(() => { const t = setTimeout(() => { setQ(search); setPage(0); }, 300); return () => clearTimeout(t); }, [search]);
   const params = useMemo(() => {
@@ -40,6 +44,8 @@ export default function DeliveryPartnersPage() {
     return p;
   }, [q, active, debt, page, size]);
   const { data } = usePartners(params);
+  const owner = useSettlementOwner(settlementCode, data?.items.map((p) => p.id) ?? []);
+  const { open: expanded, setOpen: setExpanded, toggle } = useDeepLinkExpanded(data?.items, link, (p) => [p.code, p.id === owner ? settlementCode : null]);
   const exportCsv = () => downloadCsv("doi-tac-giao-hang", ["Mã", "Tên", "Điện thoại", "Email", "Địa chỉ", "Tổng đơn", "Phí giao hàng",
     "Cần thu hộ", "Nợ cần thu từ ĐTGH", "Trạng thái"], (data?.items ?? []).map((p) => [p.code, p.name, p.phone, p.email, p.address,
     p.shipmentCount, p.totalFee, p.totalCod, p.debt, p.active ? "Đang hoạt động" : "Ngừng hoạt động"]));
@@ -68,20 +74,20 @@ export default function DeliveryPartnersPage() {
               <TableHead className="text-right">Cần thu hộ</TableHead><TableHead className="pr-4 text-right" title="Dương: đối tác nợ cửa hàng; âm: cửa hàng nợ đối tác">Nợ cần thu từ ĐTGH</TableHead>
             </TableRow></TableHeader>
             <TableBody>
-              <TableRow className="font-bold hover:bg-transparent">
-                <TableCell colSpan={4} /><TableCell className="text-right">{formatMoney(data?.sumFee ?? 0)}</TableCell>
-                <TableCell className="text-right">{formatMoney(data?.sumCod ?? 0)}</TableCell><TableCell className="pr-4 text-right">{formatMoney(data?.sumDebt ?? 0)}</TableCell>
-              </TableRow>
-              {data && !data.items.length && <TableRow><TableCell colSpan={COLS} className="py-10 text-center text-muted-foreground">Chưa có đối tác giao hàng phù hợp</TableCell></TableRow>}
+              {!!data?.items.length && <TableRow className="font-bold hover:bg-transparent">
+                <TableCell colSpan={4} /><TableCell className="text-right">{formatMoney(data.sumFee ?? 0)}</TableCell>
+                <TableCell className="text-right">{formatMoney(data.sumCod ?? 0)}</TableCell><TableCell className="pr-4 text-right">{formatMoney(data.sumDebt ?? 0)}</TableCell>
+              </TableRow>}
+              {data && !data.items.length && <ListEmptyRow cols={COLS} what="đối tác giao hàng" />}
               {data?.items.map((p) => (
                 <Fragment key={p.id}>
                   <TableRow className={cn("cursor-pointer", expanded === p.id && "bg-[#e3f0fc] hover:bg-[#e3f0fc]", !p.active && "text-muted-foreground")}
-                    onClick={() => setExpanded(expanded === p.id ? null : p.id)}>
+                    onClick={() => toggle(p.id)}>
                     <TableCell className="pl-4">{p.code}</TableCell><TableCell>{p.name}</TableCell><TableCell>{p.phone}</TableCell>
                     <TableCell className="text-right">{p.shipmentCount}</TableCell><TableCell className="text-right">{formatMoney(p.totalFee)}</TableCell>
                     <TableCell className="text-right">{formatMoney(p.totalCod)}</TableCell><TableCell className="pr-4 text-right">{formatMoney(p.debt)}</TableCell>
                   </TableRow>
-                  {expanded === p.id && <TableRow className="hover:bg-transparent"><TableCell colSpan={COLS} className="p-0 whitespace-normal"><PartnerDetailPanel partner={p} /></TableCell></TableRow>}
+                  {expanded === p.id && <TableRow className="hover:bg-transparent"><TableCell colSpan={COLS} className="p-0 whitespace-normal"><PartnerDetailPanel partner={p} initialTab={p.id === owner ? "payments" : undefined} onClose={() => setExpanded(null)} /></TableCell></TableRow>}
                 </Fragment>))}
             </TableBody>
           </Table>
@@ -91,4 +97,8 @@ export default function DeliveryPartnersPage() {
       {creating && <PartnerFormDialog onClose={() => setCreating(false)} />}
     </div>
   );
+}
+
+export default function Page() {
+  return <DeepLinkRoute>{(link) => <DeliveryPartnersPage link={link} />}</DeepLinkRoute>;
 }
