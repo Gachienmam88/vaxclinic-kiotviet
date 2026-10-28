@@ -1,13 +1,16 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-/** Redirect to /login when there is no session cookie. Real auth is enforced by the backend. */
+/** Trang công khai (chưa đăng nhập): giới thiệu (+ hộp nhập địa chỉ cửa hàng) và màn đăng nhập. */
+const PUBLIC = ["/welcome", "/login"];
+
+/** Chưa có phiên → về trang giới thiệu; đã đăng nhập mà mở trang công khai → vào thẳng trang chủ. Backend vẫn tự kiểm tra quyền. */
 export function middleware(request: NextRequest) {
   const hasSession = request.cookies.has("vx_refresh");
-  const isLogin = request.nextUrl.pathname === "/login";
-  if (!hasSession && !isLogin) {
-    return NextResponse.redirect(new URL("/login", request.url));
+  const isPublic = PUBLIC.includes(request.nextUrl.pathname);
+  if (!hasSession && !isPublic) {
+    return NextResponse.redirect(new URL("/welcome", request.url));
   }
-  if (hasSession && isLogin) {
+  if (hasSession && isPublic) {
     return NextResponse.redirect(new URL("/", request.url));
   }
   return NextResponse.next();
