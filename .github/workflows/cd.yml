@@ -40,7 +40,7 @@ jobs:
           - { service: gateway-service,     context: backend,  module: gateway-service }
           - { service: frontend,            context: frontend, module: "" }
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Image name (lowercase)
         run: echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY,,}-${{ matrix.service }}" >> "$GITHUB_ENV"
       - uses: docker/setup-buildx-action@v3
@@ -89,7 +89,7 @@ jobs:
             echo "enabled=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         if: steps.cfg.outputs.enabled == 'true'
 
       - name: Set up SSH

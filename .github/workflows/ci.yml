@@ -25,8 +25,8 @@ jobs:
       run:
         working-directory: backend
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "17"
@@ -56,8 +56,8 @@ jobs:
       NEXT_PUBLIC_APP_NAME: VaxClinic
       GATEWAY_URL: http://localhost:8080
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: "22"
           cache: npm
