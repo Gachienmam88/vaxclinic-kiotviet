@@ -67,7 +67,8 @@ public class RevenueBookController {
                 ), back as (
                   select ret.d, coalesce(il.tax_code, '') tax_code,
                     sum(case when ret.subtotal = 0 then 0
-                             else round(ret.total * rl.quantity * rl.unit_price / ret.subtotal) end) amount
+                             else round(ret.total * rl.quantity * rl.unit_price / ret.subtotal) end) amount,
+                    sum(round(rl.quantity * coalesce(il.cost, 0))) cogs
                   from ret join sales_return_lines rl on rl.return_id = ret.id
                   left join invoice_lines il on il.id = rl.invoice_line_id group by 1, 2
                 )
