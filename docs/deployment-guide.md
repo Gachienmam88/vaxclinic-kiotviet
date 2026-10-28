@@ -133,6 +133,7 @@ tương thích → khôi phục từ thư mục `backups/` (lệnh ở mục 4).
   (Linux ~0,008 USD/phút). Ước tính 1 lần CI ≈ 5–8 phút; 1 lần CD (CI + 6 image) ≈ 15–25 phút máy (các job chạy song song
   nhưng tính phút cộng dồn). Khoảng 40–60 lần đẩy code/tháng + vài lần lên `main` vẫn nằm trong gói miễn phí — cần theo dõi
   tại Settings → Billing. Repo public thì miễn phí hoàn toàn (không khuyến nghị cho hệ thống nội bộ).
-- **GHCR:** mỗi bản phát hành ~6 image (Java ~200–300 MB/image, có lớp dùng chung). Image private tính vào hạn mức lưu trữ
-  Packages → nên định kỳ xoá các tag SHA cũ (giữ ~10 bản gần nhất).
-- **VPS:** 4 GB RAM khoảng 150.000–400.000 đ/tháng tùy nhà cung cấp; tên miền `.vn` ~ 450.000–750.000 đ/năm.
+- **GHCR:** mỗi bản phát hành ~6 image (Java ~200–300 MB/image, có lớp dùng chung). Chính sách tính phí lưu trữ GHCR do GitHub
+  quy định và có thể thay đổi (image private có thể bị tính vào hạn mức Packages) → kiểm tra Settings → Billing, và định kỳ
+  xoá các tag SHA cũ (giữ ~10 bản gần nhất).
+- **VPS (tham khảo, chưa báo giá):** 4 GB RAM khoảng 150.000–400.000 đ/tháng tùy nhà cung cấp; tên miền `.vn` ~ 450.000–750.000 đ/năm.
