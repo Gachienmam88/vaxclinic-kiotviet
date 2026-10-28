@@ -64,8 +64,9 @@ public class AuthService {
             throw new BusinessException(HttpStatus.FORBIDDEN, "USER_LOCKED", "Tài khoản đã bị khóa");
         }
         if (twoFactor.enabled(user.getId())) {
-            twoFactor.checkLogin(user.getId(), totpCode);
+            twoFactor.checkLogin(user.getId(), totpCode); // thiếu / sai mã: không tính vào giới hạn mật khẩu
         }
+        loginAttempts.recordSuccess(username, clientIp);
         return issue(user);
     }
 
