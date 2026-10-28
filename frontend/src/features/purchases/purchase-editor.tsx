@@ -7,6 +7,8 @@ import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { api, errorMessage } from "@/lib/api-client";
+import { formatMoney, formatNumber } from "@/lib/format";
+import type { InputInvoice } from "@/features/integrations/integration-queries";
 import { useUserLookup } from "./purchase-queries";
 import { toRequest, type EditorMode, type EditorState } from "./purchase-editor-state";
 import { PurchaseEditorPanel } from "./purchase-editor-panel";
