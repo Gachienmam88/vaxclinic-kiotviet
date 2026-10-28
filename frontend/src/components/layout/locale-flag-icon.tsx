@@ -16,7 +16,8 @@ export function LocaleFlagIcon({ locale }: { locale: Locale }) {
       {locale === "en" && (
         <>
           <rect width="18" height="12" fill="#ffffff" />
-          {[0, 2, 4, 6, 8, 10].map((i) => <rect key={i} y={(i * 12) / 13 + 0} width="18" height={12 / 13} fill="#b22234" transform={`translate(0 ${(i * 12) / 13})`} />)}
+          {/* 7 sọc đỏ / 13 sọc, góc xanh phủ 7 sọc trên */}
+          {[0, 2, 4, 6, 8, 10, 12].map((i) => <rect key={i} y={(i * 12) / 13} width="18" height={12 / 13} fill="#b22234" />)}
           <rect width="7.6" height={(12 * 7) / 13} fill="#3c3b6e" />
         </>
       )}
