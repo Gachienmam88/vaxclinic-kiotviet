@@ -21,8 +21,11 @@ public final class InvoiceDtos {
     private InvoiceDtos() {
     }
 
-    public record LineInput(@NotNull UUID productId, @NotNull UUID unitId, @NotBlank String productCode,
-                            @NotBlank String productName, @NotBlank String unitName,
+    /** Giới hạn độ dài = cột invoice_lines / customer_order_lines → dữ liệu quá dài bị chặn 400 trước khi trừ kho. */
+    public record LineInput(@NotNull UUID productId, @NotNull UUID unitId,
+                            @NotBlank @Size(max = 50, message = "Mã hàng tối đa 50 ký tự") String productCode,
+                            @NotBlank @Size(max = 250, message = "Tên hàng tối đa 250 ký tự") String productName,
+                            @NotBlank @Size(max = 50, message = "Đơn vị tính tối đa 50 ký tự") String unitName,
                             @NotNull @DecimalMin(value = "0.001", message = "Số lượng phải > 0") BigDecimal quantity,
                             @NotNull @DecimalMin("0") BigDecimal unitPrice, @DecimalMin("0") BigDecimal discount,
                             @Size(max = 500) String note, @Size(max = 30) String taxCode) {
