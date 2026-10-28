@@ -21,6 +21,7 @@
         <module>gateway-service</module>
         <module>identity-service</module>
         <module>product-service</module>
+        <module>sales-service</module>
     </modules>
 
     <properties>
