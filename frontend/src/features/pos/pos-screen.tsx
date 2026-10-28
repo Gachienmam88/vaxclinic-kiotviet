@@ -69,7 +69,7 @@ export function PosScreen() {
       const same = lines.find((l) => l.productId === p.id && l.unitId === unit.id);
       if (same) return lines.map((l) => (l === same ? { ...l, quantity: l.quantity + 1 } : l));
       return [{ key: newId(), productId: p.id, productName: p.name, unitId: unit.id, units: p.units, quantity: 1,
-        unitPrice: unit.price, discount: 0, note: "" }, ...lines];
+        unitPrice: unit.price, discount: 0, note: "", taxCode: p.taxCode }, ...lines];
     });
   }
 
