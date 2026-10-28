@@ -47,7 +47,7 @@ public class PosCatalogQuery {
             PosProduct p = out.computeIfAbsent(id, k -> {
                 try {
                     return new PosProduct(id, rs.getString("name"), rs.getBoolean("lot_managed"),
-                            rs.getBigDecimal("stock"), new ArrayList<>());
+                            rs.getBigDecimal("stock"), rs.getString("tax_code"), new ArrayList<>());
                 } catch (java.sql.SQLException e) {
                     throw new IllegalStateException(e);
                 }
