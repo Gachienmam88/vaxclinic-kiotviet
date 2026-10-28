@@ -55,7 +55,9 @@ public class InvoiceService {
         }
         // Mã HĐ lấy trước để ghi vào thẻ kho; nếu bước sau lỗi, mã bị bỏ qua (dãy số có thể nhảy cóc).
         String code = "HD%06d".formatted(invoices.nextCodeNumber());
-        List<UUID> lineIds = req.lines().stream().map(l -> UUID.randomUUID()).toList();
+        // Line ids derived from the invoice id: a retry gets the SAME ids, matching the stored stock result (cost + lots).
+        List<UUID> lineIds = IntStream.range(0, req.lines().size())
+                .mapToObj(i -> UUID.nameUUIDFromBytes((req.id() + ":" + i).getBytes(StandardCharsets.UTF_8))).toList();
         var result = stock.apply(new ProductStockClient.Request(req.id(), "SALE", code, req.branchId(),
                 customer == null ? "Khách lẻ" : customer.getName(), actor.id(), null, stockLines(req, lineIds)));
         return writer.persist(req, actor, customer, code, lineIds, result, totals, paid);
