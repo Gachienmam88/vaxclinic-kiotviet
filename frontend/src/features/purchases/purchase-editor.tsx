@@ -40,8 +40,13 @@ export function PurchaseEditor({ mode, initial, reference }: { mode: EditorMode;
       const url = state.id ? `${cfg.endpoint}/${state.id}` : cfg.endpoint;
       return api<{ id: string; code: string }>(`${url}?complete=${complete}`, { method: state.id ? "PUT" : "POST", body });
     },
-    onSuccess: (doc, complete) => {
+    onSuccess: async (doc, complete) => {
       toast.success(`${complete ? "Đã hoàn thành" : "Đã lưu tạm"} phiếu ${doc.code}`);
+      if (reference) {
+        await api(`/input-invoices/${reference.id}/receipt`, { method: "PATCH", body: { receiptId: doc.id, receiptCode: doc.code } })
+          .catch((e) => toast.error(`Chưa gắn được phiếu vào hóa đơn đầu vào: ${errorMessage(e)}`));
+        qc.invalidateQueries({ queryKey: ["input-invoices"] });
+      }
       qc.invalidateQueries({ queryKey: [cfg.listKey] });
       qc.invalidateQueries({ queryKey: ["products"] });
       router.push(cfg.listPath);
