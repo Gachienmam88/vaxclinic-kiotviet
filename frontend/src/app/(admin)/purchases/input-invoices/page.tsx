@@ -31,7 +31,7 @@ function Connections({ onEdit }: { onEdit: (c?: TaxConnection) => void }) {
     <div className="space-y-3">
       <p className="flex items-center justify-center gap-2 rounded-md bg-primary/10 p-2 text-sm text-primary">
         <Info className="size-4" /> Lưu ý: có thể kết nối nhiều tài khoản để quản lý hóa đơn của nhiều doanh nghiệp cùng lúc.</p>
-      {!data.length && <p className="py-8 text-center text-sm text-muted-foreground">Chưa có kết nối nào — bấm "Thêm kết nối"</p>}
+      {!data.length && <p className="py-8 text-center text-sm text-muted-foreground">Chưa có kết nối nào — bấm “Thêm kết nối”</p>}
       {data.map((c) => (
         <div key={c.id} className="space-y-3 rounded-lg border bg-background p-4 text-sm">
           <div className="flex items-center gap-2 font-semibold">Kết nối Cơ quan Thuế
