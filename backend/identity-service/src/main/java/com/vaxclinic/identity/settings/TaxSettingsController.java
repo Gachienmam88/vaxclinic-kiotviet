@@ -82,7 +82,13 @@ public class TaxSettingsController {
     @GetMapping("/api/settings/tax")
     public TaxSettings get() {
         TaxSettings t = store.read("tax", TaxSettings.class);
-        return t == null ? DEFAULT : t;
+        if (t == null) {
+            return DEFAULT;
+        }
+        // Bản lưu cũ (1 ngành chung) chưa có danh sách ngành → dùng danh sách mặc định
+        return t.sectors() == null || t.sectors().isEmpty()
+                ? new TaxSettings(t.vatEnabled(), DEFAULT_SECTORS, DEFAULT.defaultSector(), Map.of(), t.defaultTaxCode(), t.profiles())
+                : t;
     }
 
     @PutMapping("/api/settings/tax")
