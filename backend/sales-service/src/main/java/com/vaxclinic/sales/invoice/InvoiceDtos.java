@@ -40,7 +40,14 @@ public final class InvoiceDtos {
 
     public record LineResponse(UUID id, int lineNo, UUID productId, UUID unitId, String productCode, String productName,
                                String unitName, BigDecimal quantity, BigDecimal unitPrice, BigDecimal discount,
-                               BigDecimal price, BigDecimal amount, BigDecimal cost, String lots, String note) {
+                               BigDecimal price, BigDecimal amount, BigDecimal cost, String lots, String note,
+                               String taxCode, BigDecimal returnedQuantity) {
+    }
+
+    public record TaxCodeChange(@NotNull UUID lineId, @Size(max = 30) String taxCode) {
+    }
+
+    public record RecentPrice(String invoiceCode, Instant soldAt, String customerName, BigDecimal quantity, BigDecimal price) {
     }
 
     public record PaymentResponse(UUID voucherId, String code, Instant occurredAt, String createdByName,
