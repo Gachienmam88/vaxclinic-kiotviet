@@ -58,7 +58,10 @@ export function ProductFormDialog({ product, onClose }: Props) {
     if (!form.name.trim()) return toast.error("Nhập tên hàng");
     if (!form.categoryId) return toast.error("Chọn nhóm hàng");
     if (!base.unitName.trim()) return toast.error("Nhập tên đơn vị cơ bản");
-    save.mutate(andNew);
+    save.mutate(undefined, {
+      // "Lưu & Tạo thêm hàng": giữ nhóm hàng + thuế, xóa phần còn lại để nhập hàng kế tiếp.
+      onSuccess: () => (andNew ? setForm({ ...blank(), categoryId: form.categoryId, taxRateId: form.taxRateId }) : onClose()),
+    });
   }
 
   return (
