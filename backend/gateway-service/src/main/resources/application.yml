@@ -22,7 +22,7 @@ spring:
             - id: product
               uri: ${PRODUCT_URL:http://localhost:8082}
               predicates:
-                - Path=/api/products/**,/api/categories/**,/api/tax-rates/**,/api/positions/**
+                - Path=/api/products/**,/api/categories/**,/api/tax-rates/**,/api/positions/**,/api/suppliers/**,/api/purchase-receipts/**,/api/purchase-returns/**
 
 management:
   endpoints:
