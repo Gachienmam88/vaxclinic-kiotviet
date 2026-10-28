@@ -69,11 +69,20 @@ public class InvoiceQuery {
         Invoice inv = invoices.findById(id).orElseThrow(() ->
                 com.vaxclinic.common.error.BusinessException.notFound("INVOICE_NOT_FOUND", "Không tìm thấy hóa đơn"));
         var customer = inv.getCustomerId() == null ? null : customers.findById(inv.getCustomerId()).orElse(null);
+        // Số lượng đã trả của từng dòng (phiếu trả hàng còn hiệu lực) → màn trả hàng chỉ cho trả phần còn lại
+        var returned = new java.util.HashMap<UUID, BigDecimal>();
+        jdbc.query("""
+                select rl.invoice_line_id, sum(rl.quantity) qty from sales_return_lines rl join sales_returns r on r.id = rl.return_id
+                where r.invoice_id = :id and r.status = 'COMPLETED' group by rl.invoice_line_id""",
+                new MapSqlParameterSource("id", id), rs -> {
+                    returned.put(rs.getObject(1, UUID.class), rs.getBigDecimal(2));
+                });
         var lines = inv.getLines().stream().map(l -> {
             BigDecimal price = l.getUnitPrice().subtract(l.getDiscount());
             return new LineResponse(l.getId(), l.getLineNo(), l.getProductId(), l.getUnitId(), l.getProductCode(),
                     l.getProductName(), l.getUnitName(), l.getQuantity(), l.getUnitPrice(), l.getDiscount(), price,
-                    InvoiceMath.money(l.getQuantity().multiply(price)), l.getCost(), l.getLots(), l.getNote());
+                    InvoiceMath.money(l.getQuantity().multiply(price)), l.getCost(), l.getLots(), l.getNote(),
+                    l.getTaxCode(), returned.getOrDefault(l.getId(), BigDecimal.ZERO));
         }).toList();
         var payments = jdbc.query("""
                 select v.id, v.code, v.occurred_at, v.created_by_name, v.amount, v.fund, v.status, a.amount allocated
