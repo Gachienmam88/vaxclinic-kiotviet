@@ -16,7 +16,14 @@ const NAV: NavItem[] = [
   { href: "/", label: "Tổng quan" },
   {
     href: "/products", label: "Hàng hóa", perm: "catalog.view",
-    groups: [{ title: "Hàng hóa", links: [{ href: "/products", label: "Danh sách hàng hóa" }] }],
+    groups: [
+      { title: "Hàng hóa", links: [{ href: "/products", label: "Danh sách hàng hóa" }] },
+      { title: "Kho hàng", links: [
+        { href: "/inventory/stock-takes", label: "Kiểm kho", perm: "inventory.view" },
+        { href: "/inventory/internal-use", label: "Xuất dùng nội bộ", perm: "inventory.view" },
+        { href: "/inventory/damages", label: "Xuất hủy", perm: "inventory.view" },
+      ] },
+    ],
   },
   {
     href: "/purchases", label: "Mua hàng", perm: "inventory.view",
