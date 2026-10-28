@@ -24,6 +24,7 @@ const NAV: NavItem[] = [
       { href: "/purchases/receipts", label: "Nhập hàng" },
       { href: "/purchases/returns", label: "Trả hàng nhập" },
       { href: "/purchases/suppliers", label: "Nhà cung cấp" },
+      { href: "/purchases/input-invoices", label: "Hóa đơn đầu vào" },
     ],
   },
   { href: "/invoices", label: "Đơn hàng", perm: "sales.perform", children: [{ href: "/invoices", label: "Hóa đơn" }] },
