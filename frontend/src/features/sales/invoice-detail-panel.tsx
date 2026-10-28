@@ -16,6 +16,7 @@ import { useBranches } from "@/features/settings/settings-queries";
 import { api, errorMessage } from "@/lib/api-client";
 import { formatDateTime, formatMoney, formatNumber } from "@/lib/format";
 import { useCurrentUser } from "@/lib/use-current-user";
+import { EInvoiceStatus } from "@/features/integrations/einvoice-status";
 import { SALES_KEYS, useInvoice } from "./sales-queries";
 import { FUND_LABEL } from "./sales-types";
 
