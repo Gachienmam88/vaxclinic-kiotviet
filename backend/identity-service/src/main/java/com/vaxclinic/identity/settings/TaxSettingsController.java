@@ -45,14 +45,31 @@ public class TaxSettingsController {
                              @Valid List<Location> locations) {
     }
 
-    /** sector: PHAN_PHOI | SAN_XUAT | DICH_VU | CHO_THUE | KHAC. defaultTaxCode: mã thuế cho dòng hàng chưa có mã. */
-    public record TaxSettings(boolean vatEnabled, @NotNull @Pattern(regexp = "PHAN_PHOI|SAN_XUAT|DICH_VU|CHO_THUE|KHAC") String sector,
-                              @DecimalMin("0") @DecimalMax("10") BigDecimal vatRate, @DecimalMin("0") @DecimalMax("10") BigDecimal pitRate,
-                              @Size(max = 30) String defaultTaxCode, @Valid List<TaxProfile> profiles) {
+    /** Ngành nghề kinh doanh do cửa hàng tự khai: tỷ lệ % GTGT và TNCN trên doanh thu của ngành. */
+    public record Sector(@NotBlank @Size(max = 30) String code, @NotBlank @Size(max = 200) String name,
+                         @NotNull @DecimalMin("0") @DecimalMax("20") BigDecimal vatRate,
+                         @NotNull @DecimalMin("0") @DecimalMax("20") BigDecimal pitRate) {
     }
 
-    static final TaxSettings DEFAULT = new TaxSettings(true, "SAN_XUAT", new BigDecimal("3"), new BigDecimal("1.5"),
-            "HKD_KCT_15", List.of());
+    /**
+     * sectors: danh sách ngành nghề; defaultSector: ngành của hàng thuộc nhóm chưa gắn ngành;
+     * categorySectors: id nhóm hàng → mã ngành (nhóm con chưa gắn thì theo nhóm cha);
+     * defaultTaxCode: thuế suất cho dòng hàng chưa có mã thuế (quyết định có chịu GTGT hay không).
+     */
+    public record TaxSettings(boolean vatEnabled, @Valid List<Sector> sectors, String defaultSector,
+                              Map<UUID, String> categorySectors, @Size(max = 30) String defaultTaxCode,
+                              @Valid List<TaxProfile> profiles) {
+    }
+
+    /** 5 nhóm ngành theo quy định thuế hộ kinh doanh 2026 (tỷ lệ % trên doanh thu) — sửa / thêm được. */
+    static final List<Sector> DEFAULT_SECTORS = List.of(
+            new Sector("PHAN_PHOI", "Phân phối, cung cấp hàng hóa", new BigDecimal("1"), new BigDecimal("0.5")),
+            new Sector("SAN_XUAT", "Sản xuất, vận tải, dịch vụ có gắn với hàng hóa", new BigDecimal("3"), new BigDecimal("1.5")),
+            new Sector("DICH_VU", "Dịch vụ, xây dựng không bao thầu nguyên vật liệu", new BigDecimal("5"), new BigDecimal("2")),
+            new Sector("CHO_THUE", "Cho thuê tài sản, đại lý, nội dung số", new BigDecimal("5"), new BigDecimal("5")),
+            new Sector("KHAC", "Hoạt động kinh doanh khác", new BigDecimal("2"), new BigDecimal("1")));
+
+    static final TaxSettings DEFAULT = new TaxSettings(true, DEFAULT_SECTORS, "SAN_XUAT", Map.of(), "HKD_KCT_15", List.of());
 
     private final SettingsStore store;
     private final AuditLogger audit;
