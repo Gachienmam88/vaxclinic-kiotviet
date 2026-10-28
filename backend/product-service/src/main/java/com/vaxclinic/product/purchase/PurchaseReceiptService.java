@@ -180,6 +180,7 @@ public class PurchaseReceiptService {
         }
         r.setStatus(DocStatus.COMPLETED);
         r.setCompletedAt(Instant.now());
+        cashflows.receiptPaid(r, support.supplierOrNull(r.getSupplierId())); // phiếu chi trả NCC → Sổ quỹ
     }
 
     private static BigDecimal lineCost(PurchaseReceipt r, PurchaseReceiptLine line) {
