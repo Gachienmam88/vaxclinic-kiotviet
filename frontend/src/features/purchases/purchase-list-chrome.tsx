@@ -4,7 +4,6 @@ import Link from "next/link";
 import { FileOutput, Inbox, Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import type { DocStatus } from "./purchase-types";
 
 /** Hàng tiêu đề bảng danh sách: nền xanh nhạt kiểu KiotViet. */
 export const LIST_HEADER_ROW = "bg-[#e3f0fc] hover:bg-[#e3f0fc]";
@@ -78,31 +77,20 @@ export function PurchaseListPager({ size, onSize, page, pages, total, unit, onPa
   );
 }
 
-/** Trạng thái rỗng: biểu tượng hộp thư + "Không tìm thấy kết quả". onWiden: mở rộng tìm ra mọi thời gian. */
+/** Trạng thái rỗng chứng từ mua hàng (dùng khung chung ListEmptyState). onWiden: mở rộng tìm ra mọi thời gian. */
 export function PurchaseEmptyState({ onWiden }: { onWiden?: () => void }) {
-  return (
-    <div className="py-20 text-center">
-      <div className="mx-auto mb-4 flex size-[88px] items-center justify-center rounded-full bg-[#eef5fe]">
-        <div className="flex size-14 items-center justify-center rounded-full bg-[#d7e8fc]"><Inbox className="size-8 text-primary" /></div>
-      </div>
-      <p className="font-semibold">Không tìm thấy kết quả</p>
-      <p className="mt-1 text-muted-foreground">
-        Không tìm thấy giao dịch nào phù hợp {onWiden ? "trong tháng này" : "với điều kiện lọc"}.
-        {onWiden && (
-          <><br />Nhấn <button type="button" className="text-primary hover:underline" onClick={onWiden}>vào đây</button> để tiếp tục tìm kiếm.</>
-        )}
-      </p>
-    </div>
-  );
+  return <ListEmptyState onWiden={onWiden} />;
 }
 
-const STATUS_TONE: Record<DocStatus, string> = {
+/** DocStatus của chứng từ mua hàng / xuất kho; BALANCED = "Đã cân bằng kho" (kiểm kho). */
+const STATUS_TONE: Record<string, string> = {
   DRAFT: "bg-[#fff4e5] text-[#e07b00]",
   COMPLETED: "bg-[#e6f6ec] text-[#0d9f4f]",
+  BALANCED: "bg-[#e6f6ec] text-[#0d9f4f]",
   CANCELLED: "bg-[#fdecec] text-[#d92d20]",
 };
 
 /** Nhãn trạng thái chữ màu trên nền nhạt (VD "Đã nhập hàng" xanh lá). */
-export function DocStatusBadge({ status, label }: { status: DocStatus; label: string }) {
+export function DocStatusBadge({ status, label }: { status: string; label: string }) {
   return <span className={cn("inline-flex h-5 items-center rounded px-1.5 text-xs font-medium whitespace-nowrap", STATUS_TONE[status])}>{label}</span>;
 }
