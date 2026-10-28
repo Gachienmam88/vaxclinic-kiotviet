@@ -17,7 +17,7 @@ spring:
             - id: identity
               uri: ${IDENTITY_URL:http://localhost:8081}
               predicates:
-                - Path=/api/auth/**,/api/users/**,/api/roles/**,/api/branches/**,/api/settings/**,/api/print-templates/**,/api/audit-logs/**
+                - Path=/api/auth/**,/api/users/**,/api/roles/**,/api/branches/**,/api/settings/**,/api/print-templates/**,/api/audit-logs/**,/api/hr/**
             # product-service: hàng hóa, nhóm hàng, thuế, vị trí, tồn kho, thẻ kho
             - id: product
               uri: ${PRODUCT_URL:http://localhost:8082}
