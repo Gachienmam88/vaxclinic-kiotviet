@@ -103,4 +103,25 @@ public class EInvoiceController {
         return jdbc.queryForList("select invoice_id, invoice_code, status, inv_series, inv_no, inv_code, inv_date, transaction_id, error, updated_at"
                 + " from einvoice_records where invoice_id in (" + in + ")", invoiceIds.toArray());
     }
+
+    /**
+     * sales-service lọc danh sách hóa đơn theo "Trạng thái HĐĐT": mọi hóa đơn đã có bản ghi phát hành, phân loại
+     * ACCEPTED (đã phát hành, có mã CQT) / PUBLISHED (đã phát hành, chưa có mã CQT) / FAILED (phát hành lỗi).
+     */
+    @GetMapping("/internal/einvoices/statuses")
+    @PreAuthorize("hasAuthority('internal')")
+    public List<Map<String, Object>> statuses() {
+        return jdbc.query("select invoice_id, case when status = 'PUBLISHED' and coalesce(inv_code, '') <> '' then 'ACCEPTED'"
+                + " else status end st from einvoice_records", (rs, n) -> Map.of("invoiceId", rs.getObject(1, UUID.class).toString(),
+                "status", rs.getString(2)));
+    }
+
+    /** sales-service hỏi trước khi sửa / hủy hóa đơn (thiết lập "Chặn chỉnh sửa/hủy hóa đơn đã phát hành HĐĐT"). */
+    @GetMapping("/internal/einvoices/{invoiceId}/published")
+    @PreAuthorize("hasAuthority('internal')")
+    public Map<String, Object> published(@PathVariable UUID invoiceId) {
+        Integer n = jdbc.queryForObject("select count(*) from einvoice_records where invoice_id = ? and status = 'PUBLISHED'",
+                Integer.class, invoiceId);
+        return Map.of("published", n != null && n > 0);
+    }
 }
