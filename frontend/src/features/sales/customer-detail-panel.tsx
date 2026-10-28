@@ -97,8 +97,10 @@ function DebtTab({ c }: { c: Customer }) {
           <Button variant="outline" onClick={() => setDialog("adjust")}><SlidersHorizontal className="size-4" /> Điều chỉnh</Button>
           <Button variant="outline" onClick={() => setDialog("discount")}><Percent className="size-4" /> Chiết khấu thanh toán</Button>
         </>}
+        <Button variant="outline" onClick={() => setQr(true)}><QrCode className="size-4" /> Tạo QR</Button>
       </div>
       {dialog && <DebtDialog kind={dialog} customer={c} onClose={() => setDialog(null)} />}
+      {qr && <QrPaymentDialog amount={Math.max(Number(c.debt), 0)} info={`${c.code} thanh toan no`} onClose={() => setQr(false)} />}
     </div>
   );
 }
