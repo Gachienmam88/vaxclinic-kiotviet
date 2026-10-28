@@ -8,7 +8,8 @@ import java.math.RoundingMode;
  * <pre>
  *   thành tiền dòng = SL × (đơn giá − giảm giá/đv)
  *   tổng tiền hàng  = Σ thành tiền dòng
- *   VAT             = (tổng tiền hàng − giảm giá phiếu) × VAT%
+ *   VAT             = Σ làm_tròn((thành tiền dòng − phần giảm giá phiếu phân bổ cho dòng) × VAT%)
+ *                     (làm tròn TỪNG DÒNG rồi cộng — khớp số liệu hóa đơn thực tế, VD phiếu PN000103 = 450,642)
  *   tổng cộng       = tổng tiền hàng − giảm giá phiếu + VAT        (= cần trả NCC)
  * </pre>
  * Giá vốn / 1 đơn vị cơ bản của 1 dòng (giá đã gồm VAT vì đơn vị không khấu trừ VAT đầu vào):
