@@ -1,13 +1,12 @@
 "use client";
 
 import { Fragment, useEffect, useState } from "react";
-import Link from "next/link";
-import { Plus, Search } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { exportReceiptsCsv } from "@/features/purchases/purchase-csv-export";
 import { PurchaseFilterSidebar } from "@/features/purchases/purchase-filter-sidebar";
+import {
+  DocStatusBadge, LIST_HEADER_ROW, PurchaseEmptyState, PurchaseListLayout, PurchaseListPager, PurchaseListToolbar,
+} from "@/features/purchases/purchase-list-chrome";
 import { DEFAULT_PURCHASE_FILTERS, useReceipts } from "@/features/purchases/purchase-queries";
 import { RECEIPT_STATUS_LABEL } from "@/features/purchases/purchase-types";
 import { ReceiptDetailPanel } from "@/features/purchases/receipt-detail-panel";
@@ -16,6 +15,7 @@ import { useCurrentUser } from "@/lib/use-current-user";
 import { cn } from "@/lib/utils";
 
 const COLS = 11;
+const NUM = "text-right";
 
 export default function ReceiptsPage() {
   const { can } = useCurrentUser();
@@ -30,86 +30,73 @@ export default function ReceiptsPage() {
   }, [search]);
   const { data, isLoading } = useReceipts(filters, page, size);
   const pages = data ? Math.max(1, Math.ceil(data.total / size)) : 1;
+  const applyFilters = (f: typeof filters) => { setFilters(f); setPage(0); };
 
   return (
-    <div className="flex gap-4">
-      <div className="space-y-4">
-        <h1 className="text-xl font-bold">Nhập hàng</h1>
-        <PurchaseFilterSidebar filters={filters} statusLabels={RECEIPT_STATUS_LABEL} personLabel="Người nhập" showInvoiceNo
-          onChange={(f) => { setFilters(f); setPage(0); }} />
-      </div>
-      <div className="min-w-0 flex-1 space-y-3">
-        <div className="flex items-center gap-2">
-          <div className="relative w-full max-w-md">
-            <Search className="absolute top-2 left-2.5 size-4 text-muted-foreground" />
-            <Input className="bg-background pl-8" placeholder="Theo mã phiếu nhập" value={search} onChange={(e) => setSearch(e.target.value)} />
-          </div>
-          {can("inventory.manage") && (
-            <Button className="ml-auto" render={<Link href="/purchases/receipts/new" />}><Plus className="size-4" /> Nhập hàng</Button>
-          )}
-        </div>
-        <div className="overflow-x-auto rounded-lg bg-background">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-primary/10 hover:bg-primary/10">
-                <TableHead>Mã nhập hàng</TableHead><TableHead>Thời gian</TableHead><TableHead>Mã NCC</TableHead>
-                <TableHead>Nhà cung cấp</TableHead><TableHead>Số HĐ đầu vào</TableHead>
-                <TableHead className="text-right">Tổng tiền hàng</TableHead><TableHead className="text-right">Giảm giá</TableHead>
-                <TableHead className="text-right">VAT nhập hàng</TableHead><TableHead className="text-right">Cần trả NCC</TableHead>
-                <TableHead className="text-right">Tiền đã trả NCC</TableHead><TableHead>Trạng thái</TableHead>
+    <PurchaseListLayout title="Nhập hàng"
+      toolbar={<PurchaseListToolbar search={search} onSearch={setSearch} placeholder="Theo mã phiếu nhập"
+        createLabel={can("inventory.manage") ? "Nhập hàng" : undefined} createHref="/purchases/receipts/new"
+        onExport={data?.items.length ? () => exportReceiptsCsv(data.items) : undefined} />}
+      sidebar={<PurchaseFilterSidebar filters={filters} statusLabels={RECEIPT_STATUS_LABEL} personLabel="Người nhập" showInvoiceNo
+        onChange={applyFilters} />}>
+      <div className="min-h-[calc(100vh-190px)] overflow-hidden rounded-lg bg-background">
+        <Table>
+          <TableHeader>
+            <TableRow className={LIST_HEADER_ROW}>
+              <TableHead className="pl-4">Mã nhập hàng</TableHead><TableHead>Thời gian</TableHead><TableHead>Mã NCC</TableHead>
+              <TableHead>Nhà cung cấp</TableHead><TableHead className={NUM}>VAT nhập hàng</TableHead>
+              <TableHead className={NUM}>Cần trả NCC</TableHead><TableHead className={NUM}>Tiền đã trả NCC</TableHead>
+              <TableHead className={NUM}>Tổng tiền hàng</TableHead><TableHead className={NUM}>Giảm giá</TableHead>
+              <TableHead>Số HĐ đầu vào</TableHead><TableHead className="pr-4">Trạng thái</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {isLoading && <TableRow><TableCell colSpan={COLS} className="py-8 text-center text-muted-foreground">Đang tải...</TableCell></TableRow>}
+            {data && !data.items.length && (
+              <TableRow className="hover:bg-transparent"><TableCell colSpan={COLS} className="whitespace-normal">
+                <PurchaseEmptyState onWiden={filters.period === "month" ? () => applyFilters({ ...filters, period: "custom", from: "", to: "" }) : undefined} />
+              </TableCell></TableRow>
+            )}
+            {data && data.items.length > 0 && (
+              <TableRow className="h-10 font-bold hover:bg-transparent">
+                <TableCell colSpan={4} />
+                <TableCell className={NUM}>{formatMoney(data.sums.vatAmount)}</TableCell>
+                <TableCell className={NUM}>{formatMoney(data.sums.total)}</TableCell>
+                <TableCell className={NUM}>{formatMoney(data.sums.paidAmount)}</TableCell>
+                <TableCell className={NUM}>{formatMoney(data.sums.subtotal)}</TableCell>
+                <TableCell className={NUM}>{formatMoney(data.sums.discount)}</TableCell>
+                <TableCell colSpan={2} />
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              <TableRow className="font-semibold hover:bg-transparent">
-                <TableCell colSpan={5} />
-                <TableCell className="text-right">{formatMoney(data?.sums.subtotal ?? 0)}</TableCell>
-                <TableCell className="text-right">{formatMoney(data?.sums.discount ?? 0)}</TableCell>
-                <TableCell className="text-right">{formatMoney(data?.sums.vatAmount ?? 0)}</TableCell>
-                <TableCell className="text-right">{formatMoney(data?.sums.total ?? 0)}</TableCell>
-                <TableCell className="text-right">{formatMoney(data?.sums.paidAmount ?? 0)}</TableCell><TableCell />
-              </TableRow>
-              {isLoading && <TableRow><TableCell colSpan={COLS} className="py-8 text-center text-muted-foreground">Đang tải...</TableCell></TableRow>}
-              {data && !data.items.length && (
-                <TableRow><TableCell colSpan={COLS} className="py-12 text-center text-muted-foreground">Không tìm thấy phiếu nhập nào phù hợp</TableCell></TableRow>
-              )}
-              {data?.items.map((r) => (
-                <Fragment key={r.id}>
-                  <TableRow onClick={() => setExpanded(expanded === r.id ? null : r.id)}
-                    className={cn("cursor-pointer align-top", expanded === r.id && "bg-primary/5", r.status === "CANCELLED" && "text-muted-foreground line-through")}>
-                    <TableCell className="font-medium">{r.code}</TableCell>
-                    <TableCell>{formatDateTime(r.receivedAt)}</TableCell>
-                    <TableCell>{r.supplierCode}</TableCell>
-                    <TableCell className="max-w-56 whitespace-normal">{r.supplierName}</TableCell>
-                    <TableCell>{r.inputInvoiceNo}</TableCell>
-                    <TableCell className="text-right">{formatMoney(r.subtotal)}</TableCell>
-                    <TableCell className="text-right">{formatMoney(r.discount)}</TableCell>
-                    <TableCell className="text-right">{formatMoney(r.vatAmount)}</TableCell>
-                    <TableCell className="text-right">{formatMoney(r.total)}</TableCell>
-                    <TableCell className="text-right">{formatMoney(r.paidAmount)}</TableCell>
-                    <TableCell className="no-underline"><Badge variant={r.status === "DRAFT" ? "secondary" : r.status === "CANCELLED" ? "destructive" : "default"}>
-                      {RECEIPT_STATUS_LABEL[r.status]}</Badge></TableCell>
+            )}
+            {data?.items.map((r) => (
+              <Fragment key={r.id}>
+                <TableRow onClick={() => setExpanded(expanded === r.id ? null : r.id)} aria-expanded={expanded === r.id}
+                  className={cn("cursor-pointer align-top [&>td]:py-2.5", expanded === r.id && "bg-[#e3f0fc] hover:bg-[#e3f0fc]",
+                    r.status === "CANCELLED" && "text-muted-foreground")}>
+                  <TableCell className={cn("pl-4", r.status === "CANCELLED" && "line-through")}>{r.code}</TableCell>
+                  <TableCell>{formatDateTime(r.receivedAt)}</TableCell>
+                  <TableCell>{r.supplierCode}</TableCell>
+                  <TableCell className="w-40 max-w-40 whitespace-normal">{r.supplierName}</TableCell>
+                  <TableCell className={NUM}>{formatMoney(r.vatAmount)}</TableCell>
+                  <TableCell className={NUM}>{formatMoney(r.total)}</TableCell>
+                  <TableCell className={NUM}>{formatMoney(r.paidAmount)}</TableCell>
+                  <TableCell className={NUM}>{formatMoney(r.subtotal)}</TableCell>
+                  <TableCell className={NUM}>{formatMoney(r.discount)}</TableCell>
+                  <TableCell>{r.inputInvoiceNo}</TableCell>
+                  <TableCell className="pr-4"><DocStatusBadge status={r.status} label={RECEIPT_STATUS_LABEL[r.status]} /></TableCell>
+                </TableRow>
+                {expanded === r.id && (
+                  <TableRow className="hover:bg-transparent">
+                    <TableCell colSpan={COLS} className="p-0 whitespace-normal"><ReceiptDetailPanel id={r.id} /></TableCell>
                   </TableRow>
-                  {expanded === r.id && (
-                    <TableRow className="hover:bg-transparent">
-                      <TableCell colSpan={COLS} className="p-0 whitespace-normal"><ReceiptDetailPanel id={r.id} /></TableCell>
-                    </TableRow>
-                  )}
-                </Fragment>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-        <div className="flex items-center gap-2 text-sm">
-          <span>Hiển thị</span>
-          <select className="h-8 rounded-md border bg-background px-2" value={size}
-            onChange={(e) => { setSize(Number(e.target.value)); setPage(0); }}>
-            {[15, 30, 50, 100].map((n) => <option key={n} value={n}>{n} dòng</option>)}
-          </select>
-          <span className="ml-auto text-muted-foreground">{data?.total ?? 0} phiếu — trang {page + 1}/{pages}</span>
-          <Button size="sm" variant="outline" disabled={page === 0} onClick={() => setPage(page - 1)}>Trước</Button>
-          <Button size="sm" variant="outline" disabled={page + 1 >= pages} onClick={() => setPage(page + 1)}>Sau</Button>
-        </div>
+                )}
+              </Fragment>
+            ))}
+          </TableBody>
+        </Table>
       </div>
-    </div>
+      <PurchaseListPager size={size} onSize={(n) => { setSize(n); setPage(0); }} page={page} pages={pages}
+        total={data?.total ?? 0} unit="phiếu" onPage={setPage} />
+    </PurchaseListLayout>
   );
 }
