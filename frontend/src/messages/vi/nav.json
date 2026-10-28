@@ -1,0 +1,83 @@
+{
+  "menu": {
+    "overview": "Tổng quan",
+    "products": "Hàng hóa",
+    "purchases": "Mua hàng",
+    "orders": "Đơn hàng",
+    "customers": "Khách hàng",
+    "employees": "Nhân viên",
+    "cashbook": "Sổ quỹ",
+    "reports": "Báo cáo",
+    "accounting": "Thuế & Kế toán",
+    "sale": "Bán hàng"
+  },
+  "groups": {
+    "products": "Hàng hóa",
+    "warehouse": "Kho hàng",
+    "suppliers": "Nhà cung cấp",
+    "purchasing": "Mua hàng",
+    "orders": "Đơn hàng",
+    "delivery": "Giao hàng",
+    "customers": "Khách hàng",
+    "reports": "Báo cáo"
+  },
+  "links": {
+    "productList": "Danh sách hàng hóa",
+    "priceBooks": "Thiết lập giá",
+    "stockTakes": "Kiểm kho",
+    "internalUse": "Xuất dùng nội bộ",
+    "damages": "Xuất hủy",
+    "suppliers": "Nhà cung cấp",
+    "inputInvoices": "Hóa đơn đầu vào",
+    "receipts": "Nhập hàng",
+    "purchaseReturns": "Trả hàng nhập",
+    "orderBooking": "Đặt hàng",
+    "invoices": "Hóa đơn",
+    "returns": "Trả hàng",
+    "shipments": "Vận đơn",
+    "deliveryManagement": "Quản lý giao hàng",
+    "deliveryPartners": "Đối tác giao hàng",
+    "customers": "Khách hàng",
+    "customerGroups": "Nhóm khách hàng",
+    "employeeList": "Danh sách nhân viên",
+    "schedules": "Lịch làm việc",
+    "timesheets": "Bảng chấm công",
+    "payrolls": "Bảng lương",
+    "commissions": "Bảng hoa hồng",
+    "employeeSettings": "Thiết lập nhân viên",
+    "reportEndOfDay": "Cuối ngày",
+    "reportSales": "Bán hàng",
+    "reportOrders": "Đặt hàng",
+    "reportProducts": "Hàng hóa",
+    "reportCustomers": "Khách hàng",
+    "reportSuppliers": "Nhà cung cấp",
+    "reportEmployees": "Nhân viên",
+    "reportChannels": "Kênh bán hàng",
+    "reportFinance": "Tài chính"
+  },
+  "header": {
+    "settings": "Thiết lập",
+    "account": "Tài khoản"
+  },
+  "account": {
+    "twoFactorOn": "Đã bật xác thực 2 lớp",
+    "twoFactorOff": "Chưa bật xác thực 2 lớp",
+    "storeProfile": "Hồ sơ cửa hàng",
+    "theme": "Chủ đề",
+    "language": "Ngôn ngữ",
+    "chooseLanguage": "Chọn ngôn ngữ",
+    "beta": "Bản thử nghiệm",
+    "betaHint": "Bản dịch đang thử nghiệm, có thể còn chỗ chưa dịch. Chứng từ in và tài liệu pháp lý vẫn bằng tiếng Việt."
+  },
+  "accents": {
+    "blue": "Xanh dương",
+    "slate": "Xanh đá",
+    "green": "Xanh lá",
+    "purple": "Tím",
+    "red": "Đỏ",
+    "sage": "Xanh xám",
+    "teal": "Xanh ngọc",
+    "orange": "Cam",
+    "pink": "Hồng"
+  }
+}
