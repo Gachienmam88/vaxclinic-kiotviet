@@ -64,6 +64,20 @@ const NAV: NavItem[] = [
     ] }],
   },
   { href: "/cashbook", label: "Sổ quỹ", perm: "cashbook.manage" },
+  {
+    href: "/reports", label: "Báo cáo", perm: "report.view",
+    groups: [{ links: [
+      { href: "/reports/end-of-day", label: "Cuối ngày" },
+      { href: "/reports/sales", label: "Bán hàng" },
+      { href: "/reports/orders", label: "Đặt hàng" },
+      { href: "/reports/products", label: "Hàng hóa" },
+      { href: "/reports/customers", label: "Khách hàng" },
+      { href: "/reports/suppliers", label: "Nhà cung cấp" },
+      { href: "/reports/employees", label: "Nhân viên" },
+      { href: "/reports/channels", label: "Kênh bán hàng" },
+      { href: "/reports/finance", label: "Tài chính" },
+    ] }],
+  },
   { href: "/accounting", label: "Thuế & Kế toán", perm: "report.view" },
 ];
 
