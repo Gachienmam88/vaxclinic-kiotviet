@@ -1,6 +1,7 @@
 package com.vaxclinic.product.purchase;
 
 import com.vaxclinic.common.error.BusinessException;
+import com.vaxclinic.product.internal.CashflowOutbox;
 import com.vaxclinic.product.product.Product;
 import com.vaxclinic.product.purchase.PurchaseDtos.Actor;
 import com.vaxclinic.product.purchase.PurchaseDtos.ReceiptInfoRequest;
