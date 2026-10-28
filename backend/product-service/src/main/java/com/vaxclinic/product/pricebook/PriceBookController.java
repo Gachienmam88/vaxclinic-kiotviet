@@ -124,7 +124,8 @@ public class PriceBookController {
     @PreAuthorize("hasAuthority('catalog.manage')")
     public CountResponse upsert(@PathVariable UUID id, @Valid @RequestBody ItemsRequest req, @AuthenticationPrincipal Jwt jwt) {
         int n = items.upsert(id, req.items());
-        log(jwt, "Sửa giá", books.get(id).name(), "Cập nhật " + n + " giá trong bảng giá " + books.get(id).name());
+        String name = books.get(id).name();
+        log(jwt, "Sửa giá", name, "Cập nhật " + n + " giá trong bảng giá " + name);
         return new CountResponse(n);
     }
 
