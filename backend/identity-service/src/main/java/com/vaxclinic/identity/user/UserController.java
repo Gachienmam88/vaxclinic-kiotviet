@@ -40,6 +40,16 @@ public class UserController {
         return userService.search(q, page, size);
     }
 
+    /** Danh sách rút gọn (id, họ tên) user đang hoạt động — cho ô chọn "Người nhập", "Người tạo". Mọi user đăng nhập đều xem được. */
+    @GetMapping("/lookup")
+    @PreAuthorize("isAuthenticated()")
+    public java.util.List<UserLookup> lookup() {
+        return userService.lookup();
+    }
+
+    public record UserLookup(UUID id, String fullName) {
+    }
+
     @GetMapping("/{id}")
     public UserResponse get(@PathVariable UUID id) {
         return userService.get(id);
