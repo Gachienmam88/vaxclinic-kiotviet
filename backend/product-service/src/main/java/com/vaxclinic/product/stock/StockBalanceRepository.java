@@ -13,4 +13,6 @@ public interface StockBalanceRepository extends JpaRepository<StockBalance, Stoc
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select b from StockBalance b where b.id = ?1")
     Optional<StockBalance> findForUpdate(StockBalance.Key key);
+
+    java.util.List<StockBalance> findByIdProductId(java.util.UUID productId);
 }
