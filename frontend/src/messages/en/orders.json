@@ -1,0 +1,77 @@
+{
+  "status": { "DRAFT": "Draft", "CONFIRMED": "Confirmed", "COMPLETED": "Completed", "CANCELLED": "Cancelled" },
+  "list": {
+    "title": "Orders",
+    "searchPlaceholder": "By order code, customer name / code / phone",
+    "newOrder": "Order",
+    "newOrderHint": "Opens the selling screen — click the Add order icon on the tab bar",
+    "exportHint": "Export the rows shown to a CSV file",
+    "emptyWhat": "orders",
+    "unit": "orders"
+  },
+  "cols": {
+    "code": "Order code",
+    "time": "Time",
+    "customerCode": "Customer code",
+    "customer": "Customer",
+    "subtotal": "Subtotal",
+    "discount": "Discount",
+    "total": "Amount due",
+    "paid": "Customer paid",
+    "status": "Status",
+    "invoice": "Invoice",
+    "productCode": "Product code",
+    "productName": "Product name",
+    "unit": "Unit",
+    "quantity": "Quantity",
+    "unitPrice": "Unit price",
+    "price": "Selling price",
+    "amount": "Amount"
+  },
+  "csv": { "listFile": "orders", "detailFile": "order-{code}" },
+  "filter": { "status": "Status", "createdBy": "Created by", "pickCreator": "Select creator" },
+  "detail": {
+    "tabInfo": "Info",
+    "tabPayments": "Payment history",
+    "invoiceBadge": "Invoice {code}",
+    "creditKept": "Deposit {amount} kept as credit",
+    "createdBy": "Created by:",
+    "seller": "Seller:",
+    "orderedAt": "Order date:",
+    "noNote": "No notes",
+    "cancel": "Cancel",
+    "createInvoice": "Create invoice",
+    "edit": "Edit",
+    "confirm": "Confirm",
+    "confirmed": "Order confirmed"
+  },
+  "totals": {
+    "subtotal": "Subtotal ({qty})",
+    "discount": "Order discount",
+    "total": "Amount due",
+    "paid": "Customer paid"
+  },
+  "payments": {
+    "code": "Voucher code",
+    "time": "Time",
+    "createdBy": "Created by",
+    "type": "Voucher type",
+    "method": "Method",
+    "status": "Status",
+    "amount": "Received/paid",
+    "emptyWhat": "payment vouchers",
+    "depositReceipt": "Deposit receipt",
+    "depositRefund": "Deposit refund voucher",
+    "paid": "Paid",
+    "cancelled": "Cancelled"
+  },
+  "cancel": {
+    "title": "Cancel order {code}",
+    "depositBody": "The customer paid a deposit of {amount}. Handle the deposit:",
+    "confirmBody": "Are you sure you want to cancel this order?",
+    "submit": "Cancel order",
+    "done": "Order cancelled",
+    "doneCredit": "Order cancelled; {amount} kept as customer prepayment",
+    "doneRefund": "Order cancelled; {amount} refunded to the customer (payment voucher {voucher})"
+  }
+}
