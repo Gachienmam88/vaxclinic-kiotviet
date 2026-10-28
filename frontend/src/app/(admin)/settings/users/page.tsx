@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ListEmptyRow } from "@/components/ui/list-empty-state";
 import { RolesTab } from "@/features/settings/roles-tab";
 import { SETTINGS_TABLE as T, SETTINGS_TABS, SettingsPage, StatusPill } from "@/features/settings/settings-shell";
 import { UserFormDialog } from "@/features/settings/user-form-dialog";
@@ -40,17 +41,17 @@ function UsersTab() {
       </div>
       <table className={T.table}>
         <thead className={T.head}><tr>
-          <th>Tên hiển thị</th><th>Tên đăng nhập</th><th>Điện thoại</th><th>Vai trò</th><th>Điểm tiêm</th><th className="w-32">Trạng thái</th>
+          <th>Tên hiển thị</th><th>Tên đăng nhập</th><th>Điện thoại</th><th>Vai trò</th><th>Chi nhánh</th><th className="w-32">Trạng thái</th>
         </tr></thead>
         <tbody>
           {isLoading && <tr><td colSpan={6} className={T.empty}>Đang tải...</td></tr>}
-          {data && !data.items.length && <tr><td colSpan={6} className={T.empty}>Không có người dùng</td></tr>}
+          {data && !data.items.length && <ListEmptyRow cols={6} what="người dùng" compact />}
           {data?.items.map((u) => (
             <tr key={u.id} className={`${T.row} cursor-pointer hover:bg-[#f7f9fc]`} tabIndex={0}
               onClick={() => setDialog({ key: Date.now(), user: u })}
               onKeyDown={(e) => e.key === "Enter" && setDialog({ key: Date.now(), user: u })}>
-              <td>{u.fullName}{u.id === me?.user.id && <span className="ml-1.5 rounded bg-[#e5f0ff] px-1 text-[11px] text-primary">Tôi</span>}</td>
-              <td>{u.username}</td>
+              <td>{u.fullName}{u.id === me?.user.id && <span className="ml-1.5 rounded bg-primary-tint px-1 text-[11px] text-primary">Tôi</span>}</td>
+              <td>{u.username}{u.twoFactorEnabled && <span className="ml-1.5 rounded bg-primary/10 px-1 text-[11px] text-primary">Đã bật 2 lớp</span>}</td>
               <td>{u.phone}</td>
               <td>{u.roleName}</td>
               <td>{u.branches.map((b) => b.name).join(", ")}</td>
