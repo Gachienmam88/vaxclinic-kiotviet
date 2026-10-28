@@ -1,0 +1,15 @@
+{
+  "title": "Inbox",
+  "markAllRead": "Mark all as read",
+  "tabs": {
+    "all": "All",
+    "alert": "Alerts",
+    "update": "Updates"
+  },
+  "unread": "Unread",
+  "loadingMore": "Loading more...",
+  "emptyWhat": "notifications",
+  "offlineTitle_one": "{count} offline sale on this device has not been synced to the system yet",
+  "offlineTitle_other": "{count} offline sales on this device have not been synced to the system yet",
+  "offlineSub": "Open the Sell screen while online to sync them"
+}

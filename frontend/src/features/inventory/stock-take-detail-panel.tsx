@@ -2,6 +2,7 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { DocCodeLink } from "@/components/ui/doc-code-link";
 import { api, errorMessage } from "@/lib/api-client";
 import { formatDate, formatDateTime, formatMoney, formatNumber } from "@/lib/format";
 import { useCurrentUser } from "@/lib/use-current-user";
@@ -13,7 +14,7 @@ import { TAKE_STATUS_LABEL } from "./inventory-types";
 const CELL = "px-2 py-2.5";
 
 /** Chi tiết phiếu kiểm kho dưới dòng: thông tin, bảng dòng kiểm (theo lô), tổng lệch. Chỉ phiếu tạm mới hủy/mở lại được. */
-export function StockTakeDetailPanel({ id }: { id: string }) {
+export function StockTakeDetailPanel({ id, onClose }: { id: string; onClose?: () => void }) {
   const qc = useQueryClient();
   const { can } = useCurrentUser();
   const { data: t } = useStockTake(id);
@@ -35,7 +36,7 @@ export function StockTakeDetailPanel({ id }: { id: string }) {
   ];
   const draft = t.status === "DRAFT";
   return (
-    <InventoryDetailFrame code={t.code} status={t.status} statusLabel={TAKE_STATUS_LABEL[t.status]} branchId={t.branchId}
+    <InventoryDetailFrame code={t.code} status={t.status} statusLabel={TAKE_STATUS_LABEL[t.status]} branchId={t.branchId} onClose={onClose}
       footer={t.status !== "CANCELLED" && (
         <InventoryDetailActions canManage={can("inventory.manage")} canCancel={draft} cancelling={cancel.isPending}
           cancelText={`Hủy phiếu kiểm kho ${t.code}?`} onCancel={() => cancel.mutate()}
@@ -55,7 +56,7 @@ export function StockTakeDetailPanel({ id }: { id: string }) {
         <tbody>
           {t.lines.map((l) => (
             <tr key={l.id} className="border-b border-[#e5e7eb] align-top hover:bg-[#edeef0]">
-              <td className={`${CELL} text-primary`}>{l.productCode}</td>
+              <td className={CELL}><DocCodeLink code={l.productCode} /></td>
               <td className={`${CELL} max-w-[260px]`}>{l.productName} ({l.unitName})</td>
               <td className={CELL}>{l.lotNumber ? `${l.lotNumber} — ${formatDate(l.expiryDate)}` : ""}</td>
               <td className={`${CELL} text-right`}>{formatNumber(l.systemQuantity)}</td>

@@ -3,7 +3,12 @@
 import * as React from "react";
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 import { cn } from "cn";
-import { addDaysYmd, addMonthsYmd, monthMatrix, parseYmd, toYmd, WEEKDAYS_VI, ymdInRange } from "@/lib/date-input-format";
+import { addDaysYmd, addMonthsYmd, monthMatrix, parseYmd, toYmd, ymdInRange } from "@/lib/date-input-format";
+import { useT } from "@/lib/i18n";
+import { commonNs } from "@/messages/common";
+
+/** Thứ tự cột T2…CN (khóa trong common.calendar.weekdaysShort). */
+const WEEKDAY_KEYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
 
 const NAV = "inline-flex size-7 items-center justify-center rounded text-muted-foreground outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50 [&_svg]:size-4";
 
@@ -28,6 +33,7 @@ export function MonthCalendar({ month, onMonthChange, onPick, selected, range, m
   const first = parseYmd(month) ?? new Date();
   const y = first.getFullYear();
   const m = first.getMonth();
+  const tc = useT(commonNs);
   const today = toYmd(new Date());
   const days = monthMatrix(y, m);
   const inMonth = (ymd: string) => ymd.slice(0, 7) === month.slice(0, 7);
@@ -61,23 +67,24 @@ export function MonthCalendar({ month, onMonthChange, onPick, selected, range, m
     move(step());
   };
   const shift = (n: number) => onMonthChange(addMonthsYmd(month, n));
+  const title = tc("calendar.monthYear", { month: m + 1, year: y });
 
   return (
     <div className="w-[238px] select-none">
       <div className="mb-1 flex items-center gap-0.5">
         {nav !== "next" ? <>
-          <button type="button" className={NAV} aria-label="Năm trước" onClick={() => shift(-12)}><ChevronsLeft /></button>
-          <button type="button" className={NAV} aria-label="Tháng trước" onClick={() => shift(-1)}><ChevronLeft /></button>
+          <button type="button" className={NAV} aria-label={tc("calendar.prevYear")} onClick={() => shift(-12)}><ChevronsLeft /></button>
+          <button type="button" className={NAV} aria-label={tc("calendar.prevMonth")} onClick={() => shift(-1)}><ChevronLeft /></button>
         </> : <span className="w-[58px]" />}
-        <span className="flex-1 text-center text-[13px] font-semibold" aria-live="polite">Tháng {m + 1} năm {y}</span>
+        <span className="flex-1 text-center text-[13px] font-semibold" aria-live="polite">{title}</span>
         {nav !== "prev" ? <>
-          <button type="button" className={NAV} aria-label="Tháng sau" onClick={() => shift(1)}><ChevronRight /></button>
-          <button type="button" className={NAV} aria-label="Năm sau" onClick={() => shift(12)}><ChevronsRight /></button>
+          <button type="button" className={NAV} aria-label={tc("calendar.nextMonth")} onClick={() => shift(1)}><ChevronRight /></button>
+          <button type="button" className={NAV} aria-label={tc("calendar.nextYear")} onClick={() => shift(12)}><ChevronsRight /></button>
         </> : <span className="w-[58px]" />}
       </div>
-      <div ref={grid} role="grid" aria-label={`Tháng ${m + 1} năm ${y}`} onKeyDown={onKeyDown} onMouseLeave={() => onHover?.(null)}>
+      <div ref={grid} role="grid" aria-label={title} onKeyDown={onKeyDown} onMouseLeave={() => onHover?.(null)}>
         <div role="row" className="grid grid-cols-7">
-          {WEEKDAYS_VI.map((w) => <span key={w} role="columnheader" className="py-1 text-center text-[12px] font-medium text-muted-foreground">{w}</span>)}
+          {WEEKDAY_KEYS.map((w) => <span key={w} role="columnheader" className="py-1 text-center text-[12px] font-medium text-muted-foreground">{tc(`calendar.weekdaysShort.${w}`)}</span>)}
         </div>
         {[0, 1, 2, 3, 4, 5].map((week) => (
           <div key={week} role="row" className="grid grid-cols-7">

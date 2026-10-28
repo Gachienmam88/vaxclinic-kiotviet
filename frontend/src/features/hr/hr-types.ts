@@ -25,7 +25,7 @@ export type EmployeeRow = {
 
 export type Employee = {
   id: string; code: string; timekeepingCode: string | null; name: string; phone: string | null; idNumber: string | null;
-  birthday: string | null; gender: "MALE" | "FEMALE" | null; startDate: string | null; mainBranchId: string | null;
+  birthday: string | null; gender: "MALE" | "FEMALE" | null; startDate: string | null; endDate: string | null; mainBranchId: string | null;
   branches: { id: string; name: string }[]; departmentId: string | null; departmentName: string | null;
   jobTitleId: string | null; jobTitleName: string | null; userId: string | null; username: string | null;
   status: "WORKING" | "QUIT"; note: string | null; salaryType: SalaryType | null; salaryAmount: number; overtimePercent: number;
@@ -34,7 +34,7 @@ export type Employee = {
 
 export type EmployeeRequest = {
   code?: string; timekeepingCode?: string; name: string; phone?: string; idNumber?: string; birthday?: string | null;
-  gender?: "MALE" | "FEMALE" | null; startDate?: string | null; mainBranchId?: string | null; branchIds?: string[];
+  gender?: "MALE" | "FEMALE" | null; startDate?: string | null; endDate?: string | null; mainBranchId?: string | null; branchIds?: string[];
   departmentId?: string | null; jobTitleId?: string | null; userId?: string | null; status?: "WORKING" | "QUIT"; note?: string;
   salaryType?: SalaryType | null; salaryAmount?: number; overtimePercent?: number; commissionTableId?: string | null;
   allowances?: PayItem[]; deductions?: PayItem[];

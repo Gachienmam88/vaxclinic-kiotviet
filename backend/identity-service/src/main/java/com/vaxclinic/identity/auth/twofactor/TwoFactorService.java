@@ -3,7 +3,6 @@ package com.vaxclinic.identity.auth.twofactor;
 import com.vaxclinic.common.error.BusinessException;
 import com.vaxclinic.identity.user.AppUser;
 import org.springframework.http.HttpStatus;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,6 +11,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -30,28 +30,43 @@ public class TwoFactorService {
 
     static final int RECOVERY_CODES = 10;
 
-    private final JdbcTemplate jdbc;
+    private final UserTotpRepository totp;
+    private final RecoveryCodeRepository recoveryCodes;
     private final TotpSecretCipher cipher;
     private final TotpVerifier verifier;
     private final PasswordEncoder passwordEncoder;
 
-    public TwoFactorService(JdbcTemplate jdbc, TotpSecretCipher cipher, TotpVerifier verifier, PasswordEncoder passwordEncoder) {
-        this.jdbc = jdbc;
+    public TwoFactorService(UserTotpRepository totp, RecoveryCodeRepository recoveryCodes, TotpSecretCipher cipher,
+                            TotpVerifier verifier, PasswordEncoder passwordEncoder) {
+        this.totp = totp;
+        this.recoveryCodes = recoveryCodes;
         this.cipher = cipher;
         this.verifier = verifier;
         this.passwordEncoder = passwordEncoder;
     }
 
     public boolean enabled(UUID userId) {
-        return Boolean.TRUE.equals(jdbc.query("select enabled from user_totp where user_id = ?",
-                rs -> rs.next() ? rs.getBoolean(1) : false, userId));
+        return totp.find(userId).map(UserTotpRepository.TotpRow::enabled).orElse(false);
+    }
+
+    /** Tập user đã bật 2FA — cho cột "Đã bật 2 lớp" ở danh sách người dùng (bảng nhỏ, 1 truy vấn). */
+    public Set<UUID> enabledUserIds() {
+        return totp.findEnabledUserIds();
+    }
+
+    /** Quản trị đặt lại 2FA của user khác (mất điện thoại + mã khôi phục). false = user chưa bật 2FA. */
+    @Transactional
+    public boolean reset(UUID userId) {
+        if (!enabled(userId)) {
+            return false;
+        }
+        remove(userId);
+        return true;
     }
 
     public Status status(UUID userId) {
-        Boolean enabled = jdbc.query("select enabled from user_totp where user_id = ?", rs -> rs.next() ? rs.getBoolean(1) : null, userId);
-        Integer left = jdbc.queryForObject("select count(*) from user_recovery_codes where user_id = ? and used_at is null",
-                Integer.class, userId);
-        return new Status(Boolean.TRUE.equals(enabled), Boolean.FALSE.equals(enabled), left == null ? 0 : left);
+        Boolean enabled = totp.find(userId).map(UserTotpRepository.TotpRow::enabled).orElse(null);
+        return new Status(Boolean.TRUE.equals(enabled), Boolean.FALSE.equals(enabled), recoveryCodes.countUnused(userId));
     }
 
     /** Tạo khóa mới (thay khóa đang chờ xác nhận nếu có). issuer: tên hiển thị trong ứng dụng Authenticator. */
@@ -61,11 +76,7 @@ public class TwoFactorService {
             throw BusinessException.conflict("TOTP_ALREADY_ENABLED", "Xác thực 2 lớp đang bật");
         }
         byte[] secret = TotpAlgorithm.newSecret();
-        jdbc.update("""
-                insert into user_totp(user_id, secret_enc, enabled) values (?, ?, false)
-                on conflict (user_id) do update set secret_enc = excluded.secret_enc, enabled = false, last_step = null,
-                  failed_attempts = 0, locked_until = null, created_at = now(), enabled_at = null""",
-                user.getId(), cipher.encrypt(secret));
+        totp.savePending(user.getId(), cipher.encrypt(secret));
         String b32 = TotpAlgorithm.base32(secret);
         String label = enc(issuer) + ":" + enc(user.getUsername());
         return new Setup(b32, "otpauth://totp/" + label + "?secret=" + b32 + "&issuer=" + enc(issuer)
@@ -83,7 +94,7 @@ public class TwoFactorService {
             throw BusinessException.badRequest("TOTP_NOT_SETUP", "Tạo mã QR trước khi xác nhận");
         }
         verifier.verify(userId, code, false);
-        jdbc.update("update user_totp set enabled = true, enabled_at = now() where user_id = ?", userId);
+        totp.markEnabled(userId);
         return newRecoveryCodes(userId);
     }
 
@@ -92,8 +103,7 @@ public class TwoFactorService {
         requireEnabled(user.getId());
         checkPassword(user, password);
         verifier.verify(user.getId(), code, true);
-        jdbc.update("delete from user_recovery_codes where user_id = ?", user.getId());
-        jdbc.update("delete from user_totp where user_id = ?", user.getId());
+        remove(user.getId());
     }
 
     @Transactional
@@ -140,14 +150,20 @@ public class TwoFactorService {
     }
 
     private List<String> newRecoveryCodes(UUID userId) {
-        jdbc.update("delete from user_recovery_codes where user_id = ?", userId);
         List<String> codes = new ArrayList<>();
+        List<String> hashes = new ArrayList<>();
         for (int i = 0; i < RECOVERY_CODES; i++) {
             String raw = TotpAlgorithm.randomToken(10);
-            jdbc.update("insert into user_recovery_codes(user_id, code_hash) values (?, ?)", userId, cipher.hashRecovery(raw));
+            hashes.add(cipher.hashRecovery(raw));
             codes.add(raw.substring(0, 5) + "-" + raw.substring(5));
         }
+        recoveryCodes.replaceAll(userId, hashes);
         return codes;
+    }
+
+    private void remove(UUID userId) {
+        recoveryCodes.deleteAll(userId);
+        totp.delete(userId);
     }
 
     private static String enc(String s) {

@@ -48,9 +48,9 @@ export function TaxSectorDialog({ tax, onSave, onClose }: { tax: TaxSettings; on
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
         <DialogHeader><DialogTitle>Ngành nghề kinh doanh & tỷ lệ thuế trên doanh thu</DialogTitle></DialogHeader>
-        <div className="space-y-4 text-sm">
+        <div className="space-y-4 text-[13px]">
           <table className="w-full">
-            <thead className="bg-muted/60 text-left"><tr><th className="px-2 py-2">Ngành nghề</th><th className="w-28 px-2">GTGT (%)</th>
+            <thead className="bg-[#f0f2f5] text-left text-xs [&_th]:h-[34px] [&_th]:font-semibold"><tr><th className="px-2 py-2">Ngành nghề</th><th className="w-28 px-2">GTGT (%)</th>
               <th className="w-28 px-2">TNCN (%)</th><th className="w-24 px-2 text-center">Mặc định</th><th className="w-10" /></tr></thead>
             <tbody>
               {f.sectors.map((s, i) => (

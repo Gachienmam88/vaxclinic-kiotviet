@@ -13,6 +13,8 @@ import type { SupplierPage } from "./supplier-types";
 
 type Props = {
   data: SupplierPage | undefined; loading: boolean; columns: string[]; expanded: string | null; onExpand: (id: string | null) => void;
+  /** Mã phiếu công nợ của link sâu → panel mở sẵn tab nợ + phiếu. */
+  docCode?: string | null;
   selected: string[]; onSelect: (ids: string[]) => void;
 };
 
@@ -20,7 +22,7 @@ type Props = {
  * Bảng NCC: ô chọn, các cột đang bật, dòng tổng (Nợ cần trả hiện tại, Tổng mua). Bấm dòng → mở chi tiết; bấm lại → đóng.
  * Dòng đang mở + panel chi tiết có viền xanh 1px bao quanh như KiotViet.
  */
-export function SupplierListTable({ data, loading, columns, expanded, onExpand, selected, onSelect }: Props) {
+export function SupplierListTable({ data, loading, columns, expanded, onExpand, selected, onSelect, docCode }: Props) {
   const cols = SUPPLIER_COLUMNS.filter((c) => columns.includes(c.key));
   const span = cols.length + 1;
   const pageIds = data?.items.map((s) => s.id) ?? [];
@@ -49,7 +51,7 @@ export function SupplierListTable({ data, loading, columns, expanded, onExpand, 
             return (
               <Fragment key={s.id}>
                 <TableRow aria-expanded={open} onClick={() => onExpand(open ? null : s.id)}
-                  className={cn("cursor-pointer", open && "bg-[#e3f0fc] font-semibold hover:bg-[#e3f0fc]", !s.active && "text-muted-foreground")}>
+                  className={cn("cursor-pointer", open && "bg-primary-tint font-semibold hover:bg-primary-tint", !s.active && "text-muted-foreground")}>
                   <TableCell className={cn("pl-3", edge)} onClick={(e) => e.stopPropagation()}>
                     <Checkbox aria-label={`Chọn ${s.code}`} checked={selected.includes(s.id)}
                       onCheckedChange={(on) => onSelect(on ? [...selected, s.id] : selected.filter((id) => id !== s.id))} /></TableCell>
@@ -60,7 +62,7 @@ export function SupplierListTable({ data, loading, columns, expanded, onExpand, 
                 </TableRow>
                 {open && (
                   <TableRow className="hover:bg-transparent">
-                    <TableCell colSpan={span} className="p-0 whitespace-normal"><SupplierDetailPanel id={s.id} onClose={() => onExpand(null)} /></TableCell>
+                    <TableCell colSpan={span} className="p-0 whitespace-normal"><SupplierDetailPanel id={s.id} docCode={docCode} onClose={() => onExpand(null)} /></TableCell>
                   </TableRow>
                 )}
               </Fragment>

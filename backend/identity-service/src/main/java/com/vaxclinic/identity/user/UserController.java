@@ -1,9 +1,12 @@
 package com.vaxclinic.identity.user;
 
 import com.vaxclinic.common.web.PageResponse;
+import com.vaxclinic.identity.user.UserDtos.Actor;
 import com.vaxclinic.identity.user.UserDtos.CreateUserRequest;
 import com.vaxclinic.identity.user.UserDtos.ResetPasswordRequest;
+import com.vaxclinic.identity.user.UserDtos.ResetTwoFactorRequest;
 import com.vaxclinic.identity.user.UserDtos.UpdateUserRequest;
+import com.vaxclinic.identity.user.UserDtos.UserLookup;
 import com.vaxclinic.identity.user.UserDtos.UserResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -22,15 +25,21 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.UUID;
 
+/**
+ * Thiết lập → Quản lý người dùng. Controller chỉ nhận request + kiểm tra quyền rồi chuyển cho service:
+ * UserController → UserService / UserTwoFactorResetService → AppUserRepository (và các repository liên quan).
+ */
 @RestController
 @RequestMapping("/api/users")
 @PreAuthorize("hasAuthority('user.manage')")
 public class UserController {
 
     private final UserService userService;
+    private final UserTwoFactorResetService twoFactorReset;
 
-    public UserController(UserService userService) {
+    public UserController(UserService userService, UserTwoFactorResetService twoFactorReset) {
         this.userService = userService;
+        this.twoFactorReset = twoFactorReset;
     }
 
     @GetMapping
@@ -47,9 +56,6 @@ public class UserController {
         return userService.lookup();
     }
 
-    public record UserLookup(UUID id, String fullName) {
-    }
-
     @GetMapping("/{id}")
     public UserResponse get(@PathVariable UUID id) {
         return userService.get(id);
@@ -57,19 +63,30 @@ public class UserController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public UserResponse create(@Valid @RequestBody CreateUserRequest req) {
-        return userService.create(req);
+    public UserResponse create(@Valid @RequestBody CreateUserRequest req, @AuthenticationPrincipal Jwt jwt) {
+        return userService.create(req, actor(jwt));
     }
 
     @PutMapping("/{id}")
     public UserResponse update(@PathVariable UUID id, @Valid @RequestBody UpdateUserRequest req,
                                @AuthenticationPrincipal Jwt jwt) {
-        return userService.update(id, req, UUID.fromString(jwt.getSubject()));
+        return userService.update(id, req, actor(jwt));
     }
 
     @PostMapping("/{id}/reset-password")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void resetPassword(@PathVariable UUID id, @Valid @RequestBody ResetPasswordRequest req) {
-        userService.resetPassword(id, req.password());
+    public void resetPassword(@PathVariable UUID id, @Valid @RequestBody ResetPasswordRequest req, @AuthenticationPrincipal Jwt jwt) {
+        userService.resetPassword(id, req.password(), actor(jwt));
+    }
+
+    /** Đặt lại xác thực 2 lớp cho user khác (mất điện thoại + mã khôi phục). Quy tắc ở {@link UserTwoFactorResetService}. */
+    @PostMapping("/{id}/2fa/reset")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void resetTwoFactor(@PathVariable UUID id, @Valid @RequestBody ResetTwoFactorRequest req, @AuthenticationPrincipal Jwt jwt) {
+        twoFactorReset.reset(id, actor(jwt), req.password(), req.code());
+    }
+
+    private static Actor actor(Jwt jwt) {
+        return new Actor(UUID.fromString(jwt.getSubject()), jwt.getClaimAsString("name"));
     }
 }

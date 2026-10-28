@@ -1,10 +1,12 @@
 "use client";
 
 import { Trash2 } from "lucide-react";
+import { DocCodeLink } from "@/components/ui/doc-code-link";
 import { Input } from "@/components/ui/input";
 import { formatDate, formatMoney, formatNumber, parseNumber } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { diffOf, tabOf, type TakeRow, type TakeTab } from "./stock-take-editor-state";
+import { DatePicker } from "@/components/ui/date-picker";
 
 type Props = { rows: TakeRow[]; tab: TakeTab; onChange: (rows: TakeRow[]) => void };
 
@@ -17,7 +19,7 @@ export function StockTakeLineTable({ rows, tab, onChange }: Props) {
 
   return (
     <table className="w-full text-[13px]">
-      <thead className="sticky top-0 bg-[#e3f0fc] text-left text-xs font-bold">
+      <thead className="sticky top-0 bg-primary-tint text-left text-xs font-bold">
         <tr className="h-[30px]">
           <th className="w-10 px-2" /><th className="w-12 px-2">STT</th><th className="w-32 px-2">Mã hàng</th>
           <th className="px-2">Tên hàng</th><th className="w-20 px-2">ĐVT</th><th className="w-24 px-2 text-right">Tồn kho</th>
@@ -35,17 +37,17 @@ export function StockTakeLineTable({ rows, tab, onChange }: Props) {
                   onClick={() => onChange(rows.filter((x) => x.key !== r.key))}><Trash2 className="size-4" /></button>
               </td>
               <td className={`${TD} leading-8`}>{rows.indexOf(r) + 1}</td>
-              <td className={`${TD} leading-8 text-primary`}>{r.productCode}</td>
+              <td className={`${TD} leading-8`}><DocCodeLink code={r.productCode} newTab /></td>
               <td className={TD}>
                 <div className="leading-8">{r.productName}</div>
                 {r.lotManaged && (r.newLot ? (
                   <div className="mt-1 grid max-w-md grid-cols-2 gap-1.5">
                     <Input placeholder="Số lô" aria-label="Số lô" value={r.lotNumber} onChange={(e) => update(r.key, { lotNumber: e.target.value })} />
-                    <Input type="date" title="Hạn sử dụng" aria-label="Hạn sử dụng" value={r.expiryDate}
-                      onChange={(e) => update(r.key, { expiryDate: e.target.value })} />
+                    <DatePicker title="Hạn sử dụng" aria-label="Hạn sử dụng" value={r.expiryDate}
+                      onChange={(v) => update(r.key, { expiryDate: v })} />
                   </div>
                 ) : (
-                  <span className="inline-flex h-5 items-center rounded bg-[#eef5fe] px-1.5 text-xs text-primary">
+                  <span className="inline-flex h-5 items-center rounded bg-primary-tint-light px-1.5 text-xs text-primary">
                     Lô {r.lotNumber} — HSD {formatDate(r.expiryDate)}
                   </span>
                 ))}

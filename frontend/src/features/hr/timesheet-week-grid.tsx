@@ -6,6 +6,7 @@ import { hm, timeOf } from "./hr-queries";
 import type { AttendanceCell, EmployeeRow, Shift } from "./hr-types";
 import { ATTENDANCE_STATUS } from "./hr-types";
 import { DayHeader, todayIso } from "./week-toolbar";
+import { DocCodeLink } from "@/components/ui/doc-code-link";
 
 type Day = { iso: string; day: number; label: string };
 
@@ -84,7 +85,7 @@ export function TimesheetWeekGrid({ mode, days, shifts, employees, cells, onOpen
           {mode === "employee" && employees.map((e) => (
             <tr key={e.id}>
               <td className="border-r border-b border-[#e5e7eb] px-2 py-1.5 align-top leading-4">
-                <p className="truncate font-semibold uppercase">{e.name}</p><p className="text-[11px]">{e.code}</p>
+                <p className="truncate font-semibold uppercase">{e.name}</p><p className="text-[11px]"><DocCodeLink code={e.code} /></p>
               </td>
               {days.map((d) => (
                 <td key={d.iso} className={CELL}>

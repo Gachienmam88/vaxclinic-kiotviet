@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { DOC_CODE_LINK_CLASS } from "@/components/ui/doc-code-link";
 import { ListEmptyState } from "@/components/ui/list-empty-state";
 import { CsvExportButton, downloadCsv } from "@/features/sales/customer-csv-export";
 import { kvSubHead, kvSubRow, kvSubTable } from "@/features/sales/customer-ui-primitives";
@@ -32,7 +33,7 @@ export function SupplierDetailHistoryTab({ s }: { s: SupplierRow }) {
             {data && !rows.length && <tr><td colSpan={5}><ListEmptyState compact what="phiếu nhập/trả hàng" /></td></tr>}
             {rows.slice(page * PAGE, (page + 1) * PAGE).map((h) => (
               <tr key={h.id} className={kvSubRow}>
-                <td><button type="button" className="text-primary hover:underline"
+                <td><button type="button" className={DOC_CODE_LINK_CLASS}
                   onClick={() => setOpen({ type: h.kind === "RECEIPT" ? "PURCHASE" : "PURCHASE_RETURN", id: h.id })}>{h.code}</button></td>
                 <td>{formatDateTime(h.time)}</td><td>{h.createdByName}</td>
                 <td className="text-right">{formatMoney(h.total)}</td>

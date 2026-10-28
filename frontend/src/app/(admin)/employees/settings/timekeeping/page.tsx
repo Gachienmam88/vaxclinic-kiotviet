@@ -5,7 +5,7 @@ import { ChevronRight } from "lucide-react";
 import { SettingRow, SettingsCard, SettingsPage } from "@/features/settings/settings-layout-parts";
 import { SettingSwitch } from "@/features/settings/setting-switch";
 import { CheckLine, DurationBox, Hint, SaveBar, UnitBox } from "@/features/hr/hr-settings-controls";
-import { HrSettingsShiftListDialog } from "@/features/hr/hr-settings-shift-list-dialog";
+import { ShiftFormDialog } from "@/features/hr/shift-form-dialog";
 import { useHrSettings, useSaveHrSetting, useShifts } from "@/features/hr/hr-queries";
 import type { TimekeepingSettings } from "@/features/hr/hr-types";
 
@@ -87,7 +87,7 @@ export default function TimekeepingSettingsPage() {
           control={<SettingSwitch aria-label="Chấm công không cần xếp lịch" checked={v.allowUnscheduled} onCheckedChange={(b) => set("allowUnscheduled", b)} />} />
       </SettingsCard>
       <SaveBar dirty={!!form} pending={save.isPending} onSave={() => save.mutate(v, { onSuccess: () => setForm(null) })} />
-      {shiftsOpen && <HrSettingsShiftListDialog onClose={() => setShiftsOpen(false)} />}
+      {shiftsOpen && <ShiftFormDialog onClose={() => setShiftsOpen(false)} />}
     </SettingsPage>
   );
 }

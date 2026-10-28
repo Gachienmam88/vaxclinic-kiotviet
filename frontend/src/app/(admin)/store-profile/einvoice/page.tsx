@@ -36,7 +36,7 @@ export default function EInvoiceUsagePage() {
             ? <span className="flex items-center gap-1.5 text-[13px] text-primary"><span className="size-1.5 rounded-full bg-primary" />Đang hoạt động</span>
             : <Link href="/settings/einvoice" className="flex items-center gap-1.5 text-[13px] text-orange-600 hover:underline">
                 <span className="size-1.5 rounded-full bg-orange-500" />Chưa kết nối — thiết lập MISA meInvoice</Link>)}
-          <Link href="/invoices?einvoice=PUBLISHED"
+          <Link href="/invoices?einvoice=PUBLISHED,ACCEPTED"
             className="ml-auto flex h-8 items-center rounded-md bg-primary px-3 text-[13px] font-semibold text-primary-foreground hover:bg-primary/90">Xem danh sách hoá đơn</Link>
         </div>
         <div className="grid grid-cols-5 gap-6 px-5 py-4">

@@ -2,19 +2,30 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { CheckOption, FILTER_FIELD, FilterSection, FilterSidebar, PeriodFilter, RadioOption } from "@/features/sales/invoice-list-kit";
+import type { DeepLink } from "@/components/ui/deep-link-route";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import { periodParams, type Period } from "@/features/sales/sales-queries";
+import { useVnAdmin } from "@/lib/vn-admin-data";
 import { usePartnerOptions } from "./delivery-queries";
 import { SHIPMENT_STATUSES } from "./delivery-types";
 
-export type ShipmentFilters = { period: Period; partnerId: string; area: string; statuses: string[]; reconciled: "" | "true" | "false" };
+/** province: mã tỉnh + tên rút gọn (khớp vận đơn cũ chưa có mã theo tên khu vực). */
+export type ShipmentFilters = {
+  period: Period; partnerId: string; provinceCode: string; provinceShortName: string; statuses: string[]; reconciled: "" | "true" | "false";
+};
 
 const toggle = (list: string[], v: string, on: boolean) => (on ? [...list, v] : list.filter((x) => x !== v));
 
-/** Trạng thái bộ lọc + trang + tìm kiếm của danh sách vận đơn → query string GET /shipments. */
-export function useShipmentListState(statuses: string[] = []) {
-  const [search, setSearch] = useState("");
-  const [q, setQ] = useState("");
-  const [filters, setFiltersRaw] = useState<ShipmentFilters>({ period: { mode: "month", from: "", to: "" }, partnerId: "", area: "",
+/**
+ * Trạng thái bộ lọc + trang + tìm kiếm của danh sách vận đơn → query string GET /shipments.
+ * Link sâu (?code=VD…): tìm theo mã, mọi thời gian + trạng thái.
+ */
+export function useShipmentListState(defaultStatuses: string[] = [], link?: DeepLink) {
+  const deepLink = !!(link?.code || link?.id);
+  const statuses = deepLink ? [] : defaultStatuses;
+  const [search, setSearch] = useState(link?.code ?? "");
+  const [q, setQ] = useState(link?.code ?? "");
+  const [filters, setFiltersRaw] = useState<ShipmentFilters>({ period: { mode: deepLink ? "all" : "month", from: "", to: "" }, partnerId: "", provinceCode: "", provinceShortName: "",
     statuses, reconciled: "" });
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(15);
@@ -23,7 +34,10 @@ export function useShipmentListState(statuses: string[] = []) {
     const p = periodParams(filters.period, new URLSearchParams({ page: String(page), size: String(size) }));
     if (q) p.set("q", q);
     if (filters.partnerId) p.set("partnerId", filters.partnerId);
-    if (filters.area.trim()) p.set("area", filters.area.trim());
+    if (filters.provinceCode) {
+      p.set("provinceCode", filters.provinceCode);
+      if (filters.provinceShortName) p.set("area", filters.provinceShortName);
+    }
     if (filters.reconciled) p.set("reconciled", filters.reconciled);
     filters.statuses.forEach((s) => p.append("statuses", s));
     return p;
@@ -37,6 +51,7 @@ export function ShipmentFilterSidebar({ value, onChange, showStatuses }: {
   value: ShipmentFilters; onChange: (f: ShipmentFilters) => void; showStatuses?: boolean;
 }) {
   const { data: partners = [] } = usePartnerOptions();
+  const vn = useVnAdmin();
   const set = (p: Partial<ShipmentFilters>) => onChange({ ...value, ...p });
   return (
     <FilterSidebar>
@@ -51,8 +66,10 @@ export function ShipmentFilterSidebar({ value, onChange, showStatuses }: {
           <option value="">Tất cả đối tác</option>{partners.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select>
       </FilterSection>
       <FilterSection title="Khu vực giao hàng">
-        <input className={FILTER_FIELD} aria-label="Khu vực giao hàng" placeholder="Tỉnh/TP, Quận/Huyện" value={value.area}
-          onChange={(e) => set({ area: e.target.value })} />
+        <SearchableSelect aria-label="Khu vực giao hàng" className={FILTER_FIELD} options={vn?.provinces ?? []}
+          value={value.provinceCode} placeholder="Tất cả Tỉnh/Thành phố" searchPlaceholder="Tìm Tỉnh/Thành phố"
+          onChange={(p) => set({ provinceCode: p?.code ?? "",
+            provinceShortName: p ? p.name.replace(new RegExp(`^${p.type} `), "") : "" })} />
       </FilterSection>
       <FilterSection title="Đối soát">
         {([["", "Tất cả"], ["false", "Chưa đối soát"], ["true", "Đã đối soát"]] as const).map(([v, l]) => (

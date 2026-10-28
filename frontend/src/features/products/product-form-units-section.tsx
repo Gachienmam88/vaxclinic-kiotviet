@@ -56,15 +56,20 @@ export function UnitsSection({ form, set }: SectionProps) {
     set({ units: form.units.map((u) => (u.key === key ? { ...u, ...patch } : u)) });
   const [base, ...others] = form.units;
   return (
-    <FormSection title="Quản lý theo đơn vị tính"
-      hint="Thêm đơn vị bán hoặc nhập như liều, hộp. Đặt giá trị quy đổi để tính nhanh giá và tồn kho. VD: 1 hộp = 10 liều.">
-      <div className="grid grid-cols-1 items-end gap-3 md:grid-cols-[1fr_10rem_auto]">
+    <FormSection title="Quản lý theo đơn vị tính">
+      <div className="mb-3">
+        <div className="text-xs font-bold">Đơn vị tính</div>
+        <div className="mt-0.5 text-xs text-muted-foreground">
+          Thêm đơn vị bán hoặc nhập như liều, hộp. Đặt giá trị quy đổi để tính nhanh giá và tồn kho. Ví dụ: 1 hộp = 10 liều.
+        </div>
+      </div>
+      <div className="grid grid-cols-1 items-end gap-3 md:grid-cols-[10.5rem_6rem_auto]">
         <div className="grid gap-1.5"><Label>Tên đơn vị cơ bản</Label>
-          <Input required placeholder="VD: Liều" value={base.unitName}
+          <Input required placeholder="Nhập tên đơn vị cơ bản" value={base.unitName}
             onChange={(e) => update(base.key, { unitName: e.target.value })} /></div>
         <div className="grid gap-1.5"><Label>Giá bán</Label>
           <NumberInput value={base.price} onValueChange={(price) => update(base.key, { price })} /></div>
-        <label className="flex h-8 items-center gap-2 text-sm">
+        <label className="flex h-8 items-center gap-2 text-[13px]">
           <Checkbox checked={base.directSale} onCheckedChange={(v) => update(base.key, { directSale: v === true })} />
           Bán trực tiếp
         </label>
@@ -91,7 +96,7 @@ export function UnitsSection({ form, set }: SectionProps) {
           ))}
         </div>
       )}
-      <Button type="button" variant="link" className="mt-1 px-0" onClick={() => set({ units: [...form.units, emptyUnit()] })}>
+      <Button type="button" variant="link" className="mt-2 px-0 font-semibold hover:no-underline" onClick={() => set({ units: [...form.units, emptyUnit()] })}>
         <Plus className="size-4" /> Thêm đơn vị
       </Button>
     </FormSection>

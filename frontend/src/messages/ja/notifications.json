@@ -1,0 +1,14 @@
+{
+  "title": "受信箱",
+  "markAllRead": "すべて既読にする",
+  "tabs": {
+    "all": "すべて",
+    "alert": "警告",
+    "update": "お知らせ"
+  },
+  "unread": "未読",
+  "loadingMore": "さらに読み込み中...",
+  "emptyWhat": "通知",
+  "offlineTitle": "この端末にシステムへ未同期のオフライン販売伝票が {count} 件あります",
+  "offlineSub": "オンライン時に販売画面を開くと同期されます"
+}

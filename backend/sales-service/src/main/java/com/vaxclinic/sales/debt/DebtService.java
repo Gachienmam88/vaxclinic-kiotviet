@@ -46,9 +46,12 @@ public class DebtService {
     private final CashbookWriter cashbook;
     private final DebtLedger ledger;
     private final org.springframework.jdbc.core.JdbcTemplate jdbc;
+    private final com.vaxclinic.sales.common.SalesRules rules;
 
     public DebtService(CustomerRepository customers, InvoiceRepository invoices, CashVoucherRepository vouchers,
-                       CashbookWriter cashbook, DebtLedger ledger, org.springframework.jdbc.core.JdbcTemplate jdbc) {
+                       CashbookWriter cashbook, DebtLedger ledger, org.springframework.jdbc.core.JdbcTemplate jdbc,
+                       com.vaxclinic.sales.common.SalesRules rules) {
+        this.rules = rules;
         this.customers = customers;
         this.invoices = invoices;
         this.vouchers = vouchers;
@@ -62,6 +65,7 @@ public class DebtService {
         actor.checkBranch(req.branchId());
         Customer c = customer(customerId);
         Instant at = req.occurredAt() == null ? Instant.now() : req.occurredAt();
+        rules.checkNotLocked(req.branchId(), at);
         String code = "PT%06d".formatted(vouchers.nextReceiptNumber());
         var v = CashbookWriter.newVoucher(code, "RECEIPT", fundOf(req.paymentMethod()), "Thu Tiền khách trả", req.amount());
         v.setBankAccountId(req.bankAccountId());

@@ -18,7 +18,8 @@ export const REPORT_CSS = `
 .rp-table tr.rp-group td { background: #f4f4f4; font-weight: bold; }
 .rp-table tr.rp-sub td { background: #fafafa; }
 .rp-table td.rp-l1 { padding-left: 22px; } .rp-table td.rp-l2 { padding-left: 40px; }
-.rp-table a, .rp-link { color: #0070f4; text-decoration: none; }
+.rp-table a, .rp-link { color: #2171bc; text-decoration: none; }
+.rp-table a:hover { color: #1a9dcc; text-decoration: underline; }
 .rp-toggle { display: inline-flex; width: 11px; height: 11px; border: 1px solid #555; align-items: center; justify-content: center;
   font-size: 10px; line-height: 1; margin-right: 6px; cursor: pointer; background: #fff; vertical-align: -1px; }
 .rp-empty { text-align: center; color: #777; padding: 24px 0; }

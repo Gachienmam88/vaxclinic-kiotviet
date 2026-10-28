@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { DocCodeLink } from "@/components/ui/doc-code-link";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { kvDialog, kvDialogBody, kvDialogFooter, kvDialogHeader, kvDialogTitle, kvFooterBtn, kvInput, kvLabel } from "@/features/sales/customer-ui-primitives";
 import { SUB_HEAD } from "@/features/sales/invoice-list-kit";
@@ -29,17 +30,18 @@ export function ReconcileDialog({ partnerId: initial, onClose }: { partnerId?: s
   const [branchId, setBranchId] = useState(branches[0]?.id ?? "");
   const [fund, setFund] = useState("CASH");
   const [note, setNote] = useState("");
-  const { data: rows = [] } = useReconcilable(partnerId, branchId);
-  const [picked, setPicked] = useState<string[]>([]);
-  useEffect(() => { setPicked(rows.map((r) => r.id)); }, [rows]);
-  useEffect(() => { if (!branchId && branches[0]) setBranchId(branches[0].id); }, [branchId, branches]);
-
-  const chosen = rows.filter((r) => picked.includes(r.id));
+  const { data } = useReconcilable(partnerId, branchId || branches[0]?.id || "");
+  const rows = data ?? [];
+  // Mặc định chọn hết vận đơn chờ đối soát: chỉ lưu các vận đơn bị bỏ chọn
+  const [excluded, setExcluded] = useState<string[]>([]);
+  const chosen = rows.filter((r) => !excluded.includes(r.id));
+  const picked = chosen.map((r) => r.id);
+  const setPicked = (ids: string[]) => setExcluded(rows.map((r) => r.id).filter((id) => !ids.includes(id)));
   const sum = (f: (r: (typeof rows)[number]) => number) => chosen.reduce((s, r) => s + Number(f(r)), 0);
   const net = sum((r) => r.net);
   const save = useMutation({
     mutationFn: () => api<SettlementResult>(`/delivery-partners/${partnerId}/reconcile`, { method: "POST",
-      body: { branchId, shipmentIds: picked, fund, note: note || null } }),
+      body: { branchId: branchId || branches[0]?.id, shipmentIds: picked, fund, note: note || null } }),
     onSuccess: (r) => {
       toast.success(`Đã đối soát ${picked.length} vận đơn (${r.code})${r.voucherCode ? ` — phiếu ${r.voucherCode} ${formatMoney(Math.abs(r.amount))}` : ""}`);
       refreshDelivery(qc);
@@ -77,7 +79,7 @@ export function ReconcileDialog({ partnerId: initial, onClose }: { partnerId?: s
                   <tr key={r.id} className="border-b [&_td]:h-[30px] [&_td]:px-2">
                     <td><input type="checkbox" aria-label={`Chọn ${r.code}`} className="accent-primary" checked={picked.includes(r.id)}
                       onChange={(e) => setPicked(e.target.checked ? [...picked, r.id] : picked.filter((x) => x !== r.id))} /></td>
-                    <td>{r.code}</td><td>{r.invoiceCode}</td><td>{r.receiverName}</td><td>{shipmentStatusLabel(r.status)}</td>
+                    <td><DocCodeLink code={r.code} kind="/delivery/shipments" newTab /></td><td><DocCodeLink code={r.invoiceCode} kind="/invoices" newTab /></td><td>{r.receiverName}</td><td>{shipmentStatusLabel(r.status)}</td>
                     <td>{r.deliveredAt ? formatDateTime(r.deliveredAt) : ""}</td><td className="text-right">{formatMoney(r.cod)}</td>
                     <td className="text-right">{formatMoney(r.fee)}</td><td className="text-right">{formatMoney(r.net)}</td>
                   </tr>))}

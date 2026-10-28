@@ -74,6 +74,7 @@ public class OrderReportController {
         if (f.customerId() != null) w.append(" and o.customer_id = :customerId");
         if (f.createdBy() != null) w.append(" and o.created_by = :createdBy");
         if (statuses != null && !statuses.isEmpty()) w.append(" and o.status in (:statuses)");
+        w.append(f.docMeta("o")).append(f.deliveryWhere());
         return w.toString();
     }
 

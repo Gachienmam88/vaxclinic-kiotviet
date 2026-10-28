@@ -15,6 +15,7 @@ import { InventoryEditorShell, PANEL_FIELD, PanelRow } from "./inventory-editor-
 import { ISSUE_CONFIG } from "./inventory-types";
 import { issueLineValue, issueRequest, type IssueEditorState } from "./stock-issue-editor-state";
 import { StockIssueLineTable } from "./stock-issue-line-table";
+import { DateTimePicker } from "@/components/ui/date-time-picker";
 
 /** Màn soạn phiếu xuất hủy / xuất dùng nội bộ (toàn trang như Nhập hàng). Hoàn thành = trừ kho theo giá vốn. */
 export function StockIssueEditor({ initial }: { initial: IssueEditorState }) {
@@ -60,8 +61,8 @@ export function StockIssueEditor({ initial }: { initial: IssueEditorState }) {
       onSave={submit} onPick={(p) => set({ lines: [...state.lines, lineFromProduct(p)] })}
       panel={(
         <div className="space-y-1.5">
-          <input type="datetime-local" aria-label="Thời gian" className={cn(PANEL_FIELD, "mb-2.5")} value={state.at}
-            onChange={(e) => set({ at: e.target.value })} />
+          <DateTimePicker aria-label="Thời gian" className={cn(PANEL_FIELD, "mb-2.5")} value={state.at}
+            onChange={(v) => set({ at: v })} />
           {myBranches.length > 1 && (
             <select aria-label="Chi nhánh" className={cn(PANEL_FIELD, "mb-2.5")} value={state.branchId}
               disabled={state.lines.some((l) => l.lotNumber)} onChange={(e) => set({ branchId: e.target.value })}>

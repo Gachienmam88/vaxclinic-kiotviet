@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { ExternalLink, FileOutput, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { DetailSingleTab } from "@/components/ui/detail-tabs-list";
 import { DocStatusBadge } from "@/features/purchases/purchase-list-chrome";
 import { useBranches } from "@/features/settings/settings-queries";
 
@@ -16,14 +17,14 @@ export function Info({ label, children }: { label: string; children: React.React
 }
 
 /** Panel chi tiết mở dưới dòng (viền xanh, tab "Thông tin", mã + trạng thái + chi nhánh) — như Mua hàng. */
-export function InventoryDetailFrame({ code, status, statusLabel, branchId, children, footer }: {
-  code: string; status: string; statusLabel: string; branchId: string; children: React.ReactNode; footer?: React.ReactNode;
+export function InventoryDetailFrame({ code, status, statusLabel, branchId, children, footer, onClose }: {
+  code: string; status: string; statusLabel: string; branchId: string; children: React.ReactNode; footer?: React.ReactNode; onClose?: () => void;
 }) {
   const { data: branches = [] } = useBranches();
   return (
     <div className="border border-primary bg-background text-[13px]">
       <div className="border-b border-[#e5e7eb] px-4">
-        <span className="inline-block border-b-2 border-primary py-2 font-semibold text-primary">Thông tin</span>
+        <DetailSingleTab onClick={onClose} />
       </div>
       <div className="space-y-4 p-4">
         <div className="flex items-center gap-3">

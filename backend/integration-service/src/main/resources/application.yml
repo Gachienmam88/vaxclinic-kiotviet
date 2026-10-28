@@ -25,6 +25,11 @@ app:
   # AES-256 key (base64, 32 bytes) encrypting stored passwords of tax portal / MISA accounts
   encryption-key: ${ENCRYPTION_KEY}
   sales-url: ${SALES_URL:http://localhost:8086}
+  # identity-service: gửi cảnh báo vào Hộp thư đến (HĐĐT lỗi, nhận chuyển khoản SePay)
+  identity-url: ${IDENTITY_URL:http://localhost:8081}
+  # Webhook SePay gọi từ ngoài (không có JWT) — xác thực bằng API key trong Thiết lập → Thanh toán
+  security:
+    public-paths: /api/payments/sepay/webhook
   # Cổng hóa đơn điện tử của Tổng cục Thuế (không có API chính thức — xem GdtPortalClient)
   gdt-portal-url: ${GDT_PORTAL_URL:https://hoadondientu.gdt.gov.vn:30000}
   misa:

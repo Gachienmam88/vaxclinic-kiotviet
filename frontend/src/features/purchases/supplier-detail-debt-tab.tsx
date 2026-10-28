@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { CircleDollarSign, PencilLine, Percent } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { sameCode } from "@/components/ui/deep-link-route";
+import { DOC_CODE_LINK_CLASS } from "@/components/ui/doc-code-link";
 import { ListEmptyState } from "@/components/ui/list-empty-state";
 import { CsvExportButton, downloadCsv } from "@/features/sales/customer-csv-export";
 import { kvSubHead, kvSubRow, kvSubTable } from "@/features/sales/customer-ui-primitives";
@@ -21,15 +23,19 @@ const header = ["Mã phiếu", "Thời gian", "Loại", "Giá trị", "Nợ cầ
 const csvRow = (d: SupplierLedgerRow) => [d.docCode, formatDateTime(d.occurredAt), SUPPLIER_DEBT_TYPE_LABEL[d.docType], d.amount, d.balance];
 
 /** Tab "Nợ cần trả nhà cung cấp": sổ công nợ (mới nhất trước, số dư lũy kế) + Thanh toán / Điều chỉnh / Chiết khấu thanh toán. */
-export function SupplierDetailDebtTab({ s }: { s: SupplierRow }) {
+export function SupplierDetailDebtTab({ s, docCode }: { s: SupplierRow; docCode?: string | null }) {
   const { data } = useSupplierDebts(s.id);
   const { can } = useCurrentUser();
   const [type, setType] = useState("");
-  const [page, setPage] = useState(0);
+  // link sâu ?code=<mã phiếu>: chưa thao tác (undefined) → trang chứa phiếu đó + mở sẵn phiếu khi sổ nợ về
+  const [pageState, setPage] = useState<number | undefined>(docCode ? undefined : 0);
   const [dialog, setDialog] = useState<"payment" | "discount" | "adjust" | null>(null);
-  const [open, setOpen] = useState<OpenDoc | null>(null);
+  const [openState, setOpen] = useState<OpenDoc | null | undefined>(docCode ? undefined : null);
   const all = data ?? [];
   const rows = type ? all.filter((d) => d.docType === type) : all;
+  const linked = rows.findIndex((d) => sameCode(d.docCode, docCode));
+  const page = pageState ?? Math.max(0, Math.floor(linked / PAGE));
+  const open = openState !== undefined ? openState : linked >= 0 ? { type: rows[linked].docType, id: rows[linked].docId } : null;
   const shown = rows.slice(page * PAGE, (page + 1) * PAGE);
   return (
     <div className="space-y-3">
@@ -49,7 +55,7 @@ export function SupplierDetailDebtTab({ s }: { s: SupplierRow }) {
             {data && !rows.length && <tr><td colSpan={5}><ListEmptyState compact what="giao dịch" /></td></tr>}
             {shown.map((d) => (
               <tr key={`${d.docType}-${d.docId}`} className={kvSubRow}>
-                <td><button type="button" className="text-primary hover:underline" onClick={() => setOpen({ type: d.docType, id: d.docId })}>{d.docCode}</button></td>
+                <td><button type="button" className={DOC_CODE_LINK_CLASS} onClick={() => setOpen({ type: d.docType, id: d.docId })}>{d.docCode}</button></td>
                 <td>{formatDateTime(d.occurredAt)}</td><td>{SUPPLIER_DEBT_TYPE_LABEL[d.docType]}</td>
                 <td className="text-right">{formatMoney(d.amount)}</td><td className="text-right">{formatMoney(d.balance)}</td>
               </tr>

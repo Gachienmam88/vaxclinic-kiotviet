@@ -19,9 +19,9 @@ export function middleware(request: NextRequest) {
     }
     return res;
   }
-  // Vừa đăng nhập (về "/" hoặc "/pos") mà trước đó đang mở /cham-cong → quay lại trang đó
+  // Vừa đăng nhập (về "/" hoặc "/sale") mà trước đó đang mở /cham-cong → quay lại trang đó
   const back = request.cookies.get(RETURN_COOKIE)?.value;
-  if (hasSession && back && (pathname === "/" || pathname === "/pos") && RETURN_AFTER_LOGIN.some((p) => back.startsWith(p + "?") || back === p)) {
+  if (hasSession && back && (pathname === "/" || pathname === "/sale") && RETURN_AFTER_LOGIN.some((p) => back.startsWith(p + "?") || back === p)) {
     const res = NextResponse.redirect(new URL(back, request.url));
     res.cookies.delete(RETURN_COOKIE);
     return res;
@@ -33,6 +33,6 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  // Bỏ qua API, file nội bộ Next, service worker và ảnh thương hiệu /brand (màn đăng nhập cần khi chưa có phiên).
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|sw.js|brand/).*)"],
+  // Bỏ qua API, file nội bộ Next, service worker, ảnh thương hiệu /brand (màn đăng nhập cần khi chưa có phiên) và danh mục tĩnh /data.
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|sw.js|brand/|data/).*)"],
 };

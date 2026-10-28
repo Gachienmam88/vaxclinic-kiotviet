@@ -30,6 +30,17 @@ public class Branch {
 
     private String address;
 
+    /** Khu vực (tên) + mã ĐVHC 2 cấp; null với chi nhánh cũ. */
+    private String province;
+
+    private String ward;
+
+    @Column(name = "province_code")
+    private String provinceCode;
+
+    @Column(name = "ward_code")
+    private String wardCode;
+
     private String phone;
 
     @Column(nullable = false)

@@ -27,8 +27,9 @@ public class ClockTokenService {
 
     private final byte[] key;
 
-    public ClockTokenService(@Value("${app.hr.clock-secret}") String secret) {
-        this.key = hmac(secret.getBytes(StandardCharsets.UTF_8), "vaxclinic-hr-clock-qr-v1");
+    public ClockTokenService(@Value("${app.hr.clock-secret:}") String secret, @Value("${app.jwt.secret}") String jwtSecret) {
+        String base = secret == null || secret.isBlank() ? jwtSecret : secret;
+        this.key = hmac(base.getBytes(StandardCharsets.UTF_8), "vaxclinic-hr-clock-qr-v1");
     }
 
     public static long slotOf(Instant t) {

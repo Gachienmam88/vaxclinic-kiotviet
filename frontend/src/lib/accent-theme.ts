@@ -1,8 +1,9 @@
 /**
- * Màu chủ đề (KiotViet "Chủ đề"): 9 màu nhấn, chọn theo từng người dùng, lưu localStorage trên máy
+ * Màu chủ đề (KiotViet "Chủ đề"): 9 màu, chọn theo từng người dùng, lưu localStorage trên máy
  * (backend chưa có API lưu tuỳ chọn người dùng).
- * Chỉ đặt biến --primary trên <html>; các sắc độ đậm / nhạt (nút đang chọn, rê chuột, nền nhạt) tự suy ra bằng
- * color-mix() trong app/globals.css (@theme) nên mọi chỗ dùng bg-primary-*, text-primary… đổi theo.
+ * Như KiotViet chỉ tô khung ứng dụng: đặt biến --chrome trên <html> (thanh menu, nút "Bán hàng", avatar, thanh trên +
+ * nút THANH TOÁN màn bán hàng — các lớp bg-chrome / text-chrome / bg-chrome-active trong app/globals.css).
+ * Nội dung trang (--primary: bảng, nút, liên kết…) luôn giữ xanh mặc định.
  */
 
 export type Accent = { id: string; hex: string; label: string };
@@ -36,11 +37,11 @@ export function readAccent(userId: string): Accent {
   }
 }
 
-/** Gắn màu lên <html>; màu mặc định thì bỏ biến để dùng giá trị trong globals.css. */
+/** Gắn màu khung lên <html>; màu mặc định thì bỏ biến để dùng giá trị trong globals.css. */
 export function applyAccent(accent: Accent) {
   const style = document.documentElement.style;
-  if (accent.hex === DEFAULT_ACCENT.hex) style.removeProperty("--primary");
-  else style.setProperty("--primary", accent.hex);
+  if (accent.hex === DEFAULT_ACCENT.hex) style.removeProperty("--chrome");
+  else style.setProperty("--chrome", accent.hex);
 }
 
 /** Lưu màu cho người dùng + nhớ người dùng hiện tại (cho lần tải trang sau). */
@@ -70,4 +71,4 @@ export function syncAccentForUser(userId: string) {
 export const ACCENT_BOOT_SCRIPT =
   `(function(){try{if(/^\\/(login|welcome)(\\/|$)/.test(location.pathname))return;var s=localStorage,` +
   `u=s.getItem("${LAST_USER_KEY}"),h=u&&s.getItem("kv-accent:"+u);` +
-  `if(h&&/^#[0-9a-f]{6}$/i.test(h))document.documentElement.style.setProperty("--primary",h)}catch(e){}})()`;
+  `if(h&&/^#[0-9a-f]{6}$/i.test(h))document.documentElement.style.setProperty("--chrome",h)}catch(e){}})()`;

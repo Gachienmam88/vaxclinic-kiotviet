@@ -31,7 +31,8 @@ public class GatewaySecurityConfig {
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
         return http.csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .authorizeExchange(ex -> ex
-                        .pathMatchers("/actuator/health/**", "/api/auth/login", "/api/auth/refresh").permitAll()
+                        // Webhook SePay: SePay gọi từ ngoài, xác thực bằng API key ở integration-service
+                        .pathMatchers("/actuator/health/**", "/api/auth/login", "/api/auth/refresh", "/api/auth/store", "/api/auth/store-status", "/api/payments/sepay/webhook").permitAll()
                         .anyExchange().authenticated())
                 .oauth2ResourceServer(rs -> rs.jwt(jwt -> { }))
                 .build();

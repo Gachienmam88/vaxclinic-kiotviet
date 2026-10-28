@@ -6,14 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { formatMoney, parseNumber } from "@/lib/format";
 import { useCommissionTables, useSaveHrSetting } from "./hr-queries";
-import { SALARY_TYPES, salaryTypeLabel, type SalarySettingsLists, type SalaryTemplate, type SalaryType } from "./salary-template-types";
+import { SALARY_TYPES, salaryTypeLabel, type SalaryTemplate, type SalaryType } from "./hr-types";
 import { ALLOWANCE_KINDS, DEDUCTION_KINDS, SalaryTemplatePayItems } from "./salary-template-pay-items";
 
 const box = "h-8 w-full rounded-md border border-[#d9dbe0] bg-white px-2 text-[13px] outline-none focus:border-primary";
 const EMPTY: SalaryTemplate = { name: "", salaryType: "FIXED", salaryAmount: 0, overtimePercent: 150, commissionTableId: null, allowances: [], deductions: [] };
 
 /** Thiết lập Mẫu lương: bộ lương dựng sẵn (loại lương, mức lương, phụ cấp, giảm trừ, hoa hồng) để áp nhanh cho nhân viên. */
-export function SalaryTemplateDialog({ templates, lists, onClose }: { templates: SalaryTemplate[]; lists: SalarySettingsLists; onClose: () => void }) {
+export function SalaryTemplateDialog({ templates, lists, onClose }: { templates: SalaryTemplate[]; lists: { allowances: string[]; deductions: string[] }; onClose: () => void }) {
   const [list, setList] = useState(templates);
   const [editing, setEditing] = useState<{ index: number; t: SalaryTemplate } | null>(null);
   const { data: tables = [] } = useCommissionTables();
@@ -80,7 +80,7 @@ export function SalaryTemplateDialog({ templates, lists, onClose }: { templates:
             <DialogFooter>
               <Button variant="outline" onClick={() => setEditing(null)}>Quay lại</Button>
               <Button disabled={!t.name.trim() || [...t.allowances, ...t.deductions].some((p) => !p.name.trim()) || save.isPending}
-                onClick={() => persist(editing.index < 0 ? [...list, t] : list.map((x, j) => (j === editing.index ? t : x)))}>Lưu mẫu lương</Button>
+                onClick={() => editing && persist(editing.index < 0 ? [...list, t] : list.map((x, j) => (j === editing.index ? t : x)))}>Lưu mẫu lương</Button>
             </DialogFooter>
           </>
         )}

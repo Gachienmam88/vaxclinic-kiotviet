@@ -25,7 +25,7 @@ public class StoreAccessController {
     }
 
     /** Địa chỉ đang dùng: đã đặt trong Thiết lập → Thông tin cửa hàng, hoặc tự sinh từ tên (VD "Vắc xin số 1" → "vacxinso1"). */
-    static String accessCodeOf(StoreInfo info) {
+    public static String accessCodeOf(StoreInfo info) {
         if (info == null) {
             return FALLBACK_CODE;
         }

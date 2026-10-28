@@ -8,6 +8,7 @@ import { NativeSelect } from "@/features/products/product-form-sections";
 import { api } from "@/lib/api-client";
 import { formatDate, formatDateTime, formatMoney, formatNumber } from "@/lib/format";
 import { downloadCsv, type Period } from "./tax-calc";
+import { DocCodeLink } from "@/components/ui/doc-code-link";
 
 type StockLine = { productId: string; productCode: string; productName: string; unitName: string; openingQty: number; openingValue: number;
   inQty: number; inValue: number; outQty: number; outValue: number; closingQty: number; closingValue: number };
@@ -36,7 +37,7 @@ export function StockBookTab({ period, branchIds }: { period: Period; branchIds:
           <tbody>
             {isLoading && <tr><td colSpan={11} className="py-6 text-center text-muted-foreground">Đang tải...</td></tr>}
             {data.map((l) => (
-              <tr key={l.productId}><td className="border px-2 py-1">{l.productCode}</td><td className="border px-2">{l.productName}</td>
+              <tr key={l.productId}><td className="border px-2 py-1"><DocCodeLink code={l.productCode} className="print:text-inherit" /></td><td className="border px-2">{l.productName}</td>
                 <td className="border px-2 text-center">{l.unitName}</td>
                 {cols.map(([h, f, money]) => <td key={h} className="border px-2 text-right">{money ? formatMoney(f(l)) : formatNumber(f(l))}</td>)}</tr>
             ))}
@@ -91,7 +92,7 @@ export function CashBookTab({ period, branchIds }: { period: Period; branchIds: 
         <tbody>
           <tr className="font-medium"><td className="border px-2 py-1" colSpan={5}>Số dư đầu kỳ</td><td className="border px-2 text-right">{formatMoney(data?.summary.opening ?? 0)}</td></tr>
           {lines.map((l) => (
-            <tr key={l.id}><td className="border px-2 py-1">{formatDateTime(l.occurredAt)}</td><td className="border px-2">{l.code}</td>
+            <tr key={l.id}><td className="border px-2 py-1">{formatDateTime(l.occurredAt)}</td><td className="border px-2"><DocCodeLink code={l.code} className="print:text-inherit" /></td>
               <td className="border px-2">{l.category}{l.partnerName ? ` - ${l.partnerName}` : ""}</td>
               <td className="border px-2 text-right">{l.inAmt ? formatMoney(l.inAmt) : ""}</td><td className="border px-2 text-right">{l.outAmt ? formatMoney(l.outAmt) : ""}</td>
               <td className="border px-2 text-right">{formatMoney(l.balance)}</td></tr>

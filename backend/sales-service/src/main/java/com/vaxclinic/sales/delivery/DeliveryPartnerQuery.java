@@ -5,6 +5,7 @@ import com.vaxclinic.sales.delivery.DeliveryPartnerDtos.PartnerListResponse;
 import com.vaxclinic.sales.delivery.DeliveryPartnerDtos.PartnerRow;
 import com.vaxclinic.sales.delivery.DeliveryPartnerDtos.ReconcileRow;
 import com.vaxclinic.sales.delivery.DeliveryPartnerDtos.SettlementRow;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
@@ -23,6 +24,12 @@ public class DeliveryPartnerQuery {
             (select coalesce(sum(s.shipping_fee), 0) from shipments s where s.partner_id = p.id and s.status <> 'CANCELLED') fee,
             (select coalesce(sum(s.cod_amount), 0) from shipments s where s.partner_id = p.id
                 and s.status not in ('CANCELLED', 'RETURNING', 'RETURNED')) cod""";
+
+    private static final RowMapper<PartnerRow> ROW = (rs, n) -> new PartnerRow(rs.getObject("id", UUID.class),
+            rs.getString("code"), rs.getString("name"), rs.getString("phone"), rs.getString("email"), rs.getString("address"),
+            rs.getString("note"), rs.getString("partner_type"), rs.getBoolean("active"), rs.getLong("cnt"),
+            rs.getBigDecimal("fee"), rs.getBigDecimal("cod"), rs.getBigDecimal("debt"), rs.getTimestamp("created_at").toInstant(),
+            rs.getString("province"), rs.getString("ward"), rs.getString("province_code"), rs.getString("ward_code"));
 
     private final NamedParameterJdbcTemplate jdbc;
 
@@ -47,22 +54,14 @@ public class DeliveryPartnerQuery {
         var agg = jdbc.queryForMap("select count(*) n, coalesce(sum(x.fee), 0) fee, coalesce(sum(x.cod), 0) cod,"
                 + " coalesce(sum(x.debt), 0) debt from (select p.debt, " + STATS + w + ") x", p);
         p.addValue("limit", size).addValue("offset", (long) page * size);
-        var items = jdbc.query("select p.*, " + STATS + w + " order by p.created_at desc limit :limit offset :offset", p,
-                (rs, n) -> new PartnerRow(rs.getObject("id", UUID.class), rs.getString("code"), rs.getString("name"),
-                        rs.getString("phone"), rs.getString("email"), rs.getString("address"), rs.getString("note"),
-                        rs.getString("partner_type"), rs.getBoolean("active"), rs.getLong("cnt"), rs.getBigDecimal("fee"),
-                        rs.getBigDecimal("cod"), rs.getBigDecimal("debt"), rs.getTimestamp("created_at").toInstant()));
+        var items = jdbc.query("select p.*, " + STATS + w + " order by p.created_at desc limit :limit offset :offset", p, ROW);
         return new PartnerListResponse(items, ((Number) agg.get("n")).longValue(), page, size, (BigDecimal) agg.get("fee"),
                 (BigDecimal) agg.get("cod"), (BigDecimal) agg.get("debt"));
     }
 
     public PartnerRow get(UUID id) {
         var rows = jdbc.query("select p.*, " + STATS + " from delivery_partners p where p.id = :id",
-                new MapSqlParameterSource("id", id), (rs, n) -> new PartnerRow(rs.getObject("id", UUID.class),
-                        rs.getString("code"), rs.getString("name"), rs.getString("phone"), rs.getString("email"),
-                        rs.getString("address"), rs.getString("note"), rs.getString("partner_type"), rs.getBoolean("active"),
-                        rs.getLong("cnt"), rs.getBigDecimal("fee"), rs.getBigDecimal("cod"), rs.getBigDecimal("debt"),
-                        rs.getTimestamp("created_at").toInstant()));
+                new MapSqlParameterSource("id", id), ROW);
         if (rows.isEmpty()) {
             throw DeliveryPartnerService.notFound();
         }

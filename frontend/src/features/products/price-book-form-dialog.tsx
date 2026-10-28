@@ -14,6 +14,7 @@ import { NativeSelect } from "./product-form-sections";
 import { useCustomerGroupRefs, useDeletePriceBook, useSavePriceBook } from "./price-book-queries";
 import { PriceBookScopePicker } from "./price-book-scope-picker";
 import { MISSING_POLICY_LABEL, type MissingPolicy, type PriceBook, type PriceBookRequest } from "./price-book-types";
+import { DatePicker } from "@/components/ui/date-picker";
 
 const FOOTER_BTN = "h-8 rounded-md px-3 font-semibold";
 const day = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -79,11 +80,11 @@ export function PriceBookFormDialog({ book, onClose, onSaved }: {
           <div className="grid gap-1.5 md:col-span-2"><Label>Tên bảng giá</Label>
             <Input autoFocus placeholder="Bắt buộc" value={form.name} onChange={(e) => set({ name: e.target.value })} /></div>
           <div className="grid gap-1.5"><Label>Hiệu lực từ</Label>
-            <Input type="date" value={day(new Date(form.validFrom))}
-              onChange={(e) => e.target.value && set({ validFrom: new Date(`${e.target.value}T00:00:00`).toISOString() })} /></div>
+            <DatePicker value={day(new Date(form.validFrom))}
+              onChange={(v) => v && set({ validFrom: new Date(`${v}T00:00:00`).toISOString() })} /></div>
           <div className="grid gap-1.5"><Label>Đến</Label>
-            <Input type="date" value={day(new Date(form.validTo))}
-              onChange={(e) => e.target.value && set({ validTo: new Date(`${e.target.value}T23:59:59`).toISOString() })} /></div>
+            <DatePicker value={day(new Date(form.validTo))}
+              onChange={(v) => v && set({ validTo: new Date(`${v}T23:59:59`).toISOString() })} /></div>
           <div className="grid gap-1.5 md:col-span-2"><Label>Trạng thái</Label>
             <div className="flex gap-4 text-[13px]">
               {[true, false].map((on) => (

@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { DeepLinkRoute, useDeepLinkExpanded, type DeepLink } from "@/components/ui/deep-link-route";
 import { ProductFilterSidebar } from "@/features/products/product-filter-sidebar";
 import { ProductFormDialog } from "@/features/products/product-form-dialog";
 import { ProductListTable } from "@/features/products/product-list-table";
@@ -12,12 +14,12 @@ import { useCurrentUser } from "@/lib/use-current-user";
 
 const PAGE_SIZE = 15;
 
-export default function ProductsPage() {
+/** Hàng hóa. Link sâu ?code=SP000123 (mã hàng hoặc mã đơn vị tính) → tìm theo mã, mọi trạng thái + mở sẵn chi tiết. */
+function ProductsPage({ link }: { link: DeepLink }) {
   const { can } = useCurrentUser();
-  const [filters, setFilters] = useState(EMPTY_FILTERS);
-  const [search, setSearch] = useState("");
+  const [filters, setFilters] = useState<typeof EMPTY_FILTERS>(link.code ? { ...EMPTY_FILTERS, q: link.code, active: "all" } : EMPTY_FILTERS);
+  const [search, setSearch] = useState(link.code ?? "");
   const [page, setPage] = useState(0);
-  const [expanded, setExpanded] = useState<string | null>(null);
   const [dialog, setDialog] = useState<{ key: number; product?: ProductDetail } | null>(null);
 
   // Gõ tìm kiếm: đợi 300ms rồi mới gọi API.
@@ -28,6 +30,8 @@ export default function ProductsPage() {
 
   const { data, isLoading } = useProducts(filters, page, PAGE_SIZE);
   const pages = data ? Math.max(1, Math.ceil(data.total / PAGE_SIZE)) : 1;
+  // Mã đơn vị tính khác mã hàng: server tìm cả mã ĐVT → kết quả duy nhất là hàng cần mở
+  const { open: expanded, toggle } = useDeepLinkExpanded(data?.items, link, (p) => [p.code, data?.items.length === 1 ? link.code : null]);
 
   return (
     <div className="space-y-2.5">
@@ -36,8 +40,7 @@ export default function ProductsPage() {
         <h1 className="w-[200px] shrink-0 text-lg font-bold">Hàng hóa</h1>
         <div className="relative w-full max-w-[400px]">
           <Search className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-          <input aria-label="Tìm hàng hóa" placeholder="Theo mã, tên hàng, mã vạch"
-            className="h-8 w-full rounded-md border border-input bg-background pr-2.5 pl-8 text-[13px] outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+          <Input aria-label="Tìm hàng hóa" placeholder="Theo mã, tên hàng, mã vạch" className="rounded-md bg-background pl-8"
             value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
         {can("catalog.manage") && (
@@ -51,7 +54,7 @@ export default function ProductsPage() {
         <ProductFilterSidebar filters={filters} onChange={(f) => { setFilters(f); setPage(0); }} />
         <div className="min-w-0 flex-1 space-y-2.5">
           <ProductListTable data={data} isLoading={isLoading} expanded={expanded}
-            onToggle={(id) => setExpanded(expanded === id ? null : id)}
+            onToggle={toggle}
             onEdit={(product) => setDialog({ key: Date.now(), product })} />
           <div className="flex items-center justify-end gap-2 text-[13px]">
             <span className="text-muted-foreground">{data?.total ?? 0} hàng hóa — trang {page + 1}/{pages}</span>
@@ -63,4 +66,8 @@ export default function ProductsPage() {
       {dialog && <ProductFormDialog key={dialog.key} product={dialog.product} onClose={() => setDialog(null)} />}
     </div>
   );
+}
+
+export default function Page() {
+  return <DeepLinkRoute>{(link) => <ProductsPage link={link} />}</DeepLinkRoute>;
 }

@@ -78,7 +78,9 @@ public class OrderQuery {
                         rs.getTimestamp("ordered_at").toInstant(), rs.getString("customer_code"), rs.getString("customer_name"),
                         rs.getString("created_by_name"), rs.getBigDecimal("subtotal"), rs.getBigDecimal("discount"),
                         rs.getBigDecimal("total"), rs.getBigDecimal("deposit"), rs.getString("status"),
-                        rs.getString("invoice_code")));
+                        rs.getString("invoice_code"),
+                        rs.getTimestamp("expected_delivery_at") == null ? null : rs.getTimestamp("expected_delivery_at").toInstant(),
+                        rs.getString("sales_channel")));
         return new OrderListResponse(items, ((Number) agg.get("cnt")).longValue(), f.page(), f.size(),
                 (BigDecimal) agg.get("sub"), (BigDecimal) agg.get("tot"), (BigDecimal) agg.get("dep"));
     }
@@ -106,6 +108,6 @@ public class OrderQuery {
                 customer == null ? null : customer.getCode(), o.getCustomerName(), customer == null ? null : customer.getPhone(),
                 o.getSellerId(), o.getSellerName(), o.getCreatedByName(), o.getOrderedAt(), o.getStatus(), o.getSubtotal(),
                 o.getDiscount(), o.getTotal(), o.getDeposit(), o.getNote(), o.getInvoiceId(), invoiceCode, o.getCancelledAt(),
-                lines, payments);
+                lines, payments, o.getPriceBookId(), o.getPriceBookName(), o.getSalesChannel(), o.getExpectedDeliveryAt());
     }
 }

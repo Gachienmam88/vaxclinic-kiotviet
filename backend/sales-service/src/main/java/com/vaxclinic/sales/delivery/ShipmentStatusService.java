@@ -4,18 +4,11 @@ import com.vaxclinic.common.audit.AuditLogger;
 import com.vaxclinic.common.error.BusinessException;
 import com.vaxclinic.sales.common.Actor;
 import com.vaxclinic.sales.common.SalesRules;
+import com.vaxclinic.sales.delivery.ShipmentDtos.ReturnOptions;
 import com.vaxclinic.sales.delivery.ShipmentDtos.StatusResult;
-import com.vaxclinic.sales.invoice.Invoice;
-import com.vaxclinic.sales.invoice.InvoiceRepository;
-import com.vaxclinic.sales.invoice.InvoiceService;
-import com.vaxclinic.sales.salesreturn.SalesReturnDtos;
-import com.vaxclinic.sales.salesreturn.SalesReturnService;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,38 +16,39 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Đổi trạng thái vận đơn (KHÔNG mở transaction — chuyển hoàn gọi kho qua đường trả hàng):
- * Đã hủy → hủy hóa đơn (hàng nhập lại kho, chỉ khi chưa lấy hàng); Chuyển hoàn / Đã chuyển hoàn lần đầu → phiếu trả hàng
- * toàn bộ hàng còn lại (id suy ra từ vận đơn → gọi lại không tạo trùng), hoàn khách số đã trả trước; còn lại ghi qua writer.
+ * Đổi trạng thái vận đơn (KHÔNG mở transaction — Đã chuyển hoàn gọi kho qua đường trả hàng):
+ * Đã hủy (chỉ khi chưa lấy hàng) → chỉ hủy vận đơn, hóa đơn vẫn Hoàn thành (khách còn nợ phần chưa trả, tạo vận đơn khác được);
+ * Chuyển hoàn → chỉ đổi trạng thái (hàng đang trên đường về); Đã chuyển hoàn lần đầu → phiếu trả hàng toàn bộ hàng còn lại
+ * (hoàn tiền / giữ công nợ theo refundMethod) + phí cửa hàng chịu ghi sổ đối tác; còn lại ghi qua writer.
  */
 @Service
 public class ShipmentStatusService {
 
     private final JdbcTemplate jdbc;
     private final ShipmentStatusWriter writer;
-    private final InvoiceService invoices;
-    private final InvoiceRepository invoiceRepo;
-    private final SalesReturnService returns;
+    private final ShipmentReturnService returns;
     private final SalesRules rules;
     private final AuditLogger audit;
 
-    public ShipmentStatusService(JdbcTemplate jdbc, ShipmentStatusWriter writer, InvoiceService invoices,
-                                 InvoiceRepository invoiceRepo, SalesReturnService returns, SalesRules rules, AuditLogger audit) {
+    public ShipmentStatusService(JdbcTemplate jdbc, ShipmentStatusWriter writer, ShipmentReturnService returns, SalesRules rules,
+                                 AuditLogger audit) {
         this.jdbc = jdbc;
         this.writer = writer;
-        this.invoices = invoices;
-        this.invoiceRepo = invoiceRepo;
         this.returns = returns;
         this.rules = rules;
         this.audit = audit;
     }
 
-    /** Cập nhật nhiều vận đơn: lỗi ở 1 vận đơn không chặn các vận đơn khác. */
-    public List<StatusResult> changeAll(List<UUID> ids, String to, String note, Actor actor) {
+    /** Cập nhật nhiều vận đơn: lỗi ở 1 vận đơn không chặn các vận đơn khác. Phí nhập tay chỉ áp dụng khi chọn 1 vận đơn. */
+    public List<StatusResult> changeAll(List<UUID> ids, String to, String note, ReturnOptions opts, Actor actor) {
+        List<UUID> distinct = ids.stream().distinct().toList();
+        if (distinct.size() > 1 && (opts.shippingFee() != null || opts.returnFee() != null)) {
+            throw BusinessException.badRequest("FEE_PER_SHIPMENT", "Phí giao hàng / phí chuyển hoàn chỉ nhập được khi cập nhật từng vận đơn");
+        }
         var out = new ArrayList<StatusResult>();
-        for (UUID id : ids.stream().distinct().toList()) {
+        for (UUID id : distinct) {
             try {
-                out.add(change(id, to, note, actor));
+                out.add(change(id, to, note, opts, actor));
             } catch (BusinessException e) {
                 out.add(new StatusResult(id, codeOf(id), false, null, e.getMessage()));
             }
@@ -62,7 +56,7 @@ public class ShipmentStatusService {
         return out;
     }
 
-    public StatusResult change(UUID id, String to, String note, Actor actor) {
+    public StatusResult change(UUID id, String to, String note, ReturnOptions opts, Actor actor) {
         var rows = jdbc.queryForList("select * from shipments where id = ?", id);
         if (rows.isEmpty()) {
             throw BusinessException.notFound("SHIPMENT_NOT_FOUND", "Không tìm thấy vận đơn");
@@ -79,42 +73,32 @@ public class ShipmentStatusService {
             throw BusinessException.badRequest("SHIPMENT_STATUS_INVALID", code + ": không chuyển được từ "
                     + ShipmentStatus.label(from) + " sang " + ShipmentStatus.label(to));
         }
-        rules.checkNotLocked(branchId, Instant.now()); // công nợ / phiếu trả phát sinh lúc này
+        rules.checkNotLocked(branchId, Instant.now()); // công nợ / phiếu trả / phí phát sinh lúc này
         UUID invoiceId = (UUID) s.get("invoice_id");
-        if (ShipmentStatus.CANCELLED.equals(to)) {
-            invoices.cancel(invoiceId, actor); // hủy hóa đơn → vận đơn chuyển Đã hủy trong cùng transaction
-        } else {
-            UUID returnId = ShipmentStatus.returning(to) && s.get("return_id") == null ? createReturn(id, code, invoiceId, actor) : null;
-            writer.apply(id, from, to, returnId, Actor.blankToNull(note), actor);
+        UUID returnId = null;
+        if (ShipmentStatus.RETURNED.equals(to) && s.get("return_id") == null) {
+            returns.validate(code, invoiceId, opts);
+            returnId = returns.create(id, code, invoiceId, opts, actor);
         }
+        writer.apply(id, from, to, returnId, opts, Actor.blankToNull(note), actor);
         actor.audit(audit, branchId, "Vận đơn", "Cập nhật trạng thái", code, code + ": " + ShipmentStatus.label(from) + " → "
-                + ShipmentStatus.label(to) + (Actor.blankToNull(note) == null ? "" : " (" + note.trim() + ")"));
+                + ShipmentStatus.label(to) + detail(to, opts) + (Actor.blankToNull(note) == null ? "" : " (" + note.trim() + ")"));
         return new StatusResult(id, code, true, to, null);
     }
 
-    /** Phiếu trả hàng cho toàn bộ hàng còn lại của hóa đơn; tiền khách đã trả trước được hoàn (tiền mặt). */
-    private UUID createReturn(UUID shipmentId, String code, UUID invoiceId, Actor actor) {
-        Invoice inv = invoiceRepo.findWithLines(invoiceId).orElseThrow();
-        var lines = new ArrayList<SalesReturnDtos.LineInput>();
-        BigDecimal subtotal = BigDecimal.ZERO;
-        for (var l : inv.getLines()) {
-            BigDecimal left = l.getQuantity().subtract(jdbc.queryForObject("""
-                    select coalesce(sum(rl.quantity), 0) from sales_return_lines rl join sales_returns r on r.id = rl.return_id
-                    where rl.invoice_line_id = ? and r.status = 'COMPLETED'""", BigDecimal.class, l.getId()));
-            if (left.signum() > 0) {
-                lines.add(new SalesReturnDtos.LineInput(l.getId(), left, null));
-                subtotal = subtotal.add(left.multiply(l.getUnitPrice().subtract(l.getDiscount())).setScale(0, RoundingMode.HALF_UP));
-            }
+    private static String detail(String to, ReturnOptions opts) {
+        if (ShipmentStatus.CANCELLED.equals(to)) {
+            return ", hóa đơn giữ nguyên";
         }
-        if (lines.isEmpty()) {
-            return null;
+        if (!ShipmentStatus.RETURNED.equals(to) || opts.refundMethod() == null) {
+            return "";
         }
-        BigDecimal discount = inv.getDiscount().min(subtotal);
-        BigDecimal refund = inv.getPaid().min(subtotal.subtract(discount)).max(BigDecimal.ZERO);
-        UUID returnId = UUID.nameUUIDFromBytes(("shipment-return:" + shipmentId).getBytes(StandardCharsets.UTF_8));
-        returns.create(new SalesReturnDtos.ReturnRequest(returnId, invoiceId, Instant.now(), lines, discount, BigDecimal.ZERO,
-                refund, "CASH", "Chuyển hoàn vận đơn " + code), actor);
-        return returnId;
+        return ", hoàn tiền: " + switch (opts.refundMethod()) {
+            case "TRANSFER" -> "chuyển khoản";
+            case "CREDIT" -> "giữ làm công nợ";
+            default -> "tiền mặt";
+        } + (opts.shippingFee() == null ? "" : ", phí giao hàng " + Actor.money(opts.shippingFee()))
+                + (opts.returnFee() == null ? "" : ", phí chuyển hoàn " + Actor.money(opts.returnFee()));
     }
 
     private String codeOf(UUID id) {

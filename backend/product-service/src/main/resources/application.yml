@@ -20,6 +20,8 @@ app:
     secret: ${JWT_SECRET}
   # sales-service (Sổ quỹ) nhận phiếu chi trả NCC qua outbox
   sales-url: ${SALES_URL:http://localhost:8086}
+  # identity-service: thiết lập cửa hàng (khóa sổ, cho phép bán âm kho)
+  identity-url: ${IDENTITY_URL:http://localhost:8081}
 
 management:
   endpoints:

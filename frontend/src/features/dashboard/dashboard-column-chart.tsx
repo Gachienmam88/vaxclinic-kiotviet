@@ -38,7 +38,7 @@ export function DashboardColumnChart({ columns, height = 300 }: { columns: Colum
           <div className="absolute inset-0 flex items-end justify-around">
             {columns.map((c) => (
               <div key={c.label} className="flex h-full min-w-0 flex-1 items-end justify-center" title={`${c.title}: ${formatMoney(c.value)}`}>
-                <div className="w-[60%] max-w-[30px] bg-primary transition-[height] hover:bg-[#005fd0]"
+                <div className="w-[60%] max-w-[30px] bg-primary transition-[height] hover:bg-primary-hover"
                   style={{ height: `${(Math.max(0, c.value) / top) * 100}%` }} />
               </div>
             ))}

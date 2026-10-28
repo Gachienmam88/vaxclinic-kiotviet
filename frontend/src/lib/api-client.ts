@@ -1,4 +1,5 @@
 /** Browser-side API helper. Calls the BFF proxy and normalises errors to ApiRequestError. */
+import { genericErrorText, translateApiError, translateValidationDetails } from "@/lib/i18n/translate-api-error";
 
 export type FieldViolation = { field: string; message: string };
 
@@ -31,9 +32,11 @@ export async function api<T>(path: string, init?: { method?: string; body?: unkn
   return (res.status === 204 ? undefined : await res.json()) as T;
 }
 
+/** Câu lỗi để hiện toast: giao diện khác tiếng Việt thì dịch theo error.code (namespace "errors"), không có thì giữ message server. */
 export function errorMessage(error: unknown): string {
   if (error instanceof ApiRequestError) {
-    return error.details.length ? error.details.map((d) => d.message).join("; ") : error.message;
+    if (error.details.length) return translateValidationDetails(error.details.map((d) => d.message).join("; "));
+    return error.message ? translateApiError(error.code, error.message) : genericErrorText();
   }
-  return "Có lỗi xảy ra";
+  return genericErrorText();
 }

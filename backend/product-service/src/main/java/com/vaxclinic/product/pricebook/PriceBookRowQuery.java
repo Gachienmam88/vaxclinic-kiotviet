@@ -40,12 +40,13 @@ public class PriceBookRowQuery {
 
     /** inBooks != null: chỉ đơn vị đã có trong ít nhất 1 bảng giá trong danh sách. Chuỗi bắt đầu bằng khoảng trắng. */
     static String from(RowFilter f, List<UUID> inBooks, MapSqlParameterSource p) {
-        var w = new StringBuilder("""
-                 from product_units u join products p on p.id = u.product_id
-                 left join (select product_id, sum(quantity) qty from stock_balances
-                            where (cast(:branchId as uuid) is null or branch_id = cast(:branchId as uuid))
-                            group by product_id) s on s.product_id = p.id
-                 where not p.deleted and p.active""");
+        // Khoảng trắng đầu phải viết tường minh: text block cắt thụt lề.
+        var w = new StringBuilder(" ").append("""
+                from product_units u join products p on p.id = u.product_id
+                left join (select product_id, sum(quantity) qty from stock_balances
+                           where (cast(:branchId as uuid) is null or branch_id = cast(:branchId as uuid))
+                           group by product_id) s on s.product_id = p.id
+                where not p.deleted and p.active""");
         p.addValue("branchId", f.branchId());
         if (f.q() != null && !f.q().isBlank()) {
             w.append(" and (p.name ilike :q or u.code ilike :q or u.barcode ilike :q)");

@@ -4,6 +4,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDown, Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { searchUnits, type VnUnit } from "@/lib/vn-admin-search";
+import { useT } from "@/lib/i18n";
+import { commonNs } from "@/messages/common";
 
 type Props = {
   options: VnUnit[];
@@ -20,8 +22,10 @@ type Props = {
 };
 
 /** Ô chọn có tìm kiếm không dấu (danh sách hiển thị tối đa 100 dòng khớp). Phím ↑ ↓ Enter Esc. */
-export function SearchableSelect({ options, value, fallbackLabel, onChange, placeholder, searchPlaceholder = "Tìm kiếm",
+export function SearchableSelect({ options, value, fallbackLabel, onChange, placeholder, searchPlaceholder: searchPlaceholderProp,
   disabled, className, id, ...aria }: Props) {
+  const tc = useT(commonNs);
+  const searchPlaceholder = searchPlaceholderProp ?? tc("select.search");
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
   const [active, setActive] = useState(0);
@@ -52,7 +56,7 @@ export function SearchableSelect({ options, value, fallbackLabel, onChange, plac
         className={cn("flex h-8 w-full items-center gap-1 rounded-md border border-input bg-background px-2.5 text-left text-sm outline-none focus-visible:border-ring disabled:cursor-not-allowed disabled:opacity-50", className)}>
         <span className={cn("flex-1 truncate", !label && "text-muted-foreground")}>{label || placeholder}</span>
         {label && !disabled && (
-          <span role="button" tabIndex={-1} aria-label="Bỏ chọn" className="rounded p-0.5 text-muted-foreground hover:text-foreground"
+          <span role="button" tabIndex={-1} aria-label={tc("select.clear")} className="rounded p-0.5 text-muted-foreground hover:text-foreground"
             onClick={(e) => { e.stopPropagation(); pick(null); }}><X className="size-3.5" /></span>)}
         <ChevronDown className="size-4 shrink-0 text-muted-foreground" />
       </button>
@@ -65,7 +69,7 @@ export function SearchableSelect({ options, value, fallbackLabel, onChange, plac
               className="h-7 w-full rounded border border-input bg-background pr-2 pl-7 text-sm outline-none focus:border-primary" />
           </div>
           <ul role="listbox" className="max-h-64 overflow-y-auto py-1">
-            {!items.length && <li className="px-3 py-2 text-sm text-muted-foreground">Không tìm thấy</li>}
+            {!items.length && <li className="px-3 py-2 text-sm text-muted-foreground">{tc("select.noResults")}</li>}
             {items.map((u, i) => (
               <li key={u.code} role="option" aria-selected={u.code === value} onMouseEnter={() => setActive(i)}
                 onMouseDown={(e) => e.preventDefault()} onClick={() => pick(u)}

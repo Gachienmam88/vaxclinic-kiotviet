@@ -35,6 +35,24 @@
   --color-secondary: var(--secondary);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary: var(--primary);
+  /*
+   * Sắc độ của màu xanh chủ đạo (cố định, không đổi theo "Chủ đề"): đậm = RGB × 0.8, rê chuột = × 0.875 (#0062d6),
+   * nhạt = trộn trắng (cột biểu đồ rê chuột, đầu bảng bán hàng), nền nhạt = 16% / 11% / 6.5% (#d7e8fc / #e3f0fc / #eef5fe).
+   */
+  --color-primary-active: color-mix(in srgb, var(--primary) 80%, black);
+  --color-primary-hover: color-mix(in srgb, var(--primary) 87.5%, black);
+  --color-primary-soft: color-mix(in srgb, var(--primary) 78%, white);
+  --color-primary-tint-strong: color-mix(in srgb, var(--primary) 16%, white);
+  --color-primary-tint: color-mix(in srgb, var(--primary) 11%, white);
+  --color-primary-tint-light: color-mix(in srgb, var(--primary) 6.5%, white);
+  /*
+   * Màu "Chủ đề" (như KiotViet chỉ tô khung ứng dụng): thanh menu quản lý + mục đang chọn, nút "Bán hàng", avatar,
+   * thanh trên + nút THANH TOÁN màn bán hàng. lib/accent-theme.ts đổi --chrome trên <html>; nội dung trang giữ xanh.
+   * Đậm = RGB × 0.8 (mục menu đang chọn: #005ac3 xanh, #7c4792 tím), rê chuột = × 0.875.
+   */
+  --color-chrome: var(--chrome);
+  --color-chrome-active: color-mix(in srgb, var(--chrome) 80%, black);
+  --color-chrome-hover: color-mix(in srgb, var(--chrome) 87.5%, black);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
@@ -46,34 +64,42 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+  /* Cỡ chữ theo ảnh KiotViet: chữ thường 13px, chữ phụ 12px */
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1.125rem;
+  --text-sm: 0.8125rem;
+  --text-sm--line-height: 1.25rem;
 }
 
 :root {
   --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
+  --foreground: #1f2937;
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  /* Màu chủ đạo xanh dương (thay bằng màu thương hiệu khi có) */
-  --primary: oklch(0.56 0.2 257);
+  /* Màu chủ đạo xanh dương (cố định cho nội dung trang) */
+  --primary: #0070f4;
+  /* Màu khung ứng dụng theo "Chủ đề"; mặc định = xanh chủ đạo, lib/accent-theme.ts ghi đè trên <html> */
+  --chrome: #0070f4;
   --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
+  /* Nền trang xám nhạt; chữ phụ xám */
+  --muted: #f3f4f6;
+  --muted-foreground: #6b7280;
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.56 0.2 257);
+  --border: #e5e7eb;
+  --input: #d1d5db;
+  --ring: var(--primary);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
+  --radius: 0.5rem;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.205 0 0);
@@ -123,9 +149,22 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground text-sm;
   }
   html {
     @apply font-sans;
   }
+  /* Ô chọn / nút chọn gốc của trình duyệt theo màu chủ đề (cả chỗ chưa gắn accent-primary) */
+  input[type="checkbox"],
+  input[type="radio"] {
+    accent-color: var(--primary);
+  }
+}
+/*
+ * Tỷ lệ theo KiotViet: đo ảnh KiotViet (chụp ở zoom 67%) → chữ, nút, hàng bảng của KiotViet lớn hơn bộ kích thước gốc
+ * của app ~12%. Phóng đều phần quản lý (gồm cả hộp thoại / menu nổi gắn vào body) thay vì sửa từng cỡ chữ cố định.
+ * Màn bán hàng, đăng nhập, chấm công điện thoại không có [data-kv-scale] → giữ nguyên (h-screen không bị tràn).
+ */
+html:has([data-kv-scale]) {
+  zoom: 1.12;
 }

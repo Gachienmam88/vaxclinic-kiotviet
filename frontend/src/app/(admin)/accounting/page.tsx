@@ -6,10 +6,11 @@ import { useQuery } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RevenueBookTab } from "@/features/accounting/revenue-book-tab";
 import { CashBookTab, StockBookTab } from "@/features/accounting/stock-and-cash-book-tabs";
-import { computeTax, periodsOf, type DailyExpense, type DailyRevenue } from "@/features/accounting/tax-calc";
+import { computeTax, periodsOf, sectorResolver, type DailyExpense, type DailyRevenue } from "@/features/accounting/tax-calc";
 import { TaxDeclarationTab } from "@/features/accounting/tax-declaration-tab";
 import { profileBranches, useTaxSettings } from "@/features/accounting/tax-queries";
 import { NativeSelect } from "@/features/products/product-form-sections";
+import { useCategories } from "@/features/products/product-queries";
 import { useShopSettings } from "@/features/settings/settings-queries";
 import { api } from "@/lib/api-client";
 
@@ -34,6 +35,9 @@ export default function AccountingPage() {
   const range = `from=${year}-01-01&to=${year}-12-31${bq}`;
   const { data: revenue = [] } = useQuery({ queryKey: ["revenue-daily", range], enabled: !!profile,
     queryFn: () => api<DailyRevenue[]>(`/accounting/revenue/daily?${range}`) });
+  const { data: productCats = [] } = useQuery({ queryKey: ["product-categories"],
+    queryFn: () => api<{ productId: string; categoryId: string | null }[]>("/accounting/stock/product-categories") });
+  const { data: categories = [] } = useCategories();
   const { data: expenses = [] } = useQuery({ queryKey: ["expenses-daily", range], enabled: !!profile && profile.pitMethod === "PROFIT",
     queryFn: () => api<DailyExpense[]>(`/accounting/revenue/expenses?${range}`) });
 
@@ -46,14 +50,17 @@ export default function AccountingPage() {
       </div>
     );
   }
-  const cfg = { vatEnabled: tax.vatEnabled, vatRate: Number(tax.vatRate), pitRate: Number(tax.pitRate), defaultTaxCode: tax.defaultTaxCode };
+  // Mặt hàng → nhóm hàng → (nhóm cha) → ngành nghề; không gắn → ngành mặc định
+  const sectorOf = sectorResolver(new Map(productCats.map((p) => [p.productId, p.categoryId])),
+    new Map(categories.map((c) => [c.id, c.parentId])), tax.categorySectors ?? {}, tax.defaultSector);
+  const cfg = { vatEnabled: tax.vatEnabled, sectors: tax.sectors, sectorOf, defaultTaxCode: tax.defaultTaxCode };
   const yearly = computeTax(revenue, expenses, periods, cfg, profile);
   const formCode = profile.revenueGroup === 1 ? "S1a-HKD" : profile.pitMethod === "REVENUE" ? "S2a-HKD" : "S2b-HKD";
 
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-2">
-        <h1 className="mr-4 text-xl font-bold">Thuế &amp; Kế toán</h1>
+        <h1 className="mr-4 text-lg font-bold">Thuế &amp; Kế toán</h1>
         <div className="w-56"><NativeSelect value={profile.taxCode} onChange={(e) => setTaxCode(e.target.value)}>
           {profiles.map((p) => <option key={p.taxCode} value={p.taxCode}>MST {p.taxCode}</option>)}</NativeSelect></div>
         <div className="w-28"><NativeSelect value={year} onChange={(e) => setYear(Number(e.target.value))}>
@@ -72,7 +79,7 @@ export default function AccountingPage() {
             <TabsTrigger value="stock">Sổ hàng hóa (S2d-HKD)</TabsTrigger>
             <TabsTrigger value="cash">Sổ tiền (S2e-HKD)</TabsTrigger>
           </TabsList>
-          <TabsContent value="declaration" className="pt-3"><TaxDeclarationTab rows={yearly} tax={tax} profile={profile} year={year} /></TabsContent>
+          <TabsContent value="declaration" className="pt-3"><TaxDeclarationTab rows={yearly} tax={tax} profile={profile} year={year} periodIdx={Math.min(periodIdx, periods.length - 1)} /></TabsContent>
           <TabsContent value="revenue" className="pt-3">
             <RevenueBookTab rows={revenue} period={period} cfg={cfg} formCode={formCode} storeName={shop?.store?.name ?? ""} taxCode={profile.taxCode} />
           </TabsContent>

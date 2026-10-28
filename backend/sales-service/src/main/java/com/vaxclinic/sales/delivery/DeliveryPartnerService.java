@@ -1,5 +1,6 @@
 package com.vaxclinic.sales.delivery;
 
+import com.vaxclinic.common.address.AdminUnitCodes;
 import com.vaxclinic.common.error.BusinessException;
 import com.vaxclinic.sales.common.Actor;
 import com.vaxclinic.sales.delivery.DeliveryPartnerDtos.PartnerRequest;
@@ -27,10 +28,12 @@ public class DeliveryPartnerService {
                 : "DT%06d".formatted(jdbc.queryForObject("select nextval('delivery_partner_code_seq')", Long.class));
         try {
             jdbc.update("""
-                    insert into delivery_partners(id, code, name, phone, email, address, note, partner_type, active, created_by)
-                    values (?,?,?,?,?,?,?,?,?,?)""", id, code, r.name().trim(), Actor.blankToNull(r.phone()),
+                    insert into delivery_partners(id, code, name, phone, email, address, note, partner_type, active, created_by,
+                        province, ward, province_code, ward_code)
+                    values (?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", id, code, r.name().trim(), Actor.blankToNull(r.phone()),
                     Actor.blankToNull(r.email()), Actor.blankToNull(r.address()), Actor.blankToNull(r.note()), type(r),
-                    r.active() == null || r.active(), actor.id());
+                    r.active() == null || r.active(), actor.id(), Actor.blankToNull(r.province()), Actor.blankToNull(r.ward()),
+                    AdminUnitCodes.clean(r.provinceCode()), AdminUnitCodes.clean(r.wardCode()));
         } catch (DuplicateKeyException e) {
             throw duplicate(code);
         }
@@ -47,9 +50,10 @@ public class DeliveryPartnerService {
         try {
             jdbc.update("""
                     update delivery_partners set code = ?, name = ?, phone = ?, email = ?, address = ?, note = ?, partner_type = ?,
-                        active = ? where id = ?""", newCode, r.name().trim(), Actor.blankToNull(r.phone()),
-                    Actor.blankToNull(r.email()), Actor.blankToNull(r.address()), Actor.blankToNull(r.note()), type(r),
-                    r.active() == null || r.active(), id);
+                        active = ?, province = ?, ward = ?, province_code = ?, ward_code = ? where id = ?""", newCode, r.name().trim(),
+                    Actor.blankToNull(r.phone()), Actor.blankToNull(r.email()), Actor.blankToNull(r.address()),
+                    Actor.blankToNull(r.note()), type(r), r.active() == null || r.active(), Actor.blankToNull(r.province()),
+                    Actor.blankToNull(r.ward()), AdminUnitCodes.clean(r.provinceCode()), AdminUnitCodes.clean(r.wardCode()), id);
         } catch (DuplicateKeyException e) {
             throw duplicate(newCode);
         }

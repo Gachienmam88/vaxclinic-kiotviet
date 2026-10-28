@@ -77,20 +77,19 @@ public class EmployeeService {
     }
 
     public Employee get(UUID id) {
-        var list = jdbc.query(ROW_SQL + " where e.id = ?", (rs, i) -> rs.getObject("id", UUID.class), id);
-        if (list.isEmpty()) {
-            throw BusinessException.notFound("EMPLOYEE_NOT_FOUND", "Không tìm thấy nhân viên");
-        }
         return jdbc.query("""
                 select e.*, d.name department_name, j.name job_title_name, u.username, t.name commission_table_name,
                 """ + DEBT_SQL + """
                  debt from hr_employees e left join hr_departments d on d.id = e.department_id
                 left join hr_job_titles j on j.id = e.job_title_id left join users u on u.id = e.user_id
                 left join hr_commission_tables t on t.id = e.commission_table_id where e.id = ?""", rs -> {
-            rs.next();
+            if (!rs.next()) {
+                throw BusinessException.notFound("EMPLOYEE_NOT_FOUND", "Không tìm thấy nhân viên");
+            }
             return new Employee(id, rs.getString("code"), rs.getString("timekeeping_code"), rs.getString("name"),
                     rs.getString("phone"), rs.getString("id_number"), rs.getObject("birthday", LocalDate.class), rs.getString("gender"),
-                    rs.getObject("start_date", LocalDate.class), rs.getObject("main_branch_id", UUID.class), branches(id),
+                    rs.getObject("start_date", LocalDate.class), rs.getObject("end_date", LocalDate.class),
+                    rs.getObject("main_branch_id", UUID.class), branches(id),
                     rs.getObject("department_id", UUID.class), rs.getString("department_name"),
                     rs.getObject("job_title_id", UUID.class), rs.getString("job_title_name"),
                     rs.getObject("user_id", UUID.class), rs.getString("username"), rs.getString("status"), rs.getString("note"),
@@ -118,17 +117,20 @@ public class EmployeeService {
                 HrActor.blankToNull(r.idNumber()), r.birthday(), r.gender(), r.startDate(), main, r.departmentId(), r.jobTitleId(),
                 r.userId(), r.status() == null ? "WORKING" : r.status(), HrActor.blankToNull(r.note()), r.salaryType(),
                 r.salaryAmount() == null ? BigDecimal.ZERO : r.salaryAmount(),
-                r.overtimePercent() == null ? BigDecimal.valueOf(150) : r.overtimePercent(), r.commissionTableId(), empId};
+                r.overtimePercent() == null ? BigDecimal.valueOf(150) : r.overtimePercent(), r.commissionTableId(), r.endDate(), empId};
+        if (r.startDate() != null && r.endDate() != null && r.endDate().isBefore(r.startDate())) {
+            throw BusinessException.badRequest("INVALID_END_DATE", "Ngày nghỉ việc phải sau ngày bắt đầu làm việc");
+        }
         try {
             if (create) {
                 jdbc.update("""
                         insert into hr_employees(code, timekeeping_code, name, phone, id_number, birthday, gender, start_date,
                           main_branch_id, department_id, job_title_id, user_id, status, note, salary_type, salary_amount,
-                          overtime_percent, commission_table_id, id) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", values);
+                          overtime_percent, commission_table_id, end_date, id) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", values);
             } else if (jdbc.update("""
                     update hr_employees set code=?, timekeeping_code=?, name=?, phone=?, id_number=?, birthday=?, gender=?, start_date=?,
                       main_branch_id=?, department_id=?, job_title_id=?, user_id=?, status=?, note=?, salary_type=?, salary_amount=?,
-                      overtime_percent=?, commission_table_id=? where id=?""", values) == 0) {
+                      overtime_percent=?, commission_table_id=?, end_date=? where id=?""", values) == 0) {
                 throw BusinessException.notFound("EMPLOYEE_NOT_FOUND", "Không tìm thấy nhân viên");
             }
         } catch (DuplicateKeyException e) {

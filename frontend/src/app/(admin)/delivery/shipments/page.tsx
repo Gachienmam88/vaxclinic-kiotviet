@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { FileOutput, Plus } from "lucide-react";
+import { DeepLinkRoute, type DeepLink } from "@/components/ui/deep-link-route";
 import { Button } from "@/components/ui/button";
 import { useShipments } from "@/features/delivery/delivery-queries";
 import { ShipmentFilterSidebar, useShipmentListState } from "@/features/delivery/shipment-filter-sidebar";
@@ -12,10 +13,10 @@ import { cn } from "@/lib/utils";
 
 /**
  * Vận đơn: danh sách vận đơn lọc theo trạng thái giao hàng / thời gian / đối tác / khu vực, chi tiết + lịch sử trạng thái.
- * Vận đơn tạo ở màn bán hàng, chế độ "Bán giao hàng" (cùng hóa đơn).
+ * Vận đơn tạo ở màn bán hàng, chế độ "Bán giao hàng" (cùng hóa đơn). Link sâu: ?code=VD000001 (mọi thời gian + trạng thái, mở chi tiết).
  */
-export default function ShipmentsPage() {
-  const st = useShipmentListState(["PENDING", "PICKING", "DELIVERING", "RETURNING"]);
+function ShipmentsPage({ link }: { link: DeepLink }) {
+  const st = useShipmentListState(["PENDING", "PICKING", "DELIVERING", "RETURNING"], link);
   const { data } = useShipments(st.params);
 
   return (
@@ -27,14 +28,19 @@ export default function ShipmentsPage() {
       <div className="min-w-0 flex-1 space-y-3">
         <div className="flex items-center gap-2">
           <ListSearch value={st.search} onChange={st.setSearch} placeholder="Theo mã vận đơn, mã hóa đơn, người nhận, SĐT" />
-          <Button variant="outline" className={cn(TOOLBAR_BTN, "ml-auto")} render={<Link href="/pos" />}
+          <Button variant="outline" className={cn(TOOLBAR_BTN, "ml-auto")} render={<Link href="/sale" />}
             title="Mở màn bán hàng, chọn chế độ Bán giao hàng ở thanh dưới cùng"><Plus className="size-4" /> Bán giao hàng</Button>
           <Button variant="outline" className={TOOLBAR_BTN} disabled={!data?.items.length} onClick={() => exportShipments(data)}>
             <FileOutput className="size-4" /> Xuất file</Button>
         </div>
-        <ShipmentTable data={data} />
+        <ShipmentTable data={data} link={link}
+          onWiden={st.filters.period.mode === "month" ? () => st.setFilters({ ...st.filters, period: { ...st.filters.period, mode: "all" } }) : undefined} />
         <ListPager total={data?.total ?? 0} page={st.page} size={st.size} unit="vận đơn" onPage={st.setPage} onSize={st.setSize} />
       </div>
     </div>
   );
+}
+
+export default function Page() {
+  return <DeepLinkRoute>{(link) => <ShipmentsPage link={link} />}</DeepLinkRoute>;
 }

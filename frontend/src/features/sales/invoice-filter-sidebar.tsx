@@ -2,7 +2,7 @@
 
 import { useUserLookup } from "@/features/purchases/purchase-queries";
 import { CheckOption, FILTER_FIELD, FilterSection, FilterSidebar } from "./invoice-list-kit";
-import { EINVOICE_STATE_OPTIONS } from "./invoice-einvoice-state";
+import { EINVOICE_STATE_OPTIONS, einvoiceStatusesLabel } from "./invoice-einvoice-state";
 import { NATURE_OPTIONS, STATE_OPTIONS, type InvoiceFilters } from "./invoice-filter-model";
 import { InvoiceTimeFilter } from "./invoice-time-filter";
 import { PAYMENT_METHODS } from "./sales-types";
@@ -37,14 +37,16 @@ export function InvoiceFilterSidebar({ value, onChange }: { value: InvoiceFilter
       </FilterSection>
       <FilterSection title="Trạng thái HĐĐT">
         <select className={FILTER_FIELD} aria-label="Trạng thái HĐĐT" value={value.einvoiceStatus} onChange={(e) => set({ einvoiceStatus: e.target.value })}>
-          <option value="">Chọn trạng thái</option>{EINVOICE_STATE_OPTIONS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select>
+          <option value="">Chọn trạng thái</option>
+          {value.einvoiceStatus.includes(",") && <option value={value.einvoiceStatus}>{einvoiceStatusesLabel(value.einvoiceStatus)}</option>}
+          {EINVOICE_STATE_OPTIONS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select>
       </FilterSection>
       <FilterSection title="Tính chất hóa đơn">
         <select className={FILTER_FIELD} aria-label="Tính chất hóa đơn" value={value.einvoiceNature} onChange={(e) => set({ einvoiceNature: e.target.value })}>
           <option value="">Chọn trạng thái</option>{NATURE_OPTIONS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select>
       </FilterSection>
       <FilterSection title="Phương thức thanh toán">
-        <Checks options={PAYMENT_METHODS.map((m) => [m.value, m.label] as const)} value={value.methods} onChange={(methods) => set({ methods })} />
+        <Checks options={PAYMENT_METHODS.map((m) => [m.value as string, m.label] as const)} value={value.methods} onChange={(methods) => set({ methods })} />
       </FilterSection>
       <FilterSection title="Người tạo">
         <select className={FILTER_FIELD} aria-label="Người tạo" value={value.createdBy} onChange={(e) => set({ createdBy: e.target.value })}>

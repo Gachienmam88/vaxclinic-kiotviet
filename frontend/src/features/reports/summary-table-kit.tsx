@@ -6,6 +6,7 @@ import { chartBuckets, type DateRange } from "./report-time-presets";
 import { sumOf, type SummaryRow } from "./report-api";
 import type { ChartItem } from "./report-charts";
 import type { ReportColumn, ReportLine } from "./report-table";
+import { DocCodeLink } from "@/components/ui/doc-code-link";
 
 export type SumAgg = {
   label: string; code: string; count: number; subtotal: number; discount: number; revenue: number; returnValue: number;
@@ -37,7 +38,7 @@ const money = (key: keyof SumAgg, label: string): ReportColumn<SumAgg> => ({ key
 /** Doanh thu: [nhãn, (mã)], Doanh thu, Giá trị trả, Doanh thu thuần. */
 export function revenueColumns(first: string, codeLabel?: string): ReportColumn<SumAgg>[] {
   return [
-    ...(codeLabel ? [{ key: "code", label: codeLabel, value: (r: SumAgg) => r.code, render: (r: SumAgg) => <b className="rp-link">{r.code}</b> }] : []),
+    ...(codeLabel ? [{ key: "code", label: codeLabel, value: (r: SumAgg) => r.code, render: (r: SumAgg) => <b><DocCodeLink code={r.code} /></b> }] : []),
     { key: "label", label: first, value: (r) => r.label },
     money("revenue", "Doanh thu"), money("returnValue", "Giá trị trả"), money("net", "Doanh thu thuần"),
   ];

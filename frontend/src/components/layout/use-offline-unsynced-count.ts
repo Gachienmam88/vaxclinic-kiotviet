@@ -1,21 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { KEYS, load } from "@/features/sale/sale-storage";
 
-/**
- * Khóa localStorage của hàng đợi phiếu bán offline (màn bán hàng): mảng phiếu chưa gửi được lên server.
- * Màn bán hàng đổi tên khóa thì sửa cả ở đây.
- */
-export const OFFLINE_QUEUE_KEY = "pos.queue";
+/** Khóa hàng đợi phiếu bán offline lấy từ màn bán hàng (một nguồn duy nhất; load() tự chuyển khóa cũ sang khóa mới). */
+const OFFLINE_QUEUE_KEY = KEYS.queue;
 
 function readCount(): number {
-  try {
-    const raw = window.localStorage.getItem(OFFLINE_QUEUE_KEY);
-    const v: unknown = raw ? JSON.parse(raw) : [];
-    return Array.isArray(v) ? v.length : 0;
-  } catch {
-    return 0; // trình duyệt chặn bộ nhớ / dữ liệu hỏng → coi như không có
-  }
+  const v = load<unknown>(OFFLINE_QUEUE_KEY, []); // trình duyệt chặn bộ nhớ / dữ liệu hỏng → []
+  return Array.isArray(v) ? v.length : 0;
 }
 
 /**

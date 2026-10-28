@@ -5,6 +5,8 @@ import { cn } from "@/lib/utils";
 import { CsvExportButton, downloadCsv } from "./customer-csv-export";
 import { kvSubHead, kvSubRow, kvSubTable } from "./customer-ui-primitives";
 import { useInvoices } from "./sales-queries";
+import { ListEmptyRow } from "@/components/ui/list-empty-state";
+import { DocCodeLink } from "@/components/ui/doc-code-link";
 
 const STATUS = { COMPLETED: "Hoàn thành", CANCELLED: "Đã hủy" } as const;
 
@@ -20,10 +22,10 @@ export function CustomerDetailSalesTab({ customerId, customerCode }: { customerI
         <thead className={kvSubHead}><tr><th>Mã hóa đơn</th><th>Thời gian</th><th>Người bán</th>
           <th className="text-right">Tổng cộng</th><th className="w-32">Trạng thái</th></tr></thead>
         <tbody>
-          {!items.length && <tr className={kvSubRow}><td colSpan={5} className="text-center text-muted-foreground">Chưa có giao dịch</td></tr>}
+          {!items.length && <ListEmptyRow cols={5} what="giao dịch" compact />}
           {items.map((i) => (
             <tr key={i.id} className={kvSubRow}>
-              <td className="text-primary">{i.code}</td><td>{formatDateTime(i.soldAt)}</td>
+              <td><DocCodeLink code={i.code} kind="/invoices" /></td><td>{formatDateTime(i.soldAt)}</td>
               <td>{i.sellerName}</td><td className="text-right">{formatMoney(i.total)}</td>
               <td><span className={cn("rounded px-1.5 py-0.5 text-[11px] font-semibold",
                 i.status === "COMPLETED" ? "bg-[#e6f7ee] text-[#00a650]" : "bg-destructive/10 text-destructive")}>{STATUS[i.status]}</span></td>

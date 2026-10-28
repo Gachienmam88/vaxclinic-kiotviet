@@ -100,4 +100,7 @@ export const DOC_TYPE_LABEL: Record<string, string> = {
   TRANSFER_OUT: "Chuyển hàng đi",
   TRANSFER_IN: "Nhận hàng chuyển",
   DAMAGE: "Xuất hủy",
+  DAMAGE_CANCEL: "Hủy phiếu xuất hủy",
+  INTERNAL_USE: "Xuất dùng nội bộ",
+  INTERNAL_USE_CANCEL: "Hủy phiếu xuất dùng nội bộ",
 };

@@ -56,7 +56,7 @@ export function InvoiceListToolbar({ search, onSearch, onExport, exportDisabled,
         <DropdownMenu>
           <DropdownMenuTrigger className={cn(TOOLBAR_BTN, "inline-flex items-center gap-1 border")}><Plus className="size-4" /> Tạo mới <ChevronDown className="size-3.5" /></DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem render={<Link href="/pos" />}>Hóa đơn</DropdownMenuItem>
+            <DropdownMenuItem render={<Link href="/sale" />}>Hóa đơn</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
         <DropdownMenu>

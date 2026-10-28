@@ -3,24 +3,26 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight, Columns3, LogOut, Plus } from "lucide-react";
+import { DeepLinkRoute, sameCode, type DeepLink } from "@/components/ui/deep-link-route";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ListEmptyRow } from "@/components/ui/list-empty-state";
 import { CheckOption, FilterSection, FilterSidebar, LIST_HEAD_ROW, ListSearch, PageTitle } from "@/features/sales/invoice-list-kit";
 import { dmy, downloadCsv, usePayrolls } from "@/features/hr/hr-queries";
 import { PAYROLL_STATUS, type PayrollStatus } from "@/features/hr/hr-types";
 import { PayrollCreateDialog } from "@/features/hr/payroll-create-dialog";
+import { statusLabel } from "@/features/hr/payroll-ui-parts";
 import { formatMoney } from "@/lib/format";
 
 const PAGE_SIZE = 15;
 const pagerBtn = "flex size-7 items-center justify-center rounded-md border border-[#d9dbe0] bg-white hover:border-primary hover:text-primary disabled:pointer-events-none disabled:opacity-40";
 const toolBtn = "flex h-[30px] items-center gap-1 rounded-md border bg-white px-2.5 text-[13px] font-semibold";
-export const statusLabel = (s: PayrollStatus) => PAYROLL_STATUS.find((x) => x[0] === s)?.[1] ?? s;
 
-/** Bảng lương (ảnh KiotViet 114): lọc kỳ hạn trả + trạng thái, dòng tổng, danh sách bảng lương. */
-export default function PayrollsPage() {
+/** Bảng lương (ảnh KiotViet 114): lọc kỳ hạn trả + trạng thái, dòng tổng, danh sách bảng lương. ?code=BL… → mở thẳng trang chi tiết. */
+function PayrollsPage({ link }: { link: DeepLink }) {
   const router = useRouter();
-  const [search, setSearch] = useState("");
-  const [q, setQ] = useState("");
-  const [statuses, setStatuses] = useState<PayrollStatus[]>(["DRAFT", "TEMP", "LOCKED"]);
+  const [search, setSearch] = useState(link.code ?? "");
+  const [q, setQ] = useState(link.code ?? "");
+  const [statuses, setStatuses] = useState<PayrollStatus[]>(link.code ? PAYROLL_STATUS.map(([s]) => s) : ["DRAFT", "TEMP", "LOCKED"]);
   const [page, setPage] = useState(0);
   const [creating, setCreating] = useState(false);
   const [checked, setChecked] = useState<string[]>([]);
@@ -34,6 +36,8 @@ export default function PayrollsPage() {
     return p;
   }, [q, statuses, page]);
   const { data } = usePayrolls(params);
+  const linkedId = link.code ? data?.items.find((p) => sameCode(p.code, link.code))?.id : undefined;
+  useEffect(() => { if (linkedId) router.replace(`/employees/payrolls/${linkedId}`); }, [linkedId, router]);
   const pages = data ? Math.max(1, Math.ceil(data.total / PAGE_SIZE)) : 1;
   const toggle = (s: PayrollStatus, on: boolean) => { setStatuses(on ? [...statuses, s] : statuses.filter((x) => x !== s)); setPage(0); };
 
@@ -86,16 +90,12 @@ export default function PayrollsPage() {
               <TableHead className="text-right">Còn cần trả</TableHead><TableHead className="pr-4">Trạng thái</TableHead>
             </TableRow></TableHeader>
             <TableBody>
-              <TableRow className="font-bold hover:bg-transparent">
-                <TableCell colSpan={5} /><TableCell className="text-right">{formatMoney(data?.sumTotal ?? 0)}</TableCell>
-                <TableCell className="text-right">{formatMoney(data?.sumPaid ?? 0)}</TableCell>
-                <TableCell className="text-right">{formatMoney(data?.sumRemaining ?? 0)}</TableCell><TableCell />
-              </TableRow>
-              {data && !data.items.length && (
-                <TableRow className="hover:bg-transparent">
-                  <TableCell colSpan={9} className="py-10 text-center text-muted-foreground">Không tìm thấy bảng lương nào phù hợp</TableCell>
-                </TableRow>
-              )}
+              {!!data?.items.length && <TableRow className="font-bold hover:bg-transparent">
+                <TableCell colSpan={5} /><TableCell className="text-right">{formatMoney(data.sumTotal ?? 0)}</TableCell>
+                <TableCell className="text-right">{formatMoney(data.sumPaid ?? 0)}</TableCell>
+                <TableCell className="text-right">{formatMoney(data.sumRemaining ?? 0)}</TableCell><TableCell />
+              </TableRow>}
+              {data && !data.items.length && <ListEmptyRow cols={9} what="bảng lương" />}
               {data?.items.map((p) => (
                 <TableRow key={p.id} className="h-[41px] cursor-pointer" onClick={() => router.push(`/employees/payrolls/${p.id}`)}>
                   <TableCell className="pl-3" onClick={(e) => e.stopPropagation()}>
@@ -126,4 +126,8 @@ export default function PayrollsPage() {
       {creating && <PayrollCreateDialog onClose={() => setCreating(false)} />}
     </div>
   );
+}
+
+export default function Page() {
+  return <DeepLinkRoute>{(link) => <PayrollsPage link={link} />}</DeepLinkRoute>;
 }

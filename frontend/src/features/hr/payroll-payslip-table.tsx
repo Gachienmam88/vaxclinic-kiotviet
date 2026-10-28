@@ -8,6 +8,8 @@ import { cn } from "@/lib/utils";
 import { useHrMutation } from "./hr-queries";
 import { salaryTypeLabel, type Payslip, type PayrollDetail } from "./hr-types";
 import { PayslipDetailPanel, unitLabel } from "./payroll-ui-parts";
+import { DocCodeLink } from "@/components/ui/doc-code-link";
+import { ListEmptyRow } from "@/components/ui/list-empty-state";
 
 const MONEY_COLS: [keyof Payslip, string][] = [
   ["baseAmount", "Lương chính"], ["overtimeAmount", "Làm thêm"], ["holidayAmount", "Ngày lễ"], ["allowance", "Phụ cấp"],
@@ -40,28 +42,27 @@ export function PayrollPayslipTable({ detail }: { detail: PayrollDetail }) {
   return (
     <div className="overflow-x-auto rounded-lg bg-white">
       <table className="w-full text-[13px]">
-        <thead><tr className="bg-[#e3f0fc] text-left">
+        <thead><tr className="bg-primary-tint text-left">
           <th className={cn(th, "w-6")} /><th className={th}>Mã NV</th><th className={th}>Tên nhân viên</th><th className={th}>Loại lương</th>
           <th className={cn(th, "text-right")}>Số công</th>
           {MONEY_COLS.map(([k, l]) => <th key={k} className={cn(th, "text-right")}>{l}</th>)}
           <th className={cn(th, "pr-3 text-right")}>Còn cần trả</th>
         </tr></thead>
         <tbody>
-          <tr className="border-b font-bold">
+          {!!slips.length && <tr className="border-b font-bold">
             <td colSpan={5} />
             {MONEY_COLS.map(([k]) => <td key={k} className="px-2 py-2 text-right">{formatMoney(sum(k))}</td>)}
             <td className="px-2 pr-3 text-right">{formatMoney(sum("total") - sum("paid"))}</td>
-          </tr>
-          {!slips.length && <tr><td colSpan={17} className="py-10 text-center text-muted-foreground">
-            Chưa có nhân viên nào được thiết lập lương hoặc có chấm công đã duyệt trong kỳ</td></tr>}
+          </tr>}
+          {!slips.length && <ListEmptyRow cols={17} what="phiếu lương" compact />}
           {slips.map((s) => {
             const expanded = open === s.id;
             return (
               <Fragment key={s.id}>
-                <tr className={cn("cursor-pointer border-b border-[#eceef1] hover:bg-[#f3f6fa]", expanded && "bg-[#e3f0fc] font-semibold")}
+                <tr className={cn("cursor-pointer border-b border-[#eceef1] hover:bg-[#f3f6fa]", expanded && "bg-primary-tint font-semibold")}
                   onClick={() => setOpen(expanded ? null : s.id)}>
                   <td className="px-2">{expanded ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5" />}</td>
-                  <td className="px-2 py-2.5">{s.employeeCode}</td><td className="px-2">{s.employeeName}</td>
+                  <td className="px-2 py-2.5"><DocCodeLink code={s.employeeCode} /></td><td className="px-2">{s.employeeName}</td>
                   <td className="px-2 whitespace-nowrap">{salaryTypeLabel(s.salaryType)}</td>
                   <td className="px-2 text-right whitespace-nowrap">{formatNumber(s.workUnits)} {unitLabel(s.salaryType)}</td>
                   {MONEY_COLS.map(([k]) => (

@@ -26,10 +26,10 @@ export async function exportInvoiceDetails(items: InvoiceListItem[]) {
 
 /** Nút "Xuất file" trong chi tiết 1 hóa đơn: thông tin chung + dòng hàng + tổng. */
 export function exportOneInvoice(inv: Invoice) {
-  const head: (string | number | null)[][] = [["Mã hóa đơn", inv.code], ["Thời gian", formatDateTime(inv.soldAt)],
+  const head: (string | number | null)[][] = [["Thời gian", formatDateTime(inv.soldAt)],
     ["Khách hàng", [inv.customerCode, inv.customerName].filter(Boolean).join(" - ")], ["Người bán", inv.sellerName],
     ["Kênh bán", inv.salesChannelName], ["Bảng giá", inv.priceBookName ?? "Bảng giá chung"], ["Ghi chú", inv.note], []];
   const totals = [[], ["Tổng tiền hàng", inv.subtotal], ["Giảm giá hóa đơn", inv.discount], ["Khách cần trả", inv.total],
     ["Khách đã trả", inv.paid]];
-  downloadCsv(`hoa-don-${inv.code}`, [], [...head, LINE_HEAD, ...inv.lines.map(lineRow), ...totals]);
+  downloadCsv(`hoa-don-${inv.code}`, ["Mã hóa đơn", inv.code], [...head, LINE_HEAD, ...inv.lines.map(lineRow), ...totals]);
 }

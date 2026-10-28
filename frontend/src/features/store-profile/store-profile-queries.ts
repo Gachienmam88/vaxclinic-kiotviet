@@ -20,10 +20,9 @@ export type StoreProfile = {
 export type VerifyPurpose = "PROFILE" | "PHONE" | "RENAME" | "TRANSFER" | "PAUSE";
 export type HistoryItem = { id: number; occurredAt: string; userName: string | null; detail: string | null };
 
-export const BUSINESS_TYPES: readonly (readonly [BusinessType, string])[] = [
-  ["PERSONAL", "Cá nhân"], ["HOUSEHOLD", "Hộ kinh doanh"], ["ENTERPRISE", "Doanh nghiệp"],
-];
-export const GENDERS = [["MALE", "Nam"], ["FEMALE", "Nữ"]] as const;
+/** Nhãn hiển thị: t(`businessTypes.${v}`) / t(`genders.${v}`) trong namespace store-profile. */
+export const BUSINESS_TYPES: readonly BusinessType[] = ["PERSONAL", "HOUSEHOLD", "ENTERPRISE"];
+export const GENDERS = ["MALE", "FEMALE"] as const;
 
 const KEY = ["store-profile"];
 
@@ -47,7 +46,7 @@ export const useStoreStatus = () => useQuery({
 export const verifyAction = (purpose: VerifyPurpose, password: string | null, code: string | null) =>
   api<{ verifyToken: string; expiresAt: string }>("/store-profile/verify", { method: "POST", body: { purpose, password, code } });
 
-/** Ghi Hồ sơ cửa hàng rồi làm mới màn hình (hồ sơ, lịch sử, trạng thái bảo lưu, thông tin cửa hàng). */
+/** `success`: câu toast đã dịch. Ghi Hồ sơ cửa hàng rồi làm mới màn hình (hồ sơ, lịch sử, trạng thái bảo lưu, thông tin cửa hàng). */
 export function useStoreProfileMutation<B>(method: string, path: string, success: string) {
   const qc = useQueryClient();
   return useMutation({
@@ -56,7 +55,7 @@ export function useStoreProfileMutation<B>(method: string, path: string, success
       toast.success(success);
       void qc.invalidateQueries({ queryKey: KEY });
       void qc.invalidateQueries({ queryKey: ["store-status"] });
-      void qc.invalidateQueries({ queryKey: ["settings"] });
+      void qc.invalidateQueries({ queryKey: ["shop-settings"] });
       void qc.invalidateQueries({ queryKey: ["me"] });
     },
     onError: (e) => toast.error(errorMessage(e)),

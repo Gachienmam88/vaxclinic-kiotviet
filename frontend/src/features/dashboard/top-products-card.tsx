@@ -36,14 +36,15 @@ export function TopProductsCard({ rows, today }: { rows: DailyRevenue[]; today: 
             {top.map(([id, v]) => (
               <li key={id} className="text-[11px]">
                 <p className="truncate text-foreground/80">{names.get(id) ?? "…"}</p>
-                <div className="mt-0.5 flex items-center gap-1.5">
-                  <div className="h-[18px] bg-primary" style={{ width: `calc(${(v / axis) * 100}% - 40px)` }} />
-                  <span className="whitespace-nowrap text-muted-foreground" title={formatMoney(v)}>{shortMoney(v)}</span>
+                <div className="relative mt-0.5 mr-12 h-[18px]">
+                  <div className="h-full bg-primary" style={{ width: `${(v / axis) * 100}%` }} />
+                  <span className="absolute top-0.5 whitespace-nowrap text-muted-foreground" style={{ left: `calc(${(v / axis) * 100}% + 6px)` }}
+                    title={formatMoney(v)}>{shortMoney(v)}</span>
                 </div>
               </li>
             ))}
           </ol>
-          <div className="mt-2 flex justify-between border-t border-[#e8eaee] pt-1 text-[11px] text-muted-foreground" aria-hidden>
+          <div className="mt-2 mr-12 flex justify-between border-t border-[#e8eaee] pt-1 text-[11px] text-muted-foreground" aria-hidden>
             {ticks.map((t) => <span key={t}>{shortMoney(t)}</span>)}
           </div>
         </>

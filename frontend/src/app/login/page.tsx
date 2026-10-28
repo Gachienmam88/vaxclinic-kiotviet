@@ -10,7 +10,7 @@ const SUPPORT_PHONE = process.env.NEXT_PUBLIC_SUPPORT_PHONE ?? "";
 /**
  * Bước 2 đăng nhập — bố cục theo màn KiotViet (ảnh 1365px): thẻ trắng 293px giữa màn, ô nhập cao 26px chữ 12px,
  * hàng nút cao 36px "Quản lý" (xanh dương) | "Bán hàng" (xanh lá), nền ảnh tối toàn màn.
- * Ảnh nền: đặt file public/brand/login-bg.jpg (ảnh của cửa hàng); chưa có thì dùng nền màu.
+ * Ảnh nền: public/brand/login-bg.jpg (ảnh đã làm tối sẵn); thiếu file thì dùng nền màu.
  */
 export default function LoginPage() {
   const router = useRouter();
@@ -19,9 +19,13 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [show, setShow] = useState(false);
   const [remember, setRemember] = useState(true);
+  // Tài khoản đã bật xác thực 2 lớp: server trả TOTP_REQUIRED → hiện ô nhập mã (TOTP 6 số hoặc mã khôi phục)
+  const [needCode, setNeedCode] = useState(false);
+  const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
-  const [loading, setLoading] = useState<"manage" | "pos" | null>(null);
+  const [loading, setLoading] = useState<"manage" | "sale" | null>(null);
+  const [logoFailed, setLogoFailed] = useState(false);
 
   // Địa chỉ cửa hàng: từ URL, hoặc lần đăng nhập trước; không có / sai → quay về hộp nhập địa chỉ
   useEffect(() => {
@@ -35,34 +39,41 @@ export default function LoginPage() {
     });
   }, [router]);
 
-  async function login(target: "manage" | "pos") {
+  async function login(target: "manage" | "sale") {
     if (!username || !password) { setError("Nhập tên đăng nhập và mật khẩu"); return; }
+    if (needCode && !code) { setError("Nhập mã xác thực 2 lớp"); return; }
     setLoading(target);
     setError(null);
     const res = await fetch("/api/session/login", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password, remember }),
+      body: JSON.stringify({ username, password, remember, code: needCode ? code : undefined }),
     });
     if (res.ok) {
-      router.replace(target === "pos" ? "/pos" : "/");
+      router.replace(target === "sale" ? "/sale" : "/");
       router.refresh();
       return;
     }
     setLoading(null);
     const err = await res.json().catch(() => ({}));
+    if (err.code === "TOTP_REQUIRED" && !needCode) {
+      setNeedCode(true);
+      setError(null);
+      setNotice("Tài khoản đã bật xác thực 2 lớp. Nhập mã 6 số trong ứng dụng xác thực.");
+      return;
+    }
     setError(err.message ?? "Đăng nhập thất bại");
   }
 
   const input = "h-[26px] w-full rounded-[5px] border border-[#ced4da] px-2.5 text-xs outline-none focus:border-primary";
   return (
     <main className="relative flex min-h-screen flex-col items-center justify-center bg-[#1e2a36] bg-cover bg-center"
-      style={{ backgroundImage: "linear-gradient(rgba(0,0,0,.55), rgba(0,0,0,.55)), url(/brand/login-bg.jpg), linear-gradient(135deg, #3b4a5a, #1b2530)" }}>
+      style={{ backgroundImage: "url(/brand/login-bg.jpg), linear-gradient(135deg, #3b4a5a, #1b2530)" }}>
       <form className="w-[293px] overflow-hidden rounded-xl bg-white shadow-2xl" onSubmit={(e) => { e.preventDefault(); void login("manage"); }}>
         <div className="space-y-[9px] px-4 pb-4 pt-5">
           <div className="flex h-[30px] items-center justify-center gap-1.5 pb-2">
-            {store?.logo
+            {store?.logo && !logoFailed
               // eslint-disable-next-line @next/next/no-img-element -- logo cửa hàng dạng data URL
-              ? <img src={store.logo} alt={store.name} className="max-h-[26px] max-w-36 object-contain" />
+              ? <img src={store.logo} alt={store.name} className="max-h-[26px] max-w-36 object-contain" onError={() => setLogoFailed(true)} />
               : <><Syringe className="size-[22px] text-primary" /><span className="text-[17px] font-bold text-[#0a2540]">{store?.name ?? "..."}</span></>}
           </div>
           <input autoFocus value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Tên đăng nhập" autoComplete="username" className={input} />
@@ -72,6 +83,10 @@ export default function LoginPage() {
             <button type="button" tabIndex={-1} aria-label={show ? "Ẩn mật khẩu" : "Hiện mật khẩu"} onClick={() => setShow(!show)}
               className="absolute right-2 top-[5px] text-[#495057]">{show ? <Eye className="size-4" /> : <EyeOff className="size-4" />}</button>
           </div>
+          {needCode && (
+            <input autoFocus value={code} onChange={(e) => setCode(e.target.value.trim())} placeholder="Mã xác thực 2 lớp (hoặc mã khôi phục)"
+              inputMode="numeric" autoComplete="one-time-code" maxLength={11} aria-label="Mã xác thực 2 lớp" className={input} />
+          )}
           <div className="flex items-center gap-1.5 pt-0.5 text-[11px]">
             <label className="flex items-center gap-1.5">
               <input type="checkbox" className="size-[13px] accent-primary" checked={remember} onChange={(e) => setRemember(e.target.checked)} /> Duy trì đăng nhập
@@ -85,11 +100,11 @@ export default function LoginPage() {
         </div>
         <div className="grid grid-cols-2">
           <button type="submit" disabled={!!loading || !store}
-            className="flex h-9 items-center justify-center gap-1.5 bg-primary text-[13px] font-bold text-white hover:bg-[#0062d6] disabled:opacity-70">
+            className="flex h-9 items-center justify-center gap-1.5 bg-primary text-[13px] font-bold text-white hover:bg-primary-hover disabled:opacity-70">
             <ChartLine className="size-4" /> {loading === "manage" ? "Đang vào..." : "Quản lý"}</button>
-          <button type="button" disabled={!!loading || !store} onClick={() => void login("pos")}
+          <button type="button" disabled={!!loading || !store} onClick={() => void login("sale")}
             className="flex h-9 items-center justify-center gap-1.5 bg-[#00b63e] text-[13px] font-bold text-white hover:bg-[#00a136] disabled:opacity-70">
-            <ShoppingCart className="size-4" /> {loading === "pos" ? "Đang vào..." : "Bán hàng"}</button>
+            <ShoppingCart className="size-4" /> {loading === "sale" ? "Đang vào..." : "Bán hàng"}</button>
         </div>
       </form>
       <div className="absolute bottom-3 flex items-center gap-4 text-[11px] font-semibold text-white">

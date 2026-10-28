@@ -1,5 +1,6 @@
 package com.vaxclinic.identity.settings;
 
+import com.vaxclinic.common.address.AdminUnitCodes;
 import com.vaxclinic.common.audit.AuditLogger;
 import com.vaxclinic.common.error.BusinessException;
 import com.vaxclinic.common.settings.ShopSettings;
@@ -40,7 +41,9 @@ public class SettingsController {
                             @Size(max = 100) String province, @Size(max = 100) String ward,
                             @Size(max = 20) String taxCode, @Size(max = 400_000) String logo,
                             @jakarta.validation.constraints.Pattern(regexp = "[a-z0-9]{3,40}",
-                                    message = "Địa chỉ truy cập gồm 3–40 chữ thường không dấu hoặc số") String accessCode) {
+                                    message = "Địa chỉ truy cập gồm 3–40 chữ thường không dấu hoặc số") String accessCode,
+                            @jakarta.validation.constraints.Pattern(regexp = AdminUnitCodes.PROVINCE, message = AdminUnitCodes.PROVINCE_MSG) String provinceCode,
+                            @jakarta.validation.constraints.Pattern(regexp = AdminUnitCodes.WARD, message = AdminUnitCodes.WARD_MSG) String wardCode) {
     }
 
     public record SalesRequest(boolean allowNegativeStock, boolean blockEditPublishedEInvoice,
@@ -53,8 +56,9 @@ public class SettingsController {
     public record LockRequest(boolean enabled, java.util.Map<UUID, java.time.LocalDate> branches) {
     }
 
+    /** accessCode: địa chỉ truy cập cửa hàng đang có hiệu lực (đã đặt hoặc tự sinh từ tên). */
     public record AllSettings(StoreInfo store, ShopSettings.Sales sales, ShopSettings.CustomerRules customer,
-                              ShopSettings.BookLock lock) {
+                              ShopSettings.BookLock lock, String accessCode) {
     }
 
     private final SettingsStore store;
@@ -73,7 +77,8 @@ public class SettingsController {
     @GetMapping("/api/settings")
     public AllSettings all() {
         ShopSettings s = store.shop();
-        return new AllSettings(store.read("store", StoreInfo.class), s.sales(), s.customer(), s.lock());
+        StoreInfo info = store.read("store", StoreInfo.class);
+        return new AllSettings(info, s.sales(), s.customer(), s.lock(), StoreAccessController.accessCodeOf(info));
     }
 
     @GetMapping("/internal/settings")
@@ -88,7 +93,15 @@ public class SettingsController {
         if (req.logo() != null && !req.logo().isEmpty() && !req.logo().startsWith("data:image/")) {
             throw BusinessException.badRequest("INVALID_LOGO", "Ảnh đại diện không hợp lệ");
         }
-        store.write("store", req, userId(jwt));
+        // Địa chỉ truy cập chỉ đổi qua Hồ sơ cửa hàng → Đổi tên gian hàng (chủ gian hàng, đăng xuất mọi thiết bị);
+        // luôn ghi tường minh mã đang dùng để đổi tên cửa hàng không làm đổi địa chỉ tự sinh.
+        String current = StoreAccessController.accessCodeOf(store.read("store", StoreInfo.class));
+        if (req.accessCode() != null && !req.accessCode().isBlank() && !req.accessCode().equals(current)) {
+            throw BusinessException.badRequest("ACCESS_CODE_LOCKED",
+                    "Đổi địa chỉ truy cập tại Hồ sơ cửa hàng → Cập nhật → Đổi tên gian hàng");
+        }
+        store.write("store", new StoreInfo(req.name(), req.phone(), req.email(), req.address(), req.province(), req.ward(),
+                req.taxCode(), req.logo(), current, req.provinceCode(), req.wardCode()), userId(jwt));
         log(jwt, "Thiết lập cửa hàng", "Sửa", "Cập nhật thông tin cửa hàng: " + req.name());
         return all();
     }

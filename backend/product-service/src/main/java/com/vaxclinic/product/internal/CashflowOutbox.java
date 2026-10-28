@@ -81,6 +81,60 @@ public class CashflowOutbox {
         }
     }
 
+    /** Phiếu chi trả nợ NCC (màn Nhà cung cấp) → phiếu chi Sổ quỹ, sourceType PURCHASE + sourceId = id phiếu công nợ. */
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void supplierPayment(SupplierPaymentVoucher v, Supplier s) {
+        var p = new LinkedHashMap<String, Object>();
+        p.put("action", "CREATE");
+        p.put("sourceType", "PURCHASE");
+        p.put("sourceId", v.sourceId());
+        p.put("code", v.code());
+        p.put("voucherType", "PAYMENT");
+        p.put("fund", "TRANSFER".equals(v.method()) ? "BANK" : "EWALLET".equals(v.method()) ? "EWALLET" : "CASH");
+        p.put("bankAccountId", v.bankAccountId());
+        p.put("category", "Chi Tiền trả NCC");
+        p.put("amount", v.amount());
+        p.put("occurredAt", v.occurredAt());
+        p.put("branchId", v.branchId());
+        p.put("partnerType", "SUPPLIER");
+        p.put("partnerId", s.getId());
+        p.put("partnerName", s.getName());
+        p.put("partnerPhone", s.getPhone());
+        p.put("userId", v.userId());
+        p.put("userName", v.userName());
+        p.put("note", v.note());
+        insert(p);
+    }
+
+    /** Sửa thời gian / người chi / ghi chú của phiếu chi trả NCC đã gửi Sổ quỹ. */
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void supplierPaymentUpdated(UUID sourceId, java.time.Instant occurredAt, UUID userId, String userName, String note) {
+        var p = new LinkedHashMap<String, Object>();
+        p.put("action", "UPDATE");
+        p.put("sourceType", "PURCHASE");
+        p.put("sourceId", sourceId);
+        p.put("occurredAt", occurredAt);
+        p.put("userId", userId);
+        p.put("userName", userName);
+        p.put("note", note);
+        insert(p);
+    }
+
+    /** Hủy phiếu chi trả NCC → hủy phiếu chi Sổ quỹ tương ứng. */
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void supplierPaymentCancelled(UUID sourceId) {
+        var p = new LinkedHashMap<String, Object>();
+        p.put("action", "CANCEL");
+        p.put("sourceType", "PURCHASE");
+        p.put("sourceId", sourceId);
+        insert(p);
+    }
+
+    public record SupplierPaymentVoucher(UUID sourceId, String code, String method, UUID bankAccountId, BigDecimal amount,
+                                         java.time.Instant occurredAt, UUID branchId, UUID userId, String userName,
+                                         String note) {
+    }
+
     private void insert(Object payload) {
         try {
             jdbc.update("insert into outbox_cashflows(id, payload) values (?, ?)", UUID.randomUUID(),

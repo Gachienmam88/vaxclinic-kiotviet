@@ -6,6 +6,7 @@ import { Pencil, Plus, QrCode, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ListEmptyRow } from "@/components/ui/list-empty-state";
 import { MoneyAccountDialog } from "@/features/settings/money-account-dialog";
 import { SettingsCard, SettingsPage } from "@/features/settings/settings-shell";
 import { QrPaymentDialog } from "@/features/sales/qr-payment-dialog";
@@ -24,12 +25,12 @@ function AccountTable({ kind, list, onEdit }: { kind: "BANK" | "EWALLET"; list: 
   });
   const bank = kind === "BANK";
   return (
-    <table className="w-full text-sm">
-      <thead className="bg-muted/60 text-left"><tr><th className="px-3 py-2">{bank ? "Số tài khoản" : "Số điện thoại / mã ví"}</th>
+    <table className="w-full text-[13px]">
+      <thead className="bg-[#f0f2f5] text-left text-xs [&_th]:h-[34px] [&_th]:font-semibold"><tr><th className="px-3 py-2">{bank ? "Số tài khoản" : "Số điện thoại / mã ví"}</th>
         <th className="px-3">{bank ? "Ngân hàng" : "Ví điện tử"}</th><th className="px-3">{bank ? "Chủ tài khoản" : "Chủ ví"}</th>
         <th className="px-3">Phạm vi áp dụng</th><th className="px-3">Ghi chú</th><th className="w-24 px-3 text-right">Thao tác</th></tr></thead>
       <tbody>
-        {!list.length && <tr><td colSpan={6} className="py-6 text-center text-muted-foreground">Chưa có {bank ? "tài khoản ngân hàng" : "ví điện tử"}</td></tr>}
+        {!list.length && <ListEmptyRow cols={6} what={bank ? "tài khoản ngân hàng" : "ví điện tử"} compact />}
         {list.map((a) => (
           <tr key={a.id} className="border-b">
             <td className="px-3 py-2">{a.accountNo}{bank && !a.bankBin && <span className="block text-xs text-destructive">thiếu mã BIN — không tạo được QR</span>}</td>

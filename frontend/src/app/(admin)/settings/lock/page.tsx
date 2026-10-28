@@ -3,10 +3,11 @@
 import { useState } from "react";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
+import { SettingSwitch } from "@/features/settings/setting-switch";
 import { SettingsCard, SettingsPage } from "@/features/settings/settings-shell";
 import { useBranches, useSaveSettings, useShopSettings, type LockSettings } from "@/features/settings/settings-queries";
 import { useCurrentUser } from "@/lib/use-current-user";
+import { DatePicker } from "@/components/ui/date-picker";
 
 /** Ngày hôm qua theo giờ máy (yyyy-MM-dd) — ngày khóa mặc định khi bật khóa sổ cho 1 chi nhánh. */
 function yesterday() {
@@ -24,7 +25,7 @@ export default function BookLockPage() {
   const { can } = useCurrentUser();
   const save = useSaveSettings<LockSettings>("lock");
   const [q, setQ] = useState("");
-  if (!data) return <div className="p-6 text-sm text-muted-foreground">Đang tải...</div>;
+  if (!data) return <div className="p-6 text-[13px] text-muted-foreground">Đang tải...</div>;
   const lock = data.lock;
   const map = lock.branches ?? {};
   const readOnly = !can("settings.manage") || save.isPending;
@@ -42,7 +43,7 @@ export default function BookLockPage() {
       <SettingsCard id="lock" title="Khóa sổ"
         description={<>Để đảm bảo tính chính xác của báo cáo, không thể tạo, chỉnh sửa, hủy giao dịch có ngày từ ngày khóa sổ trở về trước,
           hoặc đổi ngày giao dịch về trước thời điểm này.</>}
-        action={<Switch checked={lock.enabled} disabled={readOnly} onCheckedChange={(v) => set({ enabled: v })} />}>
+        action={<SettingSwitch checked={lock.enabled} disabled={readOnly} onCheckedChange={(v) => set({ enabled: v })} />}>
         {lock.enabled && (
           <div className="space-y-3 p-5">
             <div className="flex items-center gap-3">
@@ -50,14 +51,14 @@ export default function BookLockPage() {
                 <Search className="absolute top-2 left-2.5 size-4 text-muted-foreground" />
                 <Input className="pl-8" placeholder="Tìm chi nhánh" value={q} onChange={(e) => setQ(e.target.value)} />
               </div>
-              <label className="ml-auto flex items-center gap-2 text-sm">Bật toàn bộ
-                <Switch checked={allOn} disabled={readOnly} onCheckedChange={(v) => set({
+              <label className="ml-auto flex items-center gap-2 text-[13px]">Bật toàn bộ
+                <SettingSwitch checked={allOn} disabled={readOnly} onCheckedChange={(v) => set({
                   branches: v ? Object.fromEntries(branches.map((b) => [b.id, map[b.id] ?? yesterday()])) : {},
                 })} />
               </label>
             </div>
-            <table className="w-full text-sm">
-              <thead className="bg-muted/60 text-left">
+            <table className="w-full text-[13px]">
+              <thead className="bg-[#f0f2f5] text-left text-xs [&_th]:h-[34px] [&_th]:font-semibold">
                 <tr><th className="px-3 py-2">Chi nhánh</th><th className="w-48 px-3">Ngày khóa sổ</th><th className="w-20 px-3">Thao tác</th></tr>
               </thead>
               <tbody>
@@ -65,10 +66,10 @@ export default function BookLockPage() {
                   <tr key={b.id} className="border-b">
                     <td className="px-3 py-2">{b.name}</td>
                     <td className="px-3">
-                      <Input type="date" className="h-8" max={yesterday()} disabled={readOnly || !map[b.id]} value={map[b.id] ?? ""}
-                        onChange={(e) => e.target.value && setBranch(b.id, e.target.value)} />
+                      <DatePicker className="h-8" max={yesterday()} disabled={readOnly || !map[b.id]} value={map[b.id] ?? ""}
+                        onChange={(v) => v && setBranch(b.id, v)} />
                     </td>
-                    <td className="px-3"><Switch checked={Boolean(map[b.id])} disabled={readOnly}
+                    <td className="px-3"><SettingSwitch checked={Boolean(map[b.id])} disabled={readOnly}
                       onCheckedChange={(v) => setBranch(b.id, v ? yesterday() : null)} /></td>
                   </tr>
                 ))}

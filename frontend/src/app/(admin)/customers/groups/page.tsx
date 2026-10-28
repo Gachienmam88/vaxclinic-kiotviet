@@ -6,17 +6,16 @@ import { Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ListEmptyRow } from "@/components/ui/list-empty-state";
+import { groupDiscountLabel } from "@/features/sales/customer-group-discount";
 import { CustomerGroupDialog } from "@/features/sales/customer-group-dialog";
 import { LIST_HEAD_ROW, PageTitle, TOOLBAR_BTN } from "@/features/sales/invoice-list-kit";
 import { useCustomerGroups } from "@/features/sales/sales-queries";
 import type { CustomerGroup } from "@/features/sales/sales-types";
 import { api, errorMessage } from "@/lib/api-client";
-import { formatMoney, formatNumber } from "@/lib/format";
+import { formatNumber } from "@/lib/format";
 import { useCurrentUser } from "@/lib/use-current-user";
 import { cn } from "@/lib/utils";
-
-export const groupDiscountLabel = (g: Pick<CustomerGroup, "discountType" | "discountValue">) =>
-  !Number(g.discountValue) ? "" : g.discountType === "PERCENT" ? `${formatNumber(g.discountValue)}%` : formatMoney(g.discountValue);
 
 /** Khách hàng → Nhóm khách hàng. Xóa nhóm: khách trong nhóm chuyển thành "chưa có nhóm" (không xóa khách). */
 export default function CustomerGroupsPage() {
@@ -52,8 +51,7 @@ export default function CustomerGroupsPage() {
             <TableHead className="text-right">Số khách hàng</TableHead><TableHead>Ghi chú</TableHead><TableHead className="w-24 pr-4" />
           </TableRow></TableHeader>
           <TableBody>
-            {groups && !groups.length && <TableRow className="hover:bg-transparent">
-              <TableCell colSpan={5} className="py-10 text-center text-muted-foreground">Chưa có nhóm khách hàng nào</TableCell></TableRow>}
+            {groups && !groups.length && <ListEmptyRow cols={5} what="nhóm khách hàng" />}
             {groups?.map((g) => (
               <TableRow key={g.id}>
                 <TableCell className="pl-4 font-medium">{g.name}</TableCell>

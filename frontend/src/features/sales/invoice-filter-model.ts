@@ -15,6 +15,7 @@ export type InvoiceFilters = {
   states: InvoiceState[];
   /** NONE = Không trả hàng, HAS = Có trả hàng. */
   returnStates: string[];
+  /** 1 trạng thái HĐĐT, hoặc nhiều trạng thái nối bằng dấu phẩy (link sâu ?einvoice=PUBLISHED,ACCEPTED). */
   einvoiceStatus: string; einvoiceNature: string;
   methods: string[]; createdBy: string; sellerId: string;
 };
@@ -68,7 +69,7 @@ export function invoiceListParams(f: InvoiceFilters, s: InvoiceSearch, page: num
   f.states.forEach((v) => p.append("states", v));
   f.deliveries.forEach((v) => p.append("deliveries", v));
   f.returnStates.forEach((v) => p.append("returnStates", v));
-  if (f.einvoiceStatus) p.append("einvoiceStatuses", f.einvoiceStatus);
+  f.einvoiceStatus.split(",").filter(Boolean).forEach((v) => p.append("einvoiceStatuses", v));
   if (f.einvoiceNature) p.append("einvoiceNatures", f.einvoiceNature);
   f.methods.forEach((m) => p.append("paymentMethods", m));
   if (f.createdBy) p.set("createdBy", f.createdBy);

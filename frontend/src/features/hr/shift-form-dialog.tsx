@@ -9,6 +9,7 @@ import { api } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 import { hm, useHrMutation, useShifts } from "./hr-queries";
 import type { Shift } from "./hr-types";
+import { TimePicker } from "@/components/ui/time-picker";
 
 const duration = (m: number) => `${Math.floor(m / 60)} giờ${m % 60 ? ` ${m % 60} phút` : ""}`;
 
@@ -70,9 +71,9 @@ function ShiftForm({ shift, onCancel, onSaved }: { shift?: Shift; onCancel: () =
         <Input autoFocus value={name} maxLength={100} placeholder="VD: Ca sáng" onChange={(e) => setName(e.target.value)} /></label>
       <div className="grid grid-cols-2 gap-3">
         <label className="grid gap-1.5"><span className="font-medium">Giờ bắt đầu</span>
-          <Input type="time" value={start} onChange={(e) => setStart(e.target.value)} /></label>
+          <TimePicker value={start} onChange={(v) => setStart(v)} /></label>
         <label className="grid gap-1.5"><span className="font-medium">Giờ kết thúc</span>
-          <Input type="time" value={end} onChange={(e) => setEnd(e.target.value)} /></label>
+          <TimePicker value={end} onChange={(v) => setEnd(v)} /></label>
       </div>
       {overnight && <p className="text-xs text-muted-foreground">Ca qua đêm: kết thúc lúc {end} ngày hôm sau</p>}
       {shift && (

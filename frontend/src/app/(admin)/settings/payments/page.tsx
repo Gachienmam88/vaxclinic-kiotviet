@@ -6,7 +6,7 @@ import { Copy } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
+import { SettingSwitch } from "@/features/settings/setting-switch";
 import { SettingRow, SettingsCard, SettingsPage } from "@/features/settings/settings-shell";
 import { api, errorMessage } from "@/lib/api-client";
 import { formatMoney } from "@/lib/format";
@@ -29,7 +29,7 @@ export default function PaymentSettingsPage() {
     onSuccess: (d) => { qc.setQueryData(["sepay-settings"], d); setApiKey(""); toast.success("Thiết lập đã được cập nhật thành công"); },
     onError: (e) => toast.error(errorMessage(e)),
   });
-  if (!s) return <div className="p-6 text-sm text-muted-foreground">Đang tải...</div>;
+  if (!s) return <div className="p-6 text-[13px] text-muted-foreground">Đang tải...</div>;
   const readOnly = !can("settings.manage") || save.isPending;
   const webhook = typeof window === "undefined" ? "" : `${window.location.origin}/api/payments/sepay/webhook`;
 
@@ -37,7 +37,7 @@ export default function PaymentSettingsPage() {
     <SettingsPage toc={[{ id: "sepay", label: "Báo có SePay" }, { id: "transactions", label: "Giao dịch ngân hàng" }]}>
       <SettingsCard id="sepay" title="Thông báo thanh toán QR (SePay)"
         description="Tiền về tài khoản là màn bán hàng báo ngay, tự khớp với hóa đơn — không lo mất tiền oan, hết đối soát thủ công."
-        action={<Switch checked={s.enabled} disabled={readOnly}
+        action={<SettingSwitch checked={s.enabled} disabled={readOnly}
           onCheckedChange={(v) => save.mutate({ enabled: v, apiKey: apiKey || undefined, autoComplete: s.autoComplete })} />}>
         <SettingRow title="Bước 1 — Đăng ký SePay và liên kết tài khoản ngân hàng"
           description={<>Tạo tài khoản tại sepay.vn, liên kết các tài khoản ngân hàng nhận tiền (trùng với Thiết lập → Sổ quỹ).</>} />
@@ -60,14 +60,14 @@ export default function PaymentSettingsPage() {
         </SettingRow>
         <SettingRow title="Tự động hoàn thành hóa đơn khi nhận đủ tiền"
           description="Khách quét QR ở màn bán hàng và chuyển khoản đủ tiền → hóa đơn tự hoàn thành, không cần bấm Thanh toán."
-          control={<Switch checked={s.autoComplete} disabled={readOnly}
+          control={<SettingSwitch checked={s.autoComplete} disabled={readOnly}
             onCheckedChange={(v) => save.mutate({ enabled: s.enabled, autoComplete: v })} />} />
       </SettingsCard>
       {can("cashbook.manage") && (
         <SettingsCard id="transactions" title="Giao dịch ngân hàng gần đây" description="Do SePay báo về; cột Mã thanh toán có giá trị là đã khớp với mã QR ở màn bán hàng.">
           <div className="overflow-x-auto p-4">
-            <table className="w-full text-sm">
-              <thead className="bg-muted/60 text-left"><tr><th className="px-2 py-2">Thời gian</th><th className="px-2">Ngân hàng</th>
+            <table className="w-full text-[13px]">
+              <thead className="bg-[#f0f2f5] text-left text-xs [&_th]:h-[34px] [&_th]:font-semibold"><tr><th className="px-2 py-2">Thời gian</th><th className="px-2">Ngân hàng</th>
                 <th className="px-2">Tài khoản</th><th className="px-2 text-right">Số tiền</th><th className="px-2">Nội dung</th><th className="px-2">Mã thanh toán</th></tr></thead>
               <tbody>
                 {!txs.length && <tr><td colSpan={6} className="py-6 text-center text-muted-foreground">Chưa có giao dịch</td></tr>}

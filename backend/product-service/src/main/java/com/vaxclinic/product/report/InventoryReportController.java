@@ -25,6 +25,9 @@ public class InventoryReportController {
     public record MovementRow(UUID productId, String code, String name, String unit, String docType, BigDecimal qty, BigDecimal value) {
     }
 
+    public record MonthValue(String month, BigDecimal value) {
+    }
+
     public record DamageRow(UUID productId, String code, String name, String unit, BigDecimal qty, BigDecimal value, long docCount) {
     }
 
@@ -64,5 +67,18 @@ public class InventoryReportController {
                 group by 1, 2, 3, 4 order by val desc""", ProductReportScope.params(from, to, branchIds, jwt),
                 (rs, n) -> new DamageRow(rs.getObject("product_id", UUID.class), rs.getString("code"), rs.getString("name"),
                         rs.getString("unit_name"), rs.getBigDecimal("qty"), rs.getBigDecimal("val"), rs.getLong("n")));
+    }
+
+    /** Giá trị xuất hủy theo tháng (giờ Việt Nam) — dòng "Xuất hủy hàng hóa" của Báo cáo tài chính. */
+    @GetMapping("/api/reports/inventory/damages/monthly")
+    public List<MonthValue> damagesMonthly(@RequestParam Instant from, @RequestParam Instant to,
+                                           @RequestParam(required = false) List<UUID> branchIds, @AuthenticationPrincipal Jwt jwt) {
+        return jdbc.query("""
+                select to_char(d.issued_at at time zone 'Asia/Ho_Chi_Minh', 'YYYY-MM') m, sum(round(l.quantity * l.unit_cost)) val
+                from stock_issues d join stock_issue_lines l on l.issue_id = d.id
+                where d.type = 'DAMAGE' and d.status = 'COMPLETED' and d.issued_at >= :from and d.issued_at < :to
+                  and d.branch_id in (:branches)
+                group by 1 order by 1""", ProductReportScope.params(from, to, branchIds, jwt),
+                (rs, n) -> new MonthValue(rs.getString("m"), rs.getBigDecimal("val")));
     }
 }

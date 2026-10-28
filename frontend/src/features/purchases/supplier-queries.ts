@@ -15,10 +15,11 @@ export function useInvalidateSuppliers() {
   return () => SUPPLIER_KEYS.forEach((k) => qc.invalidateQueries({ queryKey: k }));
 }
 
-/** Bộ lọc sidebar → query string của GET /suppliers. */
-export function supplierParams(q: string, f: SupplierFilters, page: number, size: number) {
+/** Bộ lọc sidebar → query string của GET /suppliers. docCode: link sâu theo mã phiếu công nợ (PCN/CKN/DCN…). */
+export function supplierParams(q: string, f: SupplierFilters, page: number, size: number, docCode?: string | null) {
   const p = new URLSearchParams({ page: String(page), size: String(size) });
   if (q.trim()) p.set("q", q.trim());
+  if (docCode) p.set("docCode", docCode);
   if (f.groupId) p.set("groupId", f.groupId);
   if (f.status) p.set("active", String(f.status === "active"));
   if (f.buyFrom) p.set("buyFrom", f.buyFrom);

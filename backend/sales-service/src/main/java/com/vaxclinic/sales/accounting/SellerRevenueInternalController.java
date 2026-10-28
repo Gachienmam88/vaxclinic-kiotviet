@@ -16,7 +16,8 @@ import java.util.UUID;
 
 /**
  * Doanh thu theo người bán × mặt hàng (identity-service tính hoa hồng nhân viên; chỉ JWT "internal", gateway không route /internal).
- * Hóa đơn hoàn thành trong kỳ − hàng khách trả trong kỳ (quy về người bán của hóa đơn gốc), theo giờ Việt Nam.
+ * Hóa đơn hoàn thành trong kỳ − hàng khách trả trong kỳ (quy về người bán của hóa đơn gốc; "Trả nhanh" không theo hóa đơn
+ * → trừ vào người lập phiếu trả, tính đủ cả thực thu vì tiền đã hoàn cho khách), theo giờ Việt Nam.
  * netRevenue: sau phân bổ giảm giá hóa đơn theo tỷ lệ tiền hàng (như Sổ doanh thu);
  * paidRevenue: netRevenue × tỷ lệ khách đã trả của hóa đơn (thực thu, tối đa 100%).
  */
@@ -49,12 +50,15 @@ public class SellerRevenueInternalController {
                   where i.status = 'COMPLETED' and i.seller_id is not null and i.sold_at >= :from and i.sold_at < :to
                   group by 1, 2
                 ), back as (
-                  select i.seller_id, rl.product_id, max(rl.product_code) code, max(rl.product_name) name, sum(rl.quantity) qty,
+                  select coalesce(i.seller_id, r.created_by) seller_id, rl.product_id, max(rl.product_code) code,
+                    max(rl.product_name) name, sum(rl.quantity) qty,
                     sum(case when r.subtotal = 0 then 0 else round(r.total * rl.quantity * rl.unit_price / r.subtotal) end) net,
-                    sum(case when r.subtotal = 0 or i.total = 0 then 0
+                    sum(case when r.subtotal = 0 then 0 when i.id is null then round(r.total * rl.quantity * rl.unit_price / r.subtotal)
+                             when i.total = 0 then 0
                              else round(r.total * rl.quantity * rl.unit_price / r.subtotal * least(1, i.paid / i.total)) end) paid
-                  from sales_returns r join invoices i on i.id = r.invoice_id join sales_return_lines rl on rl.return_id = r.id
-                  where r.status = 'COMPLETED' and i.seller_id is not null and r.returned_at >= :from and r.returned_at < :to
+                  from sales_returns r left join invoices i on i.id = r.invoice_id join sales_return_lines rl on rl.return_id = r.id
+                  where r.status = 'COMPLETED' and (r.invoice_id is null or i.seller_id is not null)
+                    and r.returned_at >= :from and r.returned_at < :to
                   group by 1, 2
                 )
                 select coalesce(s.seller_id, b.seller_id) seller_id, coalesce(s.product_id, b.product_id) product_id,

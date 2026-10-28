@@ -63,6 +63,15 @@ public class StockIssueService {
         return issues.saveAndFlush(d).getId();
     }
 
+    /** "Hoàn thành" phiếu tạm đã lưu, giữ nguyên các dòng đã nhập. */
+    @Transactional
+    public UUID complete(StockIssue.Type type, UUID id, Actor actor) {
+        StockIssue d = find(type, id);
+        var lines = d.getLines().stream().map(l -> new InventoryDocDtos.IssueLineInput(l.getProductId(), l.getUnitId(),
+                l.getQuantity(), l.getLotNumber())).toList();
+        return save(type, id, new IssueRequest(d.getBranchId(), d.getIssuedAt(), d.getReason(), d.getNote(), lines), true, actor);
+    }
+
     @Transactional
     public void cancel(StockIssue.Type type, UUID id, Actor actor) {
         StockIssue d = find(type, id);

@@ -1,8 +1,10 @@
 package com.vaxclinic.identity.auth;
 
 import com.vaxclinic.common.error.BusinessException;
+import com.vaxclinic.identity.auth.twofactor.TwoFactorService;
 import com.vaxclinic.identity.user.AppUser;
 import com.vaxclinic.identity.user.AppUserRepository;
+import com.vaxclinic.identity.user.UserDtos.UserResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -11,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -34,9 +37,12 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final TokenService tokenService;
     private final Duration refreshTtl;
+    private final TwoFactorService twoFactor;
 
     public AuthService(AppUserRepository users, RefreshTokenRepository refreshTokens, PasswordEncoder passwordEncoder,
-                       TokenService tokenService, @Value("${app.jwt.refresh-ttl-days}") long refreshTtlDays) {
+                       TokenService tokenService, @Value("${app.jwt.refresh-ttl-days}") long refreshTtlDays,
+                       TwoFactorService twoFactor) {
+        this.twoFactor = twoFactor;
         this.users = users;
         this.refreshTokens = refreshTokens;
         this.passwordEncoder = passwordEncoder;
@@ -44,14 +50,18 @@ public class AuthService {
         this.refreshTtl = Duration.ofDays(refreshTtlDays);
     }
 
-    @Transactional
-    public TokenPair login(String username, String password) {
+    /** totpCode: bắt buộc khi user đã bật xác thực 2 lớp (thiếu → 401 TOTP_REQUIRED để màn đăng nhập hiện ô nhập mã). */
+    @Transactional(noRollbackFor = BusinessException.class)
+    public TokenPair login(String username, String password, String totpCode) {
         AppUser user = users.findByUsernameIgnoreCase(username.trim()).orElseThrow(() -> BAD_CREDENTIALS);
         if (!passwordEncoder.matches(password, user.getPasswordHash())) {
             throw BAD_CREDENTIALS;
         }
         if (!user.isActive()) {
             throw new BusinessException(HttpStatus.FORBIDDEN, "USER_LOCKED", "Tài khoản đã bị khóa");
+        }
+        if (twoFactor.enabled(user.getId())) {
+            twoFactor.checkLogin(user.getId(), totpCode);
         }
         return issue(user);
     }
@@ -70,6 +80,16 @@ public class AuthService {
         stored.setRevoked(true);
         AppUser user = users.findById(stored.getUserId()).filter(AppUser::isActive).orElseThrow(() -> INVALID_REFRESH);
         return issue(user);
+    }
+
+    /** Hồ sơ user đang đăng nhập + quyền + trạng thái 2FA / chủ gian hàng (GET /api/auth/me). */
+    @Transactional(readOnly = true)
+    public AuthController.MeResponse me(UUID userId) {
+        AppUser user = users.findById(userId)
+                .orElseThrow(() -> BusinessException.notFound("USER_NOT_FOUND", "Không tìm thấy người dùng"));
+        boolean twoFactorOn = twoFactor.enabled(user.getId());
+        return new AuthController.MeResponse(UserResponse.of(user, twoFactorOn), List.copyOf(user.getRole().getPermissions()),
+                twoFactorOn, user.isOwner());
     }
 
     @Transactional

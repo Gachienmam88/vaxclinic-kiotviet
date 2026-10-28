@@ -1,5 +1,6 @@
 package com.vaxclinic.sales.delivery;
 
+import com.vaxclinic.common.address.AdminUnitCodes;
 import com.vaxclinic.common.error.BusinessException;
 import com.vaxclinic.sales.common.Actor;
 import com.vaxclinic.sales.delivery.ShipmentDtos.DeliveryInput;
@@ -37,13 +38,15 @@ public class ShipmentEditService {
                     + ": chỉ sửa được khi Chờ xử lý / Đang lấy hàng");
         }
         hooks.validate("DELIVERY", new DeliveryInput(r.partnerId(), r.receiverName(), r.receiverPhone(), r.receiverAddress(),
-                r.area(), r.weightGram(), r.shippingFee(), r.feePayer(), r.note()));
+                r.area(), r.weightGram(), r.shippingFee(), r.feePayer(), r.note(), r.provinceCode(), r.wardCode()));
         jdbc.update("""
                 update shipments set partner_id = ?, receiver_name = ?, receiver_phone = ?, receiver_address = ?, area = ?,
-                    weight_gram = ?, shipping_fee = ?, fee_payer = ?, note = ?, updated_at = now() where id = ?""",
+                    weight_gram = ?, shipping_fee = ?, fee_payer = ?, note = ?, province_code = ?, ward_code = ?, updated_at = now()
+                where id = ?""",
                 r.partnerId(), r.receiverName().trim(), r.receiverPhone().trim(), r.receiverAddress().trim(),
                 Actor.blankToNull(r.area()), r.weightGram(), ShipmentInvoiceHooks.money(r.shippingFee()),
-                r.feePayer() == null ? "SHOP" : r.feePayer(), Actor.blankToNull(r.note()), id);
+                r.feePayer() == null ? "SHOP" : r.feePayer(), Actor.blankToNull(r.note()),
+                AdminUnitCodes.clean(r.provinceCode()), AdminUnitCodes.clean(r.wardCode()), id);
         return (String) s.get("code");
     }
 }

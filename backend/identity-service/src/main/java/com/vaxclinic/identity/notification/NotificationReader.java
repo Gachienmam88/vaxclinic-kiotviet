@@ -23,9 +23,12 @@ public class NotificationReader {
     public record UnreadCount(long count, long alert, long update) {
     }
 
-    /** Bộ lọc hiển thị: chưa đóng, đúng chi nhánh người xem làm việc (hoặc mọi chi nhánh), đúng quyền. */
+    /**
+     * Bộ lọc hiển thị: chưa đóng, đúng chi nhánh người xem làm việc (hoặc mọi chi nhánh), đúng quyền, và thông báo gửi
+     * riêng (target_user_id) chỉ người đó thấy. Tham số theo thứ tự: branchIds, permissions, userId.
+     */
     private static final String VISIBLE = " n.resolved_at is null and (n.branch_id is null or n.branch_id::text = any(?))"
-            + " and (n.permission is null or n.permission = any(?))";
+            + " and (n.permission is null or n.permission = any(?)) and (n.target_user_id is null or n.target_user_id = ?)";
 
     private final JdbcTemplate jdbc;
 
@@ -37,7 +40,7 @@ public class NotificationReader {
         int limit = Math.min(Math.max(size, 1), 100);
         String category = category(tab);
         String where = " where" + VISIBLE + (category == null ? "" : " and n.category = ?");
-        List<Object> args = new ArrayList<>(List.of(v.branchIds(), v.permissions()));
+        List<Object> args = new ArrayList<>(List.of(v.branchIds(), v.permissions(), v.userId()));
         if (category != null) {
             args.add(category);
         }
@@ -64,7 +67,7 @@ public class NotificationReader {
                         + " count(*) filter (where n.category = 'UPDATE') as upd from notifications n where" + VISIBLE
                         + " and not exists (select 1 from notification_reads r where r.notification_id = n.id and r.user_id = ?)",
                 (rs, i) -> new UnreadCount(rs.getLong("total"), rs.getLong("alert"), rs.getLong("upd")),
-                v.branchIds(), v.permissions(), v.userId());
+                v.branchIds(), v.permissions(), v.userId(), v.userId());
     }
 
     public void markRead(NotificationViewer v, long id) {
@@ -75,7 +78,7 @@ public class NotificationReader {
     /** Đánh dấu đã đọc tất cả thông báo người xem đang thấy (theo tab nếu có). */
     public int markAllRead(NotificationViewer v, String tab) {
         String category = category(tab);
-        List<Object> args = new ArrayList<>(List.of(v.userId(), v.branchIds(), v.permissions()));
+        List<Object> args = new ArrayList<>(List.of(v.userId(), v.branchIds(), v.permissions(), v.userId()));
         if (category != null) {
             args.add(category);
         }

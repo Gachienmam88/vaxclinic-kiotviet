@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import type { Holiday } from "./hr-types";
+import { DatePicker } from "@/components/ui/date-picker";
 
 /** Thêm / sửa kỳ lễ tết: tên, từ ngày, đến hết ngày, hệ số lương (%) áp cho ca làm trong kỳ. */
 export function HolidayDialog({ holiday, onSave, onClose, pending }: {
@@ -20,9 +21,9 @@ export function HolidayDialog({ holiday, onSave, onClose, pending }: {
           <label htmlFor="hol-name">Tên kỳ lễ tết</label>
           <Input id="hol-name" value={h.name} placeholder="VD: Quốc khánh 2/9" onChange={(e) => setH({ ...h, name: e.target.value })} />
           <label htmlFor="hol-from">Từ ngày</label>
-          <Input id="hol-from" type="date" value={h.from} onChange={(e) => setH({ ...h, from: e.target.value, to: h.to || e.target.value })} />
+          <DatePicker id="hol-from" value={h.from} onChange={(v) => setH({ ...h, from: v, to: h.to || v })} />
           <label htmlFor="hol-to">Đến hết ngày</label>
-          <Input id="hol-to" type="date" value={h.to} onChange={(e) => setH({ ...h, to: e.target.value })} />
+          <DatePicker id="hol-to" value={h.to} onChange={(v) => setH({ ...h, to: v })} />
           <label htmlFor="hol-mult">Hệ số lương</label>
           <div className="flex items-center gap-2">
             <Input id="hol-mult" type="number" min={0} className="w-24 text-right" value={h.multiplier}

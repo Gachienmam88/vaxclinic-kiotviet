@@ -18,7 +18,7 @@ import java.util.UUID;
 
 /**
  * Cảnh báo tích hợp cho Hộp thư đến:
- * - EINVOICE_FAILED (mỗi 15 phút, quyền settings.manage): hóa đơn phát hành HĐĐT lỗi; tự đóng khi phát hành lại thành công.
+ * - EINVOICE_FAILED (mỗi 15 phút, quyền sales.perform — nhân viên bán hàng phát hành lại được): hóa đơn phát hành HĐĐT lỗi; tự đóng khi phát hành lại thành công.
  * - SEPAY_RECEIVED (mỗi phút, chỉ khi bật SePay, quyền sales.perform, theo chi nhánh của yêu cầu thanh toán):
  *   nhận chuyển khoản khớp mã thanh toán QR. Dạng sự kiện, không tự đóng; mốc đã gửi giữ trong bộ nhớ
  *   (khởi động lại → quét lại 24 giờ gần nhất, identity bỏ qua bản trùng theo dedupeKey).
@@ -66,7 +66,7 @@ public class IntegrationAlertJob {
             String body = (error == null || error.isBlank() ? "Không rõ lý do" : cut(error, 500))
                     + ". Kiểm tra thiết lập Hóa đơn điện tử rồi phát hành lại từ chi tiết hóa đơn.";
             return new Item("EINVOICE_FAILED", "einvoice_failed:" + rs.getObject("invoice_id", UUID.class),
-                    "Hóa đơn " + code + " phát hành hóa đơn điện tử lỗi", body, code, null, null, "settings.manage");
+                    "Hóa đơn " + code + " phát hành hóa đơn điện tử lỗi", body, code, null, null, "sales.perform");
         });
         return notifications.sync(List.of("EINVOICE_FAILED"), items) ? items.size() : -1;
     }

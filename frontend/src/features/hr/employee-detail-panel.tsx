@@ -42,6 +42,7 @@ export function EmployeeDetailPanel({ id }: { id: string }) {
           <Info label="Phòng ban" value={e.departmentName} /><Info label="Chức danh" value={e.jobTitleName} />
           <Info label="Chi nhánh làm việc" value={e.branches.map((b) => b.name).join(", ")} />
           <Info label="Ngày bắt đầu làm" value={formatDate(e.startDate)} />
+          {e.endDate && <Info label="Ngày nghỉ việc" value={formatDate(e.endDate)} />}
           <Info label="Loại lương" value={e.salaryType ? `${salaryTypeLabel(e.salaryType)}: ${formatMoney(e.salaryAmount)}` : "Chưa thiết lập lương"} />
           <Info label="Hoa hồng" value={e.commissionTableName} />
           <Info label="Phụ cấp / giảm trừ" value={`${e.allowances.length} phụ cấp, ${e.deductions.length} giảm trừ`} />

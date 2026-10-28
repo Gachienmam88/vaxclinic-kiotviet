@@ -2,7 +2,7 @@
 import { downloadCsv } from "@/features/accounting/tax-calc";
 import { formatDateTime } from "@/lib/format";
 import {
-  RECEIPT_STATUS_LABEL, RETURN_STATUS_LABEL, type Receipt, type ReceiptListItem, type ReturnListItem, type Supplier,
+  RECEIPT_STATUS_LABEL, RETURN_STATUS_LABEL, type Receipt, type ReceiptListItem, type ReturnListItem,
 } from "./purchase-types";
 
 const num = (v: number | string | null | undefined) => Number(v ?? 0);
@@ -31,12 +31,4 @@ export function exportReceiptLinesCsv(r: Receipt) {
     ["Mã hàng", "Tên hàng", "ĐVT", "Số lô", "Hạn sử dụng", "Số lượng", "Đơn giá", "Giảm giá", "Giá nhập có VAT", "Thành tiền"],
     r.lines.map((l) => [l.productCode, l.productName, l.unitName, l.lotNumber ?? "", l.expiryDate ?? "", num(l.quantity),
       num(l.unitPrice), num(l.discount), num(l.priceWithVat), num(l.amount)]));
-}
-
-export function exportSuppliersCsv(items: Supplier[]) {
-  downloadCsv(`nha-cung-cap-${stamp()}.csv`,
-    ["Mã NCC", "Tên nhà cung cấp", "Điện thoại", "Email", "Địa chỉ", "Khu vực", "Phường/Xã", "Nhóm", "Tên công ty",
-      "Mã số thuế", "Trạng thái"],
-    items.map((s) => [s.code, s.name, s.phone ?? "", s.email ?? "", s.address ?? "", s.province ?? "", s.ward ?? "",
-      s.groupName ?? "", s.companyName ?? "", s.taxCode ?? "", s.active ? "Đang hoạt động" : "Ngừng hoạt động"]));
 }

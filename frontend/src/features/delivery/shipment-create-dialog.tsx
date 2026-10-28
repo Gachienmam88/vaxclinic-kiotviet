@@ -11,6 +11,7 @@ import { api, errorMessage } from "@/lib/api-client";
 import { formatMoney } from "@/lib/format";
 import { refreshDelivery } from "./delivery-queries";
 import type { ShipmentDetail } from "./delivery-types";
+import { areaFromServer } from "./delivery-address";
 import { ShipmentDeliveryFields, type DeliveryForm } from "./shipment-delivery-fields";
 
 /**
@@ -21,7 +22,8 @@ export function ShipmentCreateDialog({ inv, onClose }: { inv: Invoice; onClose: 
   const qc = useQueryClient();
   const old = inv.shipment;
   const [v, setV] = useState<DeliveryForm>({ partnerId: "", receiverName: old?.receiverName ?? inv.customerName,
-    receiverPhone: old?.receiverPhone ?? inv.customerPhone ?? "", receiverAddress: old?.receiverAddress ?? "", area: old?.area ?? "",
+    receiverPhone: old?.receiverPhone ?? inv.customerPhone ?? "", receiverAddress: old?.receiverAddress ?? "",
+    ...areaFromServer({ area: old?.area ?? null, provinceCode: old?.provinceCode, wardCode: old?.wardCode }),
     weightGram: old?.weightGram ?? 0, shippingFee: Number(old?.shippingFee ?? 0), feePayer: old?.feePayer ?? "SHOP", note: "" });
   const save = useMutation({
     mutationFn: () => api<ShipmentDetail>("/shipments", { method: "POST",

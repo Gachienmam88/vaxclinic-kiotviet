@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment } from "react";
+import { DeepLinkRoute, type DeepLink } from "@/components/ui/deep-link-route";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PurchaseFilterSidebar } from "@/features/purchases/purchase-filter-sidebar";
 import {
@@ -10,7 +11,7 @@ import { exportStockTakesCsv } from "@/features/inventory/inventory-csv-export";
 import { defaultInventoryFilters, useStockTakes } from "@/features/inventory/inventory-queries";
 import { TAKE_STATUS_LABEL } from "@/features/inventory/inventory-types";
 import { StockTakeDetailPanel } from "@/features/inventory/stock-take-detail-panel";
-import { useInventoryListState } from "@/features/inventory/use-inventory-list-state";
+import { useInventoryExpanded, useInventoryListState } from "@/features/inventory/use-inventory-list-state";
 import { formatDateTime, formatMoney, formatNumber } from "@/lib/format";
 import { useCurrentUser } from "@/lib/use-current-user";
 import { cn } from "@/lib/utils";
@@ -18,12 +19,13 @@ import { cn } from "@/lib/utils";
 const COLS = 10;
 const NUM = "text-right";
 
-/** /inventory/stock-takes — danh sách phiếu kiểm kho (KiotViet: Hàng hóa → Kiểm kho). */
-export default function StockTakesPage() {
+/** /inventory/stock-takes — danh sách phiếu kiểm kho (KiotViet: Hàng hóa → Kiểm kho). ?code=KK000001 → lọc + mở sẵn. */
+function StockTakesPage({ link }: { link: DeepLink }) {
   const { can } = useCurrentUser();
-  const s = useInventoryListState(defaultInventoryFilters(["DRAFT", "BALANCED"]));
+  const s = useInventoryListState(defaultInventoryFilters(["DRAFT", "BALANCED"]), link, Object.keys(TAKE_STATUS_LABEL));
   const { data, isLoading } = useStockTakes(s.filters, s.page, s.size);
   const pages = data ? Math.max(1, Math.ceil(data.total / s.size)) : 1;
+  const x = useInventoryExpanded(data?.items, link);
 
   return (
     <PurchaseListLayout title="Phiếu kiểm kho"
@@ -51,9 +53,9 @@ export default function StockTakesPage() {
             )}
             {data?.items.map((t) => (
               <Fragment key={t.id}>
-                <TableRow onClick={() => s.toggle(t.id)} onKeyDown={(e) => e.key === "Enter" && s.toggle(t.id)} tabIndex={0}
-                  aria-expanded={s.expanded === t.id}
-                  className={cn("cursor-pointer align-top [&>td]:py-2.5", s.expanded === t.id && "bg-[#e3f0fc] hover:bg-[#e3f0fc]",
+                <TableRow onClick={() => x.toggle(t.id)} onKeyDown={(e) => e.key === "Enter" && x.toggle(t.id)} tabIndex={0}
+                  aria-expanded={x.expanded === t.id}
+                  className={cn("cursor-pointer align-top [&>td]:py-2.5", x.expanded === t.id && "bg-primary-tint hover:bg-primary-tint",
                     t.status === "CANCELLED" && "text-muted-foreground")}>
                   <TableCell className="pl-4">{t.code}</TableCell><TableCell>{formatDateTime(t.takenAt)}</TableCell>
                   <TableCell>{formatDateTime(t.balancedAt)}</TableCell>
@@ -65,9 +67,9 @@ export default function StockTakesPage() {
                   <TableCell className="max-w-48 truncate" title={t.note ?? ""}>{t.note}</TableCell>
                   <TableCell className="pr-4"><DocStatusBadge status={t.status} label={TAKE_STATUS_LABEL[t.status]} /></TableCell>
                 </TableRow>
-                {s.expanded === t.id && (
+                {x.expanded === t.id && (
                   <TableRow className="hover:bg-transparent">
-                    <TableCell colSpan={COLS} className="p-0 whitespace-normal"><StockTakeDetailPanel id={t.id} /></TableCell>
+                    <TableCell colSpan={COLS} className="p-0 whitespace-normal"><StockTakeDetailPanel id={t.id} onClose={() => x.toggle(t.id)} /></TableCell>
                   </TableRow>
                 )}
               </Fragment>
@@ -79,4 +81,8 @@ export default function StockTakesPage() {
         total={data?.total ?? 0} unit="phiếu" onPage={s.setPage} />
     </PurchaseListLayout>
   );
+}
+
+export default function Page() {
+  return <DeepLinkRoute>{(link) => <StockTakesPage link={link} />}</DeepLinkRoute>;
 }

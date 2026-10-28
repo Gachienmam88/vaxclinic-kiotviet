@@ -5,6 +5,7 @@ export type SalesChannel = { code: string; name: string; active: boolean; builti
 export type DeliveryPartner = {
   id: string; code: string; name: string; phone: string | null; email: string | null; address: string | null; note: string | null;
   partnerType: string; active: boolean; shipmentCount: number; totalFee: number; totalCod: number; debt: number; createdAt: string;
+  province?: string | null; ward?: string | null; provinceCode?: string | null; wardCode?: string | null;
 };
 export type PartnerList = { items: DeliveryPartner[]; total: number; page: number; size: number; sumFee: number; sumCod: number; sumDebt: number };
 
@@ -28,6 +29,7 @@ export type ShipmentItem = {
   id: string; code: string; createdAt: string; invoiceId: string; invoiceCode: string; customerName: string;
   receiverName: string; receiverPhone: string; receiverAddress: string; area: string | null; partnerId: string; partnerName: string;
   shippingFee: number; feePayer: "SHOP" | "CUSTOMER"; codAmount: number; status: ShipmentStatus; reconciled: boolean; branchId: string;
+  provinceCode?: string | null; wardCode?: string | null;
 };
 export type ShipmentList = {
   items: ShipmentItem[]; total: number; page: number; size: number; sumFee: number; sumCod: number; statusCounts: Record<ShipmentStatus, number>;
@@ -35,13 +37,16 @@ export type ShipmentList = {
 export type StatusLog = { fromStatus: string | null; toStatus: ShipmentStatus; note: string | null; changedByName: string; changedAt: string };
 export type ShipmentDetail = {
   item: ShipmentItem; weightGram: number | null; note: string | null; deliveredAt: string | null; returnId: string | null;
-  returnCode: string | null; settlementCode: string | null; createdByName: string; invoiceTotal: number; invoicePaid: number; logs: StatusLog[];
+  returnCode: string | null; settlementCode: string | null; createdByName: string; invoiceTotal: number; invoicePaid: number;
+  /** Phí đã ghi sổ đối tác (giao thành công / đã chuyển hoàn); returnFee = phần phí chuyển hoàn. */
+  feePosted: number | null; returnFee: number; logs: StatusLog[];
 };
 /** Tóm tắt vận đơn trên chi tiết hóa đơn (InvoiceResponse.shipment). */
 export type ShipmentInfo = {
   id: string; code: string; status: ShipmentStatus; partnerId: string; partnerName: string; receiverName: string; receiverPhone: string;
   receiverAddress: string; area: string | null; weightGram: number | null; shippingFee: number; feePayer: "SHOP" | "CUSTOMER";
   codAmount: number; note: string | null; deliveredAt: string | null; returnCode: string | null;
+  provinceCode?: string | null; wardCode?: string | null;
 };
 export type StatusResult = { id: string; code: string | null; ok: boolean; status: string | null; message: string | null };
 

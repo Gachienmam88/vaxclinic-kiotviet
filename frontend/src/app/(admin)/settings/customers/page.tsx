@@ -2,17 +2,14 @@
 
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
+import { SettingSwitch } from "@/features/settings/setting-switch";
 import { SettingRow, SettingsCard, SettingsPage } from "@/features/settings/settings-shell";
-import { useSaveSettings, useShopSettings, type CustomerSettings } from "@/features/settings/settings-queries";
+import { CUSTOMER_FIELDS, useSaveSettings, useShopSettings, type CustomerSettings } from "@/features/settings/settings-queries";
 import { formatNumber } from "@/lib/format";
 import { useCurrentUser } from "@/lib/use-current-user";
 
-/** Trường có thể đặt bắt buộc — khớp với SettingsController.CUSTOMER_FIELDS phía identity-service. */
-export const CUSTOMER_FIELDS = [
-  ["phone", "Số điện thoại"], ["birthday", "Ngày sinh"], ["email", "Email"], ["address", "Địa chỉ"],
-  ["gender", "Giới tính"], ["facebook", "Facebook"], ["group", "Nhóm khách hàng"],
-] as const;
+/** Thứ tự hiển thị 2 cột giống KiotViet (cột trái: SĐT, Email, Giới tính; cột phải: Ngày sinh, Địa chỉ, Facebook, Nhóm). */
+const FIELD_ORDER = ["phone", "email", "gender", "birthday", "address", "facebook", "group"] as const;
 
 /** Thiết lập → Khách hàng. */
 export default function CustomerSettingsPage() {
@@ -20,7 +17,7 @@ export default function CustomerSettingsPage() {
   const { can } = useCurrentUser();
   const save = useSaveSettings<CustomerSettings>("customer");
   const [limit, setLimit] = useState<string | null>(null);
-  if (!data) return <div className="p-6 text-sm text-muted-foreground">Đang tải...</div>;
+  if (!data) return <div className="p-6 text-[13px] text-muted-foreground">Đang tải...</div>;
   const c = data.customer;
   const readOnly = !can("settings.manage") || save.isPending;
   const set = (patch: Partial<CustomerSettings>) => save.mutate({ ...c, ...patch });
@@ -35,10 +32,10 @@ export default function CustomerSettingsPage() {
     <SettingsPage toc={[{ id: "customers", label: "Quản lý khách hàng" }]}>
       <SettingsCard id="customers" title="Quản lý khách hàng">
         <SettingRow title="Cảnh báo công nợ khách hàng" description="Hiển thị cảnh báo ở màn bán hàng khi khách hàng nợ vượt mức."
-          control={<Switch checked={c.debtLimit != null} disabled={readOnly}
+          control={<SettingSwitch checked={c.debtLimit != null} disabled={readOnly}
             onCheckedChange={(v) => set({ debtLimit: v ? Number(limitValue.replace(/\D/g, "")) || 0 : null })} />}>
           {c.debtLimit != null && (
-            <div className="mt-2 flex items-center gap-2 text-sm">
+            <div className="mt-2 flex items-center gap-2 text-[13px]">
               Cảnh báo khi nợ vượt
               <Input className="h-8 w-36 text-right" inputMode="numeric" disabled={readOnly}
                 value={formatNumber(Number(limitValue.replace(/\D/g, "")) || 0)}
@@ -48,11 +45,11 @@ export default function CustomerSettingsPage() {
           )}
         </SettingRow>
         <SettingRow title="Thiết lập thông tin bắt buộc" description="Thiết lập tính bắt buộc cho các trường thông tin khách hàng.">
-          <div className="mt-3 grid grid-cols-1 gap-x-10 gap-y-2.5 px-4 text-sm md:grid-cols-2">
-            <label className="flex items-center justify-between">Tên khách hàng <Switch checked disabled /></label>
-            {CUSTOMER_FIELDS.map(([key, label]) => (
+          <div className="mt-4 grid grid-cols-1 gap-x-10 gap-y-2.5 px-5 pb-1 text-[13px] md:grid-flow-col md:grid-cols-2 md:grid-rows-4 md:[&>label:nth-child(-n+4)]:border-r md:[&>label:nth-child(-n+4)]:pr-5">
+            <label className="flex items-center justify-between">Tên khách hàng <SettingSwitch checked disabled /></label>
+            {FIELD_ORDER.map((key) => [key, CUSTOMER_FIELDS.find(([k]) => k === key)![1]] as const).map(([key, label]) => (
               <label key={key} className="flex items-center justify-between">{label}
-                <Switch checked={required(key)} disabled={readOnly} onCheckedChange={(v) => set({
+                <SettingSwitch checked={required(key)} disabled={readOnly} onCheckedChange={(v) => set({
                   requiredFields: v ? [...c.requiredFields, key] : c.requiredFields.filter((f) => f !== key),
                 })} />
               </label>

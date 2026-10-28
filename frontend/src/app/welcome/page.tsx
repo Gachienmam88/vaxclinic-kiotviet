@@ -49,17 +49,17 @@ export default function WelcomePage() {
           <div className="ml-auto flex items-center gap-6">
             <span className="hidden h-6 border-l border-[#d1d5db] lg:block" />
             <button type="button" className="text-[16px] font-medium hover:text-primary" onClick={() => setLogin(true)}>Đăng nhập</button>
-            <button type="button" className="h-10 rounded-full bg-primary px-5 text-[16px] font-semibold text-white hover:bg-[#0062d6]" onClick={() => setLogin(true)}>Vào cửa hàng</button>
+            <button type="button" className="h-10 rounded-full bg-primary px-5 text-[16px] font-semibold text-white hover:bg-primary-hover" onClick={() => setLogin(true)}>Vào cửa hàng</button>
           </div>
         </div>
       </header>
       <main className="mx-auto grid max-w-[1270px] grid-cols-1 items-center gap-10 px-4 pb-16 pt-[95px] lg:grid-cols-[1fr_485px]">
         <div>
           <h1 className="text-[46px] font-bold leading-[1.27] tracking-[-0.01em]">Phần mềm quản lý<br />phòng tiêm chủng</h1>
-          <p className="mt-5 max-w-[580px] text-[18px] leading-7 text-[#1f2937]">Bán vắc xin, kho theo lô – hạn dùng, công nợ, sổ quỹ, hóa đơn điện tử và sổ sách thuế cho mọi điểm tiêm.</p>
+          <p className="mt-5 max-w-[580px] text-[18px] leading-7 text-[#1f2937]">Bán vắc xin, kho theo lô – hạn dùng, công nợ, sổ quỹ, hóa đơn điện tử và sổ sách thuế cho mọi chi nhánh.</p>
           <div className="mt-12 flex flex-wrap gap-4">
             <button type="button" onClick={() => setLogin(true)}
-              className="h-16 w-[275px] rounded-full bg-primary text-[23px] font-bold text-white hover:bg-[#0062d6]">Đăng nhập</button>
+              className="h-16 w-[275px] rounded-full bg-primary text-[23px] font-bold text-white hover:bg-primary-hover">Đăng nhập</button>
             <a href="#tinh-nang" className="flex h-16 items-center gap-3 rounded-full bg-white pl-8 pr-2.5 text-[23px] font-bold text-primary">
               Khám phá <span className="flex size-11 items-center justify-center rounded-full border-2 border-primary"><Play className="ml-0.5 size-5 fill-primary" /></span></a>
           </div>

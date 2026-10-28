@@ -21,7 +21,8 @@ import java.util.UUID;
 /**
  * Tiền đặt cọc của đơn đặt hàng:
  * - Thu cọc: phiếu thu TT{mã đơn}[-n] (nguồn ORDER, không hạch toán doanh thu), sổ nợ PAYMENT (khách trả trước → nợ âm).
- * - Hủy đơn còn cọc: phiếu chi PC{mã đơn} hoàn tiền cho khách, sổ nợ REFUND (đưa nợ về như trước khi cọc).
+ * - Hủy đơn còn cọc: phiếu chi PC{mã đơn} hoàn tiền cho khách, sổ nợ REFUND (đưa nợ về như trước khi cọc);
+ *   hoặc giữ cọc làm tiền khách trả trước (không gọi refund: phiếu thu cọc giữ nguyên, nợ khách vẫn âm, đơn giữ số cọc).
  * - Tạo hóa đơn từ đơn: phân bổ các phiếu cọc vào hóa đơn (invoices.paid tăng), đơn → COMPLETED.
  *   Hủy hóa đơn đó: gỡ phân bổ, đơn mở lại "Đã xác nhận", tiền cọc vẫn thuộc đơn.
  */
@@ -55,25 +56,42 @@ public class OrderDepositLedger {
     }
 
     @Transactional(propagation = Propagation.MANDATORY)
-    public void refund(CustomerOrder o, String method, Actor actor) {
+    public void refund(CustomerOrder o, String method, UUID bankAccountId, Actor actor) {
         if (o.getDeposit().signum() <= 0) {
             return;
         }
         Instant now = Instant.now();
         String code = "PC" + o.getCode();
         var v = CashbookWriter.newVoucher(code, "PAYMENT", fundOf(method), "Chi Tiền trả khách", o.getDeposit());
+        v.setBankAccountId("TRANSFER".equals(method) || "CARD".equals(method) ? bankAccountId : null);
         fill(v, o, null, now, actor, "Hoàn tiền đặt cọc khi hủy đơn " + o.getCode());
         cashbook.save(v, List.of());
         debt.post(o.getCustomerId(), DebtLedger.DocType.REFUND, o.getId(), code, o.getDeposit(), "Hủy đơn " + o.getCode(), now);
         o.setDeposit(BigDecimal.ZERO);
     }
 
-    /** Kiểm tra trước khi xuất kho cho hóa đơn từ đơn đặt hàng; trả về tiền cọc sẽ trừ vào hóa đơn. */
-    public BigDecimal depositForInvoice(UUID orderId, UUID customerId, UUID branchId) {
+    /**
+     * Kiểm tra + giữ chỗ đơn cho hóa đơn invoiceId TRƯỚC khi xuất kho (máy khác đang lập hóa đơn cùng đơn → chặn);
+     * trả về tiền cọc sẽ trừ vào hóa đơn. Gửi lại cùng invoiceId vẫn qua được.
+     */
+    public BigDecimal depositForInvoice(UUID orderId, UUID invoiceId, UUID customerId, UUID branchId) {
         CustomerOrder o = orders.findById(orderId)
                 .orElseThrow(() -> BusinessException.badRequest("ORDER_NOT_FOUND", "Không tìm thấy đơn đặt hàng"));
         checkInvoiceable(o, customerId, branchId);
+        int claimed = jdbc.update("""
+                update customer_orders set invoicing_id = ?, invoicing_at = now()
+                where id = ? and status in ('DRAFT', 'CONFIRMED')
+                  and (invoicing_id is null or invoicing_id = ? or invoicing_at < now() - interval '2 minutes')""",
+                invoiceId, orderId, invoiceId);
+        if (claimed == 0) {
+            throw BusinessException.conflict("ORDER_BUSY", "Đơn " + o.getCode() + " đang được lập hóa đơn ở máy khác");
+        }
         return o.getDeposit();
+    }
+
+    /** Lập hóa đơn thất bại → bỏ giữ chỗ để lập lại được ngay. */
+    public void releaseClaim(UUID orderId, UUID invoiceId) {
+        jdbc.update("update customer_orders set invoicing_id = null where id = ? and invoicing_id = ?", orderId, invoiceId);
     }
 
     /** Trong transaction ghi hóa đơn (hóa đơn đã lưu, đã có phiếu thu TT nếu khách trả thêm). */
@@ -103,7 +121,7 @@ public class OrderDepositLedger {
         jdbc.update("delete from voucher_allocations where invoice_id = ? and voucher_id in "
                 + "(select id from cash_vouchers where source_type = 'ORDER')", inv.getId());
         inv.setPaid(inv.getPaid().subtract(allocated));
-        jdbc.update("update customer_orders set status = 'CONFIRMED', invoice_id = null where invoice_id = ?", inv.getId());
+        jdbc.update("update customer_orders set status = 'CONFIRMED', invoice_id = null, invoicing_id = null where invoice_id = ?", inv.getId());
     }
 
     /** Tiền cọc đơn đặt hàng đang phân bổ vào hóa đơn. */

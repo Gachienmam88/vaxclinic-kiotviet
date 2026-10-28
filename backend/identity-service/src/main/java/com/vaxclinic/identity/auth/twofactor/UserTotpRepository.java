@@ -23,6 +23,11 @@ public class UserTotpRepository {
         this.jdbc = jdbc;
     }
 
+    /** Id các user đã bật 2FA (bảng nhỏ — 1 truy vấn cho danh sách người dùng). */
+    public java.util.Set<UUID> findEnabledUserIds() {
+        return new java.util.HashSet<>(jdbc.queryForList("select user_id from user_totp where enabled", UUID.class));
+    }
+
     public Optional<TotpRow> find(UUID userId) {
         return query("select secret_enc, enabled, last_step, failed_attempts, locked_until from user_totp where user_id = ?", userId);
     }

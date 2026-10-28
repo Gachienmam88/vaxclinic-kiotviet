@@ -36,6 +36,8 @@ public class Role {
     @Column(nullable = false)
     private boolean system;
 
+    private String description;
+
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "role_permissions", joinColumns = @JoinColumn(name = "role_id"))
     @Column(name = "permission")

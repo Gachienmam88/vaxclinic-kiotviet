@@ -3,6 +3,7 @@ package com.vaxclinic.sales.order;
 import com.vaxclinic.common.error.BusinessException;
 import com.vaxclinic.sales.common.Actor;
 import com.vaxclinic.sales.common.SalesRules;
+import com.vaxclinic.sales.channel.SalesChannels;
 import com.vaxclinic.sales.customer.Customer;
 import com.vaxclinic.sales.customer.CustomerRepository;
 import com.vaxclinic.sales.invoice.InvoiceDtos.LineInput;
@@ -28,13 +29,19 @@ public class OrderService {
     private final CustomerRepository customers;
     private final OrderDepositLedger deposits;
     private final SalesRules rules;
+    private final SalesChannels channels;
 
     public OrderService(CustomerOrderRepository orders, CustomerRepository customers, OrderDepositLedger deposits,
-                        SalesRules rules) {
+                        SalesRules rules, SalesChannels channels) {
+        this.channels = channels;
         this.orders = orders;
         this.customers = customers;
         this.deposits = deposits;
         this.rules = rules;
+    }
+
+    public boolean exists(UUID id) {
+        return orders.existsById(id);
     }
 
     @Transactional
@@ -46,6 +53,7 @@ public class OrderService {
         actor.checkBranch(req.branchId());
         Instant now = Instant.now();
         rules.checkNotLocked(req.branchId(), now);
+        channels.resolve(req.salesChannel(), null);
         Customer customer = customer(req.customerId());
         var totals = InvoiceMath.totals(req.lines(), req.discount());
         var o = new CustomerOrder();
@@ -72,6 +80,7 @@ public class OrderService {
         if (o.getDeposit().signum() > 0 && !Objects.equals(o.getCustomerId(), req.customerId())) {
             throw BusinessException.badRequest("ORDER_HAS_DEPOSIT", "Đơn đã có tiền đặt cọc, không đổi khách hàng được");
         }
+        channels.resolve(req.salesChannel(), o.getSalesChannel());
         Customer customer = customer(req.customerId());
         var totals = InvoiceMath.totals(req.lines(), req.discount());
         BigDecimal paid = paidNow(req, totals, o.getDeposit());
@@ -97,12 +106,14 @@ public class OrderService {
         return o;
     }
 
-    /** Hủy đơn: tiền cọc (nếu có) hoàn lại khách bằng phiếu chi PC{mã đơn} ngay lúc hủy. */
+    /** Hủy đơn: tiền cọc (nếu có) hoàn lại khách bằng phiếu chi PC{mã đơn} ngay lúc hủy, hoặc giữ làm công nợ (CREDIT). */
     @Transactional
-    public CustomerOrder cancel(UUID id, String refundMethod, Actor actor) {
+    public CustomerOrder cancel(UUID id, String refundMethod, UUID bankAccountId, Actor actor) {
         CustomerOrder o = openForUpdate(id, actor);
         rules.checkNotLocked(o.getBranchId(), Instant.now());
-        deposits.refund(o, refundMethod, actor);
+        if (!"CREDIT".equals(refundMethod)) {
+            deposits.refund(o, refundMethod, bankAccountId, actor);
+        }
         o.setStatus("CANCELLED");
         o.setCancelledAt(Instant.now());
         return o;
@@ -140,6 +151,10 @@ public class OrderService {
         o.setDiscount(totals.discount());
         o.setTotal(totals.total());
         o.setNote(req.note());
+        o.setPriceBookId(req.priceBookId());
+        o.setPriceBookName(req.priceBookId() == null ? null : Actor.blankToNull(req.priceBookName()));
+        o.setSalesChannel(req.salesChannel() == null || req.salesChannel().isBlank() ? "DIRECT" : req.salesChannel().trim());
+        o.setExpectedDeliveryAt(req.expectedDeliveryAt());
         for (int i = 0; i < req.lines().size(); i++) {
             LineInput in = req.lines().get(i);
             var line = new CustomerOrderLine();

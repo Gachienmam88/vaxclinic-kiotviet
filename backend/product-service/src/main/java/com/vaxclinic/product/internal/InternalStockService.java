@@ -29,14 +29,18 @@ import java.util.UUID;
  * - SALE_CANCEL: hoàn đúng các lô của chứng từ bán hiện hành (SALE hoặc SALE_REPLACE cùng docId).
  * - SALE_REPLACE (sửa hóa đơn): hoàn lô của previousDocId + xuất lại theo dòng mới, CÙNG 1 transaction
  *   → thiếu hàng ở bản mới thì kho giữ nguyên như trước khi sửa.
- * - SALE_RETURN: nhập lại đúng các lô sales-service chỉ định (lotNumber + baseQuantity); SALE_RETURN_CANCEL: đảo lại.
+ * - SALE_RETURN: nhập lại đúng các lô sales-service chỉ định (lotNumber + baseQuantity); lô chưa có + có expiryDate
+ *   (trả nhanh) → tạo lô mới; SALE_RETURN_CANCEL: đảo lại.
  */
 @Service
 public class InternalStockService {
 
-    /** Bán: productId + unitId + quantity. Trả hàng: productId + lotNumber + baseQuantity. */
+    /**
+     * Bán: productId + unitId + quantity. Trả hàng: productId + lotNumber + baseQuantity;
+     * expiryDate chỉ dùng cho trả nhanh nhập lô MỚI (lô chưa có tại chi nhánh) — lô đã có thì phải trùng hạn.
+     */
     public record LineInput(UUID lineId, UUID productId, UUID unitId, BigDecimal quantity, String lotNumber,
-                            BigDecimal baseQuantity) {
+                            BigDecimal baseQuantity, LocalDate expiryDate) {
     }
 
     public record StockDocRequest(UUID docId, String docType, String docCode, UUID branchId, String partnerName,
@@ -60,15 +64,18 @@ public class InternalStockService {
     private final ProductLotRepository lots;
     private final StockBalanceRepository balances;
     private final StockMovementService stock;
+    private final SaleReturnLotExpiryResolver returnLots;
 
     public InternalStockService(JdbcTemplate jdbc, ObjectMapper json, ProductRepository products,
-                                ProductLotRepository lots, StockBalanceRepository balances, StockMovementService stock) {
+                                ProductLotRepository lots, StockBalanceRepository balances, StockMovementService stock,
+                                SaleReturnLotExpiryResolver returnLots) {
         this.jdbc = jdbc;
         this.json = json;
         this.products = products;
         this.lots = lots;
         this.balances = balances;
         this.stock = stock;
+        this.returnLots = returnLots;
     }
 
     @Transactional
@@ -141,9 +148,12 @@ public class InternalStockService {
             if (p.isLotManaged() && (line.lotNumber() == null || line.lotNumber().isBlank())) {
                 throw BusinessException.badRequest("LOT_REQUIRED", p.getName() + ": thiếu lô hàng trả");
             }
-            move(p, req, line.baseQuantity(), p.isLotManaged() ? line.lotNumber() : null, DocType.SALE_RETURN);
+            LocalDate expiry = p.isLotManaged() ? returnLots.expiry(p, req.branchId(), line.lotNumber(), line.expiryDate()) : null;
+            String lot = p.isLotManaged() ? line.lotNumber().trim() : null;
+            stock.apply(p, new Movement(req.branchId(), line.baseQuantity(), lot, expiry, DocType.SALE_RETURN,
+                    req.docId(), req.docCode(), null, req.partnerName(), req.userId()));
             results.add(new LineResult(line.lineId(), p.getId(), p.getCost(), BigDecimal.ONE,
-                    List.of(new Allocation(line.lotNumber(), null, line.baseQuantity()))));
+                    List.of(new Allocation(lot, expiry, line.baseQuantity()))));
         }
         return new StockDocResult(req.docId(), req.docType(), results);
     }

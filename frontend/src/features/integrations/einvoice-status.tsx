@@ -3,9 +3,9 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { FileCheck2 } from "lucide-react";
 import { toast } from "sonner";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { api, errorMessage } from "@/lib/api-client";
+import { StatusBadge } from "@/features/sales/invoice-list-kit";
 import { useEInvoiceRecords, type EInvoiceRecord } from "./integration-queries";
 
 /** Trạng thái HĐĐT + nút "Phát hành HĐĐT" trong chi tiết hóa đơn bán. Phát hành lại sau lỗi dùng lại RefID cũ (MISA chống trùng). */
@@ -26,17 +26,17 @@ export function EInvoiceStatus({ invoiceId, active }: { invoiceId: string; activ
   if (rec?.status === "PUBLISHED") {
     return (
       <span className="flex items-center gap-2 text-sm">
-        <Badge className="bg-green-100 text-green-700">Đã phát hành HĐĐT</Badge>
+        <StatusBadge tone="green">Đã phát hành HĐĐT</StatusBadge>
         Ký hiệu {rec.inv_series} · Số {rec.inv_no}{rec.inv_code && ` · Mã CQT ${rec.inv_code}`}
       </span>
     );
   }
   return (
     <span className="flex items-center gap-2 text-sm">
-      {rec?.status === "FAILED" && <Badge variant="destructive" title={rec.error ?? ""}>Phát hành lỗi</Badge>}
+      {rec?.status === "FAILED" && <StatusBadge tone="red" title={rec.error ?? ""}>Phát hành lỗi</StatusBadge>}
       {rec?.error && <span className="max-w-md truncate text-xs text-destructive" title={rec.error}>{rec.error}</span>}
       {active && (
-        <Button size="sm" variant="outline" disabled={publish.isPending} onClick={() => publish.mutate()}>
+        <Button size="sm" variant="outline" className="h-7 rounded-md border-primary text-primary hover:text-primary" disabled={publish.isPending} onClick={() => publish.mutate()}>
           <FileCheck2 className="size-4" /> {rec ? "Phát hành lại" : "Phát hành HĐĐT"}
         </Button>
       )}

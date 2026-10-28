@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { Lightbulb } from "lucide-react";
+import { useT } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { settingsNs } from "@/messages/settings";
 
 /** Bảng trong thẻ thiết lập (Người dùng, Chi nhánh, Lịch sử thao tác...): header nền xám 12px, dòng 13px. */
 export const SETTINGS_TABLE = {
@@ -11,6 +13,20 @@ export const SETTINGS_TABLE = {
   row: "border-b border-[#eceef1] align-top [&_td]:px-2 [&_td]:py-3",
   empty: "py-8 text-center text-muted-foreground",
 };
+
+/** Tab gạch chân kiểu KiotViet (chữ 13px, tab đang chọn chữ + gạch xanh) — truyền vào TabsList/TabsTrigger. */
+export const SETTINGS_TABS = {
+  list: "h-11 w-full justify-start gap-4 border-b border-[#eceef1] px-5",
+  trigger: "flex-none px-0.5 text-[13px] font-normal text-foreground data-active:font-medium data-active:text-primary after:!bg-primary",
+};
+
+/** Nhãn trạng thái nhỏ: xanh nhạt = đang hoạt động, xám = ngừng. */
+export function StatusPill({ on, children }: { on: boolean; children: React.ReactNode }) {
+  return (
+    <span className={cn("inline-block rounded px-1.5 py-0.5 text-[11px] leading-4 whitespace-nowrap",
+      on ? "bg-primary-tint text-primary" : "bg-muted text-muted-foreground")}>{children}</span>
+  );
+}
 
 /** Thẻ nhóm thiết lập (VD "Quản lý đơn hàng"); id dùng cho mục lục bên phải. */
 export function SettingsCard({ id, title, description, action, children, className }: {
@@ -50,9 +66,10 @@ export function SettingRow({ title, description, control, children }: {
 
 /** Ô "Gợi ý" bên phải (màn dạng bảng: Người dùng, Chi nhánh, Lịch sử thao tác). */
 export function SettingsHint({ children }: { children: React.ReactNode }) {
+  const t = useT(settingsNs);
   return (
     <div className="rounded-lg bg-background p-3 text-xs leading-[18px]">
-      <p className="mb-2 flex items-center gap-1.5 font-medium text-primary"><Lightbulb className="size-3.5" /> Gợi ý</p>
+      <p className="mb-2 flex items-center gap-1.5 font-medium text-primary"><Lightbulb className="size-3.5" /> {t("common.hint")}</p>
       <div className="text-foreground/80">{children}</div>
     </div>
   );

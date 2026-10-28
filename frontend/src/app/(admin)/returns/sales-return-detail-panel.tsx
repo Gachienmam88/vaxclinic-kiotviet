@@ -4,7 +4,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DocCodeLink } from "@/components/ui/doc-code-link";
+import { DetailTabsList } from "@/components/ui/detail-tabs-list";
+import { Tabs, TabsContent, TabsTrigger } from "@/components/ui/tabs";
 import { DETAIL_BTN, DETAIL_PANEL, DETAIL_TAB, DETAIL_TABS_LIST, StatusBadge, SUB_HEAD } from "@/features/sales/invoice-list-kit";
 import { SALES_KEYS } from "@/features/sales/sales-queries";
 import { api, errorMessage } from "@/lib/api-client";
@@ -20,7 +22,7 @@ type Detail = SalesReturnItem & { createdByName: string; discount: number; note:
   lines: { id: string; productCode: string; productName: string; unitName: string; quantity: number; unitPrice: number; amount: number; lots: string | null }[] };
 
 /** Chi tiết phiếu khách trả hàng mở dưới dòng (bố cục giống chi tiết hóa đơn). */
-export function SalesReturnDetailPanel({ id }: { id: string }) {
+export function SalesReturnDetailPanel({ id, onClose }: { id: string; onClose?: () => void }) {
   const qc = useQueryClient();
   const { can } = useCurrentUser();
   const { data: r } = useQuery({ queryKey: ["sales-return", id], queryFn: () => api<Detail>(`/sales-returns/${id}`) });
@@ -35,7 +37,7 @@ export function SalesReturnDetailPanel({ id }: { id: string }) {
   return (
     <div className={DETAIL_PANEL}>
       <Tabs defaultValue="info" className="gap-0">
-        <TabsList variant="line" className={DETAIL_TABS_LIST}><TabsTrigger value="info" className={DETAIL_TAB}>Thông tin</TabsTrigger></TabsList>
+        <DetailTabsList onActiveTabClick={onClose} variant="line" className={DETAIL_TABS_LIST}><TabsTrigger value="info" className={DETAIL_TAB}>Thông tin</TabsTrigger></DetailTabsList>
         <TabsContent value="info">
           <div className="space-y-4 p-4">
             <div className="flex flex-wrap items-center gap-3">
@@ -45,14 +47,14 @@ export function SalesReturnDetailPanel({ id }: { id: string }) {
             <div className="grid grid-cols-1 gap-x-8 gap-y-2 text-xs md:grid-cols-3">
               <div><span className="inline-block w-24">Người tạo:</span>{r.createdByName}</div>
               <div><span className="inline-block w-24">Thời gian:</span>{formatDateTime(r.returnedAt)}</div>
-              <div><span className="inline-block w-24">Mã hóa đơn:</span><span className="text-primary">{r.invoiceCode}</span></div>
+              <div><span className="inline-block w-24">Mã hóa đơn:</span><DocCodeLink code={r.invoiceCode} kind="/invoices" /></div>
             </div>
             <table className="w-full text-[13px]">
               <thead className={SUB_HEAD}><tr><th className="pl-2.5">Mã hàng</th><th>Tên hàng</th><th>Lô nhập lại</th>
                 <th className="text-right">Số lượng</th><th className="text-right">Giá trả</th><th className="pr-2.5 text-right">Thành tiền</th></tr></thead>
               <tbody>{r.lines.map((l) => (
                 <tr key={l.id} className="border-b border-[#eff0f3] [&_td]:px-2 [&_td]:py-2.5">
-                  <td className="text-primary">{l.productCode}</td><td>{l.productName} ({l.unitName})</td><td>{l.lots}</td>
+                  <td><DocCodeLink code={l.productCode} kind="/products" /></td><td>{l.productName} ({l.unitName})</td><td>{l.lots}</td>
                   <td className="text-right">{formatNumber(l.quantity)}</td><td className="text-right">{formatMoney(l.unitPrice)}</td>
                   <td className="text-right font-bold">{formatMoney(l.amount)}</td></tr>))}</tbody>
             </table>

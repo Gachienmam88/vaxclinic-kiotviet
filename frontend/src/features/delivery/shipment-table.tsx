@@ -51,7 +51,7 @@ export function ShipmentTable({ data, selected, onSelect, onWiden, compact, link
           {data && !items.length && <ListEmptyRow cols={COLS} what="vận đơn" onWiden={onWiden} compact={compact} />}
           {items.map((s) => (
             <Fragment key={s.id}>
-              <TableRow className={cn("cursor-pointer", expanded === s.id && "bg-[#e3f0fc] hover:bg-[#e3f0fc]", s.status === "CANCELLED" && "text-muted-foreground")}
+              <TableRow className={cn("cursor-pointer", expanded === s.id && "bg-primary-tint hover:bg-primary-tint", s.status === "CANCELLED" && "text-muted-foreground")}
                 onClick={() => toggleRow(s.id)}>
                 <TableCell className="pl-4" onClick={(e) => e.stopPropagation()}>
                   {pick && <input type="checkbox" aria-label={`Chọn ${s.code}`} className="accent-primary" checked={selected.includes(s.id)}

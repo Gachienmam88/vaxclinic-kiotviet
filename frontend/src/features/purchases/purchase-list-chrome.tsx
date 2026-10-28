@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { FileOutput, Inbox, Plus, Search } from "lucide-react";
+import { FileOutput, Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { ListEmptyState } from "@/components/ui/list-empty-state";
 
 /** Hàng tiêu đề bảng danh sách: nền xanh nhạt kiểu KiotViet. */
-export const LIST_HEADER_ROW = "bg-[#e3f0fc] hover:bg-[#e3f0fc]";
+export const LIST_HEADER_ROW = "bg-primary-tint hover:bg-primary-tint";
 /** Nút viền xanh ("+ Nhập hàng", "+ Trả hàng nhập"...). */
 export const OUTLINE_BLUE_BTN = "h-[30px] rounded-md border-primary bg-background px-3 text-primary hover:bg-primary/5 hover:text-primary";
 /** Nút viền xám ("Xuất file", "Sao chép"...). */

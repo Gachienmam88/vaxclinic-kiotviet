@@ -8,6 +8,7 @@ import { formatMoney, parseNumber } from "@/lib/format";
 import { useHrMutation } from "./hr-queries";
 import type { CommissionTable } from "./hr-types";
 import { CommissionRateCell, type Rate } from "./commission-rate-cell";
+import { DocCodeLink } from "@/components/ui/doc-code-link";
 
 type RuleItem = { productId: string; rateType: "PERCENT" | "AMOUNT"; value: number | null };
 const filterBox = "h-7 w-full border-0 border-b border-[#d9dbe0] bg-transparent px-0.5 text-[12px] outline-none placeholder:text-muted-foreground focus:border-primary";
@@ -51,7 +52,7 @@ export function CommissionProductGrid({ products, tables, rates, codeQ, nameQ, o
     <div className="overflow-x-auto rounded-lg bg-white p-2.5">
       <table className="w-full text-[13px]">
         <thead>
-          <tr className="bg-[#e3f0fc] text-left">
+          <tr className="bg-primary-tint text-left">
             <th className={`${th} w-8`}>
               <input type="checkbox" aria-label="Chọn tất cả" className="size-4 accent-primary" checked={allChecked}
                 onChange={(e) => onChecked(e.target.checked ? products.map((p) => p.id) : [])} />
@@ -83,7 +84,7 @@ export function CommissionProductGrid({ products, tables, rates, codeQ, nameQ, o
             <tr key={p.id} className="border-b border-[#eceef1] hover:bg-[#f3f6fa] [&_td]:px-2 [&_td]:py-2">
               <td><input type="checkbox" aria-label={`Chọn ${p.code}`} className="size-4 accent-primary" checked={checked.includes(p.id)}
                 onChange={(e) => onChecked(e.target.checked ? [...checked, p.id] : checked.filter((x) => x !== p.id))} /></td>
-              <td>{p.code}</td><td>{p.name}</td><td className="text-right">{p.unitName}</td>
+              <td><DocCodeLink code={p.code} /></td><td>{p.name}</td><td className="text-right">{p.unitName}</td>
               <td className="text-right">{formatMoney(p.price)}</td><td className="text-right">{formatMoney(p.cost)}</td>
               <td className="text-right">{formatMoney(p.price - p.cost)}</td>
               {tables.map((t) => {

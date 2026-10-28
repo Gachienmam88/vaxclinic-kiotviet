@@ -1,8 +1,10 @@
 "use client";
 
 import { ChevronDown } from "lucide-react";
+import { DocCodeLink } from "@/components/ui/doc-code-link";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ListEmptyRow } from "@/components/ui/list-empty-state";
 import { LIST_HEADER_ROW } from "@/features/purchases/purchase-list-chrome";
 import type { PageResponse } from "@/lib/api-client";
 import { formatMoney, formatNumber } from "@/lib/format";
@@ -54,12 +56,10 @@ export function PriceBookTable({ data, isLoading, books, editable, onFormula, on
           {isLoading && (
             <TableRow><TableCell colSpan={cols} className="py-8 text-center text-muted-foreground">Đang tải...</TableCell></TableRow>
           )}
-          {data && !data.items.length && (
-            <TableRow><TableCell colSpan={cols} className="py-8 text-center text-muted-foreground">Không tìm thấy hàng hóa nào</TableCell></TableRow>
-          )}
+          {data && !data.items.length && <ListEmptyRow cols={cols} what="hàng hóa" />}
           {data?.items.map((r) => (
             <TableRow key={r.unitId}>
-              <TableCell className="pl-4">{r.code}</TableCell>
+              <TableCell className="pl-4"><DocCodeLink code={r.code} /></TableCell>
               <TableCell className="max-w-60 min-w-40 whitespace-normal">
                 {r.name} <span className="text-muted-foreground">({r.unitName})</span>
               </TableCell>

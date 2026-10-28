@@ -14,7 +14,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -31,11 +30,14 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/hr/settings")
 @PreAuthorize("hasAuthority('hr.manage')")
-@Validated
 public class HrSettingsController {
 
     public record AllHrSettings(Timekeeping timekeeping, Payroll payroll, List<BranchWorkdays> workdays, List<Holiday> holidays,
                                 Mobile mobile, List<Template> templates) {
+    }
+
+    /** Danh sách bọc trong {"items": [...]} để @Valid kiểm tra từng phần tử (lỗi trả 400 như các form khác). */
+    public record Items<T>(@jakarta.validation.constraints.NotNull List<@Valid T> items) {
     }
 
     private final HrSettingsService settings;
@@ -86,15 +88,16 @@ public class HrSettingsController {
     }
 
     @PutMapping("/workdays")
-    public AllHrSettings saveWorkdays(@RequestBody List<@Valid BranchWorkdays> req, @AuthenticationPrincipal Jwt jwt) {
+    public AllHrSettings saveWorkdays(@Valid @RequestBody Items<BranchWorkdays> body, @AuthenticationPrincipal Jwt jwt) {
+        var req = body.items();
         var clean = req.stream().map(w -> new BranchWorkdays(w.branchId(), new HashSet<>(w.days()).stream().sorted().toList())).toList();
         return save(jwt, "hr.workdays", clean, "Thiết lập ngày làm việc của " + clean.size() + " chi nhánh");
     }
 
     @PutMapping("/holidays")
-    public AllHrSettings saveHolidays(@RequestBody List<@Valid Holiday> req, @AuthenticationPrincipal Jwt jwt) {
+    public AllHrSettings saveHolidays(@Valid @RequestBody Items<Holiday> body, @AuthenticationPrincipal Jwt jwt) {
         var clean = new ArrayList<Holiday>();
-        for (Holiday h : req) {
+        for (Holiday h : body.items()) {
             if (h.to().isBefore(h.from())) {
                 throw BusinessException.badRequest("INVALID_HOLIDAY", "Ngày kết thúc kỳ lễ tết phải sau ngày bắt đầu");
             }
@@ -110,8 +113,8 @@ public class HrSettingsController {
     }
 
     @PutMapping("/templates")
-    public AllHrSettings saveTemplates(@RequestBody List<@Valid Template> req, @AuthenticationPrincipal Jwt jwt) {
-        var clean = req.stream().map(t -> new Template(t.id() == null ? UUID.randomUUID() : t.id(), t.name().trim(), t.salaryType(),
+    public AllHrSettings saveTemplates(@Valid @RequestBody Items<Template> body, @AuthenticationPrincipal Jwt jwt) {
+        var clean = body.items().stream().map(t -> new Template(t.id() == null ? UUID.randomUUID() : t.id(), t.name().trim(), t.salaryType(),
                 t.salaryAmount(), t.overtimePercent(), t.commissionTableId(),
                 t.allowances() == null ? List.of() : t.allowances(), t.deductions() == null ? List.of() : t.deductions())).toList();
         return save(jwt, "hr.templates", clean, "Thiết lập mẫu lương: " + clean.stream().map(Template::name).toList());

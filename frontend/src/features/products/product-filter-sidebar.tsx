@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { errorMessage } from "@/lib/api-client";
 import { useCurrentUser } from "@/lib/use-current-user";
@@ -13,6 +12,7 @@ import {
   flattenCategoryTree, promptCreateCategory, useCategories, useTaxRates, type ProductFilters,
 } from "./product-queries";
 import type { StockFilter } from "./product-types";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
 
 const STOCK_OPTIONS: { value: StockFilter; label: string }[] = [
   { value: "ALL", label: "Tất cả" },
@@ -108,13 +108,9 @@ export function ProductFilterSidebar({ filters, onChange }: Props) {
             onSelect={() => { setCustomTime(false); set({ createdFrom: "", createdTo: "" }); }} />
           <Radio label="Tùy chỉnh" checked={customTime} onSelect={() => setCustomTime(true)} />
           {customTime && (
-            <div className="mt-1 grid gap-1.5 text-xs text-muted-foreground">
-              <label className="grid gap-1">Từ ngày
-                <Input type="date" value={filters.createdFrom} onChange={(e) => set({ createdFrom: e.target.value })} />
-              </label>
-              <label className="grid gap-1">Đến ngày
-                <Input type="date" value={filters.createdTo} onChange={(e) => set({ createdTo: e.target.value })} />
-              </label>
+            <div className="mt-1">
+              <DateRangePicker placeholder="Chọn khoảng ngày" value={{ from: filters.createdFrom, to: filters.createdTo }}
+                onChange={(r) => set({ createdFrom: r.from, createdTo: r.to })} />
             </div>
           )}
         </div>

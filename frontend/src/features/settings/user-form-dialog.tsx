@@ -10,14 +10,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { api, errorMessage } from "@/lib/api-client";
-import type { User } from "@/lib/use-current-user";
+import { useCurrentUser, type User } from "@/lib/use-current-user";
+import { ResetTwoFactorDialog } from "./reset-two-factor-dialog";
 import { useBranches, useRoles } from "./settings-queries";
 
 type Props = { open: boolean; onOpenChange: (open: boolean) => void; user?: User };
 
-/** Thêm / sửa người dùng: vai trò + các điểm tiêm được làm việc; đặt lại mật khẩu khi sửa. */
+/** Thêm / sửa người dùng: vai trò + các điểm tiêm được làm việc; đặt lại mật khẩu / xác thực 2 lớp khi sửa. */
 export function UserFormDialog({ open, onOpenChange, user }: Props) {
   const qc = useQueryClient();
+  const { data: me } = useCurrentUser();
+  const [resetting2fa, setResetting2fa] = useState(false);
+  // Không tự đặt lại cho mình (Tài khoản → Xác thực 2 lớp); 2FA của chủ gian hàng chỉ chủ gian hàng tự xử lý.
+  const canReset2fa = !!user?.twoFactorEnabled && !user.owner && user.id !== me?.user.id;
   const { data: roles = [] } = useRoles();
   const { data: branches = [] } = useBranches();
   const [form, setForm] = useState({
@@ -88,7 +93,7 @@ export function UserFormDialog({ open, onOpenChange, user }: Props) {
             </Select>
           </div>
           <div className="col-span-2 grid gap-1.5">
-            <Label>Điểm tiêm được làm việc</Label>
+            <Label>Chi nhánh được làm việc</Label>
             <div className="grid grid-cols-2 gap-2 rounded-md border p-2">
               {branches.map((b) => (
                 <label key={b.id} className="flex items-center gap-2 text-sm">
@@ -107,9 +112,15 @@ export function UserFormDialog({ open, onOpenChange, user }: Props) {
           )}
         </form>
         <DialogFooter>
+          {canReset2fa && (
+            <Button variant="ghost" className="mr-auto text-primary" onClick={() => setResetting2fa(true)}>Đặt lại xác thực 2 lớp</Button>
+          )}
           <Button variant="outline" onClick={() => onOpenChange(false)}>Bỏ qua</Button>
           <Button type="submit" form="user-form" disabled={save.isPending || !form.roleId}>Lưu</Button>
         </DialogFooter>
+        {resetting2fa && user && (
+          <ResetTwoFactorDialog user={user} onOpenChange={setResetting2fa} onDone={() => onOpenChange(false)} />
+        )}
       </DialogContent>
     </Dialog>
   );

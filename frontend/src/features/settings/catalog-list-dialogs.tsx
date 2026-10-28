@@ -42,10 +42,12 @@ export function CategoryManagerDialog({ onClose }: { onClose: () => void }) {
         <DialogHeader><DialogTitle>Nhóm hàng</DialogTitle></DialogHeader>
         <div className="flex gap-2">
           <Input placeholder="Tên nhóm hàng mới" value={name} onChange={(e) => setName(e.target.value)} />
-          <NativeSelect className="w-44" value={parentId} onChange={(e) => setParentId(e.target.value)}>
-            <option value="">-- Nhóm cha --</option>
-            {tree.map((c) => <option key={c.id} value={c.id}>{"  ".repeat(c.depth)}{c.name}</option>)}
-          </NativeSelect>
+          <div className="w-44 shrink-0">
+            <NativeSelect value={parentId} onChange={(e) => setParentId(e.target.value)}>
+              <option value="">-- Nhóm cha --</option>
+              {tree.map((c) => <option key={c.id} value={c.id}>{"  ".repeat(c.depth)}{c.name}</option>)}
+            </NativeSelect>
+          </div>
           <Button disabled={!name.trim() || add.isPending} onClick={() => add.mutate()}><Plus className="size-4" /> Thêm</Button>
         </div>
         <div className="divide-y rounded-md border text-sm">

@@ -32,7 +32,7 @@ function Change({ value, sub }: { value: number | null; sub: string }) {
   return (
     <Kpi label="Doanh thu thuần" sub={sub}
       icon={<Icon className={cn("size-[18px]", up ? "text-[#16a34a]" : "text-[#e5372b]")} strokeWidth={2.2} aria-hidden />}
-      value={value == null ? "—" : `${value > 0 ? "" : ""}${value.toFixed(2)}%`} />
+      value={value == null ? "—" : `${value.toFixed(2)}%`} />
   );
 }
 

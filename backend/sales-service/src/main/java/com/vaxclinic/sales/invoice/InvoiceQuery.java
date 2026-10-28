@@ -1,6 +1,8 @@
 package com.vaxclinic.sales.invoice;
 
+import com.vaxclinic.common.address.AdminUnitCodes;
 import com.vaxclinic.sales.customer.CustomerRepository;
+import com.vaxclinic.sales.delivery.ShipmentInvoiceHooks;
 import com.vaxclinic.sales.invoice.InvoiceDtos.InvoiceListItem;
 import com.vaxclinic.sales.invoice.InvoiceDtos.InvoiceListResponse;
 import com.vaxclinic.sales.invoice.InvoiceDtos.InvoiceResponse;
@@ -12,7 +14,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -21,15 +22,35 @@ import java.util.UUID;
 @Component
 public class InvoiceQuery {
 
+    /**
+     * statuses = trạng thái lưu (COMPLETED / CANCELLED); states = trạng thái hiển thị KiotViet (PROCESSING / COMPLETED /
+     * FAILED_DELIVERY / CANCELLED); deliveries = DELIVERY / NONE; returnStates = HAS / NONE;
+     * einvoiceStatuses = NONE / PUBLISHED / ACCEPTED / FAILED; einvoiceNatures = ORIGINAL / ADJUST / REPLACE.
+     */
     public record Filter(String q, List<String> statuses, Instant from, Instant to, UUID createdBy, UUID sellerId,
-                         List<String> paymentMethods, UUID customerId, UUID branchId, int page, int size) {
+                         List<String> paymentMethods, UUID customerId, UUID branchId, int page, int size,
+                         List<UUID> ids, List<String> states, List<String> deliveries, List<String> returnStates,
+                         List<String> einvoiceStatuses, List<String> einvoiceNatures, String customerQ, String productQ,
+                         String noteQ) {
+
+        /** Bộ lọc cũ (dashboard / tab bán hàng của khách) — không dùng các lọc mới. */
+        public Filter(String q, List<String> statuses, Instant from, Instant to, UUID createdBy, UUID sellerId,
+                      List<String> paymentMethods, UUID customerId, UUID branchId, int page, int size) {
+            this(q, statuses, from, to, createdBy, sellerId, paymentMethods, customerId, branchId, page, size,
+                    null, null, null, null, null, null, null, null, null);
+        }
     }
 
     private final NamedParameterJdbcTemplate jdbc;
     private final InvoiceRepository invoices;
     private final CustomerRepository customers;
+    private final ShipmentInvoiceHooks shipments;
+    private final EInvoiceLookupClient einvoices;
 
-    public InvoiceQuery(NamedParameterJdbcTemplate jdbc, InvoiceRepository invoices, CustomerRepository customers) {
+    public InvoiceQuery(NamedParameterJdbcTemplate jdbc, InvoiceRepository invoices, CustomerRepository customers,
+                        ShipmentInvoiceHooks shipments, EInvoiceLookupClient einvoices) {
+        this.einvoices = einvoices;
+        this.shipments = shipments;
         this.jdbc = jdbc;
         this.invoices = invoices;
         this.customers = customers;
@@ -37,29 +58,21 @@ public class InvoiceQuery {
 
     public InvoiceListResponse search(Filter f) {
         var p = new MapSqlParameterSource();
-        var w = new StringBuilder(" from invoices i left join customers c on c.id = i.customer_id where 1=1");
-        if (f.q() != null && !f.q().isBlank()) {
-            w.append(" and (i.code ilike :q or i.customer_name ilike :q or c.code ilike :q or c.phone ilike :q)");
-            p.addValue("q", "%" + f.q().trim() + "%");
-        }
-        add(w, p, f.statuses() != null && !f.statuses().isEmpty(), " and i.status in (:statuses)", "statuses", f.statuses());
-        add(w, p, f.from() != null, " and i.sold_at >= :from", "from", f.from() == null ? null : Timestamp.from(f.from()));
-        add(w, p, f.to() != null, " and i.sold_at < :to", "to", f.to() == null ? null : Timestamp.from(f.to()));
-        add(w, p, f.createdBy() != null, " and i.created_by = :createdBy", "createdBy", f.createdBy());
-        add(w, p, f.sellerId() != null, " and i.seller_id = :sellerId", "sellerId", f.sellerId());
-        add(w, p, f.paymentMethods() != null && !f.paymentMethods().isEmpty(), " and i.payment_method in (:methods)",
-                "methods", f.paymentMethods());
-        add(w, p, f.customerId() != null, " and i.customer_id = :customerId", "customerId", f.customerId());
-        add(w, p, f.branchId() != null, " and i.branch_id = :branchId", "branchId", f.branchId());
+        boolean needEInvoices = (f.einvoiceStatuses() != null && !f.einvoiceStatuses().isEmpty())
+                || (f.einvoiceNatures() != null && !f.einvoiceNatures().isEmpty());
+        String w = InvoiceFilterSql.where(f, p, needEInvoices ? einvoices.idsByStatus() : null);
         var agg = jdbc.queryForMap("select count(*) cnt, coalesce(sum(i.subtotal),0) sub, coalesce(sum(i.discount),0) disc,"
                 + " coalesce(sum(i.total),0) tot, coalesce(sum(i.paid),0) paid" + w, p);
         p.addValue("limit", f.size()).addValue("offset", (long) f.page() * f.size());
-        var items = jdbc.query("select i.*, c.code customer_code" + w + " order by i.sold_at desc limit :limit offset :offset", p,
+        var items = jdbc.query("select i.*, c.code customer_code, " + InvoiceFilterSql.STATE + " state,"
+                + " (select string_agg(r.code, ', ' order by r.created_at) from sales_returns r where r.invoice_id = i.id"
+                + " and r.status = 'COMPLETED') return_codes" + w + " order by i.sold_at desc limit :limit offset :offset", p,
                 (rs, n) -> new InvoiceListItem(rs.getObject("id", UUID.class), rs.getString("code"),
                         rs.getTimestamp("sold_at").toInstant(), rs.getString("customer_code"), rs.getString("customer_name"),
                         rs.getString("seller_name"), rs.getBigDecimal("subtotal"), rs.getBigDecimal("discount"),
                         rs.getBigDecimal("total"), rs.getBigDecimal("paid"), rs.getString("status"),
-                        rs.getString("payment_method")));
+                        rs.getString("payment_method"), rs.getString("state"), rs.getString("sale_mode"),
+                        rs.getString("return_codes")));
         return new InvoiceListResponse(items, ((Number) agg.get("cnt")).longValue(), f.page(), f.size(),
                 (BigDecimal) agg.get("sub"), (BigDecimal) agg.get("disc"), (BigDecimal) agg.get("tot"), (BigDecimal) agg.get("paid"));
     }
@@ -96,7 +109,13 @@ public class InvoiceQuery {
                 customer == null ? null : customer.getPhone(), inv.getSellerId(), inv.getSellerName(),
                 inv.getCreatedByName(), inv.getSoldAt(), inv.getStatus(), inv.getSaleMode(), inv.getSubtotal(),
                 inv.getDiscount(), inv.getTotal(), inv.getPaid(), inv.getPaymentMethod(), inv.getNote(), inv.isOffline(),
-                inv.getRevision(), lines, payments);
+                inv.getRevision(), lines, payments, inv.getOrderId(), inv.getOrderId() == null ? null : jdbc.queryForObject(
+                        "select code from customer_orders where id = :id", new MapSqlParameterSource("id", inv.getOrderId()), String.class),
+                inv.getPriceBookId(), inv.getPriceBookName(), inv.getSalesChannel(), jdbc.queryForObject(
+                        "select coalesce((select name from sales_channels where code = :c), :c)",
+                        new MapSqlParameterSource("c", inv.getSalesChannel()), String.class), shipments.info(id),
+                customer == null ? null : AdminUnitCodes.joinAddress(customer.getAddress(), customer.getWard(), customer.getProvince()),
+                inv.einvoiceBuyer());
     }
 
     /** 10 lần bán gần nhất của 1 hàng; có khách thì lấy giá đã bán cho khách đó trước. */
@@ -110,12 +129,5 @@ public class InvoiceQuery {
                 limit 10""", p, (rs, n) -> new InvoiceDtos.RecentPrice(rs.getString("code"),
                 rs.getTimestamp("sold_at").toInstant(), rs.getString("customer_name"), rs.getBigDecimal("quantity"),
                 rs.getBigDecimal("price")));
-    }
-
-    private static void add(StringBuilder w, MapSqlParameterSource p, boolean when, String sql, String name, Object value) {
-        if (when) {
-            w.append(sql);
-            p.addValue(name, value);
-        }
     }
 }

@@ -32,13 +32,14 @@ public class SupplierListQuery {
             from supplier_debt_docs d where d.status = 'ACTIVE'""";
 
     public record Filter(String q, UUID groupId, Boolean active, BigDecimal buyFrom, BigDecimal buyTo, Instant from,
-                         Instant to, BigDecimal debtFrom, BigDecimal debtTo, int page, int size) {
+                         Instant to, BigDecimal debtFrom, BigDecimal debtTo, String docCode, int page, int size) {
     }
 
     public record SupplierRow(UUID id, String code, String name, String phone, String email, String address,
                               String province, String ward, UUID groupId, String groupName, String note,
                               String companyName, String taxCode, String idNumber, boolean active, UUID branchId,
-                              String createdByName, Instant createdAt, BigDecimal debt, BigDecimal totalBuy) {
+                              String createdByName, Instant createdAt, BigDecimal debt, BigDecimal totalBuy,
+                              String provinceCode, String wardCode) {
     }
 
     public record SupplierPage(List<SupplierRow> items, long total, int page, int size, BigDecimal sumDebt,
@@ -51,7 +52,7 @@ public class SupplierListQuery {
             rs.getString("group_name"), rs.getString("note"), rs.getString("company_name"), rs.getString("tax_code"),
             rs.getString("id_number"), rs.getBoolean("active"), rs.getObject("branch_id", UUID.class),
             rs.getString("created_by_name"), rs.getTimestamp("created_at").toInstant(), rs.getBigDecimal("debt"),
-            rs.getBigDecimal("total_buy"));
+            rs.getBigDecimal("total_buy"), rs.getString("province_code"), rs.getString("ward_code"));
 
     private final NamedParameterJdbcTemplate jdbc;
 
@@ -74,6 +75,10 @@ public class SupplierListQuery {
         if (f.q() != null && !f.q().isBlank()) {
             where.append(" and (s.code ilike :q or s.name ilike :q or s.phone like :q or s.tax_code like :q)");
             p.addValue("q", "%" + f.q().trim().replace("%", "\\%").replace("_", "\\_") + "%");
+        }
+        if (f.docCode() != null && !f.docCode().isBlank()) {
+            where.append(" and exists (select 1 from supplier_debt_docs x where x.supplier_id = s.id and upper(x.code) = upper(:docCode))");
+            p.addValue("docCode", f.docCode().trim());
         }
         if (f.groupId() != null) {
             where.append(" and s.group_id = :groupId");

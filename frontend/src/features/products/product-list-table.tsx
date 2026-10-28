@@ -2,6 +2,7 @@
 
 import { Fragment } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ListEmptyRow } from "@/components/ui/list-empty-state";
 import { formatMoney, formatNumber } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { ProductDetailPanel } from "./product-detail-panel";
@@ -23,7 +24,7 @@ export function ProductListTable({ data, isLoading, expanded, onToggle, onEdit }
     <div className="overflow-x-auto rounded-lg bg-background">
       <Table>
         <TableHeader>
-          <TableRow className="bg-[#e3f0fc] hover:bg-[#e3f0fc]">
+          <TableRow className="bg-primary-tint hover:bg-primary-tint">
             <TableHead className="w-28 pl-4">Mã hàng</TableHead>
             <TableHead>Tên hàng</TableHead>
             <TableHead>Tên viết tắt</TableHead>
@@ -35,22 +36,20 @@ export function ProductListTable({ data, isLoading, expanded, onToggle, onEdit }
           </TableRow>
         </TableHeader>
         <TableBody>
-          <TableRow className="hover:bg-transparent">
+          {!!data?.items.length && <TableRow className="hover:bg-transparent">
             <TableCell colSpan={COLS - 1} />
-            <TableCell className="pr-4 text-right font-bold">{formatNumber(data?.totalStock ?? 0)}</TableCell>
-          </TableRow>
+            <TableCell className="pr-4 text-right font-bold">{formatNumber(data.totalStock ?? 0)}</TableCell>
+          </TableRow>}
           {isLoading && (
             <TableRow><TableCell colSpan={COLS} className="py-8 text-center text-muted-foreground">Đang tải...</TableCell></TableRow>
           )}
-          {data && !data.items.length && (
-            <TableRow><TableCell colSpan={COLS} className="py-8 text-center text-muted-foreground">Không tìm thấy hàng hóa nào</TableCell></TableRow>
-          )}
+          {data && !data.items.length && <ListEmptyRow cols={COLS} what="hàng hóa" />}
           {data?.items.map((p) => {
             const open = expanded === p.id;
             return (
               <Fragment key={p.id}>
                 <TableRow onClick={() => onToggle(p.id)} aria-expanded={open}
-                  className={cn("cursor-pointer align-top [&>td]:py-3", open && "border-x border-t border-x-primary border-t-primary",
+                  className={cn("cursor-pointer align-top [&>td]:py-3", open && "bg-primary-tint hover:bg-primary-tint",
                     !p.active && "text-muted-foreground")}>
                   <TableCell className="pl-4">{p.code}</TableCell>
                   <TableCell className="max-w-44 min-w-36 whitespace-normal">
@@ -71,7 +70,7 @@ export function ProductListTable({ data, isLoading, expanded, onToggle, onEdit }
                 {open && (
                   <TableRow className="hover:bg-transparent">
                     <TableCell colSpan={COLS} className="h-auto p-0 whitespace-normal">
-                      <ProductDetailPanel productId={p.id} onEdit={onEdit} />
+                      <ProductDetailPanel productId={p.id} onEdit={onEdit} onClose={() => onToggle(p.id)} />
                     </TableCell>
                   </TableRow>
                 )}

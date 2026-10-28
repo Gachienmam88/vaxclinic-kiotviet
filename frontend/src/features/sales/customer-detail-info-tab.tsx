@@ -25,7 +25,7 @@ export function CustomerDetailInfoTab({ c }: { c: Customer }) {
   return (
     <div className="space-y-5">
       <div className="flex gap-6">
-        <div className="flex size-[124px] shrink-0 items-center justify-center rounded-full bg-[#e3f0fc] text-primary">
+        <div className="flex size-[124px] shrink-0 items-center justify-center rounded-full bg-primary-tint text-primary">
           <UserRound className="size-16" strokeWidth={1.75} />
         </div>
         <div className="min-w-0 flex-1 space-y-3 pt-5">

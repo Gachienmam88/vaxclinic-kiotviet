@@ -22,7 +22,7 @@ export function TaxConnectionList({ onEdit }: { onEdit: (c: TaxConnection) => vo
   });
   return (
     <div className="space-y-3 text-[13px]">
-      <p className="flex items-center justify-center gap-2 rounded bg-[#e3f0fc] px-3 py-1.5 text-primary">
+      <p className="flex items-center justify-center gap-2 rounded bg-primary-tint px-3 py-1.5 text-primary">
         <Info className="size-4 shrink-0" /> Lưu ý: Bạn có thể kết nối nhiều tài khoản để quản lý hóa đơn của nhiều doanh nghiệp cùng lúc.</p>
       {!data.length && <p className="py-8 text-center text-muted-foreground">Chưa có kết nối nào — bấm “Thêm kết nối”</p>}
       {data.map((c) => (

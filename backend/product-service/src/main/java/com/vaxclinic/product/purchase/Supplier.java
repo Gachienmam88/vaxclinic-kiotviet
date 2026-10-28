@@ -34,8 +34,25 @@ public class Supplier {
     private String province;
     private String ward;
 
-    @Column(name = "group_name")
-    private String groupName;
+    /** Mã ĐVHC (tỉnh 2 số, phường/xã 5 số); null với dữ liệu cũ chỉ có tên. */
+    @Column(name = "province_code")
+    private String provinceCode;
+
+    @Column(name = "ward_code")
+    private String wardCode;
+
+    @Column(name = "group_id")
+    private UUID groupId;
+
+    /** Chi nhánh nơi tạo NCC (chỉ để hiển thị). */
+    @Column(name = "branch_id")
+    private UUID branchId;
+
+    @Column(name = "created_by", updatable = false)
+    private UUID createdBy;
+
+    @Column(name = "created_by_name", updatable = false)
+    private String createdByName;
 
     private String note;
 

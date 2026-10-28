@@ -3,6 +3,8 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { FileOutput, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { DeepLinkRoute, useDeepLinkExpanded, type DeepLink } from "@/components/ui/deep-link-route";
+import { ListEmptyRow } from "@/components/ui/list-empty-state";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { CashVoucherDetail } from "@/features/sales/cash-voucher-detail";
 import { CashVoucherDialog } from "@/features/sales/cash-voucher-dialog";
@@ -14,16 +16,21 @@ import { FUND_LABEL } from "@/features/sales/sales-types";
 import { formatDateTime, formatMoney } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-export default function CashbookPage() {
+/**
+ * Sổ quỹ. Link sâu: /cashbook?code=PT000001 (hoặc ?id=<uuid>) → Tổng quỹ, mọi thời gian, cả phiếu đã hủy, mở chi tiết phiếu
+ * (thời gian để trống = không giới hạn, sidebar không có "Toàn thời gian").
+ */
+function CashbookPage({ link }: { link: DeepLink }) {
+  const deepLink = !!(link.code || link.id);
   const [filters, setFilters] = useState<CashFilters>({
-    fund: "CASH", period: { mode: "month", from: "", to: "" }, types: [], category: "", statuses: ["PAID"], accounting: "",
+    fund: deepLink ? "ALL" : "CASH", period: { mode: deepLink ? "custom" : "month", from: "", to: "" }, types: [], category: "",
+    statuses: deepLink ? ["PAID", "CANCELLED"] : ["PAID"], accounting: "",
     createdBy: "", collectorId: "", partnerType: "", partner: "",
   });
-  const [search, setSearch] = useState("");
-  const [q, setQ] = useState("");
+  const [search, setSearch] = useState(link.code ?? "");
+  const [q, setQ] = useState(link.code ?? "");
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(15);
-  const [expanded, setExpanded] = useState<string | null>(null);
   const [dialog, setDialog] = useState<"RECEIPT" | "PAYMENT" | null>(null);
   useEffect(() => { const t = setTimeout(() => { setQ(search); setPage(0); }, 300); return () => clearTimeout(t); }, [search]);
 
@@ -38,6 +45,7 @@ export default function CashbookPage() {
     return p;
   }, [filters, q, page, size]);
   const { data } = useCashbook(params);
+  const { open: expanded, setOpen: setExpanded, toggle } = useDeepLinkExpanded(data?.items, link, (v) => [v.code]);
   const s = data?.summary;
   const signed = (v: { voucherType: string; amount: number }) => (v.voucherType === "PAYMENT" ? -v.amount : v.amount);
   const exportCsv = () => downloadCsv("so-quy", ["Mã phiếu", "Thời gian", "Loại thu chi", "Người nộp/nhận", "Giá trị", "Trạng thái"],
@@ -71,16 +79,17 @@ export default function CashbookPage() {
               <TableHead className="pl-4">Mã phiếu</TableHead><TableHead>Thời gian</TableHead><TableHead>Loại thu chi</TableHead>
               <TableHead>Người nộp/nhận</TableHead><TableHead className="pr-4 text-right">Giá trị</TableHead></TableRow></TableHeader>
             <TableBody>
-              {data && !data.items.length && <TableRow><TableCell colSpan={5} className="py-10 text-center text-muted-foreground">Không có phiếu nào phù hợp</TableCell></TableRow>}
+              {data && !data.items.length && <ListEmptyRow cols={5} what="phiếu thu chi"
+                onWiden={filters.period.mode === "month" ? () => setFilters({ ...filters, period: { mode: "custom", from: "", to: "" } }) : undefined} />}
               {data?.items.map((v) => (
                 <Fragment key={v.id}>
-                  <TableRow className={cn("cursor-pointer", expanded === v.id && "bg-[#e3f0fc] hover:bg-[#e3f0fc]", v.status === "CANCELLED" && "text-muted-foreground line-through")}
-                    onClick={() => setExpanded(expanded === v.id ? null : v.id)}>
+                  <TableRow className={cn("cursor-pointer", expanded === v.id && "bg-primary-tint hover:bg-primary-tint", v.status === "CANCELLED" && "text-muted-foreground line-through")}
+                    onClick={() => toggle(v.id)}>
                     <TableCell className="pl-4">{v.code}</TableCell><TableCell>{formatDateTime(v.occurredAt)}</TableCell>
                     <TableCell>{v.category}</TableCell><TableCell className="whitespace-normal">{v.partnerName}</TableCell>
                     <TableCell className="pr-4 text-right">{formatMoney(signed(v))}</TableCell>
                   </TableRow>
-                  {expanded === v.id && <TableRow className="hover:bg-transparent"><TableCell colSpan={5} className="p-0 whitespace-normal"><CashVoucherDetail id={v.id} /></TableCell></TableRow>}
+                  {expanded === v.id && <TableRow className="hover:bg-transparent"><TableCell colSpan={5} className="p-0 whitespace-normal"><CashVoucherDetail id={v.id} onClose={() => setExpanded(null)} /></TableCell></TableRow>}
                 </Fragment>))}
             </TableBody>
           </Table>
@@ -90,4 +99,8 @@ export default function CashbookPage() {
       {dialog && <CashVoucherDialog type={dialog} onClose={() => setDialog(null)} />}
     </div>
   );
+}
+
+export default function Page() {
+  return <DeepLinkRoute>{(link) => <CashbookPage link={link} />}</DeepLinkRoute>;
 }

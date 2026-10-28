@@ -5,6 +5,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Copy, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { ListEmptyRow } from "@/components/ui/list-empty-state";
 import { api, errorMessage } from "@/lib/api-client";
 import { RoleFormDialog } from "./role-form-dialog";
 import { SETTINGS_TABLE as T } from "./settings-layout-parts";
@@ -30,7 +31,7 @@ export function RolesTab() {
           <th>Vai trò</th><th>Mô tả</th><th>Tài khoản</th><th className="w-28 text-right">Thao tác</th>
         </tr></thead>
         <tbody>
-          {!roles.length && <tr><td colSpan={4} className={T.empty}>Chưa có vai trò</td></tr>}
+          {!roles.length && <ListEmptyRow cols={4} what="vai trò" compact />}
           {roles.map((r) => (
             <tr key={r.id} className={T.row}>
               <td className="font-medium">{r.name}</td>

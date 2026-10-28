@@ -15,10 +15,13 @@ import { useCurrentUser } from "@/lib/use-current-user";
 import { NativeSelect, PriceSection, StockSection } from "./product-form-sections";
 import { emptyProductForm, formFromDetail, toRequest, type ProductForm } from "./product-form-state";
 import { PositionWeightSection, UnitsSection } from "./product-form-units-section";
-import { flattenCategoryTree, useCategories } from "./product-queries";
+import { flattenCategoryTree, promptCreateCategory, useCategories } from "./product-queries";
+import { LINE_TABS_LIST, LINE_TABS_TRIGGER } from "./product-tab-styles";
 import type { ProductDetail } from "./product-types";
 
 type Props = { product?: ProductDetail; onClose: () => void };
+
+const FOOTER_BTN = "h-8 rounded-md px-3 font-semibold";
 
 /** Tạo / sửa hàng hóa. Tab Thông tin gồm các khối: giá, tồn kho, vị trí, đơn vị tính; tab Mô tả. */
 export function ProductFormDialog({ product, onClose }: Props) {
@@ -45,12 +48,9 @@ export function ProductFormDialog({ product, onClose }: Props) {
   });
 
   async function createCategory() {
-    const name = prompt("Tên nhóm hàng mới")?.trim();
-    if (!name) return;
     try {
-      const c = await api<{ id: string }>("/categories", { method: "POST", body: { name } });
-      await qc.invalidateQueries({ queryKey: ["categories"] });
-      set({ categoryId: c.id });
+      const id = await promptCreateCategory(qc);
+      if (id) set({ categoryId: id });
     } catch (e) { toast.error(errorMessage(e)); }
   }
 
@@ -66,17 +66,19 @@ export function ProductFormDialog({ product, onClose }: Props) {
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="flex max-h-[92vh] flex-col gap-0 p-0 sm:max-w-4xl">
-        <DialogHeader className="px-5 pt-4">
-          <DialogTitle>{isCreate ? "Tạo hàng hóa" : "Sửa hàng hóa"}</DialogTitle>
+      {/* Nhãn 12px thường, ô nhập bo 6px như form KiotViet — áp cho toàn popup. */}
+      <DialogContent className={"flex max-h-[92vh] flex-col gap-0 rounded-lg p-0 sm:max-w-[954px]"
+        + " [&_[data-slot=label]]:text-xs [&_[data-slot=label]]:font-normal [&_input]:rounded-md"}>
+        <DialogHeader className="px-5 pt-5 pb-3">
+          <DialogTitle className="text-base font-bold">{isCreate ? "Tạo hàng hóa" : "Sửa hàng hóa"}</DialogTitle>
         </DialogHeader>
-        <Tabs defaultValue="info" className="min-h-0 flex-1">
-          <TabsList variant="line" className="px-5">
-            <TabsTrigger value="info">Thông tin</TabsTrigger>
-            <TabsTrigger value="desc">Mô tả</TabsTrigger>
+        <Tabs defaultValue="info" className="min-h-0 flex-1 gap-0">
+          <TabsList variant="line" className={`${LINE_TABS_LIST} px-5`}>
+            <TabsTrigger value="info" className={LINE_TABS_TRIGGER}>Thông tin</TabsTrigger>
+            <TabsTrigger value="desc" className={LINE_TABS_TRIGGER}>Mô tả</TabsTrigger>
           </TabsList>
-          <TabsContent value="info" className="space-y-3 overflow-y-auto px-5 py-3">
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          <TabsContent value="info" className="space-y-4 overflow-y-auto px-5 py-3">
+            <div className="grid grid-cols-1 gap-x-5 gap-y-3 md:grid-cols-2">
               <div className="grid gap-1.5"><Label>Mã hàng</Label>
                 <Input placeholder="Tự động" value={base.code} onChange={(e) => setBase({ code: e.target.value })} /></div>
               <div className="grid gap-1.5"><Label>Mã vạch</Label>
@@ -89,7 +91,7 @@ export function ProductFormDialog({ product, onClose }: Props) {
                 <Input value={form.shortName} onChange={(e) => set({ shortName: e.target.value })} /></div>
               <div className="grid gap-1.5 md:col-span-2">
                 <div className="flex justify-between"><Label>Nhóm hàng</Label>
-                  <button type="button" className="text-xs text-primary" onClick={createCategory}>Tạo mới</button></div>
+                  <button type="button" className="text-xs text-primary hover:underline" onClick={createCategory}>Tạo mới</button></div>
                 <NativeSelect value={form.categoryId} onChange={(e) => set({ categoryId: e.target.value })}>
                   <option value="">Chọn nhóm hàng (Bắt buộc)</option>
                   {flattenCategoryTree(categories).map((c) => (
@@ -103,15 +105,15 @@ export function ProductFormDialog({ product, onClose }: Props) {
             <PositionWeightSection form={form} set={set} isCreate={isCreate} />
             <UnitsSection form={form} set={set} isCreate={isCreate} />
           </TabsContent>
-          <TabsContent value="desc" className="space-y-3 px-5 py-3">
+          <TabsContent value="desc" className="space-y-3 overflow-y-auto px-5 py-3">
             <div className="grid gap-1.5"><Label>Mô tả</Label>
               <Textarea rows={6} value={form.description} onChange={(e) => set({ description: e.target.value })} /></div>
             <div className="grid gap-1.5"><Label>Ghi chú</Label>
               <Textarea rows={3} value={form.note} onChange={(e) => set({ note: e.target.value })} /></div>
           </TabsContent>
         </Tabs>
-        <DialogFooter className="m-0 items-center border-t px-5 py-3 sm:justify-between">
-          <div className="flex gap-4 text-sm">
+        <DialogFooter className="m-0 items-center rounded-b-lg border-t bg-background px-5 py-3 sm:justify-between">
+          <div className="flex gap-4 text-[13px]">
             <label className="flex items-center gap-2">
               <Checkbox checked={base.directSale} onCheckedChange={(v) => setBase({ directSale: v === true })} /> Bán trực tiếp
             </label>
@@ -120,11 +122,13 @@ export function ProductFormDialog({ product, onClose }: Props) {
             </label>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={onClose}>Bỏ qua</Button>
+            <Button variant="outline" className={FOOTER_BTN} onClick={onClose}>Bỏ qua</Button>
             {isCreate && (
-              <Button variant="outline" disabled={save.isPending} onClick={() => submit(true)}>Lưu & Tạo thêm hàng</Button>
+              <Button variant="outline" className={FOOTER_BTN} disabled={save.isPending} onClick={() => submit(true)}>
+                Lưu & Tạo thêm hàng
+              </Button>
             )}
-            <Button disabled={save.isPending} onClick={() => submit(false)}>Lưu</Button>
+            <Button className={`${FOOTER_BTN} min-w-16`} disabled={save.isPending} onClick={() => submit(false)}>Lưu</Button>
           </div>
         </DialogFooter>
       </DialogContent>

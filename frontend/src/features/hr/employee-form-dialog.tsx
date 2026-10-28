@@ -13,10 +13,11 @@ import { EmployeeFormSalaryTab } from "./employee-form-salary-tab";
 import { HrField, hrInput } from "./hr-form-ui";
 import { useCatalog, useHrMutation } from "./hr-queries";
 import type { Employee, EmployeeRequest } from "./hr-types";
+import { DatePicker } from "@/components/ui/date-picker";
 
 const toRequest = (e?: Employee): EmployeeRequest => ({
   code: e?.code ?? "", timekeepingCode: e?.timekeepingCode ?? "", name: e?.name ?? "", phone: e?.phone ?? "", idNumber: e?.idNumber ?? "",
-  birthday: e?.birthday ?? "", gender: e?.gender ?? null, startDate: e?.startDate ?? "", mainBranchId: e?.mainBranchId ?? null,
+  birthday: e?.birthday ?? "", gender: e?.gender ?? null, startDate: e?.startDate ?? "", endDate: e?.endDate ?? "", mainBranchId: e?.mainBranchId ?? null,
   branchIds: e?.branches.map((b) => b.id) ?? [], departmentId: e?.departmentId ?? null, jobTitleId: e?.jobTitleId ?? null,
   userId: e?.userId ?? null, status: e?.status ?? "WORKING", note: e?.note ?? "", salaryType: e?.salaryType ?? null,
   salaryAmount: e?.salaryAmount ?? 0, overtimePercent: e?.overtimePercent ?? 150, commissionTableId: e?.commissionTableId ?? null,
@@ -33,7 +34,7 @@ export function EmployeeFormDialog({ employee, tab = "info", onClose }: { employ
   const { data: titles = [] } = useCatalog("job-titles");
   const { data: users = [] } = useUserLookup();
   const save = useHrMutation(() => {
-    const body = { ...f, birthday: f.birthday || null, startDate: f.startDate || null,
+    const body = { ...f, birthday: f.birthday || null, startDate: f.startDate || null, endDate: f.endDate || null,
       allowances: f.allowances?.filter((a) => a.name.trim()), deductions: f.deductions?.filter((a) => a.name.trim()) };
     return employee ? api<Employee>(`/hr/employees/${employee.id}`, { method: "PUT", body }) : api<Employee>("/hr/employees", { method: "POST", body });
   }, employee ? "Đã cập nhật nhân viên" : "Đã thêm nhân viên", onClose);
@@ -58,13 +59,19 @@ export function EmployeeFormDialog({ employee, tab = "info", onClose }: { employ
               <HrField label="Tên nhân viên *">{text("name")}</HrField>
               <HrField label="Số điện thoại">{text("phone")}</HrField>
               <HrField label="Số CMND/CCCD">{text("idNumber")}</HrField>
-              <HrField label="Ngày sinh"><input type="date" className={hrInput} value={f.birthday ?? ""} onChange={(e) => set({ birthday: e.target.value })} /></HrField>
+              <HrField label="Ngày sinh"><DatePicker className={hrInput} value={f.birthday ?? ""} onChange={(v) => set({ birthday: v })} /></HrField>
               <HrField label="Giới tính">
                 <select className={hrInput} value={f.gender ?? ""} onChange={(e) => set({ gender: (e.target.value || null) as EmployeeRequest["gender"] })}>
                   <option value="">Chọn giới tính</option><option value="MALE">Nam</option><option value="FEMALE">Nữ</option>
                 </select>
               </HrField>
-              <HrField label="Ngày bắt đầu làm"><input type="date" className={hrInput} value={f.startDate ?? ""} onChange={(e) => set({ startDate: e.target.value })} /></HrField>
+              <HrField label="Ngày bắt đầu làm"><DatePicker className={hrInput} value={f.startDate ?? ""} onChange={(v) => set({ startDate: v })} /></HrField>
+              <HrField label="Ngày nghỉ việc"><DatePicker className={hrInput} value={f.endDate ?? ""} onChange={(v) => set({ endDate: v })} /></HrField>
+              <HrField label="Trạng thái">
+                <select className={hrInput} value={f.status ?? "WORKING"} onChange={(e) => set({ status: e.target.value as "WORKING" | "QUIT" })}>
+                  <option value="WORKING">Đang làm việc</option><option value="QUIT">Đã nghỉ</option>
+                </select>
+              </HrField>
               <HrField label="Phòng ban">
                 <div className="flex gap-1.5">
                   <select className={hrInput} value={f.departmentId ?? ""} onChange={(e) => set({ departmentId: e.target.value || null })}>

@@ -12,7 +12,7 @@ import { PRINT_DEFS, type PrintType } from "./print-template-defaults";
 /** Xem trước A5 trong iframe sandbox (không chạy script). */
 export function A5Preview({ html, scale = 0.8 }: { html: string; scale?: number }) {
   return (
-    <div className="mx-auto bg-white shadow" style={{ width: 559 * scale, height: 794 * scale }}>
+    <div className="mx-auto rounded-md bg-white shadow-sm" style={{ width: 559 * scale, height: 794 * scale }}>
       <iframe title="Xem trước mẫu in" sandbox="" className="origin-top-left border-0"
         style={{ width: 559, height: 794, transform: `scale(${scale})` }} srcDoc={pageDocument(sanitizeHtml(html))} />
     </div>
@@ -52,7 +52,7 @@ export function PrintTemplateEditor({ type, current, data, onClose }: {
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-muted">
       <div className="flex items-center gap-3 border-b bg-background px-4 py-2">
-        <h2 className="font-semibold">Chỉnh sửa mẫu in — {def.label} (A5)</h2>
+        <h2 className="text-[15px] font-semibold">Chỉnh sửa mẫu in — {def.label} (A5)</h2>
         <div className="ml-auto flex gap-2">
           <Button variant="outline" disabled={reset.isPending}
             onClick={() => confirm("Đặt lại về mẫu mặc định? Mẫu đã sửa sẽ mất.") && reset.mutate()}><RotateCcw className="size-4" /> Đặt lại</Button>
@@ -84,7 +84,7 @@ export function PrintTemplateEditor({ type, current, data, onClose }: {
             className="min-h-0 flex-1 resize-none rounded-md border p-2 font-mono text-xs outline-none focus-visible:ring-2 focus-visible:ring-ring/50" />
         </div>
         <div className="w-[480px] shrink-0 overflow-y-auto rounded-lg bg-background p-3">
-          <p className="mb-2 text-sm font-medium">Xem trước mẫu in (A5 dọc, dữ liệu mẫu)</p>
+          <p className="mb-2 text-[13px] font-medium">Xem trước mẫu in (A5 dọc, dữ liệu mẫu)</p>
           <A5Preview html={rendered} />
         </div>
       </div>

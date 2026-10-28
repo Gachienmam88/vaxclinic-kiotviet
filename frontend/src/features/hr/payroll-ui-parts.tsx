@@ -1,5 +1,6 @@
 "use client";
 
+import { DocCodeLink } from "@/components/ui/doc-code-link";
 import { formatMoney } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { PAYROLL_STATUS, type PayrollStatus, type Payslip } from "./hr-types";
@@ -39,14 +40,14 @@ export function PayslipDetailPanel({ slip }: { slip: Payslip }) {
       <div className="grid grid-cols-3 gap-4">
         <ItemList title="Phụ cấp" rows={d.allowances.map((a) => [a.name, KIND[a.kind] ?? a.kind, a.amount])} />
         <ItemList title="Giảm trừ" rows={d.deductions.map((a) => [a.name, KIND[a.kind] ?? a.kind, a.amount])} />
-        <ItemList title="Hoa hồng" rows={d.commissions.map((c) => [`${c.productCode} - ${c.productName}`,
+        <ItemList title="Hoa hồng" rows={d.commissions.map((c) => [<><DocCodeLink code={c.productCode} /> - {c.productName}</>,
           `SL ${c.quantity} · DT ${formatMoney(c.revenue)}`, c.commission])} />
       </div>
     </div>
   );
 }
 
-function ItemList({ title, rows }: { title: string; rows: [string, string, number][] }) {
+function ItemList({ title, rows }: { title: string; rows: [React.ReactNode, string, number][] }) {
   return (
     <div>
       <p className="mb-1 font-semibold">{title}</p>

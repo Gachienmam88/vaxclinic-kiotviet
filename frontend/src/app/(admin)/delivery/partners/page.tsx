@@ -81,7 +81,7 @@ function DeliveryPartnersPage({ link }: { link: DeepLink }) {
               {data && !data.items.length && <ListEmptyRow cols={COLS} what="đối tác giao hàng" />}
               {data?.items.map((p) => (
                 <Fragment key={p.id}>
-                  <TableRow className={cn("cursor-pointer", expanded === p.id && "bg-[#e3f0fc] hover:bg-[#e3f0fc]", !p.active && "text-muted-foreground")}
+                  <TableRow className={cn("cursor-pointer", expanded === p.id && "bg-primary-tint hover:bg-primary-tint", !p.active && "text-muted-foreground")}
                     onClick={() => toggle(p.id)}>
                     <TableCell className="pl-4">{p.code}</TableCell><TableCell>{p.name}</TableCell><TableCell>{p.phone}</TableCell>
                     <TableCell className="text-right">{p.shipmentCount}</TableCell><TableCell className="text-right">{formatMoney(p.totalFee)}</TableCell>

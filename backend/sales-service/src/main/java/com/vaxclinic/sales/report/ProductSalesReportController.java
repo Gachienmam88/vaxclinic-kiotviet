@@ -35,7 +35,7 @@ public class ProductSalesReportController {
             "CUSTOMER", new String[]{"coalesce(i.customer_id::text, '')", "coalesce(c.code || ' - ', '') || coalesce(c.name, i.customer_name, 'Khách lẻ')",
                     "coalesce(r.customer_id::text, '')", "coalesce(c.code || ' - ', '') || coalesce(c.name, r.customer_name, 'Khách lẻ')"},
             "SELLER", new String[]{"coalesce(i.seller_id, i.created_by)::text", "coalesce(i.seller_name, i.created_by_name)",
-                    "coalesce(i.seller_id, i.created_by)::text", "coalesce(i.seller_name, i.created_by_name)"});
+                    "coalesce(i.seller_id, i.created_by, r.created_by)::text", "coalesce(i.seller_name, i.created_by_name, r.created_by_name)"});
 
     private final NamedParameterJdbcTemplate jdbc;
 
@@ -64,8 +64,8 @@ public class ProductSalesReportController {
                   union all
                   select %s, rl.product_id, rl.product_code, rl.product_name, rl.unit_name, %s, %s, 0, 0, %s,
                     case when r.subtotal = 0 then 0 else round((r.subtotal - r.discount) * rl.quantity * rl.unit_price / r.subtotal) end,
-                    -round(rl.quantity * coalesce(il.cost, 0))
-                  from sales_returns r join sales_return_lines rl on rl.return_id = r.id join invoices i on i.id = r.invoice_id
+                    -round(rl.quantity * coalesce(il.cost, rl.cost, 0))
+                  from sales_returns r join sales_return_lines rl on rl.return_id = r.id left join invoices i on i.id = r.invoice_id
                   left join invoice_lines il on il.id = rl.invoice_line_id left join customers c on c.id = r.customer_id
                   where %s%s
                 )

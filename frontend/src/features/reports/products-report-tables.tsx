@@ -4,12 +4,13 @@
  */
 import { sumOf, type DamageRow, type MovementRow, type ProductRow, type SupplierRow } from "./report-api";
 import type { ReportColumn, ReportLine } from "./report-table";
+import { DocCodeLink, docCodeHref } from "@/components/ui/doc-code-link";
 
 /** 1 dòng chung cho mọi bảng hàng hóa (các trường không dùng = 0). */
-export type PAgg = Record<string, number> & { code: string; name: string; dim: string };
+export type PAgg = { code: string; name: string; dim: string; v: Record<string, number> };
 type Num = Record<string, number>;
 
-const agg = (code: string, name: string, dim: string, nums: Num): PAgg => ({ ...nums, code, name, dim }) as PAgg;
+const agg = (code: string, name: string, dim: string, nums: Num): PAgg => ({ code, name, dim, v: nums });
 
 const NUMERIC = ["qtySold", "revenue", "qtyReturned", "returnValue", "net", "cogs", "profit", "margin",
   "oq", "ov", "iq", "iv", "xq", "xv", "cq", "cv", "before", "purchase", "custReturn", "adjust", "otherIn", "sale", "supReturn", "damage", "internal", "otherOut", "closing", "closingValue", "qty", "value", "docs"];
@@ -17,8 +18,8 @@ const NUMERIC = ["qtySold", "revenue", "qtyReturned", "returnValue", "net", "cog
 /** Dòng tổng: cộng mọi cột số (tỷ suất tính lại từ tổng). */
 export function withTotal(rows: PAgg[], label: string): ReportLine<PAgg>[] {
   if (!rows.length) return [];
-  const t = agg("", "", "", Object.fromEntries(NUMERIC.map((k) => [k, sumOf(rows, (r) => r[k] ?? 0)])));
-  t.margin = t.net ? Math.round((t.profit / t.net) * 10000) / 100 : 0;
+  const t = agg("", "", "", Object.fromEntries(NUMERIC.map((k) => [k, sumOf(rows, (r) => r.v[k] ?? 0)])));
+  t.v.margin = t.v.net ? Math.round((t.v.profit / t.v.net) * 10000) / 100 : 0;
   return [{ id: "sum", kind: "sum", label, data: t }, ...rows.map((r, i) => ({ id: `${r.code}-${r.dim}-${i}`, kind: "row" as const, data: r }))];
 }
 
@@ -59,9 +60,9 @@ export function fromMovements(rows: MovementRow[]): (PAgg & { productId: string 
   rows.forEach((m) => {
     const a = map.get(m.productId) ?? { ...agg(m.code, m.name, "", { closing: 0, closingValue: 0 }), productId: m.productId };
     const [col, sign] = BUCKET[m.docType] ?? [Number(m.qty) >= 0 ? "otherIn" : "otherOut", Number(m.qty) >= 0 ? 1 : -1];
-    a[col] = (a[col] ?? 0) + sign * Number(m.qty);
-    a.closing += Number(m.qty);
-    a.closingValue += Number(m.value);
+    a.v[col] = (a.v[col] ?? 0) + sign * Number(m.qty);
+    a.v.closing += Number(m.qty);
+    a.v.closingValue += Number(m.value);
     map.set(m.productId, a);
   });
   return [...map.values()];
@@ -71,10 +72,16 @@ export const fromDamage = (d: DamageRow): PAgg => agg(d.code, d.name, "", { qty:
 export const fromSupplier = (s: SupplierRow): PAgg => agg(s.productCode ?? "", s.productName ?? "", `${s.supplierCode ? `${s.supplierCode} - ` : ""}${s.supplierName}`,
   { qtySold: +s.qtyIn, revenue: +s.valueIn, qtyReturned: +s.qtyReturned, returnValue: +s.valueReturned, net: +s.valueIn - +s.valueReturned });
 
-const col = (key: string, label: string, type: "money" | "qty" = "money"): ReportColumn<PAgg> => ({ key, label, type, value: (r) => r[key] });
-const CODE: ReportColumn<PAgg> = { key: "code", label: "Mã hàng", value: (r) => r.code, render: (r) => <b className="rp-link">{r.code}</b> };
+const col = (key: string, label: string, type: "money" | "qty" = "money"): ReportColumn<PAgg> => ({ key, label, type, value: (r) => r.v[key] });
+const CODE: ReportColumn<PAgg> = { key: "code", label: "Mã hàng", value: (r) => r.code, render: (r) => <b><DocCodeLink code={r.code} /></b> };
 const NAME: ReportColumn<PAgg> = { key: "name", label: "Tên hàng", value: (r) => r.name, width: 140 };
-const DIM = (label: string): ReportColumn<PAgg> => ({ key: "dim", label, value: (r) => r.dim, width: 130 });
+/** Cột nhóm "Mã - Tên" (vd. NCC000001 - Công ty A): mã đầu thành link nếu nhận ra. */
+const dimCell = (dim: string) => {
+  const i = dim.indexOf(" - ");
+  const code = i > 0 ? dim.slice(0, i) : "";
+  return code && docCodeHref(code) ? <><DocCodeLink code={code} />{dim.slice(i)}</> : dim;
+};
+const DIM = (label: string): ReportColumn<PAgg> => ({ key: "dim", label, value: (r) => r.dim, width: 130, render: (r) => dimCell(r.dim) });
 
 export const COLUMNS: Record<string, ReportColumn<PAgg>[]> = {
   sales: [CODE, NAME, col("qtySold", "SL Bán", "qty"), col("revenue", "Doanh thu"), col("qtyReturned", "SL Trả", "qty"), col("returnValue", "Giá trị trả"), col("net", "Doanh thu thuần")],

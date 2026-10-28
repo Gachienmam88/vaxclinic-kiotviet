@@ -10,7 +10,7 @@ export function WorkdaysBranchDialog({ branchName, days, onSave, onClose, pendin
   branchName: string; days: number[]; onSave: (days: number[]) => void; onClose: () => void; pending: boolean;
 }) {
   const [value, setValue] = useState(days);
-  const toggle = (d: number, on: boolean) => setValue(on ? [...value, d].sort() : value.filter((x) => x !== d));
+  const toggle = (d: number, on: boolean) => setValue(on ? [...value, d].sort((a, b) => a - b) : value.filter((x) => x !== d));
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="sm:max-w-md">

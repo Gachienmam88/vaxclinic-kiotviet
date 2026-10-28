@@ -2,7 +2,13 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
-import { apiRange, type DateRange } from "./report-time-presets";
+import { addDays } from "@/features/dashboard/dashboard-date-utils";
+import type { DateRange } from "./report-time-presets";
+
+/** Khoảng thời điểm [from, to) gửi API. */
+export type Span = { from: Date; to: Date };
+/** Khoảng ngày (gồm cả ngày cuối) → [đầu ngày đầu, đầu ngày sau ngày cuối). */
+export const spanOf = (r: DateRange): Span => ({ from: r.from, to: addDays(r.to, 1) });
 
 /** Kiểu dữ liệu các API /reports/** (sales-service + product-service) và hook tải chung. */
 
@@ -31,7 +37,7 @@ export type OrderRow = {
 export type DebtRow = { customerId?: string; supplierId?: string; code: string; name: string; phone: string | null; opening: number; debit: number; credit: number; closing: number };
 export type MonthRow = {
   month: string; sales: number; invoiceDiscount: number; returnValue: number; cogs: number; returnFee: number;
-  paymentDiscount: number; salary: number; otherExpense: number; otherIncome: number;
+  paymentDiscount: number; salary: number; otherExpense: number; otherIncome: number; deliveryFee: number;
 };
 export type MovementRow = { productId: string; code: string; name: string; unit: string; docType: string; qty: number; value: number };
 export type DamageRow = { productId: string; code: string; name: string; unit: string; qty: number; value: number; docCount: number };
@@ -43,8 +49,8 @@ export type SupplierRow = {
 /** Bộ lọc gửi kèm (rỗng / undefined thì bỏ). Mảng → lặp tham số. */
 export type ReportParams = Record<string, string | string[] | boolean | undefined | null>;
 
-export function buildQuery(range: DateRange, extra: ReportParams = {}) {
-  const p = new URLSearchParams(apiRange(range));
+export function buildQuery(span: Span, extra: ReportParams = {}) {
+  const p = new URLSearchParams({ from: span.from.toISOString(), to: span.to.toISOString() });
   Object.entries(extra).forEach(([k, v]) => {
     if (Array.isArray(v)) v.filter(Boolean).forEach((x) => p.append(k, x));
     else if (v !== undefined && v !== null && v !== "") p.set(k, String(v));
@@ -53,8 +59,8 @@ export function buildQuery(range: DateRange, extra: ReportParams = {}) {
 }
 
 /** Tải 1 báo cáo; key gồm đường dẫn + tham số → đổi bộ lọc là tải lại. */
-export function useReport<T>(path: string, range: DateRange, extra: ReportParams = {}, enabled = true) {
-  const qs = buildQuery(range, extra);
+export function useReport<T>(path: string, span: Span, extra: ReportParams = {}, enabled = true) {
+  const qs = buildQuery(span, extra);
   return useQuery({
     queryKey: ["report", path, qs], enabled, staleTime: 30_000,
     queryFn: () => api<T>(`${path}?${qs}`),

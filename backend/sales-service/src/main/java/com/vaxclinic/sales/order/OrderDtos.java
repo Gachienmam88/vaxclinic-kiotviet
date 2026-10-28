@@ -28,7 +28,9 @@ public final class OrderDtos {
                                @DecimalMin("0") BigDecimal discount, @DecimalMin("0") BigDecimal paidAmount,
                                @Pattern(regexp = "CASH|TRANSFER|CARD|EWALLET") String paymentMethod,
                                UUID bankAccountId, String note,
-                               @NotEmpty(message = "Đơn đặt hàng chưa có hàng") @Valid List<LineInput> lines) {
+                               @NotEmpty(message = "Đơn đặt hàng chưa có hàng") @Valid List<LineInput> lines,
+                               UUID priceBookId, @Size(max = 150) String priceBookName, @Size(max = 30) String salesChannel,
+                               Instant expectedDeliveryAt) {
     }
 
     public record OrderLineResponse(UUID id, int lineNo, UUID productId, UUID unitId, String productCode,
@@ -46,12 +48,14 @@ public final class OrderDtos {
                                 String createdByName, Instant orderedAt, String status, BigDecimal subtotal,
                                 BigDecimal discount, BigDecimal total, BigDecimal deposit, String note,
                                 UUID invoiceId, String invoiceCode, Instant cancelledAt,
-                                List<OrderLineResponse> lines, List<OrderPayment> payments) {
+                                List<OrderLineResponse> lines, List<OrderPayment> payments, UUID priceBookId,
+                                String priceBookName, String salesChannel, Instant expectedDeliveryAt) {
     }
 
     public record OrderListItem(UUID id, String code, Instant orderedAt, String customerCode, String customerName,
                                 String createdByName, BigDecimal subtotal, BigDecimal discount, BigDecimal total,
-                                BigDecimal deposit, String status, String invoiceCode) {
+                                BigDecimal deposit, String status, String invoiceCode, Instant expectedDeliveryAt,
+                                String salesChannel) {
     }
 
     public record OrderListResponse(List<OrderListItem> items, long total, int page, int size, BigDecimal sumSubtotal,

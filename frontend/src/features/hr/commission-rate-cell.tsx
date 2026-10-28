@@ -26,7 +26,7 @@ export function CommissionRateCell({ rate, onSave, label }: { rate: Rate; onSave
         onChange={(e) => setText(e.target.value.replace(/[^\d.,]/g, ""))}
         onBlur={() => commit(type, text)} />
       <button type="button" aria-label={`Đổi đơn vị ${label}`}
-        className={cn("h-6 w-9 rounded text-[11px] font-semibold", type === "PERCENT" ? "bg-[#e3f0fc] text-primary" : "bg-[#eff0f3]")}
+        className={cn("h-6 w-9 rounded text-[11px] font-semibold", type === "PERCENT" ? "bg-primary-tint text-primary" : "bg-[#eff0f3]")}
         onClick={() => { const t = type === "PERCENT" ? "AMOUNT" : "PERCENT"; setType(t); if (text.trim()) commit(t, text); }}>
         {type === "PERCENT" ? "%" : "VNĐ"}
       </button>

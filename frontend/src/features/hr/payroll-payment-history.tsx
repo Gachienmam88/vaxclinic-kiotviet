@@ -5,6 +5,8 @@ import { formatDateTime, formatMoney } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { useHrMutation } from "./hr-queries";
 import type { PayrollPayment } from "./hr-types";
+import { DocCodeLink } from "@/components/ui/doc-code-link";
+import { ListEmptyRow } from "@/components/ui/list-empty-state";
 
 /** Lịch sử thanh toán lương: mỗi phiếu PCPL… tương ứng 1 phiếu chi trong Sổ quỹ (phần tiền mặt / CK). */
 export function PayrollPaymentHistory({ payments }: { payments: PayrollPayment[] }) {
@@ -18,10 +20,10 @@ export function PayrollPaymentHistory({ payments }: { payments: PayrollPayment[]
           <th>Phương thức</th><th>Thời gian</th><th>Người tạo</th><th>Trạng thái</th><th />
         </tr></thead>
         <tbody>
-          {!payments.length && <tr><td colSpan={9} className="py-6 text-center text-muted-foreground">Chưa có phiếu thanh toán</td></tr>}
+          {!payments.length && <ListEmptyRow cols={9} what="phiếu thanh toán" compact />}
           {payments.map((p) => (
             <tr key={p.id} className={cn("border-b border-[#eceef1] [&_td]:px-3 [&_td]:py-2", p.cancelled && "text-muted-foreground line-through")}>
-              <td>{p.code}</td><td>{p.employeeName}</td>
+              <td><DocCodeLink code={p.code} /></td><td>{p.employeeName}</td>
               <td className="text-right">{formatMoney(p.cashAmount)}</td><td className="text-right">{formatMoney(p.advanceAmount)}</td>
               <td>{p.method === "BANK" ? "Chuyển khoản" : "Tiền mặt"}</td><td>{formatDateTime(p.paidAt)}</td><td>{p.createdByName}</td>
               <td className="no-underline">{p.cancelled ? "Đã hủy" : "Đã thanh toán"}</td>

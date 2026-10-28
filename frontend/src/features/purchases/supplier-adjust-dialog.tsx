@@ -6,7 +6,6 @@ import { Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { NumberInput } from "@/components/number-input";
 import { kvDialog, kvDialogFooter, kvDialogHeader, kvDialogTitle, kvFooterBtn, kvInput } from "@/features/sales/customer-ui-primitives";
 import { api, errorMessage } from "@/lib/api-client";
@@ -16,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { fromLocalInput } from "./purchase-line-form";
 import { useInvalidateSuppliers } from "./supplier-queries";
 import type { SupplierRow } from "./supplier-types";
+import { DateTimePicker } from "@/components/ui/date-time-picker";
 
 /** Popup "Điều chỉnh" công nợ NCC: nhập giá trị nợ mới → phát sinh điều chỉnh = nợ mới − nợ hiện tại. */
 export function SupplierAdjustDialog({ supplier, onClose }: { supplier: SupplierRow; onClose: () => void }) {
@@ -34,12 +34,12 @@ export function SupplierAdjustDialog({ supplier, onClose }: { supplier: Supplier
   const valid = value !== null && value !== Number(supplier.debt) && !save.isPending;
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className={cn(kvDialog, "sm:max-w-[372px]")}>
+      <DialogContent className={cn(kvDialog, "sm:max-w-[497px]")}>
         <DialogHeader className={kvDialogHeader}><DialogTitle className={kvDialogTitle}>Điều chỉnh</DialogTitle></DialogHeader>
         <div className="grid grid-cols-[126px_1fr] items-center gap-x-2 gap-y-3 px-5 pt-3 pb-6 text-[13px]">
           <span>Nợ cần trả hiện tại:</span><span>{formatMoney(supplier.debt)}</span>
           <span>Ngày điều chỉnh:</span>
-          <Input type="datetime-local" aria-label="Ngày điều chỉnh" className={kvInput} value={at} onChange={(e) => setAt(e.target.value)} />
+          <DateTimePicker aria-label="Ngày điều chỉnh" className={kvInput} value={at} onChange={(v) => setAt(v)} />
           <span>Giá trị nợ điều chỉnh:</span>
           <NumberInput autoFocus aria-label="Giá trị nợ điều chỉnh" className={kvInput} value={value ?? 0}
             onValueChange={(v) => setValue(v)} />

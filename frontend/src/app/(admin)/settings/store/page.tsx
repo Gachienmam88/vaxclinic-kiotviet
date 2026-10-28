@@ -7,11 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { VnAddressFields } from "@/components/ui/vn-address-fields";
 import { SettingsCard, SettingsPage } from "@/features/settings/settings-shell";
 import { useSaveSettings, useShopSettings, type StoreInfo } from "@/features/settings/settings-queries";
 import { useCurrentUser } from "@/lib/use-current-user";
 
-const EMPTY: StoreInfo = { name: "", phone: null, email: null, address: null, province: null, ward: null, taxCode: null, logo: null };
+const EMPTY: StoreInfo = { name: "", phone: null, email: null, address: null, province: null, ward: null, taxCode: null, logo: null, accessCode: null };
 
 /** Thu nhỏ ảnh về tối đa 256px (PNG) để lưu kèm thiết lập và in lên đầu hóa đơn. */
 async function shrinkImage(file: File): Promise<string> {
@@ -31,35 +32,42 @@ async function shrinkImage(file: File): Promise<string> {
   }
 }
 
-function Field({ label, value }: { label: string; value: string | null }) {
+function Field({ label, value, accent }: { label: string; value: string | null; accent?: boolean }) {
   return (
-    <div className="border-b pb-1.5">
-      <div className="text-xs text-muted-foreground">{label}</div>
-      <div className="text-sm">{value || <span className="text-muted-foreground">Chưa có</span>}</div>
+    <div className="border-b border-[#e3e6ea] pb-2">
+      <div className="mb-1 text-[11px] text-muted-foreground">{label}</div>
+      <div className={accent ? "text-[13px] text-primary" : "text-[13px]"}>{value || <span className="text-muted-foreground">Chưa có</span>}</div>
     </div>
   );
 }
 
-function StoreDialog({ store, onClose }: { store: StoreInfo; onClose: () => void }) {
+function StoreDialog({ store, accessCode, onClose }: { store: StoreInfo; accessCode: string; onClose: () => void }) {
   const save = useSaveSettings<StoreInfo>("store");
-  const [f, setF] = useState(store);
+  const [f, setF] = useState({ ...store, accessCode: store.accessCode ?? accessCode });
   const bind = (k: keyof StoreInfo) => ({ value: f[k] ?? "", onChange: (e: React.ChangeEvent<HTMLInputElement>) => setF({ ...f, [k]: e.target.value }) });
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader><DialogTitle>Sửa thông tin cửa hàng</DialogTitle></DialogHeader>
-        <div className="grid grid-cols-1 gap-3 text-sm md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 text-[13px] md:grid-cols-3">
+          <div className="grid gap-1.5 md:col-span-3"><Label>Địa chỉ truy cập (nhập ở bước đầu khi đăng nhập)</Label>
+            <Input value={f.accessCode ?? ""} readOnly disabled />
+            <span className="text-xs text-muted-foreground">Chỉ chủ gian hàng đổi được tại Hồ sơ cửa hàng → Cập nhật → Đổi tên gian hàng (mọi thiết bị sẽ bị đăng xuất).</span></div>
           <div className="grid gap-1.5 md:col-span-2"><Label>Tên cửa hàng *</Label><Input {...bind("name")} /></div>
           <div className="grid gap-1.5"><Label>Điện thoại</Label><Input {...bind("phone")} /></div>
           <div className="grid gap-1.5"><Label>Email</Label><Input {...bind("email")} /></div>
           <div className="grid gap-1.5"><Label>Mã số thuế</Label><Input {...bind("taxCode")} /></div>
-          <div className="grid gap-1.5"><Label>Địa chỉ</Label><Input {...bind("address")} /></div>
-          <div className="grid gap-1.5"><Label>Tỉnh/Thành phố</Label><Input {...bind("province")} /></div>
-          <div className="grid gap-1.5"><Label>Phường/Xã</Label><Input {...bind("ward")} /></div>
+          <VnAddressFields idPrefix="store" fieldClassName="grid gap-1.5" labelClassName="text-sm font-medium leading-none"
+            labels={{ province: "Tỉnh/Thành phố" }}
+            value={{ address: f.address ?? "", provinceCode: f.provinceCode ?? "", provinceName: f.province ?? "",
+              wardCode: f.wardCode ?? "", wardName: f.ward ?? "" }}
+            onChange={(v) => setF({ ...f, address: v.address, province: v.provinceName || null, ward: v.wardName || null,
+              provinceCode: v.provinceCode || null, wardCode: v.wardCode || null })} />
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Bỏ qua</Button>
-          <Button disabled={!f.name.trim() || save.isPending} onClick={() => save.mutate(f, { onSuccess: onClose })}>Lưu</Button>
+          <Button disabled={!f.name.trim() || (!!f.accessCode && f.accessCode.length < 3) || save.isPending}
+            onClick={() => save.mutate({ ...f, accessCode: f.accessCode || null }, { onSuccess: onClose })}>Lưu</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -73,7 +81,7 @@ export default function StoreInfoPage() {
   const save = useSaveSettings<StoreInfo>("store");
   const [editing, setEditing] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
-  if (!data) return <div className="p-6 text-sm text-muted-foreground">Đang tải...</div>;
+  if (!data) return <div className="p-6 text-[13px] text-muted-foreground">Đang tải...</div>;
   const s = data.store ?? { ...EMPTY, name: process.env.NEXT_PUBLIC_APP_NAME ?? "" };
   const editable = can("settings.manage");
 
@@ -106,7 +114,8 @@ export default function StoreInfoPage() {
               </div>
             )}
           </div>
-          <div className="grid grid-cols-1 gap-x-8 gap-y-3 md:grid-cols-3">
+          <div className="grid grid-cols-1 gap-x-4 gap-y-3 md:grid-cols-3">
+            <Field label="Địa chỉ truy cập" value={data.accessCode} accent />
             <Field label="Tên cửa hàng" value={s.name} />
             <Field label="Điện thoại" value={s.phone} />
             <Field label="Email" value={s.email} />
@@ -116,7 +125,7 @@ export default function StoreInfoPage() {
           </div>
         </div>
       </SettingsCard>
-      {editing && <StoreDialog store={s} onClose={() => setEditing(false)} />}
+      {editing && <StoreDialog store={s} accessCode={data.accessCode} onClose={() => setEditing(false)} />}
     </SettingsPage>
   );
 }

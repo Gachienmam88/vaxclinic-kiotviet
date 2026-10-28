@@ -1,5 +1,5 @@
 /**
- * Chuyển dữ liệu localStorage của màn bán hàng từ khóa cũ (trước khi đổi tên route /pos → /sale) sang khóa mới "sale.*".
+ * Chuyển dữ liệu localStorage của màn bán hàng từ khóa cũ (trước khi đổi tên route màn bán hàng) sang khóa mới "sale.*".
  * Khóa cũ: <LEGACY_PREFIX>catalog.<branch>, customers, tabs.<user>, queue, lookups, settings → "sale." + phần đuôi giống hệt.
  * - Khóa mới chưa có → chép giá trị cũ sang.
  * - Hàng đợi offline (queue) mà cả hai đều có → gộp theo id (KHÔNG được mất phiếu chưa đồng bộ).

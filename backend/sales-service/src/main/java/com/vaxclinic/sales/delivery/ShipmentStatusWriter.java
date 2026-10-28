@@ -19,8 +19,10 @@ import java.util.UUID;
  * Ghi đổi trạng thái vận đơn (1 transaction, khóa dòng vận đơn, chống 2 người đổi cùng lúc):
  * - Giao thành công: thu hộ = min(COD, tổng − đã trả) → hóa đơn tăng "đã trả", công nợ khách giảm, đối tác nợ cửa hàng (+COD);
  *   phí giao hàng cửa hàng chịu (SHOP) → cửa hàng nợ đối tác (−phí).
- * - Chuyển hoàn / Đã chuyển hoàn: phiếu trả hàng đã tạo trước (hàng về kho); người nhận không nhận hàng nên phí giao hàng
- *   luôn do cửa hàng chịu (−phí).
+ * - Chuyển hoàn (đối tác đang mang hàng về): chỉ đổi trạng thái, chưa nhập kho, chưa ghi phí.
+ * - Đã chuyển hoàn (cửa hàng đã nhận lại hàng): phiếu trả hàng đã tạo trước (hàng về kho); phí giao hàng + phí chuyển hoàn
+ *   cửa hàng chịu (số nhân viên nhập, mặc định = phí của vận đơn) → cửa hàng nợ đối tác (−phí), tính vào "Phí trả ĐTGH".
+ * - Đã hủy (chưa lấy hàng): chỉ hủy vận đơn, hóa đơn giữ nguyên; bỏ khoản thu hộ.
  */
 @Component
 public class ShipmentStatusWriter {
@@ -41,7 +43,7 @@ public class ShipmentStatusWriter {
     }
 
     @Transactional
-    public void apply(UUID id, String from, String to, UUID returnId, String note, Actor actor) {
+    public void apply(UUID id, String from, String to, UUID returnId, ShipmentDtos.ReturnOptions opts, String note, Actor actor) {
         Map<String, Object> s = jdbc.queryForMap("select * from shipments where id = ? for update", id);
         if (!from.equals(s.get("status"))) {
             throw BusinessException.conflict("SHIPMENT_CHANGED", "Vận đơn " + s.get("code") + " vừa được cập nhật, hãy tải lại");
@@ -53,19 +55,31 @@ public class ShipmentStatusWriter {
         BigDecimal codPosted = (BigDecimal) s.get("cod_posted");
         BigDecimal feePosted = (BigDecimal) s.get("fee_posted");
         BigDecimal fee = (BigDecimal) s.get("shipping_fee");
+        BigDecimal returnFee = (BigDecimal) s.get("return_fee");
+        if (ShipmentStatus.CANCELLED.equals(to)) {
+            hooks.markCancelled(id);
+            hooks.log(id, from, to, note, actor);
+            return;
+        }
         if (ShipmentStatus.DELIVERED.equals(to)) {
             codPosted = collectCod(s, now);
+            if (feePosted == null && "SHOP".equals(s.get("fee_payer"))) {
+                feePosted = fee;
+                ledger.post(partnerId, branchId, PartnerLedger.DocType.FEE, id, code, fee.negate(), "Phí giao hàng " + code, now);
+            }
         }
-        boolean shopPaysFee = ShipmentStatus.returning(to) || "SHOP".equals(s.get("fee_payer"));
-        if (feePosted == null && shopPaysFee && (ShipmentStatus.DELIVERED.equals(to) || ShipmentStatus.returning(to))) {
-            feePosted = fee;
-            ledger.post(partnerId, branchId, PartnerLedger.DocType.FEE, id, code, fee.negate(), "Phí giao hàng " + code, now);
+        if (ShipmentStatus.RETURNED.equals(to) && feePosted == null) { // vận đơn chuyển hoàn kiểu cũ đã ghi phí thì bỏ qua
+            fee = opts.shippingFee() == null ? fee : ShipmentInvoiceHooks.money(opts.shippingFee());
+            returnFee = ShipmentInvoiceHooks.money(opts.returnFee());
+            feePosted = fee.add(returnFee);
+            ledger.post(partnerId, branchId, PartnerLedger.DocType.FEE, id, code, fee.negate(), "Phí giao hàng " + code + " (chuyển hoàn)", now);
+            ledger.post(partnerId, branchId, PartnerLedger.DocType.FEE, id, code, returnFee.negate(), "Phí chuyển hoàn " + code, now);
         }
         boolean finished = ShipmentStatus.DELIVERED.equals(to) || ShipmentStatus.RETURNED.equals(to);
         jdbc.update("""
-                update shipments set status = ?, return_id = coalesce(?, return_id), cod_posted = ?, fee_posted = ?,
+                update shipments set status = ?, return_id = coalesce(?, return_id), cod_posted = ?, fee_posted = ?, return_fee = ?,
                     delivered_at = case when ? then ? else delivered_at end, updated_at = now() where id = ?""",
-                to, returnId, codPosted, feePosted, finished, Timestamp.from(now), id);
+                to, returnId, codPosted, feePosted, returnFee, finished, Timestamp.from(now), id);
         hooks.log(id, from, to, note, actor);
     }
 

@@ -33,7 +33,7 @@ export function ColumnChart({ items, height = 290, money = true }: { items: Char
   return (
     <div className="flex gap-2 text-[10px] text-[#666]" role="img" aria-label={items.map((i) => `${i.label}: ${formatMoney(i.value)}`).join("; ")}>
       <div className="relative w-9 shrink-0" style={{ height }}>
-        {ticks.map((t) => <span key={t} className="absolute right-0 -translate-y-1/2" style={{ bottom: `${(t / top) * 100}%`, transform: "translateY(50%)" }}>{fmt(t, money)}</span>)}
+        {ticks.map((t) => <span key={t} className="absolute right-0 translate-y-1/2" style={{ bottom: `${(t / top) * 100}%` }}>{fmt(t, money)}</span>)}
       </div>
       <div className="min-w-0 flex-1">
         <div className="relative border-b border-l border-[#ccc]" style={{ height }}>
@@ -41,7 +41,7 @@ export function ColumnChart({ items, height = 290, money = true }: { items: Char
           <div className="absolute inset-0 flex items-end">
             {items.map((c, i) => (
               <div key={c.label} className="relative flex h-full flex-1 items-end justify-center" onMouseEnter={() => setHover(i)} onMouseLeave={() => setHover(null)}>
-                <div className={hover === i ? "w-[28px] bg-[#3a8ef6]" : "w-[28px] bg-primary"} style={{ height: `${(Math.max(0, c.value) / top) * 100}%` }} />
+                <div className={hover === i ? "w-[28px] bg-primary-soft" : "w-[28px] bg-primary"} style={{ height: `${(Math.max(0, c.value) / top) * 100}%` }} />
                 {hover === i && (
                   <span className="absolute z-10 ml-[86px] rounded bg-primary px-1.5 py-1 text-[11px] whitespace-nowrap text-white shadow"
                     style={{ bottom: `calc(${(Math.max(0, c.value) / top) * 100}% - 22px)` }}>{money ? formatMoney(c.value) : formatNumber(c.value)}</span>)}
@@ -68,7 +68,7 @@ export function BarChart({ items, money = true }: { items: ChartItem[]; money?: 
           {ticks.map((t) => <div key={t} className="absolute inset-y-0 border-l border-[#e6e6e6]" style={{ left: `${(t / top) * 100}%` }} />)}
           {items.map((i) => (
             <div key={i.label} className="relative flex h-[30px] items-center" title={`${i.label}: ${money ? formatMoney(i.value) : formatNumber(i.value)}`}>
-              <div className="h-[14px] bg-primary hover:bg-[#3a8ef6]" style={{ width: `${(Math.max(0, i.value) / top) * 100}%` }} />
+              <div className="h-[14px] bg-primary hover:bg-primary-soft" style={{ width: `${(Math.max(0, i.value) / top) * 100}%` }} />
             </div>))}
         </div>
       </div>

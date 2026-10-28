@@ -13,7 +13,7 @@ import type { Invoice } from "./sales-types";
 
 /**
  * Chân chi tiết hóa đơn như KiotViet: trái Hủy · Sao chép · Xuất file; phải Chỉnh sửa · Lưu · Trả hàng · In · "…".
- * Sao chép = mở màn bán hàng với tab mới điền sẵn hàng / khách của hóa đơn (/pos?copy=<id>).
+ * Sao chép = mở màn bán hàng với tab mới điền sẵn hàng / khách của hóa đơn (/sale?copy=<id>).
  */
 export function InvoiceDetailFooter({ inv, active, canCancel, cancelling, onCancel, dirty, saving, onSave, published, onEditTax }: {
   inv: Invoice; active: boolean; canCancel: boolean; cancelling: boolean; onCancel: () => void;
@@ -25,12 +25,12 @@ export function InvoiceDetailFooter({ inv, active, canCancel, cancelling, onCanc
         <Button variant="ghost" className={DETAIL_BTN} disabled={cancelling}
           onClick={() => confirm(`Hủy hóa đơn ${inv.code}? Hàng sẽ được hoàn lại kho.`) && onCancel()}>
           <Trash2 className="size-4" /> Hủy</Button>)}
-      <Button variant="ghost" className={DETAIL_BTN} render={<Link href={`/pos?copy=${inv.id}`} />}><Copy className="size-4" /> Sao chép</Button>
+      <Button variant="ghost" className={DETAIL_BTN} render={<Link href={`/sale?copy=${inv.id}`} />}><Copy className="size-4" /> Sao chép</Button>
       <Button variant="ghost" className={DETAIL_BTN} onClick={() => exportOneInvoice(inv)}><FileOutput className="size-4" /> Xuất file</Button>
       {active && <>
-        <Button className={cn(DETAIL_BTN, "ml-auto")} render={<Link href={`/pos?edit=${inv.id}`} />}><Pencil className="size-4" /> Chỉnh sửa</Button>
+        <Button className={cn(DETAIL_BTN, "ml-auto")} render={<Link href={`/sale?edit=${inv.id}`} />}><Pencil className="size-4" /> Chỉnh sửa</Button>
         <Button variant="outline" className={DETAIL_BTN} disabled={!dirty || saving} onClick={onSave}><Save className="size-4" /> Lưu</Button>
-        <Button variant="outline" className={DETAIL_BTN} render={<Link href={`/pos?return=${inv.id}`} />}><Undo2 className="size-4" /> Trả hàng</Button>
+        <Button variant="outline" className={DETAIL_BTN} render={<Link href={`/sale?return=${inv.id}`} />}><Undo2 className="size-4" /> Trả hàng</Button>
         <PrintButton type="INVOICE" data={invoiceData(inv)} branchId={inv.branchId} />
         <DropdownMenu>
           <DropdownMenuTrigger className="inline-flex size-[30px] items-center justify-center rounded-md border hover:bg-muted" aria-label="Thêm thao tác">

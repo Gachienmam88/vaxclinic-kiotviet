@@ -26,7 +26,7 @@ Applies whenever the owner is locked out (incl. owner = only ADMIN). Requires se
 -- identity_db; replace <owner_username>
 DELETE FROM user_recovery_codes WHERE user_id = (SELECT id FROM users WHERE username = '<owner_username>');
 DELETE FROM user_totp          WHERE user_id = (SELECT id FROM users WHERE username = '<owner_username>');
-UPDATE refresh_tokens SET revoked = true WHERE user_id = (SELECT id FROM users WHERE username = '<owner_username>');  -- check column name before running
+UPDATE refresh_tokens SET revoked = true WHERE user_id = (SELECT id FROM users WHERE username = '<owner_username>');
 ```
 e.g. `docker exec -it kiot_viet_clone-postgres-1 psql -U vaxclinic -d identity_db`. Verify identity of the requester out-of-band first (CCCD vs Hồ sơ cửa hàng), then owner logs in with password only and re-enables 2FA. Leave a note in Lịch sử thao tác manually if needed (DB path writes no audit row). Alternative when another ADMIN exists: owner can't be reset by them — transfer ownership is also owner-only, so DB is the only path.
 

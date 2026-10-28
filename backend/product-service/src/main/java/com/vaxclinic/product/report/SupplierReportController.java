@@ -16,7 +16,8 @@ import java.util.UUID;
 /**
  * Báo cáo nhà cung cấp: Nhập hàng (theo NCC), Hàng nhập theo NCC (NCC × hàng) và Công nợ NCC.
  * Giá trị nhập / trả = tổng cộng phiếu (sau giảm giá, gồm VAT) — dòng hàng được phân bổ theo tỷ lệ tiền hàng.
- * Công nợ NCC = Σ (tổng phiếu nhập − đã trả) − Σ (tổng phiếu trả hàng nhập − NCC đã hoàn) của phiếu hoàn thành.
+ * Công nợ NCC = Σ tổng phiếu nhập − Σ (tổng phiếu trả hàng nhập − NCC đã hoàn) của phiếu hoàn thành
+ * − Σ thanh toán (kể cả phiếu chi lúc nhập hàng) − Σ chiết khấu thanh toán ± điều chỉnh (sổ supplier_debt_docs còn hiệu lực).
  */
 @RestController
 @PreAuthorize("hasAuthority('report.view')")
@@ -62,7 +63,7 @@ public class SupplierReportController {
                   sum(case when kind = -1 then q else 0 end) qr, sum(case when kind = -1 then v else 0 end) vr,
                   count(distinct case when kind = 1 then doc end) n
                 from x left join suppliers s on s.id = x.supplier_id%s
-                group by 1, 2, 3, 4, 5, 6, 7 order by vi - vr desc""".formatted(DOCS, productCols, productJoin),
+                group by 1, 2, 3, 4, 5, 6, 7 order by sum(kind * v) desc""".formatted(DOCS, productCols, productJoin),
                 ProductReportScope.params(from, to, branchIds, jwt), (rs, n) -> new SupplierRow(rs.getObject(1, UUID.class),
                         rs.getString("scode"), rs.getString("sname"), rs.getObject(4, UUID.class), rs.getString(5), rs.getString(6),
                         rs.getString(7), rs.getBigDecimal("qi"), rs.getBigDecimal("vi"), rs.getBigDecimal("qr"),
@@ -74,11 +75,15 @@ public class SupplierReportController {
                                       @RequestParam(required = false) List<UUID> branchIds, @AuthenticationPrincipal Jwt jwt) {
         return jdbc.query("""
                 with m as (
-                  select supplier_id, received_at t, total dr, paid_amount cr from purchase_receipts
+                  select supplier_id, received_at t, total dr, 0 cr from purchase_receipts
                   where status = 'COMPLETED' and received_at < :to and branch_id in (:branches) and supplier_id is not null
                   union all
                   select supplier_id, returned_at, 0, total - refund_amount from purchase_returns
                   where status = 'COMPLETED' and returned_at < :to and branch_id in (:branches) and supplier_id is not null
+                  union all
+                  select supplier_id, occurred_at, case when kind = 'ADJUSTMENT' then greatest(amount, 0) else 0 end,
+                    case when kind = 'ADJUSTMENT' then greatest(-amount, 0) else amount end from supplier_debt_docs
+                  where status = 'ACTIVE' and occurred_at < :to and branch_id in (:branches)
                 )
                 select s.id, s.code, s.name, s.phone,
                   coalesce(sum(m.dr - m.cr) filter (where m.t < :from), 0) opening,

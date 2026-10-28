@@ -36,6 +36,9 @@ public class Customer {
     private String address;
     private String province;
     private String ward;
+    @Column(name = "group_id")
+    private UUID groupId;
+    /** Bản sao tên nhóm (customer_groups.name) — giữ cho API cũ. */
     @Column(name = "group_name")
     private String groupName;
     private String note;
@@ -54,6 +57,15 @@ public class Customer {
     private String invoiceProvince;
     @Column(name = "invoice_ward")
     private String invoiceWard;
+    /** Mã ĐVHC 2 cấp (tỉnh 2 số, phường/xã 5 số); null với dữ liệu cũ chỉ có tên. */
+    @Column(name = "province_code")
+    private String provinceCode;
+    @Column(name = "ward_code")
+    private String wardCode;
+    @Column(name = "invoice_province_code")
+    private String invoiceProvinceCode;
+    @Column(name = "invoice_ward_code")
+    private String invoiceWardCode;
     @Column(name = "id_number")
     private String idNumber;
     private String passport;

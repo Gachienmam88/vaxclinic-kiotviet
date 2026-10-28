@@ -10,4 +10,6 @@ public interface BranchRepository extends JpaRepository<Branch, UUID> {
     boolean existsByCode(String code);
 
     List<Branch> findAllByOrderByCodeAsc();
+
+    long countByActiveTrue();
 }

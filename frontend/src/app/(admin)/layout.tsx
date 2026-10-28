@@ -1,10 +1,11 @@
 import { AppHeader } from "@/components/layout/app-header";
+import { CONTAINER } from "@/lib/layout";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-muted">
+    <div data-kv-scale className="min-h-screen bg-muted">
       <AppHeader />
-      <main className="px-4 py-4 md:px-10">{children}</main>
+      <main className={`${CONTAINER} py-4`}>{children}</main>
     </div>
   );
 }

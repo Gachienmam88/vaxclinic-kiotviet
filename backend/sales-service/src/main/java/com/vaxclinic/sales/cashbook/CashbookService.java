@@ -29,26 +29,37 @@ public class CashbookService {
                                 String collectorName, boolean accounting, String note) {
     }
 
-    /** Payload outbox từ product-service (xem CashflowOutbox). */
+    /** Payload outbox từ product-service (xem CashflowOutbox). action: CREATE | UPDATE | CANCEL. */
     public record InboundCashflow(String action, String sourceType, UUID sourceId, String code, String voucherType,
-                                  String fund, String category, BigDecimal amount, Instant occurredAt, UUID branchId,
-                                  String partnerType, UUID partnerId, String partnerName, String partnerPhone,
+                                  String fund, UUID bankAccountId, String category, BigDecimal amount, Instant occurredAt,
+                                  UUID branchId, String partnerType, UUID partnerId, String partnerName, String partnerPhone,
                                   UUID userId, String userName, String note) {
     }
 
     private final CashVoucherRepository vouchers;
     private final CashbookWriter writer;
     private final DebtLedger debt;
+    private final com.vaxclinic.sales.common.SalesRules rules;
 
-    public CashbookService(CashVoucherRepository vouchers, CashbookWriter writer, DebtLedger debt) {
+    public CashbookService(CashVoucherRepository vouchers, CashbookWriter writer, DebtLedger debt,
+                           com.vaxclinic.sales.common.SalesRules rules) {
         this.vouchers = vouchers;
         this.writer = writer;
         this.debt = debt;
+        this.rules = rules;
     }
 
     @Transactional
     public CashVoucher createManual(ManualRequest r, Actor actor) {
+        // Công nợ NCC chỉ có 1 nơi ghi là product-service: thanh toán / thu tiền NCC phải làm ở màn Nhà cung cấp
+        // (phiếu chi tự sinh sang Sổ quỹ qua outbox) để sổ công nợ NCC và Sổ quỹ luôn khớp nhau.
+        if ("SUPPLIER".equals(r.partnerType())) {
+            throw BusinessException.badRequest("SUPPLIER_VOUCHER_VIA_SUPPLIER_SCREEN",
+                    "Thanh toán cho nhà cung cấp hãy tạo tại Mua hàng → Nhà cung cấp → Nợ cần trả nhà cung cấp → Thanh toán"
+                            + " để công nợ nhà cung cấp được cập nhật");
+        }
         actor.checkBranch(r.branchId());
+        rules.checkNotLocked(r.branchId(), r.occurredAt() == null ? Instant.now() : r.occurredAt());
         boolean receipt = "RECEIPT".equals(r.voucherType());
         String code = receipt ? "PT%06d".formatted(vouchers.nextReceiptNumber()) : "PC%06d".formatted(vouchers.nextPaymentNumber());
         var v = CashbookWriter.newVoucher(code, r.voucherType(), r.fund(), r.category().trim(), r.amount());
@@ -73,12 +84,15 @@ public class CashbookService {
     public void cancel(UUID id) {
         CashVoucher v = vouchers.findById(id)
                 .orElseThrow(() -> BusinessException.notFound("VOUCHER_NOT_FOUND", "Không tìm thấy phiếu"));
-        if ("INVOICE".equals(v.getSourceType()) || "PURCHASE".equals(v.getSourceType()) || "RETURN".equals(v.getSourceType())) {
-            throw BusinessException.badRequest("VOUCHER_AUTO", "Phiếu tự động — hãy hủy hóa đơn / phiếu nhập / phiếu trả hàng gốc");
+        if ("INVOICE".equals(v.getSourceType()) || "INVOICE_EXTRA".equals(v.getSourceType()) || "PURCHASE".equals(v.getSourceType()) || "RETURN".equals(v.getSourceType())
+                || "ORDER".equals(v.getSourceType()) || "DELIVERY".equals(v.getSourceType())) {
+            throw BusinessException.badRequest("VOUCHER_AUTO",
+                    "Phiếu tự động — hãy hủy hóa đơn / phiếu nhập / phiếu trả hàng / đơn đặt hàng / phiếu đối soát giao hàng gốc");
         }
         if ("CANCELLED".equals(v.getStatus())) {
             return;
         }
+        rules.checkNotLocked(v.getBranchId(), v.getOccurredAt());
         writer.cancel(v);
         if (v.isAffectsDebt() && v.getPartnerId() != null && "CUSTOMER".equals(v.getPartnerType())) {
             BigDecimal back = "RECEIPT".equals(v.getVoucherType()) ? v.getAmount() : v.getAmount().negate();
@@ -94,11 +108,25 @@ public class CashbookService {
             existing.ifPresent(writer::cancel);
             return;
         }
+        if ("UPDATE".equals(in.action())) {
+            existing.filter(v -> !"CANCELLED".equals(v.getStatus())).ifPresent(v -> {
+                if (in.occurredAt() != null) {
+                    v.setOccurredAt(in.occurredAt());
+                }
+                if (in.userId() != null) {
+                    v.setCollectorId(in.userId());
+                    v.setCollectorName(in.userName());
+                }
+                v.setNote(in.note());
+            });
+            return;
+        }
         if (existing.isPresent()) {
             return;
         }
         var v = CashbookWriter.newVoucher(in.code(), in.voucherType(), in.fund(), in.category(), in.amount());
         v.setOccurredAt(in.occurredAt());
+        v.setBankAccountId(in.bankAccountId());
         v.setBranchId(in.branchId());
         v.setPartnerType(in.partnerType());
         v.setPartnerId(in.partnerId());

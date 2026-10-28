@@ -1,6 +1,6 @@
 # HR (Nhân viên) module — implementer report (2026-10-28)
 
-Status: DONE_WITH_CONCERNS (only open item: commission calc is not yet E2E-verified, because sales-service has to be rebuilt first)
+Status: DONE (update 20:40: sales-service rebuilt; commission verified; fixed-salary proration added)
 
 ## Summary
 The HR module is built end to end inside identity-service (no new JVM): employees, shifts, schedules, attendance, phone clock-in via a branch QR code, attendance machine file import, payroll and commission. Flyway migration V4 has been applied and identity-service has been restarted with the new code. The frontend has all the requested routes. The HR files pass `tsc` and `eslint` with no errors; the other tsc errors are in other agents' files (features/reports/*). Backend E2E: 80/80 checks pass and test data is cleaned up.
@@ -108,3 +108,13 @@ The current "Nhân viên" menu points to /settings/users and /settings/audit-log
 2. FIXED salary always pays the full amount, with no proration for joining or leaving mid-period. Is that acceptable?
 3. Is the QR replay window of ~2 minutes acceptable, or should GPS or a one-time nonce be added later?
 4. "Duyệt yêu cầu" just links to the timesheet (Duyệt chấm công); there is no employee request workflow.
+
+## Update (after lead answers)
+- sales-service jar contains SellerRevenueInternalController. The E2E commission step ran: 10% of the seller's net revenue matches the payslip commission.
+- Fixed monthly salary is now prorated for mid-period joins and leaves.
+  - New migration `V5__hr_employee_end_date.sql` adds `hr_employees.end_date`, shown in the form as "Ngày nghỉ việc".
+  - FIXED base = amount × (working days in the period inside [start_date, end_date]) / standard days.
+  - Employees whose employment does not overlap the period are excluded. Quit employees with an end date inside the period are still included.
+  - Validation: end date before start date → 400.
+- E2E rerun: **PASSED 85, FAILED 0**. New checks: join on 17/08 → 13/26 of the amount (1,300,000); quit on 08/08 → 7/26 (700,000); quit before the period → excluded; invalid end date → 400; commission calc.
+- Lead answers recorded: payment only after Đã chốt lương (unchanged); the 2-minute QR window is accepted.

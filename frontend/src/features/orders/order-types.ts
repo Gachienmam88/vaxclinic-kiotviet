@@ -28,11 +28,13 @@ export type Order = {
   customerPhone: string | null; sellerId: string | null; sellerName: string | null; createdByName: string; orderedAt: string;
   status: OrderStatus; subtotal: number; discount: number; total: number; deposit: number; note: string | null;
   invoiceId: string | null; invoiceCode: string | null; cancelledAt: string | null; lines: OrderLine[]; payments: OrderPayment[];
+  priceBookId: string | null; priceBookName: string | null; salesChannel: string; expectedDeliveryAt: string | null;
 };
 
 export type OrderListItem = {
   id: string; code: string; orderedAt: string; customerCode: string | null; customerName: string; createdByName: string;
   subtotal: number; discount: number; total: number; deposit: number; status: OrderStatus; invoiceCode: string | null;
+  expectedDeliveryAt: string | null; salesChannel: string;
 };
 
 export type OrderList = {

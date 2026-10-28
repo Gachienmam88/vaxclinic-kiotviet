@@ -11,8 +11,10 @@ export const RETURN_STATUS_LABEL: Record<DocStatus, string> = {
 
 export type Supplier = {
   id: string; code: string; name: string; phone: string | null; email: string | null; address: string | null;
-  province: string | null; ward: string | null; groupName: string | null; note: string | null;
+  province: string | null; ward: string | null; groupId: string | null; groupName: string | null; note: string | null;
   companyName: string | null; taxCode: string | null; idNumber: string | null; active: boolean;
+  /** Mã ĐVHC 2 cấp (tỉnh 2 số, phường/xã 5 số); null với NCC cũ chỉ có tên. */
+  provinceCode?: string | null; wardCode?: string | null;
 };
 
 export type ListTotals = { subtotal: number; discount: number; vatAmount: number; total: number; paidAmount: number };

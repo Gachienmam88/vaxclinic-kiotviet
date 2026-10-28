@@ -25,7 +25,8 @@ import java.util.stream.Collectors;
  * "Trả nhanh" — khách trả hàng KHÔNG theo hóa đơn (không mở transaction — gọi HTTP sang product-service):
  * tra hàng + đơn vị (tỷ lệ quy đổi từ product-service) → kho nhập lại SALE_RETURN theo lô chỉ định (idempotent theo id phiếu)
  * → SalesReturnWriter ghi phiếu TH, phiếu chi PC, công nợ như trả theo hóa đơn. Khách lẻ: phải hoàn đủ tiền.
- * Lô hàng trả phải là lô ĐÃ CÓ tại chi nhánh: product-service không tạo lô mới khi trả hàng (không nhận hạn sử dụng).
+ * Hàng theo lô: chọn lô ĐÃ CÓ tại chi nhánh (hạn bỏ trống / trùng hạn lô) hoặc nhập lô MỚI + hạn sử dụng → kho tạo lô.
+ * Giá vốn dòng = giá vốn hiện tại của hàng (kho không đổi giá vốn khi khách trả).
  */
 @Service
 public class QuickReturnService {
@@ -84,7 +85,8 @@ public class QuickReturnService {
             }
             BigDecimal baseQty = in.quantity().multiply(unit.conversionRate()).setScale(3, RoundingMode.HALF_UP);
             UUID lineId = UUID.nameUUIDFromBytes((req.id() + ":" + i).getBytes(StandardCharsets.UTF_8));
-            stockLines.add(new ProductStockClient.Line(lineId, p.id(), null, null, lot, baseQty));
+            stockLines.add(new ProductStockClient.Line(lineId, p.id(), null, null, lot, baseQty,
+                    lot == null ? null : in.expiryDate()));
             rates.add(unit.conversionRate());
             rows.add(new SalesReturnWriter.Row(lineId, null, p.id(), unit.code(), p.name(), unit.unitName(), in.quantity(),
                     in.unitPrice(), Map.of(lot == null ? "" : lot, baseQty), null));
@@ -104,9 +106,9 @@ public class QuickReturnService {
             result = stock.apply(new ProductStockClient.Request(req.id(), "SALE_RETURN", code, req.branchId(), customerName,
                     actor.id(), null, stockLines));
         } catch (BusinessException e) {
-            if ("EXPIRY_REQUIRED".equals(e.getCode())) { // lô chưa từng có tại chi nhánh → kho đòi hạn sử dụng để tạo lô mới
-                throw BusinessException.badRequest("LOT_NOT_FOUND",
-                        e.getMessage().replace(": cần nhập hạn sử dụng", "") + " chưa có tại chi nhánh — trả nhanh chỉ nhận lô đã nhập kho");
+            if ("EXPIRY_REQUIRED".equals(e.getCode())) { // lô chưa từng có tại chi nhánh, không gửi hạn sử dụng
+                throw BusinessException.badRequest("EXPIRY_REQUIRED",
+                        e.getMessage().replace(": cần nhập hạn sử dụng", "") + " chưa có tại chi nhánh — nhập hạn sử dụng để tạo lô mới");
             }
             throw e;
         }

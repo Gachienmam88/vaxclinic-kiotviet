@@ -76,14 +76,17 @@ public class PayrollService {
         var pr = settings.payroll();
         var holidays = settings.holidays();
         var emps = jdbc.query("""
-                select id, code, name, salary_type, salary_amount, overtime_percent, user_id, main_branch_id, commission_table_id
+                select id, code, name, salary_type, salary_amount, overtime_percent, user_id, main_branch_id, commission_table_id,
+                  start_date, end_date
                 from hr_employees e where salary_type is not null
-                  and (status = 'WORKING' or exists (select 1 from hr_attendance a where a.employee_id = e.id and a.approved and a.work_date between ? and ?))
+                  and (start_date is null or start_date <= ?) and (end_date is null or end_date >= ?)
+                  and (status = 'WORKING' or end_date is not null or exists (select 1 from hr_attendance a where a.employee_id = e.id and a.approved and a.work_date between ? and ?))
                   and (?::uuid is null or main_branch_id = ? or exists (select 1 from hr_employee_branches b where b.employee_id = e.id and b.branch_id = ?))
                 order by code""", (rs, i) -> new Object[]{new Emp(rs.getObject("id", UUID.class), rs.getString("code"), rs.getString("name"),
                 rs.getString("salary_type"), rs.getBigDecimal("salary_amount"), rs.getBigDecimal("overtime_percent"), rs.getObject("user_id", UUID.class),
-                List.of(), List.of()), rs.getObject("main_branch_id", UUID.class), rs.getObject("commission_table_id", UUID.class)},
-                start, end, branch, branch, branch);
+                List.of(), List.of()), rs.getObject("main_branch_id", UUID.class), rs.getObject("commission_table_id", UUID.class),
+                rs.getObject("start_date", LocalDate.class), rs.getObject("end_date", LocalDate.class)},
+                end, start, start, end, branch, branch, branch);
         boolean needRevenue = emps.stream().anyMatch(o -> o[2] != null && ((Emp) o[0]).userId() != null);
         List<SellerRevenue> sales = needRevenue ? revenue.revenue(start, end) : List.of();
         Map<UUID, Map<UUID, Object[]>> rulesByTable = new HashMap<>();
@@ -99,12 +102,13 @@ public class PayrollService {
             Emp e = new Emp(base.id(), base.code(), base.name(), base.salaryType(), base.amount(), base.overtimePercent(), base.userId(),
                     employees.payItems(base.id(), "ALLOWANCE"), employees.payItems(base.id(), "DEDUCTION"));
             UUID mainBranch = (UUID) o[1];
-            int std = PayRates.standardDays(new PayRates.Period(start, end),
-                    mainBranch == null ? HrSettingsService.ALL_DAYS : settings.workdaysOf(mainBranch));
+            List<Integer> workdays = mainBranch == null ? HrSettingsService.ALL_DAYS : settings.workdaysOf(mainBranch);
+            int std = PayRates.standardDays(new PayRates.Period(start, end), workdays);
+            int employed = PayRates.workingDays(maxDate(start, (LocalDate) o[3]), minDate(end, (LocalDate) o[4]), workdays);
             var rules = o[2] == null ? Map.<UUID, Object[]>of() : rulesByTable.getOrDefault((UUID) o[2], Map.of());
             var mine = e.userId() == null ? List.<SellerRevenue>of() : sales.stream().filter(s -> e.userId().equals(s.sellerId())).toList();
             var slip = PayrollCalculator.compute(new PayrollCalculator.Input(e, cells.stream().filter(c -> c.employeeId().equals(e.id())).toList(),
-                    std, tk, pr, mine, rules, d -> settings.holidayMultiplier(holidays, d), bonuses.get(e.id())));
+                    std, employed, tk, pr, mine, rules, d -> settings.holidayMultiplier(holidays, d), bonuses.get(e.id())));
             upsertSlip(id, e, slip);
             kept.add(e.id());
         }
@@ -118,6 +122,14 @@ public class PayrollService {
         jdbc.update("""
                 update hr_payrolls set status = 'TEMP', computed_at = now(),
                   total = (select coalesce(sum(total), 0) from hr_payslips where payroll_id = ?) where id = ?""", id, id);
+    }
+
+    private static LocalDate maxDate(LocalDate a, LocalDate b) {
+        return b == null || a.isAfter(b) ? a : b;
+    }
+
+    private static LocalDate minDate(LocalDate a, LocalDate b) {
+        return b == null || a.isBefore(b) ? a : b;
     }
 
     private void upsertSlip(UUID payrollId, Emp e, PayrollCalculator.Slip s) {

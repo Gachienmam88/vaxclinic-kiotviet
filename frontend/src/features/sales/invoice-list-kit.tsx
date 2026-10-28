@@ -1,8 +1,9 @@
 "use client";
 
-import { CalendarDays, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import type { Period } from "./sales-queries";
 import { cn } from "@/lib/utils";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
 
 /**
  * Bộ khung trang danh sách kiểu KiotViet (Hóa đơn, Trả hàng, Sổ quỹ, Hóa đơn đầu vào):
@@ -10,7 +11,7 @@ import { cn } from "@/lib/utils";
  */
 
 /** Header bảng danh sách: nền xanh nhạt. */
-export const LIST_HEAD_ROW = "bg-[#e3f0fc] hover:bg-[#e3f0fc]";
+export const LIST_HEAD_ROW = "bg-primary-tint hover:bg-primary-tint";
 /** Nút toolbar viền xanh (Tạo mới, Phiếu thu, Xuất file...). */
 export const TOOLBAR_BTN = "h-[30px] rounded-md border-primary bg-background px-2.5 font-semibold text-primary hover:bg-primary/5 hover:text-primary";
 /** Nút trong chân panel chi tiết (Lưu, Trả hàng, In...). */
@@ -77,19 +78,19 @@ export function PillGroup({ value, options, onChange }: { value: string; options
 }
 
 /** Lọc thời gian: Tháng này / Tùy chỉnh (khoảng ngày). */
-export function PeriodFilter({ value, onChange, title = "Thời gian" }: { value: Period; onChange: (p: Period) => void; title?: string }) {
+export function PeriodFilter({ value, onChange, title = "Thời gian", allowAll }: {
+  value: Period; onChange: (p: Period) => void; title?: string; allowAll?: boolean;
+}) {
   const box = "flex h-[30px] flex-1 items-center justify-between rounded-md border bg-background px-2";
   return (
     <FilterSection title={title}>
       <RadioOption checked={value.mode === "month"} onSelect={() => onChange({ ...value, mode: "month" })}>
         <span className={box}>Tháng này</span></RadioOption>
+      {allowAll && <RadioOption checked={value.mode === "all"} onSelect={() => onChange({ ...value, mode: "all" })}>
+        <span className={box}>Toàn thời gian</span></RadioOption>}
       <RadioOption checked={value.mode === "custom"} onSelect={() => onChange({ ...value, mode: "custom" })}>
-        <span className={box}>Tùy chỉnh <CalendarDays className="size-4 text-muted-foreground" /></span></RadioOption>
-      {value.mode === "custom" && (
-        <div className="grid gap-1.5 pl-6">
-          <input type="date" aria-label="Từ ngày" className={FILTER_FIELD} value={value.from} onChange={(e) => onChange({ ...value, from: e.target.value })} />
-          <input type="date" aria-label="Đến ngày" className={FILTER_FIELD} value={value.to} onChange={(e) => onChange({ ...value, to: e.target.value })} />
-        </div>)}
+        <DateRangePicker className="flex-1" value={value.mode === "custom" ? value : null} onChange={(r) => onChange({ ...value, ...r, mode: "custom" })} />
+      </RadioOption>
     </FilterSection>
   );
 }

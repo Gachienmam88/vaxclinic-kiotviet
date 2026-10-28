@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { api, errorMessage } from "@/lib/api-client";
 import type { TaxConnection } from "./integration-queries";
+import { DatePicker } from "@/components/ui/date-picker";
 
 /** Thêm / sửa kết nối cổng hóa đơn điện tử của cơ quan thuế (MST + tài khoản + mật khẩu). */
 export function TaxConnectionDialog({ connection, onClose }: { connection?: TaxConnection; onClose: () => void }) {
@@ -24,8 +25,8 @@ export function TaxConnectionDialog({ connection, onClose }: { connection?: TaxC
   });
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent>
-        <DialogHeader><DialogTitle>{connection ? "Sửa thiết lập kết nối" : "Thêm kết nối Cơ quan Thuế"}</DialogTitle></DialogHeader>
+      <DialogContent className="rounded-lg p-5 sm:max-w-md">
+        <DialogHeader><DialogTitle className="text-base font-bold">{connection ? "Sửa thiết lập kết nối" : "Thêm kết nối Cơ quan Thuế"}</DialogTitle></DialogHeader>
         <p className="text-sm text-muted-foreground">Tài khoản đăng nhập https://hoadondientu.gdt.gov.vn. Mật khẩu được mã hóa khi lưu.</p>
         <div className="grid gap-3">
           <div className="grid gap-1.5"><Label>Mã số thuế</Label><Input value={f.taxCode} onChange={(e) => setF({ ...f, taxCode: e.target.value, username: f.username || e.target.value })} /></div>
@@ -33,9 +34,9 @@ export function TaxConnectionDialog({ connection, onClose }: { connection?: TaxC
           <div className="grid gap-1.5"><Label>Mật khẩu {connection && "(bỏ trống nếu giữ nguyên)"}</Label>
             <Input type="password" autoComplete="new-password" value={f.password} onChange={(e) => setF({ ...f, password: e.target.value })} /></div>
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Bỏ qua</Button>
-          <Button disabled={save.isPending || !f.taxCode || !f.username || (!connection && !f.password)} onClick={() => save.mutate()}>Lưu</Button>
+        <DialogFooter className="-mx-5 -mb-5 rounded-b-lg bg-background px-5 py-3">
+          <Button variant="outline" className="h-8 rounded-md px-3" onClick={onClose}>Bỏ qua</Button>
+          <Button className="h-8 rounded-md px-4" disabled={save.isPending || !f.taxCode || !f.username || (!connection && !f.password)} onClick={() => save.mutate()}>Lưu</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -76,16 +77,16 @@ export function SyncDialog({ connections, onClose }: { connections: TaxConnectio
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent>
-        <DialogHeader><DialogTitle>Đồng bộ hóa đơn đầu vào</DialogTitle></DialogHeader>
+      <DialogContent className="rounded-lg p-5 sm:max-w-md">
+        <DialogHeader><DialogTitle className="text-base font-bold">Đồng bộ hóa đơn đầu vào</DialogTitle></DialogHeader>
         <div className="grid gap-3">
           <div className="grid gap-1.5"><Label>Kết nối (mã số thuế)</Label>
-            <select className="h-8 rounded-md border px-2 text-sm" value={connectionId} onChange={(e) => { setConnectionId(e.target.value); setCaptcha(null); }}>
+            <select className="h-8 rounded-md border bg-background px-2 text-sm outline-none focus-visible:border-primary" value={connectionId} onChange={(e) => { setConnectionId(e.target.value); setCaptcha(null); }}>
               {connections.map((c) => <option key={c.id} value={c.id}>{c.taxCode}</option>)}
             </select></div>
           <div className="grid grid-cols-2 gap-3">
-            <div className="grid gap-1.5"><Label>Từ ngày</Label><Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} /></div>
-            <div className="grid gap-1.5"><Label>Đến ngày</Label><Input type="date" value={to} onChange={(e) => setTo(e.target.value)} /></div>
+            <div className="grid gap-1.5"><Label>Từ ngày</Label><DatePicker value={from} onChange={(v) => setFrom(v)} /></div>
+            <div className="grid gap-1.5"><Label>Đến ngày</Label><DatePicker value={to} onChange={(v) => setTo(v)} /></div>
           </div>
           <div className="grid gap-1.5">
             <Label>Mã captcha của cổng thuế</Label>
@@ -100,9 +101,9 @@ export function SyncDialog({ connections, onClose }: { connections: TaxConnectio
             <Input placeholder="Nhập mã trong ảnh" value={value} disabled={!captcha} onChange={(e) => setValue(e.target.value)} />
           </div>
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Bỏ qua</Button>
-          <Button disabled={!captcha || !value || sync.isPending} onClick={() => sync.mutate()}>{sync.isPending ? "Đang đồng bộ..." : "Đồng bộ"}</Button>
+        <DialogFooter className="-mx-5 -mb-5 rounded-b-lg bg-background px-5 py-3">
+          <Button variant="outline" className="h-8 rounded-md px-3" onClick={onClose}>Bỏ qua</Button>
+          <Button className="h-8 rounded-md px-4" disabled={!captcha || !value || sync.isPending} onClick={() => sync.mutate()}>{sync.isPending ? "Đang đồng bộ..." : "Đồng bộ"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

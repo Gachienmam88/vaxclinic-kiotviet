@@ -2,25 +2,28 @@
  * Dựng mẫu in: {Ten_Truong} → giá trị (đã escape HTML); khối {#Dong_Hang}...{/Dong_Hang} lặp theo từng dòng hàng.
  * Trường đặc biệt {Logo} chèn thẻ <img> logo cửa hàng.
  */
-export type PrintData = Record<string, string> & { __lines?: Record<string, string>[] };
+/** Giá trị trường in; riêng khóa __lines là danh sách dòng hàng. */
+export type PrintData = Record<string, string | Record<string, string>[]>;
 
 const escape = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
-function fill(html: string, values: Record<string, string>) {
+function fill(html: string, values: PrintData) {
   return html.replace(/\{([A-Za-z_][A-Za-z0-9_]*)\}/g, (m, key: string) => {
-    if (key === "Logo") return values.Logo ? `<img src="${escape(values.Logo)}" alt="" style="max-height:60px;max-width:140px">` : "";
-    return key in values ? escape(values[key] ?? "") : m;
+    const v = values[key];
+    if (key === "Logo") return typeof v === "string" && v ? `<img src="${escape(v)}" alt="" style="max-height:60px;max-width:140px">` : "";
+    return typeof v === "string" ? escape(v) : m;
   });
 }
 
 export function renderTemplate(template: string, data: PrintData) {
   const withLines = template.replace(/\{#Dong_Hang\}([\s\S]*?)\{\/Dong_Hang\}/g, (_, row: string) =>
-    (data.__lines ?? []).map((line) => fill(row, { ...data, ...line })).join(""));
+    ((data.__lines ?? []) as Record<string, string>[]).map((line) => fill(row, { ...data, ...line })).join(""));
   return fill(withLines, data);
 }
 
 /** Bỏ script, iframe, thuộc tính on*, link javascript: — mẫu do người dùng sửa nên không tin tuyệt đối. */
 export function sanitizeHtml(html: string) {
+  if (typeof DOMParser === "undefined") return ""; // khi dựng trang phía server
   const doc = new DOMParser().parseFromString(`<body>${html}</body>`, "text/html");
   doc.querySelectorAll("script,iframe,object,embed,link,meta,base,form").forEach((n) => n.remove());
   doc.querySelectorAll("*").forEach((el) => {
@@ -86,14 +89,13 @@ function threeDigits(n: number, full: boolean) {
 export function amountInWords(amount: number) {
   let n = Math.round(Math.abs(amount));
   if (n === 0) return "Không đồng";
-  const units = ["", "nghìn", "triệu", "tỷ"];
+  const units = ["", "nghìn", "triệu", "tỷ", "nghìn tỷ", "triệu tỷ"];
   const groups: number[] = [];
   while (n > 0) { groups.push(n % 1000); n = Math.floor(n / 1000); }
   const parts: string[] = [];
   for (let i = groups.length - 1; i >= 0; i--) {
     if (!groups[i]) continue;
-    const unit = units[i % 3 === 0 && i > 0 ? 3 : i % 3] + (i >= 6 ? " tỷ" : "");
-    parts.push(`${threeDigits(groups[i], i < groups.length - 1)} ${i === 0 ? "" : unit}`.trim());
+    parts.push(`${threeDigits(groups[i], i < groups.length - 1)} ${units[i]}`.trim());
   }
   const s = parts.join(" ").replace(/\s+/g, " ");
   return `${s.charAt(0).toUpperCase()}${s.slice(1)} đồng`;

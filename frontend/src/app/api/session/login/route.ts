@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { GATEWAY_URL, saveTokens, type TokenPair } from "@/lib/server/session-cookies";
 
-/** POST {username, password} → gateway login → tokens stored as httpOnly cookies. */
+/** POST {username, password, remember} → gateway login → tokens stored as httpOnly cookies. */
 export async function POST(request: Request) {
-  const body = await request.text();
+  const { remember = true, ...credentials } = (await request.json().catch(() => ({}))) as { remember?: boolean; username?: string; password?: string };
+  const body = JSON.stringify(credentials);
   try {
     const res = await fetch(`${GATEWAY_URL}/api/auth/login`, {
       method: "POST",
@@ -17,7 +18,7 @@ export async function POST(request: Request) {
         headers: { "Content-Type": "application/json" },
       });
     }
-    await saveTokens((await res.json()) as TokenPair);
+    await saveTokens((await res.json()) as TokenPair, remember !== false);
     return NextResponse.json({ ok: true });
   } catch {
     return NextResponse.json(

@@ -7,8 +7,10 @@ import com.vaxclinic.sales.common.Actor;
 import com.vaxclinic.sales.customer.Customer;
 import com.vaxclinic.sales.customer.CustomerRepository;
 import com.vaxclinic.sales.debt.DebtLedger;
+import com.vaxclinic.sales.delivery.ShipmentInvoiceHooks;
 import com.vaxclinic.sales.invoice.InvoiceDtos.InfoRequest;
 import com.vaxclinic.sales.invoice.InvoiceDtos.InvoiceRequest;
+import com.vaxclinic.sales.order.OrderDepositLedger;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,9 +31,16 @@ public class InvoiceWriter {
     private final CashbookWriter cashbook;
     private final DebtLedger debt;
     private final InvoiceLineBuilder lineBuilder;
+    private final OrderDepositLedger orderDeposits;
+    private final ShipmentInvoiceHooks shipments;
+    private final InvoiceExtraPayments extraPayments;
 
     public InvoiceWriter(InvoiceRepository invoices, CustomerRepository customers, CashVoucherRepository vouchers,
-                         CashbookWriter cashbook, DebtLedger debt, InvoiceLineBuilder lineBuilder) {
+                         CashbookWriter cashbook, DebtLedger debt, InvoiceLineBuilder lineBuilder,
+                         OrderDepositLedger orderDeposits, ShipmentInvoiceHooks shipments, InvoiceExtraPayments extraPayments) {
+        this.extraPayments = extraPayments;
+        this.orderDeposits = orderDeposits;
+        this.shipments = shipments;
         this.invoices = invoices;
         this.customers = customers;
         this.vouchers = vouchers;
@@ -61,10 +70,15 @@ public class InvoiceWriter {
         inv.setSubtotal(totals.subtotal());
         inv.setDiscount(totals.discount());
         inv.setTotal(totals.total());
-        inv.setPaymentMethod(paid.signum() > 0 ? (req.paymentMethod() == null ? "CASH" : req.paymentMethod()) : null);
+        inv.setPaymentMethod(paid.signum() > 0 ? (req.paymentMethod() == null ? "CASH" : req.paymentMethod())
+                : req.extraPayments() == null || req.extraPayments().isEmpty() ? null : req.extraPayments().get(0).method());
         inv.setNote(req.note());
         inv.setOffline(req.offline());
+        inv.applyEInvoiceBuyer(req.einvoiceBuyer());
         inv.setStockDocId(req.id()); // chứng từ kho đầu tiên dùng chính id hóa đơn
+        inv.setOrderId(req.orderId());
+        applyMeta(inv, req);
+        if (req.delivery() != null) inv.setSaleMode("DELIVERY");
         lineBuilder.addLines(inv, req.lines(), lineIds, stockResult);
         invoices.saveAndFlush(inv); // Invoice implements Persistable → persist (INSERT), entity stays managed
         lineBuilder.saveLots(stockResult);
@@ -88,10 +102,18 @@ public class InvoiceWriter {
             v.setSourceId(inv.getId());
             cashbook.save(v, List.of(new CashbookWriter.Allocation(inv.getId(), paid)));
         }
+        var extras = extraPayments.create(inv, customer, req.extraPayments(), actor); // TT{mã}-2, -3...
+        if (req.orderId() != null) { // tiền cọc đã giảm công nợ lúc thu → chỉ phân bổ vào hóa đơn, không ghi sổ nợ lần 2
+            orderDeposits.attach(req.orderId(), inv);
+        }
+        shipments.createForInvoice(inv, req.delivery(), actor); // sau phiếu thu + cọc: thu hộ = tổng − đã trả
         if (customer != null) {
             debt.post(customer.getId(), DebtLedger.DocType.SALE, inv.getId(), code, inv.getTotal(), null, inv.getSoldAt());
             if (paid.signum() > 0) {
                 debt.post(customer.getId(), DebtLedger.DocType.PAYMENT, inv.getId(), "TT" + code, paid.negate(), null, inv.getSoldAt());
+            }
+            for (var x : extras) {
+                debt.post(customer.getId(), DebtLedger.DocType.PAYMENT, inv.getId(), x.getCode(), x.getAmount().negate(), null, inv.getSoldAt());
             }
             Customer c = customers.findById(customer.getId()).orElseThrow();
             c.setTotalSales(c.getTotalSales().add(inv.getTotal()));
@@ -101,7 +123,7 @@ public class InvoiceWriter {
 
     /** Sau khi kho đã hoàn: hủy phiếu thu tự động, ghi giảm công nợ, đánh dấu hủy. */
     @Transactional
-    public void markCancelled(UUID id) {
+    public void markCancelled(UUID id, Actor actor) {
         Invoice inv = invoices.findForUpdate(id).orElseThrow();
         if ("CANCELLED".equals(inv.getStatus())) {
             return;
@@ -109,13 +131,21 @@ public class InvoiceWriter {
         var auto = vouchers.findBySourceTypeAndSourceId("INVOICE", id).filter(v -> "PAID".equals(v.getStatus()));
         BigDecimal autoPaid = auto.map(v -> v.getAmount()).orElse(BigDecimal.ZERO);
         auto.ifPresent(cashbook::cancel);
+        var extras = extraPayments.cancelAll(id);
+        if (inv.getOrderId() != null) {
+            orderDeposits.detach(inv);
+        }
         inv.setStatus("CANCELLED");
         inv.setCancelledAt(Instant.now());
+        shipments.onInvoiceCancelled(inv, actor);
         if (inv.getCustomerId() != null) {
             Instant now = Instant.now();
             debt.post(inv.getCustomerId(), DebtLedger.DocType.SALE_CANCEL, id, inv.getCode(), inv.getTotal().negate(), "Hủy hóa đơn", now);
             if (autoPaid.signum() > 0) {
                 debt.post(inv.getCustomerId(), DebtLedger.DocType.PAYMENT_CANCEL, id, "TT" + inv.getCode(), autoPaid, "Hủy phiếu thu", now);
+            }
+            for (var x : extras) {
+                debt.post(inv.getCustomerId(), DebtLedger.DocType.PAYMENT_CANCEL, id, x.getCode(), x.getAmount(), "Hủy phiếu thu", now);
             }
             Customer c = customers.findById(inv.getCustomerId()).orElseThrow();
             c.setTotalSales(c.getTotalSales().subtract(inv.getTotal()));
@@ -134,7 +164,8 @@ public class InvoiceWriter {
     }
 
     @Transactional
-    public void updateInfo(UUID id, InfoRequest req) {
+    /** channel = mã kênh đã kiểm tra (null = giữ nguyên). */
+    public void updateInfo(UUID id, InfoRequest req, String channel) {
         Invoice inv = invoices.findById(id)
                 .orElseThrow(() -> BusinessException.notFound("INVOICE_NOT_FOUND", "Không tìm thấy hóa đơn"));
         if (req.sellerId() != null) {
@@ -144,7 +175,17 @@ public class InvoiceWriter {
         if (req.soldAt() != null) {
             inv.setSoldAt(req.soldAt());
         }
+        if (channel != null) {
+            inv.setSalesChannel(channel);
+        }
         inv.setNote(req.note());
+    }
+
+    /** Bảng giá + kênh bán (đã kiểm tra ở InvoiceService); dùng chung khi tạo và sửa hóa đơn. */
+    static void applyMeta(Invoice inv, InvoiceRequest req) {
+        inv.setPriceBookId(req.priceBookId());
+        inv.setPriceBookName(req.priceBookId() == null ? null : Actor.blankToNull(req.priceBookName()));
+        inv.setSalesChannel(req.salesChannel() == null || req.salesChannel().isBlank() ? "DIRECT" : req.salesChannel().trim());
     }
 
     static String fundOf(String method) {

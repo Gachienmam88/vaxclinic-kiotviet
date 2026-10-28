@@ -40,5 +40,5 @@ export const useSalesChannels = (all = false) =>
 /** Sau mọi thao tác giao hàng: làm mới vận đơn, đối tác, hóa đơn, sổ quỹ, công nợ khách. */
 export function refreshDelivery(qc: QueryClient) {
   ["shipments", "shipment", "delivery-partners", "delivery-partner", "delivery-partner-ledger", "delivery-settlements",
-    "delivery-reconcilable", "invoices", "invoice", "cashbook", "customers", "customer"].forEach((k) => qc.invalidateQueries({ queryKey: [k] }));
+    "delivery-reconcilable", "invoices", "invoice", "cashbook", "customers", "customer", "products"].forEach((k) => qc.invalidateQueries({ queryKey: [k] }));
 }

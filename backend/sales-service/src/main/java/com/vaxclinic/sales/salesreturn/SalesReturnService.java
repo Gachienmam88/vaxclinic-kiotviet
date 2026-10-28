@@ -2,6 +2,7 @@ package com.vaxclinic.sales.salesreturn;
 
 import com.vaxclinic.common.error.BusinessException;
 import com.vaxclinic.sales.common.Actor;
+import com.vaxclinic.sales.common.SalesRules;
 import com.vaxclinic.sales.invoice.Invoice;
 import com.vaxclinic.sales.invoice.InvoiceLine;
 import com.vaxclinic.sales.invoice.InvoiceRepository;
@@ -37,16 +38,31 @@ public class SalesReturnService {
     private final ProductStockClient stock;
     private final SalesReturnWriter writer;
 
-    public SalesReturnService(InvoiceRepository invoices, JdbcTemplate jdbc, ProductStockClient stock, SalesReturnWriter writer) {
+    private final SalesRules rules;
+    private final QuickReturnService quick;
+
+    public SalesReturnService(InvoiceRepository invoices, JdbcTemplate jdbc, ProductStockClient stock, SalesReturnWriter writer,
+                              SalesRules rules, QuickReturnService quick) {
+        this.quick = quick;
         this.invoices = invoices;
         this.jdbc = jdbc;
         this.stock = stock;
         this.writer = writer;
+        this.rules = rules;
     }
 
+    /** Trả theo hóa đơn (chuyển hoàn vận đơn gọi trực tiếp). */
     public UUID create(ReturnRequest req, Actor actor) {
+        return create(req, actor, null);
+    }
+
+    /** bearerToken: JWT người thao tác — "Trả nhanh" (invoiceId null) dùng để tra hàng hóa ở product-service. */
+    public UUID create(ReturnRequest req, Actor actor, String bearerToken) {
         if (writer.exists(req.id())) {
             return req.id();
+        }
+        if (req.invoiceId() == null) {
+            return quick.create(req, actor, bearerToken);
         }
         Invoice inv = invoices.findWithLines(req.invoiceId())
                 .orElseThrow(() -> BusinessException.notFound("INVOICE_NOT_FOUND", "Không tìm thấy hóa đơn"));
@@ -54,6 +70,9 @@ public class SalesReturnService {
             throw BusinessException.badRequest("INVOICE_NOT_RETURNABLE", "Hóa đơn đã hủy, không trả hàng được");
         }
         actor.checkBranch(inv.getBranchId());
+        java.time.Instant returnedAt = req.returnedAt() == null ? java.time.Instant.now() : req.returnedAt();
+        rules.checkNotLocked(inv.getBranchId(), returnedAt);
+        rules.checkReturnWindow(inv.getSoldAt(), returnedAt);
         var planned = new ArrayList<PlannedLine>();
         for (int i = 0; i < req.lines().size(); i++) {
             var in = req.lines().get(i);
@@ -74,7 +93,9 @@ public class SalesReturnService {
         BigDecimal fee = money(req.fee()).min(subtotal.subtract(discount));
         BigDecimal total = subtotal.subtract(discount).subtract(fee);
         BigDecimal refund = req.refundAmount() == null ? total : money(req.refundAmount()).min(total);
-        if (inv.getCustomerId() == null && refund.compareTo(total) < 0) {
+        // Khách lẻ: trả đủ, trừ phần hóa đơn chưa thu (bán giao hàng chuyển hoàn: tiền thu hộ chưa thu được)
+        BigDecimal unpaid = inv.getTotal().subtract(inv.getPaid()).max(BigDecimal.ZERO);
+        if (inv.getCustomerId() == null && refund.compareTo(total.subtract(unpaid)) < 0) {
             throw BusinessException.badRequest("WALK_IN_REFUND", "Khách lẻ: phải trả đủ tiền cho khách");
         }
         String code = "TH%06d".formatted(jdbc.queryForObject("select nextval('sales_return_code_seq')", Long.class));
@@ -93,6 +114,7 @@ public class SalesReturnService {
             return;
         }
         actor.checkBranch((UUID) r.get("branch_id"));
+        rules.checkNotLocked((UUID) r.get("branch_id"), ((java.sql.Timestamp) r.get("returned_at")).toInstant());
         stock.apply(new ProductStockClient.Request(id, "SALE_RETURN_CANCEL", (String) r.get("code"), (UUID) r.get("branch_id"),
                 (String) r.get("customer_name"), actor.id(), null, List.of()));
         writer.markCancelled(id);

@@ -29,13 +29,18 @@ public final class PayRates {
 
     /** Số ngày công chuẩn của kỳ = số ngày trong kỳ rơi vào ngày làm việc của chi nhánh (1 = Thứ hai … 7 = Chủ nhật). */
     public static int standardDays(Period p, List<Integer> workdays) {
+        return Math.max(workingDays(p.start(), p.end(), workdays), 1);
+    }
+
+    /** Số ngày làm việc (theo thứ trong tuần của chi nhánh) trong [from, to]; from sau to → 0. */
+    public static int workingDays(LocalDate from, LocalDate to, List<Integer> workdays) {
         int n = 0;
-        for (LocalDate d = p.start(); !d.isAfter(p.end()); d = d.plusDays(1)) {
+        for (LocalDate d = from; !d.isAfter(to); d = d.plusDays(1)) {
             if (workdays.contains(d.getDayOfWeek().getValue())) {
                 n++;
             }
         }
-        return Math.max(n, 1);
+        return n;
     }
 
     /** Lương 1 ngày công (theo ngày công chuẩn / cố định tháng). */

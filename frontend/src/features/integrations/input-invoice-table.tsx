@@ -4,7 +4,9 @@ import { Fragment, useState } from "react";
 import Link from "next/link";
 import { Eye, FilePlus2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { DocCodeLink } from "@/components/ui/doc-code-link";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ListEmptyRow } from "@/components/ui/list-empty-state";
 import { DETAIL_PANEL, LIST_HEAD_ROW, StatusBadge, SUB_HEAD } from "@/features/sales/invoice-list-kit";
 import { formatDate, formatMoney, formatNumber } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -24,17 +26,17 @@ export function InputInvoiceTable({ items, sumTotal }: { items: InputInvoice[] |
           <TableHead>Mã số thuế</TableHead><TableHead className="text-right">Tổng tiền</TableHead>
           <TableHead>Trạng thái lập phiếu</TableHead><TableHead>Tính chất</TableHead><TableHead className="pr-4 text-right">Thao tác</TableHead></TableRow></TableHeader>
         <TableBody>
-          <TableRow className="font-bold hover:bg-transparent"><TableCell colSpan={4} />
-            <TableCell className="text-right">{formatMoney(sumTotal)}</TableCell><TableCell colSpan={3} /></TableRow>
-          {items && !items.length && <TableRow><TableCell colSpan={COLS} className="py-10 text-center text-muted-foreground">Chưa có hóa đơn — đồng bộ từ cổng thuế hoặc nhập file XML</TableCell></TableRow>}
+          {!!items?.length && <TableRow className="font-bold hover:bg-transparent"><TableCell colSpan={4} />
+            <TableCell className="text-right">{formatMoney(sumTotal)}</TableCell><TableCell colSpan={3} /></TableRow>}
+          {items && !items.length && <ListEmptyRow cols={COLS} what="hóa đơn" />}
           {items?.map((i) => (
             <Fragment key={i.id}>
-              <TableRow className={cn("cursor-pointer align-top", expanded === i.id && "bg-[#e3f0fc] hover:bg-[#e3f0fc]")} onClick={() => toggle(i.id)}>
+              <TableRow className={cn("cursor-pointer align-top", expanded === i.id && "bg-primary-tint hover:bg-primary-tint")} onClick={() => toggle(i.id)}>
                 <TableCell className="pl-4">{i.number}</TableCell><TableCell>{formatDate(i.issuedAt)}</TableCell>
                 <TableCell className="max-w-72 whitespace-normal">{i.sellerName} - {i.sellerTaxCode}</TableCell>
                 <TableCell>{i.buyerTaxCode}</TableCell><TableCell className="text-right">{formatMoney(i.total)}</TableCell>
                 <TableCell>{i.receiptId
-                  ? <StatusBadge tone="green">Đã lập phiếu {i.receiptCode}</StatusBadge>
+                  ? <StatusBadge tone="green">Đã lập phiếu <DocCodeLink code={i.receiptCode} /></StatusBadge>
                   : <StatusBadge tone="gray">Chưa lập phiếu</StatusBadge>}</TableCell>
                 <TableCell><StatusBadge tone="gray">{NATURE_LABEL[i.nature]}</StatusBadge></TableCell>
                 <TableCell className="pr-4" onClick={(e) => e.stopPropagation()}>

@@ -3,8 +3,9 @@
 import { useState } from "react";
 import { downloadCsv } from "@/features/accounting/tax-calc";
 import { ymd } from "@/features/dashboard/dashboard-date-utils";
-import { ORDER_STATUS_OPTIONS, orderStatusLabel } from "@/features/orders/order-types";
+import { ORDER_STATUS_OPTIONS, orderStatusLabel, type OrderStatus } from "@/features/orders/order-types";
 import { BarChart, ChartCard, EmptyChart } from "./report-charts";
+import { DELIVERY_PRESETS, deliverySpan } from "./report-filter-options";
 import { spanOf, sumOf, useReport, type OrderProductRow, type OrderRow } from "./report-api";
 import { BranchFilter, CheckFilter, CustomerFilter, ReportLayout, SelectFilter, TextFilter, useBranchLabel, ViewModeFilter, type PickedCustomer, type ViewMode } from "./report-sidebar-kit";
 import { asTable, linesToCsv, ReportTable, type ReportColumn, type ReportLine } from "./report-table";
@@ -12,6 +13,7 @@ import { TimeFilter } from "./report-time-filter";
 import { rangeText, timeRange, type TimeValue } from "./report-time-presets";
 import { ReportViewer } from "./report-viewer";
 import { top10 } from "./summary-table-kit";
+import { DocCodeLink } from "@/components/ui/doc-code-link";
 
 type Concern = "products" | "transactions";
 type OAgg = { code: string; name: string; customer: string; time: string; status: string; qty: number; value: number; invoiced: number;
@@ -19,14 +21,14 @@ type OAgg = { code: string; name: string; customer: string; time: string; status
 const blank: OAgg = { code: "", name: "", customer: "", time: "", status: "", qty: 0, value: 0, invoiced: 0, subtotal: 0, discount: 0, total: 0, deposit: 0, invoice: "" };
 const fromProduct = (p: OrderProductRow): OAgg => ({ ...blank, code: p.code, name: p.unit ? `${p.name} (${p.unit})` : p.name, qty: +p.qty, value: +p.value, invoiced: +p.invoicedQty });
 const fromOrder = (o: OrderRow): OAgg => ({ ...blank, code: o.code, customer: o.customerName, time: new Date(o.orderedAt).toLocaleString("vi-VN"),
-  status: orderStatusLabel(o.status as never), qty: +o.qty, subtotal: +o.subtotal, discount: +o.discount, total: +o.total, deposit: +o.deposit, invoice: o.invoiceCode ?? "" });
+  status: orderStatusLabel(o.status as OrderStatus), qty: +o.qty, subtotal: +o.subtotal, discount: +o.discount, total: +o.total, deposit: +o.deposit, invoice: o.invoiceCode ?? "" });
 const m = (key: keyof OAgg, label: string, type: "money" | "qty" = "money"): ReportColumn<OAgg> => ({ key, label, type, value: (r) => r[key] });
-const CODE = (label: string): ReportColumn<OAgg> => ({ key: "code", label, value: (r) => r.code, render: (r) => <b className="rp-link">{r.code}</b> });
+const CODE = (label: string): ReportColumn<OAgg> => ({ key: "code", label, value: (r) => r.code, render: (r) => <b><DocCodeLink code={r.code} /></b> });
 const PRODUCT_COLS = [CODE("Mã hàng"), { key: "name", label: "Tên hàng", value: (r: OAgg) => r.name }, m("qty", "SL đặt", "qty"), m("value", "Giá trị đặt"),
   m("invoiced", "SL đã tạo hóa đơn", "qty")];
 const ORDER_COLS = [CODE("Mã đặt hàng"), { key: "time", label: "Thời gian", value: (r: OAgg) => r.time }, { key: "customer", label: "Khách hàng", value: (r: OAgg) => r.customer },
   m("qty", "SL", "qty"), m("subtotal", "Tổng tiền hàng"), m("discount", "Giảm giá"), m("total", "Khách cần trả"), m("deposit", "Khách đã trả"),
-  { key: "status", label: "Trạng thái", value: (r: OAgg) => r.status }, { key: "invoice", label: "Hóa đơn", value: (r: OAgg) => r.invoice }];
+  { key: "status", label: "Trạng thái", value: (r: OAgg) => r.status }, { key: "invoice", label: "Hóa đơn", value: (r: OAgg) => r.invoice, render: (r: OAgg) => <DocCodeLink code={r.invoice} /> }];
 
 function lines(rows: OAgg[], label: string): ReportLine<OAgg>[] {
   if (!rows.length) return [];
@@ -45,9 +47,10 @@ export function OrdersReport() {
   const [customer, setCustomer] = useState<PickedCustomer>(null);
   const [q, setQ] = useState("");
   const [branch, setBranch] = useState("");
+  const [delivery, setDelivery] = useState("");
   const branchLabel = useBranchLabel(branch);
   const range = timeRange(time), span = spanOf(range);
-  const params = { branchIds: branch || undefined, statuses: status || undefined, customerId: customer?.id, q };
+  const params = { branchIds: branch || undefined, statuses: status || undefined, customerId: customer?.id, q, ...deliverySpan(delivery) };
   const prodQ = useReport<OrderProductRow[]>("/reports/orders/products", span, { ...params, merge }, concern === "products" || mode === "chart");
   const ordQ = useReport<OrderRow[]>("/reports/orders/transactions", span, params, concern === "transactions" && mode === "report");
   const products = (prodQ.data ?? []).map(fromProduct), orders = (ordQ.data ?? []).map(fromOrder);
@@ -64,8 +67,7 @@ export function OrdersReport() {
       <SelectFilter title="Mối quan tâm" value={concern} onChange={(v) => setConcern(v as Concern)} options={[["products", "Hàng hóa"], ["transactions", "Giao dịch"]]} />
       <BranchFilter value={branch} onChange={setBranch} />
       <TimeFilter title="Thời gian đặt hàng" value={time} onChange={setTime} />
-      <SelectFilter title="Thời gian giao hàng" value="" onChange={() => undefined} options={[["", "Toàn thời gian"]]}
-        hint="Đơn đặt hàng chưa có ngày giao hàng riêng nên lấy toàn thời gian" />
+      <SelectFilter title="Thời gian giao hàng" value={delivery} onChange={setDelivery} placeholder="Toàn thời gian" options={DELIVERY_PRESETS} />
       <SelectFilter title="Trạng thái" value={status} onChange={setStatus} placeholder="Chọn trạng thái" options={ORDER_STATUS_OPTIONS} />
       <CustomerFilter value={customer} onChange={setCustomer} />
       <TextFilter title="Hàng hóa" value={q} onChange={setQ} placeholder="Theo mã, tên hàng" />

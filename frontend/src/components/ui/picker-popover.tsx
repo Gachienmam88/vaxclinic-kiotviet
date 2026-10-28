@@ -3,6 +3,7 @@
 import * as React from "react";
 import { Popover as PopoverPrimitive } from "@base-ui/react/popover";
 import { cn } from "cn";
+import { zoomAwarePositioning } from "@/lib/zoom-aware-floating-anchor";
 
 /** Nút icon trong ô chọn ngày/giờ (lịch, đồng hồ). */
 export const PICKER_ICON_BUTTON =
@@ -13,12 +14,15 @@ export const PICKER_ICON_BUTTON =
  * Gắn vào body qua Portal nên nằm trên hộp thoại; định vị bằng Floating UI của Base UI.
  */
 export function PickerPopover({
-  open, onOpenChange, anchor, icon, label, disabled, align = "end", initialFocus, children, className,
+  open, onOpenChange, anchor, icon, triggerClassName = PICKER_ICON_BUTTON, label, disabled, align = "end", initialFocus, children, className,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  anchor: React.RefObject<HTMLElement | null>;
+  /** Phần tử để canh popup; bỏ trống = canh theo nút mở. */
+  anchor?: React.RefObject<HTMLElement | null>;
+  /** Nội dung nút mở (icon, hoặc cả ô hiển thị khi dùng `triggerClassName`). */
   icon: React.ReactNode;
+  triggerClassName?: string;
   label: string;
   disabled?: boolean;
   align?: "start" | "center" | "end";
@@ -28,13 +32,16 @@ export function PickerPopover({
   className?: string;
 }) {
   const popup = React.useRef<HTMLDivElement>(null);
+  const trigger = React.useRef<HTMLButtonElement>(null);
+  // Chỉ tính khi mở (cần window/document); app phóng zoom 1.12 → neo ảo đã bù zoom.
+  const positioning = React.useMemo(() => (open ? zoomAwarePositioning(() => anchor?.current ?? trigger.current) : undefined), [open, anchor]);
   return (
     <PopoverPrimitive.Root open={open} onOpenChange={(o) => onOpenChange(o)}>
-      <PopoverPrimitive.Trigger type="button" aria-label={label} title={label} disabled={disabled} className={PICKER_ICON_BUTTON}>
+      <PopoverPrimitive.Trigger ref={trigger} type="button" aria-label={label} title={label} disabled={disabled} className={triggerClassName}>
         {icon}
       </PopoverPrimitive.Trigger>
       <PopoverPrimitive.Portal>
-        <PopoverPrimitive.Positioner className="isolate z-50 outline-none" anchor={anchor} side="bottom" align={align} sideOffset={4}>
+        <PopoverPrimitive.Positioner className="isolate z-50 outline-none" {...positioning} side="bottom" align={align} sideOffset={4}>
           <PopoverPrimitive.Popup
             ref={popup}
             aria-label={label}

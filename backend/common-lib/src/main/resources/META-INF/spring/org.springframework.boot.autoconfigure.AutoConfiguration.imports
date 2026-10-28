@@ -1,1 +1,3 @@
 com.vaxclinic.common.security.JwtResourceServerAutoConfiguration
+com.vaxclinic.common.settings.ShopSettingsAutoConfiguration
+com.vaxclinic.common.notification.NotificationAutoConfiguration

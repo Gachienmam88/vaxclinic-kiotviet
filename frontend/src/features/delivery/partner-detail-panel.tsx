@@ -5,7 +5,10 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { HandCoins, Pencil, Trash2, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DocCodeLink } from "@/components/ui/doc-code-link";
+import { DetailTabsList } from "@/components/ui/detail-tabs-list";
+import { Tabs, TabsContent, TabsTrigger } from "@/components/ui/tabs";
+import { ListEmptyRow } from "@/components/ui/list-empty-state";
 import { DETAIL_BTN, DETAIL_PANEL, DETAIL_TAB, DETAIL_TABS_LIST, StatusBadge, SUB_HEAD } from "@/features/sales/invoice-list-kit";
 import { api, errorMessage } from "@/lib/api-client";
 import { formatDateTime, formatMoney } from "@/lib/format";
@@ -16,6 +19,7 @@ import { PartnerFormDialog } from "./partner-form-dialog";
 import { PartnerPaymentDialog } from "./partner-payment-dialog";
 import { ReconcileDialog } from "./reconcile-dialog";
 import { ShipmentTable } from "./shipment-table";
+import { joinAddress } from "@/lib/vn-admin-search";
 
 const KIND: Record<string, string> = { RECONCILE: "Đối soát", RECEIPT: "Thu tiền đối tác", PAYMENT: "Trả tiền đối tác" };
 const ROW = "border-b [&_td]:h-[30px] [&_td]:px-2";
@@ -24,7 +28,8 @@ const ROW = "border-b [&_td]:h-[30px] [&_td]:px-2";
  * Chi tiết đối tác giao hàng: Thông tin, Lịch sử giao hàng (vận đơn), Nợ cần thu từ ĐTGH (sổ công nợ: thu hộ +, phí −,
  * thanh toán), Lịch sử thanh toán (phiếu đối soát / thanh toán, hủy được). Nút: Sửa, Xóa, Thanh toán, Đối soát.
  */
-export function PartnerDetailPanel({ partner: p }: { partner: DeliveryPartner }) {
+/** initialTab: tab mở sẵn (link sâu phiếu đối soát → "payments"). */
+export function PartnerDetailPanel({ partner: p, onClose, initialTab }: { partner: DeliveryPartner; onClose?: () => void; initialTab?: string }) {
   const qc = useQueryClient();
   const { can } = useCurrentUser();
   const [dialog, setDialog] = useState<"edit" | "pay" | "reconcile" | null>(null);
@@ -48,17 +53,17 @@ export function PartnerDetailPanel({ partner: p }: { partner: DeliveryPartner })
 
   return (
     <div className={DETAIL_PANEL}>
-      <Tabs defaultValue="info" className="gap-0">
-        <TabsList variant="line" className={DETAIL_TABS_LIST}>
+      <Tabs defaultValue={initialTab ?? "info"} className="gap-0">
+        <DetailTabsList onActiveTabClick={onClose} variant="line" className={DETAIL_TABS_LIST}>
           <TabsTrigger value="info" className={DETAIL_TAB}>Thông tin</TabsTrigger>
           <TabsTrigger value="shipments" className={DETAIL_TAB}>Lịch sử giao hàng</TabsTrigger>
           <TabsTrigger value="ledger" className={DETAIL_TAB}>Nợ cần thu từ ĐTGH</TabsTrigger>
           <TabsTrigger value="payments" className={DETAIL_TAB}>Lịch sử thanh toán</TabsTrigger>
-        </TabsList>
+        </DetailTabsList>
         <TabsContent value="info">
           <div className="grid grid-cols-1 gap-x-8 p-4 text-[13px] md:grid-cols-2">
             <div>{info("Mã đối tác", p.code)}{info("Tên đối tác", <b>{p.name}</b>)}{info("Điện thoại", p.phone)}{info("Email", p.email)}</div>
-            <div>{info("Địa chỉ", p.address)}{info("Trạng thái", <StatusBadge tone={p.active ? "green" : "gray"}>{p.active ? "Đang hoạt động" : "Ngừng hoạt động"}</StatusBadge>)}
+            <div>{info("Địa chỉ", joinAddress(p.address, p.ward, p.province))}{info("Trạng thái", <StatusBadge tone={p.active ? "green" : "gray"}>{p.active ? "Đang hoạt động" : "Ngừng hoạt động"}</StatusBadge>)}
               {info("Kết nối", "Tự cập nhật trạng thái (chưa tích hợp API hãng vận chuyển)")}{info("Ghi chú", p.note)}</div>
           </div>
           {can("sales.perform") && (
@@ -72,13 +77,13 @@ export function PartnerDetailPanel({ partner: p }: { partner: DeliveryPartner })
               </div>
             </div>)}
         </TabsContent>
-        <TabsContent value="shipments" className="p-3"><ShipmentTable data={shipments} /></TabsContent>
+        <TabsContent value="shipments" className="p-3"><ShipmentTable data={shipments} compact /></TabsContent>
         <TabsContent value="ledger">
           <table className="w-full text-[13px]">
             <thead className={SUB_HEAD}><tr><th>Mã chứng từ</th><th>Thời gian</th><th>Loại</th><th>Ghi chú</th>
               <th className="text-right">Giá trị</th><th className="text-right">Nợ cần thu từ ĐTGH</th></tr></thead>
-            <tbody>{!ledger.length && <tr><td colSpan={6} className="py-6 text-center text-muted-foreground">Chưa có phát sinh</td></tr>}
-              {ledger.map((l) => (<tr key={l.id} className={ROW}><td>{l.docCode}</td><td>{formatDateTime(l.occurredAt)}</td>
+            <tbody>{!ledger.length && <ListEmptyRow cols={6} what="giao dịch" compact />}
+              {ledger.map((l) => (<tr key={l.id} className={ROW}><td><DocCodeLink code={l.docCode} /></td><td>{formatDateTime(l.occurredAt)}</td>
                 <td>{LEDGER_LABELS[l.docType]}</td><td>{l.note}</td><td className="text-right">{formatMoney(l.amount)}</td>
                 <td className="text-right">{formatMoney(l.balanceAfter)}</td></tr>))}</tbody>
           </table>
@@ -87,9 +92,9 @@ export function PartnerDetailPanel({ partner: p }: { partner: DeliveryPartner })
           <table className="w-full text-[13px]">
             <thead className={SUB_HEAD}><tr><th>Mã phiếu</th><th>Thời gian</th><th>Loại</th><th>Người tạo</th><th>Phiếu Sổ quỹ</th>
               <th className="text-right">Số vận đơn</th><th className="text-right">Số tiền</th><th>Trạng thái</th><th /></tr></thead>
-            <tbody>{!settlements.length && <tr><td colSpan={9} className="py-6 text-center text-muted-foreground">Chưa có thanh toán</td></tr>}
-              {settlements.map((s) => (<tr key={s.id} className={ROW}><td>{s.code}</td><td>{formatDateTime(s.createdAt)}</td><td>{KIND[s.kind]}</td>
-                <td>{s.createdByName}</td><td>{s.voucherCode}</td><td className="text-right">{s.shipmentCount || ""}</td>
+            <tbody>{!settlements.length && <ListEmptyRow cols={9} what="phiếu thanh toán" compact />}
+              {settlements.map((s) => (<tr key={s.id} className={ROW}><td><DocCodeLink code={s.code} /></td><td>{formatDateTime(s.createdAt)}</td><td>{KIND[s.kind]}</td>
+                <td>{s.createdByName}</td><td><DocCodeLink code={s.voucherCode} kind="/cashbook" /></td><td className="text-right">{s.shipmentCount || ""}</td>
                 <td className="text-right">{formatMoney(s.amount)}</td>
                 <td><StatusBadge tone={s.status === "CANCELLED" ? "red" : "green"}>{s.status === "CANCELLED" ? "Đã hủy" : "Hoàn thành"}</StatusBadge></td>
                 <td>{s.status !== "CANCELLED" && can("sales.perform") && <Button size="xs" variant="ghost" disabled={cancel.isPending}

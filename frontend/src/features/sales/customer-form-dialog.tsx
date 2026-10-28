@@ -28,12 +28,12 @@ export function CustomerFormDialog({ customer, branchId, onClose, onSaved }: Pro
   }));
   const bind = (k: TextField) => ({
     value: f[k],
-    onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setF((x) => ({ ...x, [k]: e.target.value })),
+    onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => setF((x) => ({ ...x, [k]: e.target.value })),
   });
 
   const save = useMutation({
     mutationFn: () => {
-      const body = { ...f, gender: f.gender || null, birthday: f.birthday || null, branchId };
+      const body = { ...f, gender: f.gender || null, birthday: f.birthday || null, groupId: f.groupId || null, branchId };
       return customer
         ? api<Customer>(`/customers/${customer.id}`, { method: "PUT", body })
         : api<Customer>("/customers", { method: "POST", body });

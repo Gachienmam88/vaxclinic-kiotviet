@@ -1,12 +1,26 @@
-import { TriangleAlert } from "lucide-react";
+"use client";
+
+import { Languages, TriangleAlert } from "lucide-react";
+import { useLocale, useT } from "@/lib/i18n";
+import { storeProfileNs } from "@/messages/store-profile";
 import {
   TERMS_DRAFT_NOTICE, TERMS_EFFECTIVE_DATE, TERMS_INTRO, TERMS_LEGAL_BASES, TERMS_SECTIONS, TERMS_VERSION,
 } from "./terms-of-use-content";
 
-/** Nội dung Điều khoản sử dụng (trang Hồ sơ cửa hàng và hộp đồng ý khi đăng nhập). */
+/**
+ * Nội dung Điều khoản sử dụng (trang Hồ sơ cửa hàng và hộp đồng ý khi đăng nhập).
+ * Văn bản pháp lý: luôn tiếng Việt ở mọi ngôn ngữ giao diện — ngôn ngữ khác chỉ thêm dòng ghi chú đã dịch ở đầu.
+ */
 export function TermsOfUseView() {
+  const t = useT(storeProfileNs);
+  const locale = useLocale();
   return (
     <article className="space-y-4 text-[13px] leading-6">
+      {locale !== "vi" && (
+        <p className="flex items-center gap-2 rounded-md bg-muted px-3 py-2 text-muted-foreground">
+          <Languages className="size-4 shrink-0" /> {t("terms.vietnameseOnlyNote")}
+        </p>
+      )}
       <div className="flex items-start gap-2 rounded-md border border-orange-300 bg-orange-50 px-3 py-2 font-semibold text-orange-700">
         <TriangleAlert className="mt-0.5 size-4 shrink-0" /> {TERMS_DRAFT_NOTICE}
       </div>

@@ -2,17 +2,19 @@
 
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useT } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { storeProfileNs } from "@/messages/store-profile";
 import { FlowFooter } from "./store-flow-parts";
 
 export type UpdateChoice = "profile" | "phone" | "rename" | "transfer";
 
-const OPTIONS: { value: UpdateChoice; title: string; hint?: string; ownerOnly?: boolean }[] = [
-  { value: "profile", title: "Cập nhật thông tin hồ sơ", hint: "Email, Số CCCD, Người đại diện, Ngày sinh, Địa chỉ,..." },
-  { value: "phone", title: "Cập nhật số điện thoại chủ gian hàng" },
-  { value: "rename", title: "Đổi tên gian hàng", hint: "Thay đổi địa chỉ truy cập hệ thống", ownerOnly: true },
-  { value: "transfer", title: "Chuyển nhượng gian hàng",
-    hint: "Chuyển quyền chủ gian hàng cho quản trị viên khác. Cần xác thực của chủ gian hàng hiện tại.", ownerOnly: true },
+/** Tiêu đề / gợi ý: khóa updateChoice.options.<value>.title|hint (namespace store-profile). */
+const OPTIONS: { value: UpdateChoice; hint?: "profile" | "rename" | "transfer"; ownerOnly?: boolean }[] = [
+  { value: "profile", hint: "profile" },
+  { value: "phone" },
+  { value: "rename", hint: "rename", ownerOnly: true },
+  { value: "transfer", hint: "transfer", ownerOnly: true },
 ];
 
 /** "Bạn muốn cập nhật thông tin?" (ảnh 179): chọn 1 loại cập nhật rồi Tiếp tục. */
@@ -20,11 +22,13 @@ export function UpdateChoiceDialog({ isOwner, onClose, onChoose }: {
   isOwner: boolean; onClose: () => void; onChoose: (c: UpdateChoice) => void;
 }) {
   const [value, setValue] = useState<UpdateChoice>("profile");
+  const t = useT(storeProfileNs);
+  const t = useT(storeProfileNs);
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="gap-3 sm:max-w-[520px]">
-        <DialogHeader><DialogTitle className="text-[17px] font-semibold">Bạn muốn cập nhật thông tin?</DialogTitle></DialogHeader>
-        <p className="text-[13px]">Lựa chọn thông tin cần cập nhật:</p>
+        <DialogHeader><DialogTitle className="text-[17px] font-semibold">{t("updateChoice.title")}</DialogTitle></DialogHeader>
+        <p className="text-[13px]">{t("updateChoice.prompt")}</p>
         <div role="radiogroup" className="space-y-2">
           {OPTIONS.map((o) => {
             const disabled = !!o.ownerOnly && !isOwner;
@@ -34,15 +38,15 @@ export function UpdateChoiceDialog({ isOwner, onClose, onChoose }: {
                 <input type="radio" name="update-choice" className="mt-0.5 size-4 accent-primary" checked={value === o.value}
                   disabled={disabled} onChange={() => setValue(o.value)} />
                 <span>
-                  <span className="block text-[13px] font-semibold">{o.title}</span>
-                  {o.hint && <span className="mt-0.5 block text-[11px] text-muted-foreground">{o.hint}</span>}
-                  {disabled && <span className="mt-0.5 block text-[11px] text-muted-foreground">Chỉ chủ gian hàng được thực hiện.</span>}
+                  <span className="block text-[13px] font-semibold">{t(`updateChoice.options.${o.value}.title`)}</span>
+                  {o.hint && <span className="mt-0.5 block text-[11px] text-muted-foreground">{t(`updateChoice.options.${o.hint}.hint`)}</span>}
+                  {disabled && <span className="mt-0.5 block text-[11px] text-muted-foreground">{t("updateChoice.ownerOnly")}</span>}
                 </span>
               </label>
             );
           })}
         </div>
-        <FlowFooter onCancel={onClose} cancelLabel="Bỏ qua" nextLabel="Tiếp tục" onNext={() => onChoose(value)} />
+        <FlowFooter onCancel={onClose} cancelLabel={t("flow.skip")} nextLabel={t("flow.next")} onNext={() => onChoose(value)} />
       </DialogContent>
     </Dialog>
   );

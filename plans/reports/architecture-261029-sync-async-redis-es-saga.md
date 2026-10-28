@@ -106,26 +106,28 @@ flowchart LR
     IN -.->|"audit queue RAM"| ID
 ```
 
-Bản ASCII (nét liền `──▶` = đồng bộ, nét đứt `- - ▶` = bất đồng bộ):
+Bản ASCII (`══▶` = đồng bộ, người gọi chờ trả lời; `- -▶` = bất đồng bộ, gửi nền):
 
 ```
- Trình duyệt (/sale, hàng đợi localStorage) ──▶ Next.js BFF ◀── SePay webhook
-                                                   │
-                                                   ▼
-                                           gateway :8080/8090
-            ┌───────────────┬─────────────────────┼──────────────────────┐
-            ▼               ▼                     ▼                      ▼
-     identity :8081   product :8082          sales :8086        integration :8088 ──▶ MISA
-        ▲  ▲  ▲  │        │  ▲  │               │  │  │  ▲               │
-        │  │  │  │        │  └──┼──stock-docs───┘  │  │  └──đọc hóa đơn──┘
-        │  │  │  │        │     │ (đồng bộ)        │  └──published? (đồng bộ)──▶ integration
-        │  │  │  └─seller-revenue (đồng bộ)───────▶│
-        │  │  └────settings 30s (đồng bộ)◀─────────┘ (product cũng gọi)
-        │  │
-        │  └ - - cảnh báo 15 phút / audit queue - - (product, sales, integration)
-        │
-   product ─ - - outbox phiếu chi NCC (5 s) - - ▶ sales /internal/cashflows
-   identity ─ - - outbox phiếu chi lương (5 s) - - ▶ sales /internal/cashflows
+ Trình duyệt /sale (hàng đợi localStorage)      SePay (webhook)
+                 │                                   │
+                 ▼                                   ▼
+            Next.js BFF  ───────────────────────────────▶ gateway :8080/8090 ──▶ identity / product / sales / integration
+
+ ĐỒNG BỘ
+   sales       ══▶ product      /internal/stock-docs        (trừ/hoàn kho, idempotent doc_id+doc_type)
+   sales       ══▶ integration  /internal/einvoices/...     (HĐ đã phát hành HĐĐT? lỗi => chặn)
+   sales       ══▶ identity     /internal/settings          (cache 30 s)
+   product     ══▶ identity     /internal/settings          (cache 30 s, gọi trong transaction kho)
+   identity    ══▶ sales        /internal/seller-revenue    (tính hoa hồng)
+   integration ══▶ sales        /internal/invoices/{id}  ══▶ MISA   (phát hành HĐĐT khi người dùng bấm)
+
+ BẤT ĐỒNG BỘ
+   product     - -▶ sales       outbox_cashflows, 5 s       (phiếu chi trả NCC)
+   identity    - -▶ sales       outbox_cashflows, 5 s       (phiếu chi lương / tạm ứng)
+   product, sales, integration - -▶ identity  job 1-15 phút (hộp thư cảnh báo, sync trọn bộ)
+   product, sales, integration - -▶ identity  hàng đợi RAM  (nhật ký thao tác, mất nếu tắt service)
+   trình duyệt - -▶ sales       hàng đợi offline, 15 s      (hóa đơn / trả hàng / đặt hàng, id do client sinh)
 ```
 
 Luồng thanh toán tại quầy (hiện tại):

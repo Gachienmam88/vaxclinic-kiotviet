@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import type { VnUnit } from "./vn-admin-search";
 
-/** Tệp tĩnh danh mục ĐVHC 2 cấp (34 tỉnh/thành, 3.321 phường/xã/đặc khu). Service worker POS cache tệp này → dùng được offline. */
+/** Tệp tĩnh danh mục ĐVHC 2 cấp (34 tỉnh/thành, 3.321 phường/xã/đặc khu). Service worker màn bán hàng cache tệp này → dùng được offline. */
 export const VN_ADMIN_URL = "/data/vn-admin-2025.json";
 
 export type VnAdminData = {

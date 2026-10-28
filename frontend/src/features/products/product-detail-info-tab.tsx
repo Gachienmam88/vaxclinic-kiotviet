@@ -28,7 +28,7 @@ export function ProductInfoTab({ p }: { p: ProductDetail }) {
   return (
     <div className="space-y-5">
       <div className="flex gap-3">
-        <div className="flex size-24 shrink-0 items-center justify-center rounded-md bg-[#e3f0fc] text-primary">
+        <div className="flex size-24 shrink-0 items-center justify-center rounded-md bg-primary-tint text-primary">
           <ImageIcon className="size-11" aria-hidden />
         </div>
         <div className="space-y-2 pt-1">

@@ -10,14 +10,15 @@ import { useSupplier } from "./supplier-queries";
 
 /**
  * Chi tiết NCC mở dưới dòng: Thông tin | Lịch sử nhập/trả hàng | Nợ cần trả nhà cung cấp.
+ * docCode (link sâu theo mã phiếu công nợ) → mở sẵn tab "Nợ cần trả nhà cung cấp" + phiếu đó.
  * Bấm lại tab đang mở → onClose (thu gọn), giống bấm lại dòng. Viền xanh nối liền với dòng phía trên (không viền trên).
  */
-export function SupplierDetailPanel({ id, onClose }: { id: string; onClose: () => void }) {
+export function SupplierDetailPanel({ id, onClose, docCode }: { id: string; onClose: () => void; docCode?: string | null }) {
   const { data: s } = useSupplier(id);
   if (!s) return <div className="border border-t-0 border-primary bg-white p-6 text-[13px] text-muted-foreground">Đang tải...</div>;
   return (
     <div className="border border-t-0 border-primary bg-white px-4 pb-4">
-      <Tabs defaultValue="info">
+      <Tabs defaultValue={docCode ? "debt" : "info"}>
         <DetailTabsList variant="line" className={kvTabsList} onActiveTabClick={onClose}>
           <TabsTrigger value="info" className={kvTabsTrigger}>Thông tin</TabsTrigger>
           <TabsTrigger value="history" className={kvTabsTrigger}>Lịch sử nhập/trả hàng</TabsTrigger>
@@ -25,7 +26,7 @@ export function SupplierDetailPanel({ id, onClose }: { id: string; onClose: () =
         </DetailTabsList>
         <TabsContent value="info" className="pt-4"><SupplierDetailInfoTab s={s} onDeleted={onClose} /></TabsContent>
         <TabsContent value="history" className="pt-3"><SupplierDetailHistoryTab s={s} /></TabsContent>
-        <TabsContent value="debt" className="pt-3"><SupplierDetailDebtTab s={s} /></TabsContent>
+        <TabsContent value="debt" className="pt-3"><SupplierDetailDebtTab s={s} docCode={docCode} /></TabsContent>
       </Tabs>
     </div>
   );

@@ -4,13 +4,15 @@ import { useState } from "react";
 import { Check } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { errorMessage } from "@/lib/api-client";
+import { useT } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { storeProfileNs } from "@/messages/store-profile";
 import { verifyAction, type VerifyPurpose } from "./store-profile-queries";
 
 /** Thanh 3 bước trong hộp thoại (ảnh 181 / 182): vòng số 20px nối bằng gạch, nhãn 11px, bước hiện tại màu chủ đạo. */
 export function FlowStepper({ steps, current }: { steps: string[]; current: number }) {
   return (
-    <div className="-mx-6 flex justify-center bg-muted/60 px-6 pt-3 pb-2.5">
+    <div className="-mx-4 flex justify-center bg-muted/60 px-4 pt-3 pb-2.5">
       {steps.map((label, i) => (
         <div key={label} className="flex items-start">
           {i > 0 && <div className={cn("mt-2.5 h-px w-12", i <= current ? "bg-primary" : "bg-border")} />}
@@ -38,6 +40,8 @@ export function useVerifyStep(purpose: VerifyPurpose, twoFactor: boolean) {
   const [value, setValue] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const t = useT(storeProfileNs);
+  const t = useT(storeProfileNs);
   const valid = twoFactor ? /^\d{6}$/.test(value) : value.length > 0;
 
   async function submit(): Promise<string | null> {
@@ -57,16 +61,14 @@ export function useVerifyStep(purpose: VerifyPurpose, twoFactor: boolean) {
   const fields = (
     <div className="space-y-2 text-[13px]">
       <p className="text-muted-foreground">
-        {twoFactor
-          ? "Để xác nhận bạn là người thực hiện, nhập mã 6 số đang hiển thị trong ứng dụng xác thực (Google Authenticator, Microsoft Authenticator...)."
-          : "Để xác nhận bạn là người thực hiện, nhập mật khẩu đăng nhập hiện tại của bạn."}
+        {twoFactor ? t("verify.hintTotp") : t("verify.hintPassword")}
       </p>
       <p className="text-xs text-muted-foreground">
-        Hệ thống không gửi mã OTP qua SMS. Bật xác thực 2 lớp ở menu tài khoản để xác thực bằng ứng dụng thay cho mật khẩu.
+        {t("verify.noSms")}
       </p>
       <Input autoFocus type={twoFactor ? "text" : "password"} inputMode={twoFactor ? "numeric" : undefined}
         autoComplete={twoFactor ? "one-time-code" : "current-password"} maxLength={twoFactor ? 6 : 100}
-        placeholder={twoFactor ? "Mã xác thực 6 số" : "Mật khẩu"} aria-label={twoFactor ? "Mã xác thực" : "Mật khẩu"}
+        placeholder={twoFactor ? t("verify.codePlaceholder") : t("verify.password")} aria-label={twoFactor ? t("verify.codeLabel") : t("verify.password")}
         value={value} onChange={(e) => setValue(twoFactor ? e.target.value.replace(/\D/g, "") : e.target.value)} />
       {error && <p className="text-xs text-destructive">{error}</p>}
     </div>
@@ -74,14 +76,15 @@ export function useVerifyStep(purpose: VerifyPurpose, twoFactor: boolean) {
   return { fields, submit, pending, valid };
 }
 
-/** Hai nút chân hộp thoại kiểu KiotViet: "Hủy bỏ" viền + nút chính. */
-export function FlowFooter({ onCancel, onNext, nextLabel, disabled, cancelLabel = "Hủy bỏ" }: {
+/** Hai nút chân hộp thoại kiểu KiotViet: "Hủy bỏ" viền (mặc định) + nút chính. */
+export function FlowFooter({ onCancel, onNext, nextLabel, disabled, cancelLabel }: {
   onCancel: () => void; onNext: () => void; nextLabel: string; disabled?: boolean; cancelLabel?: string;
 }) {
+  const t = useT(storeProfileNs);
   return (
-    <div className="-mx-6 -mb-6 mt-2 flex justify-end gap-2 border-t border-border px-6 py-3">
+    <div className="-mx-4 -mb-4 mt-1 flex justify-end gap-2 border-t border-border px-4 py-3">
       <button type="button" onClick={onCancel}
-        className="h-9 rounded-md border border-border bg-background px-4 text-[13px] font-semibold hover:bg-muted">{cancelLabel}</button>
+        className="h-9 rounded-md border border-border bg-background px-4 text-[13px] font-semibold hover:bg-muted">{cancelLabel ?? t("flow.cancel")}</button>
       <button type="button" onClick={onNext} disabled={disabled}
         className="h-9 rounded-md bg-primary px-4 text-[13px] font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50">{nextLabel}</button>
     </div>

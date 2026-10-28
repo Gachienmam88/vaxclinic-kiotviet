@@ -1,5 +1,6 @@
 package com.vaxclinic.sales.salesreturn;
 
+import com.vaxclinic.common.audit.AuditLogger;
 import com.vaxclinic.sales.common.Actor;
 import com.vaxclinic.sales.salesreturn.SalesReturnDtos.LineResponse;
 import com.vaxclinic.sales.salesreturn.SalesReturnDtos.ListItem;
@@ -32,11 +33,14 @@ public class SalesReturnController {
     private final SalesReturnService service;
     private final SalesReturnWriter writer;
     private final NamedParameterJdbcTemplate jdbc;
+    private final AuditLogger audit;
 
-    public SalesReturnController(SalesReturnService service, SalesReturnWriter writer, NamedParameterJdbcTemplate jdbc) {
+    public SalesReturnController(SalesReturnService service, SalesReturnWriter writer, NamedParameterJdbcTemplate jdbc,
+                                 AuditLogger audit) {
         this.service = service;
         this.writer = writer;
         this.jdbc = jdbc;
+        this.audit = audit;
     }
 
     @GetMapping("/api/sales-returns")
@@ -45,7 +49,7 @@ public class SalesReturnController {
                                     @RequestParam(required = false) UUID invoiceId,
                                     @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "15") int size) {
         var p = new MapSqlParameterSource();
-        var w = new StringBuilder(" from sales_returns r join invoices i on i.id = r.invoice_id where 1=1");
+        var w = new StringBuilder(" from sales_returns r left join invoices i on i.id = r.invoice_id where 1=1");
         if (q != null && !q.isBlank()) { w.append(" and (r.code ilike :q or i.code ilike :q or r.customer_name ilike :q)"); p.addValue("q", "%" + q.trim() + "%"); }
         if (statuses != null && !statuses.isEmpty()) { w.append(" and r.status in (:statuses)"); p.addValue("statuses", statuses); }
         if (from != null) { w.append(" and r.returned_at >= :from"); p.addValue("from", Timestamp.from(from)); }
@@ -70,7 +74,7 @@ public class SalesReturnController {
                         rs.getBigDecimal("quantity").multiply(rs.getBigDecimal("unit_price")).setScale(0, java.math.RoundingMode.HALF_UP),
                         rs.getString("lots")));
         writer.find(id); // 404 nếu không có
-        return jdbc.queryForObject("select r.*, i.code invoice_code from sales_returns r join invoices i on i.id = r.invoice_id where r.id = :id",
+        return jdbc.queryForObject("select r.*, i.code invoice_code from sales_returns r left join invoices i on i.id = r.invoice_id where r.id = :id",
                 params, (rs, n) -> new ReturnResponse(rs.getObject("id", UUID.class), rs.getString("code"),
                         rs.getObject("invoice_id", UUID.class), rs.getString("invoice_code"), rs.getObject("branch_id", UUID.class),
                         rs.getObject("customer_id", UUID.class), rs.getString("customer_name"), rs.getString("created_by_name"),
@@ -81,13 +85,23 @@ public class SalesReturnController {
 
     @PostMapping("/api/sales-returns")
     public ReturnResponse create(@Valid @RequestBody ReturnRequest req, @AuthenticationPrincipal Jwt jwt) {
-        return get(service.create(req, Actor.of(jwt)));
+        boolean existed = writer.exists(req.id());
+        ReturnResponse r = get(service.create(req, Actor.of(jwt), jwt.getTokenValue()));
+        if (!existed) {
+            Actor.of(jwt).audit(audit, r.branchId(), "Trả hàng", "Tạo", r.code(), "Tạo phiếu trả hàng " + r.code()
+                    + (r.invoiceCode() == null ? " (trả nhanh)" : " theo hóa đơn " + r.invoiceCode())
+                    + ", khách " + r.customerName() + ", cần trả khách " + Actor.money(r.total()));
+        }
+        return r;
     }
 
     @PostMapping("/api/sales-returns/{id}/cancel")
     @PreAuthorize("hasAuthority('sales.cancel')")
     public ReturnResponse cancel(@PathVariable UUID id, @AuthenticationPrincipal Jwt jwt) {
         service.cancel(id, Actor.of(jwt));
-        return get(id);
+        ReturnResponse r = get(id);
+        Actor.of(jwt).audit(audit, r.branchId(), "Trả hàng", "Hủy", r.code(), "Hủy phiếu trả hàng " + r.code()
+                + (r.invoiceCode() == null ? " (trả nhanh)" : " của hóa đơn " + r.invoiceCode()));
+        return r;
     }
 }

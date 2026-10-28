@@ -1,9 +1,11 @@
 package com.vaxclinic.product.purchase;
 
+import com.vaxclinic.common.address.AdminUnitCodes;
 import com.vaxclinic.common.error.BusinessException;
 import com.vaxclinic.product.purchase.PurchaseDtos.Actor;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -22,7 +24,9 @@ public class SupplierCommandService {
                                   @Size(max = 500) String address, @Size(max = 100) String province,
                                   @Size(max = 100) String ward, UUID groupId, @Size(max = 100) String groupName,
                                   String note, @Size(max = 250) String companyName, @Size(max = 20) String taxCode,
-                                  @Size(max = 20) String idNumber, Boolean active) {
+                                  @Size(max = 20) String idNumber, Boolean active,
+                                  @Pattern(regexp = AdminUnitCodes.PROVINCE, message = AdminUnitCodes.PROVINCE_MSG) String provinceCode,
+                                  @Pattern(regexp = AdminUnitCodes.WARD, message = AdminUnitCodes.WARD_MSG) String wardCode) {
     }
 
     private final SupplierRepository suppliers;
@@ -110,6 +114,8 @@ public class SupplierCommandService {
         s.setAddress(PurchaseLineSupport.blankToNull(r.address()));
         s.setProvince(PurchaseLineSupport.blankToNull(r.province()));
         s.setWard(PurchaseLineSupport.blankToNull(r.ward()));
+        s.setProvinceCode(AdminUnitCodes.clean(r.provinceCode()));
+        s.setWardCode(AdminUnitCodes.clean(r.wardCode()));
         if (r.groupId() != null) {
             groups.requireExists(r.groupId());
             s.setGroupId(r.groupId());

@@ -15,6 +15,8 @@ public interface AppUserRepository extends JpaRepository<AppUser, UUID> {
 
     boolean existsByUsernameIgnoreCase(String username);
 
+    Optional<AppUser> findFirstByOwnerTrue();
+
     /** Tìm theo tên đăng nhập / họ tên / SĐT; q rỗng = tất cả. */
     @Query("""
             select u from AppUser u

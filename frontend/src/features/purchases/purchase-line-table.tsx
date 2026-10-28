@@ -1,6 +1,7 @@
 "use client";
 
 import { Trash2 } from "lucide-react";
+import { DocCodeLink } from "@/components/ui/doc-code-link";
 import { Input } from "@/components/ui/input";
 import { NumberInput } from "@/components/number-input";
 import { NativeSelect } from "@/features/products/product-form-sections";
@@ -8,6 +9,7 @@ import { useProductLots } from "@/features/products/product-queries";
 import { formatDate, formatMoney, formatNumber } from "@/lib/format";
 import { lineAmount } from "./purchase-math";
 import { changeUnit, type LineForm } from "./purchase-line-form";
+import { DatePicker } from "@/components/ui/date-picker";
 
 type Props = {
   mode: "receipt" | "return";
@@ -17,8 +19,8 @@ type Props = {
   readOnly?: boolean;
 };
 
-/** Phiếu trả: chọn lô đang tồn tại điểm tiêm (FEFO, hiển thị tồn từng lô). */
-function LotSelect({ line, branchId, onChange, disabled }: {
+/** Phiếu trả / xuất hủy / xuất nội bộ: chọn lô đang tồn tại chi nhánh (FEFO, kể cả lô hết hạn; hiển thị tồn từng lô). */
+export function LotSelect({ line, branchId, onChange, disabled }: {
   line: LineForm; branchId: string; onChange: (lot: string) => void; disabled?: boolean;
 }) {
   const { data: lots = [] } = useProductLots(line.productId, true);
@@ -39,39 +41,39 @@ export function PurchaseLineTable({ mode, lines, branchId, onChange, readOnly }:
   const isReceipt = mode === "receipt";
 
   return (
-    <table className="w-full text-sm">
-      <thead className="sticky top-0 bg-primary/10 text-left">
-        <tr>
-          <th className="w-10 px-2 py-2" /><th className="w-12 px-2">STT</th><th className="px-2">Mã hàng</th>
+    <table className="w-full text-[13px]">
+      <thead className="sticky top-0 bg-primary-tint text-left text-xs font-bold">
+        <tr className="h-[30px]">
+          <th className="w-10 px-2" /><th className="w-12 px-2">STT</th><th className="w-32 px-2">Mã hàng</th>
           <th className="px-2">Tên hàng</th><th className="w-28 px-2">ĐVT</th>
           <th className="w-28 px-2 text-right">Số lượng</th><th className="w-36 px-2 text-right">{isReceipt ? "Đơn giá" : "Giá trả"}</th>
           {isReceipt && <th className="w-32 px-2 text-right">Giảm giá</th>}
-          <th className="w-36 px-2 text-right">Thành tiền</th>
+          <th className="w-36 px-2 pr-4 text-right">Thành tiền</th>
         </tr>
       </thead>
       <tbody>
         {lines.map((l, i) => {
           const unit = l.units.find((u) => u.id === l.unitId) ?? l.units[0];
           return (
-            <tr key={l.key} className="border-b align-top">
+            <tr key={l.key} className="border-b border-[#e5e7eb] align-top hover:bg-[#f7f8fa]">
               <td className="px-2 py-2">
                 {!readOnly && (
-                  <button type="button" aria-label="Xóa dòng" className="text-muted-foreground hover:text-destructive"
+                  <button type="button" aria-label="Xóa dòng" className="flex h-8 items-center text-muted-foreground hover:text-destructive"
                     onClick={() => onChange(lines.filter((x) => x.key !== l.key))}><Trash2 className="size-4" /></button>
                 )}
               </td>
-              <td className="px-2 py-2">{i + 1}</td>
-              <td className="px-2 py-2 text-primary">{unit.code}</td>
+              <td className="px-2 py-2 leading-8">{i + 1}</td>
+              <td className="px-2 py-2 leading-8"><DocCodeLink code={unit.code} newTab /></td>
               <td className="px-2 py-2">
-                {l.productName}
+                <div className="leading-8">{l.productName}</div>
                 {l.lotManaged && (
-                  <div className="mt-1.5 grid max-w-md grid-cols-2 gap-1.5">
+                  <div className="mt-1 grid max-w-md grid-cols-2 gap-1.5">
                     {isReceipt ? (
                       <>
                         <Input placeholder="Số lô" value={l.lotNumber} disabled={readOnly}
                           onChange={(e) => update(l.key, { lotNumber: e.target.value })} />
-                        <Input type="date" title="Hạn sử dụng" value={l.expiryDate} disabled={readOnly}
-                          onChange={(e) => update(l.key, { expiryDate: e.target.value })} />
+                        <DatePicker title="Hạn sử dụng" value={l.expiryDate} disabled={readOnly}
+                          onChange={(v) => update(l.key, { expiryDate: v })} />
                       </>
                     ) : (
                       <div className="col-span-2">
@@ -99,7 +101,7 @@ export function PurchaseLineTable({ mode, lines, branchId, onChange, readOnly }:
                   <NumberInput value={l.discount} disabled={readOnly} onValueChange={(discount) => update(l.key, { discount })} />
                 </td>
               )}
-              <td className="px-2 py-2 text-right font-semibold">{formatMoney(lineAmount(l))}</td>
+              <td className="px-2 py-2 pr-4 text-right font-bold leading-8">{formatMoney(lineAmount(l))}</td>
             </tr>
           );
         })}

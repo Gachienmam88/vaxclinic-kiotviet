@@ -62,7 +62,7 @@ export default function HrStartPage() {
               "disabled:border-[#c9ced6] disabled:text-[#c9ced6] disabled:hover:bg-transparent")}>{s.action}</button>
         </div>
       ))}
-      {creatingShift && <ShiftFormDialog onClose={() => setCreatingShift(false)} />}
+      {creatingShift && <ShiftFormDialog initialMode="create" onClose={() => setCreatingShift(false)} />}
     </section>
   );
 }

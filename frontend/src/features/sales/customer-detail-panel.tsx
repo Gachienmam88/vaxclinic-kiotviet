@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { PencilLine } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DetailTabsList } from "@/components/ui/detail-tabs-list";
+import { Tabs, TabsContent, TabsTrigger } from "@/components/ui/tabs";
 import { CustomerDetailDebtTab } from "./customer-detail-debt-tab";
 import { CustomerDetailInfoTab } from "./customer-detail-info-tab";
 import { CustomerDetailSalesTab } from "./customer-detail-sales-tab";
@@ -12,18 +13,18 @@ import { kvTabsList, kvTabsTrigger } from "./customer-ui-primitives";
 import { useCustomer } from "./sales-queries";
 
 /** Chi tiết khách hàng mở dưới dòng: Thông tin | Lịch sử bán/trả hàng | Nợ cần thu từ khách. */
-export function CustomerDetailPanel({ id }: { id: string }) {
+export function CustomerDetailPanel({ id, onClose }: { id: string; onClose?: () => void }) {
   const { data: c } = useCustomer(id);
   const [editing, setEditing] = useState(false);
   if (!c) return <div className="border border-primary bg-white p-6 text-[13px] text-muted-foreground">Đang tải...</div>;
   return (
     <div className="border border-primary bg-white px-5 pb-4">
       <Tabs defaultValue="info">
-        <TabsList variant="line" className={kvTabsList}>
+        <DetailTabsList onActiveTabClick={onClose} variant="line" className={kvTabsList}>
           <TabsTrigger value="info" className={kvTabsTrigger}>Thông tin</TabsTrigger>
           <TabsTrigger value="sales" className={kvTabsTrigger}>Lịch sử bán/trả hàng</TabsTrigger>
           <TabsTrigger value="debt" className={kvTabsTrigger}>Nợ cần thu từ khách</TabsTrigger>
-        </TabsList>
+        </DetailTabsList>
         <TabsContent value="info" className="pt-4">
           <CustomerDetailInfoTab c={c} />
           <div className="mt-4 flex justify-end border-t pt-3">

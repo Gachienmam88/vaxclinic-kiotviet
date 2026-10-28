@@ -8,6 +8,7 @@ import { useBranches } from "@/features/settings/settings-queries";
 import { api } from "@/lib/api-client";
 import { payPeriodOf, useHrMutation, useHrSettings } from "./hr-queries";
 import type { PayrollDetail } from "./hr-types";
+import { DatePicker } from "@/components/ui/date-picker";
 
 const field = "h-[30px] w-full rounded-md border border-[#d9dbe0] bg-white px-2.5 text-[13px] outline-none focus:border-primary";
 
@@ -51,9 +52,9 @@ export function PayrollCreateDialog({ onClose }: { onClose: () => void }) {
           <select className={field} aria-label="Kỳ hạn trả" value="MONTHLY" onChange={() => undefined}><option value="MONTHLY">Hàng tháng</option></select>
           <span>Kỳ làm việc</span>
           <div className="flex items-center gap-2">
-            <input type="date" aria-label="Từ ngày" className={field} value={periodFrom} onChange={(e) => changeFrom(e.target.value)} />
+            <DatePicker aria-label="Từ ngày" className={field} value={periodFrom} onChange={(v) => changeFrom(v)} />
             <span>-</span>
-            <input type="date" aria-label="Đến ngày" className={field} value={periodTo} onChange={(e) => setTo(e.target.value)} />
+            <DatePicker aria-label="Đến ngày" className={field} value={periodTo} onChange={(v) => setTo(v)} />
           </div>
           <label htmlFor="pr-branch">Chi nhánh</label>
           <select id="pr-branch" className={field} value={branchId} onChange={(e) => setBranchId(e.target.value)}>

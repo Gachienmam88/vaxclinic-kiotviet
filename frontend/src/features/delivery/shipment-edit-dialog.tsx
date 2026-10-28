@@ -9,6 +9,7 @@ import { kvDialog, kvDialogBody, kvDialogFooter, kvDialogHeader, kvDialogTitle, 
 import { api, errorMessage } from "@/lib/api-client";
 import { refreshDelivery } from "./delivery-queries";
 import type { ShipmentDetail } from "./delivery-types";
+import { areaFromServer } from "./delivery-address";
 import { ShipmentDeliveryFields, type DeliveryForm } from "./shipment-delivery-fields";
 
 /** Sửa thông tin giao (người nhận, địa chỉ, đối tác, trọng lượng, phí) — chỉ khi Chờ xử lý / Đang lấy hàng. */
@@ -16,7 +17,7 @@ export function ShipmentEditDialog({ detail, onClose }: { detail: ShipmentDetail
   const qc = useQueryClient();
   const s = detail.item;
   const [v, setV] = useState<DeliveryForm>({ partnerId: s.partnerId, receiverName: s.receiverName, receiverPhone: s.receiverPhone,
-    receiverAddress: s.receiverAddress, area: s.area ?? "", weightGram: detail.weightGram ?? 0, shippingFee: Number(s.shippingFee),
+    receiverAddress: s.receiverAddress, ...areaFromServer(s), weightGram: detail.weightGram ?? 0, shippingFee: Number(s.shippingFee),
     feePayer: s.feePayer, note: detail.note ?? "" });
   const save = useMutation({
     mutationFn: () => api(`/shipments/${s.id}`, { method: "PUT", body: { ...v, weightGram: v.weightGram || null } }),

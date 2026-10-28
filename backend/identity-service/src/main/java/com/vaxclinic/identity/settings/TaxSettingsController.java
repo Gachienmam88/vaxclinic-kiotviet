@@ -1,5 +1,6 @@
 package com.vaxclinic.identity.settings;
 
+import com.vaxclinic.common.address.AdminUnitCodes;
 import com.vaxclinic.common.audit.AuditLogger;
 import com.vaxclinic.common.error.BusinessException;
 import jakarta.validation.Valid;
@@ -23,11 +24,12 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
  * Thiết lập → Thuế & Kế toán (hộ kinh doanh, phương pháp kê khai từ 2026).
- * Ngành nghề quyết định tỷ lệ % GTGT và TNCN trên doanh thu; mỗi MST có nhóm doanh thu, cách tính TNCN và các địa điểm
+ * Mỗi ngành nghề có tỷ lệ % GTGT, TNCN riêng; nhóm hàng gắn với ngành. Mỗi MST có nhóm doanh thu, cách tính TNCN và các địa điểm
  * kinh doanh gắn với chi nhánh. Sổ kế toán / tờ khai lấy số liệu theo các chi nhánh của địa điểm đang hoạt động.
  */
 @RestController
@@ -35,7 +37,9 @@ public class TaxSettingsController {
 
     public record Location(@NotBlank @Size(max = 10) String code, @NotBlank @Size(max = 200) String name,
                            @Size(max = 300) String address, @Size(max = 100) String province, @Size(max = 100) String ward,
-                           List<UUID> branchIds, LocalDate startDate, boolean active) {
+                           List<UUID> branchIds, LocalDate startDate, boolean active,
+                           @Pattern(regexp = AdminUnitCodes.PROVINCE, message = AdminUnitCodes.PROVINCE_MSG) String provinceCode,
+                           @Pattern(regexp = AdminUnitCodes.WARD, message = AdminUnitCodes.WARD_MSG) String wardCode) {
     }
 
     /** revenueGroup 1: ≤ 1 tỷ/năm; 2: > 1–3 tỷ; 3: > 3–50 tỷ; 4: > 50 tỷ. pitMethod: REVENUE (% doanh thu) | PROFIT (thu nhập). */

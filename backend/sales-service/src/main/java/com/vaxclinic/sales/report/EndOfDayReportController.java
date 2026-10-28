@@ -69,13 +69,13 @@ public class EndOfDayReportController {
                     paid.signum() > 0 ? rs.getString("payment_method") : null, rs.getString("bank"));
         }));
         out.addAll(jdbc.query("""
-                select r.id, r.code, r.returned_at t, r.customer_name, coalesce(i.seller_name, i.created_by_name) seller,
+                select r.id, r.code, r.returned_at t, r.customer_name, coalesce(i.seller_name, i.created_by_name, r.created_by_name) seller,
                   (select coalesce(sum(rl.quantity), 0) from sales_return_lines rl where rl.return_id = r.id) qty,
                   r.subtotal, r.discount, r.fee, r.total, r.payment_method,
                   (select coalesce(sum(v.amount), 0) from cash_vouchers v where v.source_type = 'RETURN' and v.source_id = r.id
                     and v.status = 'PAID' and v.occurred_at >= :from and v.occurred_at < :to) refunded,
                   %s bank
-                from sales_returns r join invoices i on i.id = r.invoice_id where %s order by r.returned_at""".formatted(
+                from sales_returns r left join invoices i on i.id = r.invoice_id where %s order by r.returned_at""".formatted(
                 BANK_LABEL.formatted("(select v.bank_account_id from cash_vouchers v where v.source_type = 'RETURN' and v.source_id = r.id limit 1)"),
                 f.returnWhere()), p, (rs, n) -> {
             BigDecimal refunded = rs.getBigDecimal("refunded"), total = rs.getBigDecimal("total");

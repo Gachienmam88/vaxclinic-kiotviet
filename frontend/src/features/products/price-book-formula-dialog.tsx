@@ -55,7 +55,7 @@ export function PriceBookFormulaDialog({ book, books, filters, total, onClose }:
             {base === "BOOK" && (
               <div className="w-40"><NativeSelect aria-label="Bảng giá gốc" value={baseBookId} onChange={(e) => setBaseBookId(e.target.value)}>
                 <option value="">Chọn bảng giá</option>
-                {books.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+                {books.filter((b) => b.id !== book.id).map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
               </NativeSelect></div>
             )}
             <div className="w-14"><NativeSelect aria-label="Phép tính" value={op} onChange={(e) => setOp(e.target.value as FormulaOp)}>

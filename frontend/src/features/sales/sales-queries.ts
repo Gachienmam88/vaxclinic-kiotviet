@@ -3,7 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
 import type {
-  BankAccount, CashPage, Customer, CustomerList, DebtLine, Invoice, InvoiceList,
+  BankAccount, CashPage, Customer, CustomerGroup, CustomerList, DebtLine, Invoice, InvoiceList,
 } from "./sales-types";
 
 /** Khoảng thời gian dùng chung: "Tháng này" hoặc tùy chỉnh [from 00:00, to hết ngày] theo giờ máy. */
@@ -39,7 +39,7 @@ export const useCustomerDebts = (id: string) =>
   useQuery({ queryKey: ["customer-debts", id], queryFn: () => api<DebtLine[]>(`/customers/${id}/debts`) });
 
 export const useCustomerGroups = () =>
-  useQuery({ queryKey: ["customer-groups"], queryFn: () => api<string[]>("/customers/groups") });
+  useQuery({ queryKey: ["customer-groups"], queryFn: () => api<CustomerGroup[]>("/customer-groups"), staleTime: 60_000 });
 
 export const useInvoices = (params: URLSearchParams) =>
   useQuery({
@@ -65,4 +65,5 @@ export const useBankAccounts = () =>
   useQuery({ queryKey: ["bank-accounts"], queryFn: () => api<BankAccount[]>("/bank-accounts"), staleTime: 5 * 60_000 });
 
 /** Invalidate everything a sale / payment / cancellation can change. */
-export const SALES_KEYS = [["invoices"], ["invoice"], ["customers"], ["customer"], ["customer-debts"], ["cashbook"], ["products"]];
+export const SALES_KEYS = [["invoices"], ["invoice"], ["customers"], ["customer"], ["customer-debts"], ["cashbook"], ["products"],
+  ["orders"], ["order"]];

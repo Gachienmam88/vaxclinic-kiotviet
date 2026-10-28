@@ -1,6 +1,7 @@
 "use client";
 
 import { NumberInput } from "@/components/number-input";
+import { DocCodeLink } from "@/components/ui/doc-code-link";
 import { formatDateTime, formatMoney } from "@/lib/format";
 import { kvSubHead, kvSubRow, kvSubTable } from "./customer-ui-primitives";
 import type { InvoiceListItem } from "./sales-types";
@@ -23,7 +24,7 @@ export function CustomerDebtAllocationTable({ unpaid, alloc, unallocated, onChan
           {!unpaid?.length && <tr className={kvSubRow}><td colSpan={6} className="text-center text-muted-foreground">Không tìm thấy bản ghi nào phù hợp</td></tr>}
           {unpaid?.map((i) => (
             <tr key={i.id} className={kvSubRow}>
-              <td className="text-primary">{i.code}</td><td>{formatDateTime(i.soldAt)}</td>
+              <td><DocCodeLink code={i.code} kind="/invoices" newTab /></td><td>{formatDateTime(i.soldAt)}</td>
               <td className="text-right">{formatMoney(i.total)}</td><td className="text-right">{formatMoney(i.paid)}</td>
               <td className="text-right">{formatMoney(i.total - i.paid)}</td>
               <td><NumberInput className="h-7 rounded-md text-[13px] md:text-[13px]" aria-label={`Tiền thu ${i.code}`} value={alloc[i.id] ?? 0}

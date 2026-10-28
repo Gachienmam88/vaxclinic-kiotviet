@@ -41,9 +41,9 @@ export function ProductPicker({ onPick }: { onPick: (p: ProductDetail) => void }
   }
 
   return (
-    <div className="relative w-full max-w-md">
-      <Search className="absolute top-2 left-2.5 size-4 text-muted-foreground" />
-      <Input ref={ref} className="bg-background pl-8" placeholder="Tìm hàng hóa theo mã hoặc tên (F3)" value={text}
+    <div className="relative w-full max-w-[400px]">
+      <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+      <Input ref={ref} aria-label="Tìm hàng hóa" className="h-8 rounded-md border-primary bg-background pl-8" placeholder="Tìm hàng hóa theo mã hoặc tên (F3)" value={text}
         onFocus={() => setOpen(true)} onBlur={() => setTimeout(() => setOpen(false), 150)}
         onChange={(e) => { setText(e.target.value); setOpen(true); }}
         onKeyDown={(e) => { if (e.key === "Enter" && data?.items[0]) pick(data.items[0].id); }} />
@@ -78,7 +78,7 @@ export function SupplierPicker({ value, onChange, onCreate, disabled }: {
 
   if (value) {
     return (
-      <div className="flex h-8 items-center justify-between rounded-md border bg-muted/40 px-2 text-sm">
+      <div className="flex h-[30px] items-center justify-between rounded-md border border-[#d1d5db] bg-[#f7f8fa] px-2 text-[13px]">
         <span className="truncate font-medium text-primary">{value.name}</span>
         {!disabled && <button type="button" className="text-muted-foreground" onClick={() => onChange(null)} aria-label="Bỏ chọn">×</button>}
       </div>
@@ -86,10 +86,11 @@ export function SupplierPicker({ value, onChange, onCreate, disabled }: {
   }
   return (
     <div className="relative">
-      <Input placeholder="Tìm nhà cung cấp" value={text} disabled={disabled} className="pr-8"
+      <Input placeholder="Tìm nhà cung cấp" aria-label="Tìm nhà cung cấp" value={text} disabled={disabled}
+        className="h-[30px] rounded-md border-[#d1d5db] pr-8"
         onFocus={() => setOpen(true)} onBlur={() => setTimeout(() => setOpen(false), 150)}
         onChange={(e) => { setText(e.target.value); setOpen(true); }} />
-      <button type="button" className="absolute top-1.5 right-2 text-muted-foreground" onClick={onCreate} aria-label="Thêm nhà cung cấp">
+      <button type="button" className="absolute top-1/2 right-2 -translate-y-1/2 text-foreground hover:text-primary" onClick={onCreate} aria-label="Thêm nhà cung cấp">
         <Plus className="size-4" />
       </button>
       {open && (

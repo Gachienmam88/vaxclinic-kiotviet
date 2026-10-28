@@ -4,6 +4,9 @@ import { Fragment, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { FileOutput } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ListEmptyRow } from "@/components/ui/list-empty-state";
+import { DocCodeLink } from "@/components/ui/doc-code-link";
+import { DeepLinkRoute, useDeepLinkExpanded, type DeepLink } from "@/components/ui/deep-link-route";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   CheckOption, FilterSection, FilterSidebar, LIST_HEAD_ROW, ListSearch, PageTitle, PeriodFilter, StatusBadge, TOOLBAR_BTN,
@@ -18,15 +21,17 @@ import { SalesReturnDetailPanel, type SalesReturnItem } from "./sales-return-det
 const COLS = 9;
 const STATUSES = [["COMPLETED", "Đã trả"], ["CANCELLED", "Đã hủy"]] as const;
 
-/** Đơn hàng → Trả hàng: danh sách phiếu khách trả hàng. Tạo phiếu từ nút "Trả hàng" trong chi tiết hóa đơn. */
-export default function SalesReturnsPage() {
-  const [search, setSearch] = useState("");
-  const [q, setQ] = useState("");
-  const [period, setPeriod] = useState<Period>({ mode: "month", from: "", to: "" });
+/**
+ * Đơn hàng → Trả hàng: danh sách phiếu khách trả hàng. Tạo phiếu từ nút "Trả hàng" trong chi tiết hóa đơn.
+ * Link sâu: /returns?code=TH000001 (lọc theo mã, mọi thời gian, mở chi tiết) hoặc ?id=<uuid>.
+ */
+function SalesReturnsPage({ link }: { link: DeepLink }) {
+  const [search, setSearch] = useState(link.code ?? "");
+  const [q, setQ] = useState(link.code ?? "");
+  const [period, setPeriod] = useState<Period>({ mode: link.code || link.id ? "all" : "month", from: "", to: "" });
   const [statuses, setStatuses] = useState<string[]>([]);
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(15);
-  const [expanded, setExpanded] = useState<string | null>(null);
   useEffect(() => { const t = setTimeout(() => { setQ(search); setPage(0); }, 300); return () => clearTimeout(t); }, [search]);
   const params = useMemo(() => {
     const p = periodParams(period, new URLSearchParams({ page: String(page), size: String(size) }));
@@ -39,6 +44,7 @@ export default function SalesReturnsPage() {
     queryFn: () => api<{ items: SalesReturnItem[]; total: number; sumTotal: number }>(`/sales-returns?${params}`),
     placeholderData: (prev) => prev,
   });
+  const { open: expanded, setOpen: setExpanded, toggle: toggleRow } = useDeepLinkExpanded(data?.items, link, (r) => [r.code]);
   const toggle = (v: string, on: boolean) => { setStatuses(on ? [...statuses, v] : statuses.filter((x) => x !== v)); setPage(0); };
   const exportCsv = () => downloadCsv("tra-hang", ["Mã trả hàng", "Thời gian", "Mã hóa đơn", "Khách hàng", "Tổng tiền hàng", "Phí trả hàng",
     "Cần trả khách", "Đã trả khách", "Trạng thái"], (data?.items ?? []).map((r) => [r.code, formatDateTime(r.returnedAt), r.invoiceCode,
@@ -49,7 +55,7 @@ export default function SalesReturnsPage() {
       <div className="space-y-3">
         <PageTitle>Trả hàng</PageTitle>
         <FilterSidebar>
-          <PeriodFilter value={period} onChange={(p) => { setPeriod(p); setPage(0); }} />
+          <PeriodFilter allowAll value={period} onChange={(p) => { setPeriod(p); setPage(0); }} />
           <FilterSection title="Trạng thái">
             {STATUSES.map(([v, l]) => <CheckOption key={v} checked={statuses.includes(v)} onChange={(on) => toggle(v, on)}>{l}</CheckOption>)}
           </FilterSection>
@@ -69,20 +75,21 @@ export default function SalesReturnsPage() {
               <TableHead className="text-right">Cần trả khách</TableHead><TableHead className="text-right">Đã trả khách</TableHead><TableHead className="pr-4">Trạng thái</TableHead>
             </TableRow></TableHeader>
             <TableBody>
-              <TableRow className="font-bold hover:bg-transparent">
-                <TableCell colSpan={6} /><TableCell className="text-right">{formatMoney(data?.sumTotal ?? 0)}</TableCell><TableCell colSpan={2} />
-              </TableRow>
-              {data && !data.items.length && <TableRow><TableCell colSpan={COLS} className="py-10 text-center text-muted-foreground">Không có phiếu trả hàng</TableCell></TableRow>}
+              {!!data?.items.length && <TableRow className="font-bold hover:bg-transparent">
+                <TableCell colSpan={6} /><TableCell className="text-right">{formatMoney(data.sumTotal ?? 0)}</TableCell><TableCell colSpan={2} />
+              </TableRow>}
+              {data && !data.items.length && <ListEmptyRow cols={COLS} what="phiếu trả hàng"
+                onWiden={period.mode === "month" ? () => { setPeriod({ ...period, mode: "all" }); setPage(0); } : undefined} />}
               {data?.items.map((r) => (
                 <Fragment key={r.id}>
-                  <TableRow className={cn("cursor-pointer", expanded === r.id && "bg-[#e3f0fc] hover:bg-[#e3f0fc]")} onClick={() => setExpanded(expanded === r.id ? null : r.id)}>
+                  <TableRow className={cn("cursor-pointer", expanded === r.id && "bg-primary-tint hover:bg-primary-tint")} onClick={() => toggleRow(r.id)}>
                     <TableCell className="pl-4">{r.code}</TableCell><TableCell>{formatDateTime(r.returnedAt)}</TableCell>
-                    <TableCell>{r.invoiceCode}</TableCell><TableCell className="whitespace-normal">{r.customerName}</TableCell>
+                    <TableCell><DocCodeLink code={r.invoiceCode} /></TableCell><TableCell className="whitespace-normal">{r.customerName}</TableCell>
                     <TableCell className="text-right">{formatMoney(r.subtotal)}</TableCell><TableCell className="text-right">{formatMoney(r.fee)}</TableCell>
                     <TableCell className="text-right">{formatMoney(r.total)}</TableCell><TableCell className="text-right">{formatMoney(r.refunded)}</TableCell>
                     <TableCell className="pr-4"><StatusBadge tone={r.status === "COMPLETED" ? "green" : "red"}>{r.status === "COMPLETED" ? "Đã trả" : "Đã hủy"}</StatusBadge></TableCell>
                   </TableRow>
-                  {expanded === r.id && <TableRow className="hover:bg-transparent"><TableCell colSpan={COLS} className="p-0 whitespace-normal"><SalesReturnDetailPanel id={r.id} /></TableCell></TableRow>}
+                  {expanded === r.id && <TableRow className="hover:bg-transparent"><TableCell colSpan={COLS} className="p-0 whitespace-normal"><SalesReturnDetailPanel id={r.id} onClose={() => setExpanded(null)} /></TableCell></TableRow>}
                 </Fragment>))}
             </TableBody>
           </Table>
@@ -91,4 +98,8 @@ export default function SalesReturnsPage() {
       </div>
     </div>
   );
+}
+
+export default function Page() {
+  return <DeepLinkRoute>{(link) => <SalesReturnsPage link={link} />}</DeepLinkRoute>;
 }

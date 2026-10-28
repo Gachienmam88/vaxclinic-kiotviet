@@ -22,8 +22,8 @@ import java.util.UUID;
 @RestController
 public class RevenueBookController {
 
-    /** cogs: giá vốn hàng bán (đã trừ hàng trả lại). */
-    public record DailyRevenue(LocalDate date, String taxCode, BigDecimal sales, BigDecimal returns, BigDecimal cogs,
+    /** Theo ngày × mặt hàng × mã thuế (mặt hàng → nhóm hàng → ngành nghề, tính thuế theo ngành). cogs: giá vốn (đã trừ hàng trả lại). */
+    public record DailyRevenue(LocalDate date, UUID productId, String taxCode, BigDecimal sales, BigDecimal returns, BigDecimal cogs,
                                int invoiceCount) {
     }
 
@@ -48,29 +48,30 @@ public class RevenueBookController {
                   where i.status = 'COMPLETED' and i.sold_at >= :from and i.sold_at < :to
                     and (:allBranches or i.branch_id in (:branches))
                 ), sale as (
-                  select inv.d, coalesce(l.tax_code, '') tax_code, count(distinct inv.id) n,
+                  select inv.d, l.product_id, coalesce(l.tax_code, '') tax_code, count(distinct inv.id) n,
                     sum(case when inv.subtotal = 0 then 0
                              else round(inv.total * l.quantity * (l.unit_price - l.discount) / inv.subtotal) end) amount,
                     sum(round(l.quantity * l.cost)) cogs
-                  from inv join invoice_lines l on l.invoice_id = inv.id group by 1, 2
+                  from inv join invoice_lines l on l.invoice_id = inv.id group by 1, 2, 3
                 ), ret as (
                   select r.id, (r.returned_at at time zone 'Asia/Ho_Chi_Minh')::date d, r.total, r.subtotal
                   from sales_returns r
                   where r.status = 'COMPLETED' and r.returned_at >= :from and r.returned_at < :to
                     and (:allBranches or r.branch_id in (:branches))
                 ), back as (
-                  select ret.d, coalesce(il.tax_code, '') tax_code,
+                  select ret.d, rl.product_id, coalesce(il.tax_code, '') tax_code,
                     sum(case when ret.subtotal = 0 then 0
                              else round(ret.total * rl.quantity * rl.unit_price / ret.subtotal) end) amount,
-                    sum(round(rl.quantity * coalesce(il.cost, 0))) cogs
+                    sum(round(rl.quantity * coalesce(il.cost, rl.cost, 0))) cogs
                   from ret join sales_return_lines rl on rl.return_id = ret.id
-                  left join invoice_lines il on il.id = rl.invoice_line_id group by 1, 2
+                  left join invoice_lines il on il.id = rl.invoice_line_id group by 1, 2, 3
                 )
-                select coalesce(s.d, b.d) d, coalesce(s.tax_code, b.tax_code) tax_code, coalesce(s.amount, 0) sales,
+                select coalesce(s.d, b.d) d, coalesce(s.product_id, b.product_id) product_id, coalesce(s.tax_code, b.tax_code) tax_code,
+                  coalesce(s.amount, 0) sales,
                   coalesce(b.amount, 0) returns, coalesce(s.cogs, 0) - coalesce(b.cogs, 0) cogs, coalesce(s.n, 0) n
-                from sale s full join back b on b.d = s.d and b.tax_code = s.tax_code
-                order by 1, 2""", params(from, to, branchIds),
-                (rs, i) -> new DailyRevenue(rs.getObject("d", LocalDate.class), rs.getString("tax_code"),
+                from sale s full join back b on b.d = s.d and b.product_id = s.product_id and b.tax_code = s.tax_code
+                order by 1, 2, 3""", params(from, to, branchIds),
+                (rs, i) -> new DailyRevenue(rs.getObject("d", LocalDate.class), rs.getObject("product_id", UUID.class), rs.getString("tax_code"),
                         rs.getBigDecimal("sales"), rs.getBigDecimal("returns"), rs.getBigDecimal("cogs"), rs.getInt("n")));
     }
 

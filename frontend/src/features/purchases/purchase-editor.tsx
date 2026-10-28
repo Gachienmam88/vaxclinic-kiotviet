@@ -66,17 +66,17 @@ export function PurchaseEditor({ mode, initial, reference }: { mode: EditorMode;
   }
 
   return (
-    <div className="flex gap-4">
-      <div className="min-w-0 flex-1 space-y-3">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => router.push(cfg.listPath)} aria-label="Quay lại"><ArrowLeft /></Button>
-          <h1 className="text-xl font-bold">{cfg.title}</h1>
+    <div className="flex min-h-[calc(100vh-110px)] gap-2.5">
+      <div className="flex min-w-0 flex-1 flex-col gap-2.5">
+        <div className="flex h-8 items-center gap-2.5">
+          <Button variant="ghost" size="icon-sm" onClick={() => router.push(cfg.listPath)} aria-label="Quay lại"><ArrowLeft /></Button>
+          <h1 className="text-lg font-bold">{cfg.title}</h1>
           {!state.receiptId && (
             <ProductPicker onPick={(p) => set({ lines: [...state.lines, lineFromProduct(p)] })} />
           )}
         </div>
         {reference && (
-          <details open className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm">
+          <details open className="rounded-lg border border-primary/30 bg-primary-tint-light p-3 text-[13px]">
             <summary className="cursor-pointer font-medium">
               Hóa đơn đầu vào {reference.series} số {reference.number} — {reference.sellerName} — {formatMoney(reference.total)} (đối chiếu để chọn hàng)
             </summary>
@@ -86,22 +86,23 @@ export function PurchaseEditor({ mode, initial, reference }: { mode: EditorMode;
                 <td className="pl-3">{l.vatRate}</td><td className="text-right">{formatMoney(l.amount)}</td></tr>))}</tbody></table>
           </details>
         )}
-        <div className="min-h-[60vh] overflow-x-auto rounded-lg bg-background">
+        <div className="flex-1 overflow-x-auto rounded-lg bg-background">
           <PurchaseLineTable mode={mode} lines={state.lines} branchId={state.branchId} onChange={(lines) => set({ lines })} />
           {!state.lines.length && (
-            <div className="py-24 text-center text-sm text-muted-foreground">
+            <div className="py-40 text-center text-[13px] text-muted-foreground">
               Tìm hàng hóa theo mã hoặc tên (phím F3) để thêm vào phiếu
             </div>
           )}
         </div>
       </div>
-      <aside className="flex w-80 shrink-0 flex-col gap-3 rounded-lg bg-background p-4">
+      <aside className="flex w-[330px] shrink-0 flex-col gap-3 self-stretch rounded-lg bg-background p-2.5">
         <PurchaseEditorPanel mode={mode} state={state} set={set} onCreateSupplier={() => setSupplierDialog(true)} />
-        <div className="mt-auto grid grid-cols-2 gap-2 pt-2">
-          <Button variant="outline" className="h-11 border-primary text-primary" disabled={save.isPending} onClick={() => submit(false)}>
+        <div className="mt-auto grid grid-cols-2 gap-2.5 pt-2">
+          <Button variant="outline" className="h-[38px] rounded-lg border-primary bg-background text-sm font-semibold text-primary hover:bg-primary/5 hover:text-primary"
+            disabled={save.isPending} onClick={() => submit(false)}>
             Lưu tạm
           </Button>
-          <Button className="h-11" disabled={save.isPending} onClick={() => submit(true)}>Hoàn thành</Button>
+          <Button className="h-[38px] rounded-lg text-sm font-semibold" disabled={save.isPending} onClick={() => submit(true)}>Hoàn thành</Button>
         </div>
       </aside>
       {supplierDialog && (

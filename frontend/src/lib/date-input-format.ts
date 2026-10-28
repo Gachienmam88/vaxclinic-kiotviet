@@ -6,9 +6,6 @@
 
 export const pad2 = (n: number) => String(n).padStart(2, "0");
 
-/** Thứ trong tuần, tuần bắt đầu từ Thứ 2. */
-export const WEEKDAYS_VI = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"] as const;
-
 export const DATE_MASK = "xx/xx/xxxx";
 export const DATETIME_MASK = "xx/xx/xxxx xx:xx";
 export const TIME_MASK = "xx:xx";

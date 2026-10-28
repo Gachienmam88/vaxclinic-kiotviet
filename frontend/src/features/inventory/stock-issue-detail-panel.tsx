@@ -2,6 +2,7 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { DocCodeLink } from "@/components/ui/doc-code-link";
 import { api, errorMessage } from "@/lib/api-client";
 import { formatDate, formatDateTime, formatMoney, formatNumber } from "@/lib/format";
 import { useCurrentUser } from "@/lib/use-current-user";
@@ -13,7 +14,7 @@ import { ISSUE_CONFIG, ISSUE_STATUS_LABEL, type IssueType } from "./inventory-ty
 const CELL = "px-2 py-2.5";
 
 /** Chi tiết phiếu xuất hủy / xuất dùng nội bộ dưới dòng. Hủy phiếu đã hoàn thành = nhập lại kho. */
-export function StockIssueDetailPanel({ type, id }: { type: IssueType; id: string }) {
+export function StockIssueDetailPanel({ type, id, onClose }: { type: IssueType; id: string; onClose?: () => void }) {
   const cfg = ISSUE_CONFIG[type];
   const qc = useQueryClient();
   const { can } = useCurrentUser();
@@ -31,7 +32,7 @@ export function StockIssueDetailPanel({ type, id }: { type: IssueType; id: strin
   if (!d) return <div className="border border-primary bg-background p-6 text-sm text-muted-foreground">Đang tải...</div>;
 
   return (
-    <InventoryDetailFrame code={d.code} status={d.status} statusLabel={ISSUE_STATUS_LABEL[d.status]} branchId={d.branchId}
+    <InventoryDetailFrame code={d.code} status={d.status} statusLabel={ISSUE_STATUS_LABEL[d.status]} branchId={d.branchId} onClose={onClose}
       footer={d.status !== "CANCELLED" && (
         <InventoryDetailActions canManage={can("inventory.manage")} canCancel cancelling={cancel.isPending}
           cancelText={`Hủy phiếu ${d.code}?${d.status === "COMPLETED" ? " Hàng sẽ được nhập lại kho." : ""}`}
@@ -52,7 +53,7 @@ export function StockIssueDetailPanel({ type, id }: { type: IssueType; id: strin
         <tbody>
           {d.lines.map((l) => (
             <tr key={l.id} className="border-b border-[#e5e7eb] align-top hover:bg-[#edeef0]">
-              <td className={`${CELL} text-primary`}>{l.productCode}</td>
+              <td className={CELL}><DocCodeLink code={l.productCode} /></td>
               <td className={`${CELL} max-w-[260px]`}>{l.productName} ({l.unitName})</td>
               <td className={CELL}>{l.lotNumber ? `${l.lotNumber} — ${formatDate(l.expiryDate)}` : ""}</td>
               <td className={`${CELL} text-right`}>{formatNumber(l.quantity)}</td>

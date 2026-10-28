@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { CalendarDays, ChevronRight, Pencil } from "lucide-react";
+import { ChevronRight, Pencil } from "lucide-react";
 import { formatMoney, parseNumber } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { SupplierGroupDialog } from "./supplier-group-dialog";
 import { useSupplierGroups } from "./supplier-queries";
 import type { SupplierFilters, SupplierGroup } from "./supplier-types";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
 
 const box = "h-[30px] w-full rounded-md border border-[#d9dbe0] bg-white px-2.5 text-[12px] outline-none focus:border-primary";
 
@@ -59,18 +60,16 @@ export function SupplierFilterSidebar({ value, onChange }: { value: SupplierFilt
         {(["all", "custom"] as const).map((m) => (
           <label key={m} className="flex cursor-pointer items-center gap-2">
             <input type="radio" name="buy-period" className="size-3.5 accent-primary" checked={value.buyPeriod === m} onChange={() => set({ buyPeriod: m })} />
-            <span className={cn(box, "flex items-center justify-between")}>
-              {m === "all" ? "Toàn thời gian" : "Tùy chỉnh"}
-              {m === "all" ? <ChevronRight className="size-3.5 text-muted-foreground" /> : <CalendarDays className="size-3.5 text-muted-foreground" />}
-            </span>
+            {m === "all" ? (
+              <span className={cn(box, "flex items-center justify-between")}>
+                Toàn thời gian <ChevronRight className="size-3.5 text-muted-foreground" />
+              </span>
+            ) : (
+              <DateRangePicker className={cn(box, "flex items-center justify-between")} value={value.buyPeriod === "custom" ? value : null}
+                onChange={(r) => set({ ...r, buyPeriod: "custom" })} />
+            )}
           </label>
         ))}
-        {value.buyPeriod === "custom" && (
-          <div className="space-y-1.5 pl-5.5">
-            <input type="date" aria-label="Từ ngày" className={box} value={value.from} onChange={(e) => set({ from: e.target.value })} />
-            <input type="date" aria-label="Đến ngày" className={box} value={value.to} onChange={(e) => set({ to: e.target.value })} />
-          </div>
-        )}
       </Section>
       <Section title="Nợ hiện tại">
         <Bound label="Từ" value={value.debtFrom} onCommit={(v) => set({ debtFrom: v })} />
@@ -88,7 +87,7 @@ export function SupplierFilterSidebar({ value, onChange }: { value: SupplierFilt
         </div>
       </Section>
       {groupDialog && <SupplierGroupDialog group={groupDialog.group} onClose={() => setGroupDialog(null)}
-        onSaved={(g) => set({ groupId: g?.id ?? "" })} />}
+        onSaved={(g) => { if (!g) set({ groupId: "" }); }} />}
     </aside>
   );
 }

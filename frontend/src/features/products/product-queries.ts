@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, type QueryClient } from "@tanstack/react-query";
 import { api, type PageResponse } from "@/lib/api-client";
 import type {
   Category, LedgerLine, Position, ProductDetail, ProductListResponse, ProductLot, StockFilter, TaxRate,
@@ -88,4 +88,13 @@ export function flattenCategoryTree(categories: Category[]) {
     (children.get(parent) ?? []).forEach((c) => { out.push({ ...c, depth }); walk(c.id, depth + 1); });
   walk(null, 0);
   return out;
+}
+
+/** Hỏi tên rồi tạo nhóm hàng mới (POST /categories); trả về id nhóm vừa tạo, hoặc null nếu bỏ qua. */
+export async function promptCreateCategory(qc: QueryClient): Promise<string | null> {
+  const name = prompt("Tên nhóm hàng mới")?.trim();
+  if (!name) return null;
+  const c = await api<{ id: string }>("/categories", { method: "POST", body: { name } });
+  await qc.invalidateQueries({ queryKey: ["categories"] });
+  return c.id;
 }

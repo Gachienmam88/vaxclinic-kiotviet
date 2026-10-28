@@ -34,8 +34,8 @@ import java.util.UUID;
 @PreAuthorize("hasAuthority('catalog.view')")
 public class SupplierDebtController {
 
-    private static final Map<String, String> KIND_LABEL = Map.of("PAYMENT", "Phiếu chi trả NCC", "DISCOUNT",
-            "Chiết khấu thanh toán NCC", "ADJUSTMENT", "Điều chỉnh công nợ NCC");
+    private static final Map<String, String> KIND_LABEL = Map.of("PAYMENT", "phiếu chi trả NCC", "DISCOUNT",
+            "chiết khấu thanh toán NCC", "ADJUSTMENT", "điều chỉnh công nợ NCC");
 
     private final SupplierDebtService service;
     private final SupplierDebtQuery query;
@@ -104,7 +104,7 @@ public class SupplierDebtController {
 
     private DocDetail logged(Jwt jwt, String action, DocDetail d, String verb) {
         audit.record(UUID.fromString(jwt.getSubject()), jwt.getClaimAsString("name"), d.branchId(), "Nhà cung cấp", action,
-                d.code(), verb + " " + KIND_LABEL.get(d.kind()).toLowerCase() + " " + d.code() + ", NCC " + d.supplierName()
+                d.code(), verb + " " + KIND_LABEL.get(d.kind()) + " " + d.code() + ", NCC " + d.supplierName()
                         + ", giá trị " + String.format("%,.0f", d.amount() == null ? BigDecimal.ZERO : d.amount()));
         return d;
     }

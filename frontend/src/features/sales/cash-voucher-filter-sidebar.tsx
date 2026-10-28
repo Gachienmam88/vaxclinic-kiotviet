@@ -12,7 +12,7 @@ export type CashFilters = {
   createdBy: string; collectorId: string; partnerType: string; partner: string;
 };
 
-export const PARTNER_TYPE_OPTIONS = [["CUSTOMER", "Khách hàng"], ["SUPPLIER", "Nhà cung cấp"], ["EMPLOYEE", "Nhân viên"], ["OTHER", "Khác"]] as const;
+export const PARTNER_TYPE_OPTIONS = [["CUSTOMER", "Khách hàng"], ["SUPPLIER", "Nhà cung cấp"], ["EMPLOYEE", "Nhân viên"], ["DELIVERY_PARTNER", "Đối tác giao hàng"], ["OTHER", "Khác"]] as const;
 
 const toggle = (list: string[], v: string, on: boolean) => (on ? [...list, v] : list.filter((x) => x !== v));
 

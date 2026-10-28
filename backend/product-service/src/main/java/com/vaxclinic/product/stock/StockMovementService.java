@@ -49,7 +49,7 @@ public class StockMovementService {
     }
 
     private static final java.util.Set<DocType> NEGATIVE_OK = java.util.EnumSet.of(DocType.SALE,
-            DocType.PURCHASE_RETURN, DocType.SALE_RETURN_CANCEL_OUT, DocType.TRANSFER_OUT, DocType.DAMAGE);
+            DocType.PURCHASE_RETURN, DocType.SALE_RETURN_CANCEL_OUT, DocType.TRANSFER_OUT, DocType.DAMAGE, DocType.INTERNAL_USE);
 
     @Transactional(propagation = Propagation.MANDATORY)
     public void apply(Product product, Movement m) {

@@ -20,6 +20,10 @@ app:
     secret: ${JWT_SECRET}
   # product-service: trừ / hoàn kho khi bán, hủy hóa đơn
   product-url: ${PRODUCT_URL:http://localhost:8082}
+  # identity-service: thiết lập cửa hàng (khóa sổ, quy tắc đơn hàng, khách hàng)
+  identity-url: ${IDENTITY_URL:http://localhost:8081}
+  # integration-service: trạng thái hóa đơn điện tử (chặn sửa/hủy HĐ đã phát hành)
+  integration-url: ${INTEGRATION_URL:http://localhost:8088}
 
 management:
   endpoints:

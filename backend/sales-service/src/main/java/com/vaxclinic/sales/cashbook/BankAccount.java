@@ -30,4 +30,8 @@ public class BankAccount {
     private String accountName;
     @Column(nullable = false)
     private boolean active = true;
+    /** BANK: tài khoản ngân hàng (tạo được VietQR) / EWALLET: ví điện tử (MoMo, ZaloPay...). */
+    @Column(nullable = false)
+    private String kind = "BANK";
+    private String note;
 }

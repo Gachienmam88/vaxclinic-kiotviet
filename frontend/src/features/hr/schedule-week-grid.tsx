@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { hm } from "./hr-queries";
 import type { EmployeeRow, ScheduleItem, ScheduleWeek, Shift } from "./hr-types";
 import { DayHeader, todayIso } from "./week-toolbar";
+import { DocCodeLink } from "@/components/ui/doc-code-link";
 
 type Day = { iso: string; day: number; label: string };
 
@@ -15,7 +16,7 @@ const CELL = "group relative h-[51px] border-r border-b border-[#e5e7eb] p-1 ali
 /** Chip 1 ca trong ô lịch: tên ca + giờ, nút x để xóa. */
 function ShiftChip({ title, sub, onRemove }: { title: string; sub: string; onRemove: () => void }) {
   return (
-    <div className="mb-1 flex items-start gap-1 rounded bg-[#e5f0ff] px-1.5 py-0.5 text-[11px] leading-4 text-primary">
+    <div className="mb-1 flex items-start gap-1 rounded bg-primary-tint px-1.5 py-0.5 text-[11px] leading-4 text-primary">
       <span className="min-w-0 flex-1 truncate"><span className="font-semibold">{title}</span> <span className="text-foreground/70">{sub}</span></span>
       <button type="button" aria-label={`Xóa ${title}`} onClick={onRemove} className="opacity-0 group-hover:opacity-100 hover:text-destructive">
         <X className="size-3" /></button>
@@ -71,7 +72,7 @@ export function ScheduleWeekGrid({ mode, days, employees, shifts, data, onAdd, o
             <tr key={e.id}>
               <td className="border-r border-b border-[#e5e7eb] px-2 py-1.5 align-top leading-4">
                 <p className="truncate font-semibold uppercase">{e.name}</p>
-                <p className="text-[11px]">{e.code}</p>
+                <p className="text-[11px]"><DocCodeLink code={e.code} /></p>
                 {e.departmentName && <p className="truncate text-[11px] text-primary uppercase">{e.departmentName}</p>}
               </td>
               {days.map((d) => (

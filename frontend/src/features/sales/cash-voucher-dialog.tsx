@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,7 @@ import { useUserLookup } from "@/features/purchases/purchase-queries";
 import { api, errorMessage } from "@/lib/api-client";
 import { useCurrentUser } from "@/lib/use-current-user";
 import { useBankAccounts, useCashCategories } from "./sales-queries";
+import { DateTimePicker } from "@/components/ui/date-time-picker";
 
 type Props = { type: "RECEIPT" | "PAYMENT"; onClose: () => void };
 
@@ -51,10 +53,10 @@ export function CashVoucherDialog({ type, onClose }: Props) {
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="sm:max-w-2xl">
-        <DialogHeader><DialogTitle>{receipt ? "Tạo phiếu thu" : "Tạo phiếu chi"}</DialogTitle></DialogHeader>
+      <DialogContent className="rounded-lg p-5 sm:max-w-2xl">
+        <DialogHeader><DialogTitle className="text-base font-bold">{receipt ? "Tạo phiếu thu" : "Tạo phiếu chi"}</DialogTitle></DialogHeader>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-          <div className="grid gap-1.5"><Label>Thời gian</Label><Input type="datetime-local" value={f.at} onChange={(e) => set({ at: e.target.value })} /></div>
+          <div className="grid gap-1.5"><Label>Thời gian</Label><DateTimePicker value={f.at} onChange={(v) => set({ at: v })} /></div>
           <div className="grid gap-1.5"><Label>{receipt ? "Người thu" : "Người chi"}</Label>
             <NativeSelect value={f.collectorId} onChange={(e) => set({ collectorId: e.target.value })}>
               {users.map((u) => <option key={u.id} value={u.id}>{u.fullName}</option>)}</NativeSelect></div>
@@ -75,6 +77,13 @@ export function CashVoucherDialog({ type, onClose }: Props) {
           <div className="grid gap-1.5"><Label>Đối tượng {receipt ? "nộp" : "nhận"}</Label>
             <NativeSelect value={f.partnerType} onChange={(e) => set({ partnerType: e.target.value })}>
               {PARTNER_TYPES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</NativeSelect></div>
+          {f.partnerType === "SUPPLIER" && (
+            <p className="rounded-md bg-[#fff4e5] px-3 py-2 text-[13px] text-[#9a5b00] md:col-span-2">
+              Thu / chi với nhà cung cấp hãy tạo tại{" "}
+              <Link href="/purchases/suppliers" className="font-semibold text-primary hover:underline" onClick={onClose}>Mua hàng → Nhà cung cấp</Link>
+              {" "}→ tab &quot;Nợ cần trả nhà cung cấp&quot; → Thanh toán, để công nợ nhà cung cấp và Sổ quỹ luôn khớp nhau.
+            </p>
+          )}
           <div className="grid gap-1.5"><Label>Tên người {receipt ? "nộp" : "nhận"}</Label>
             <Input value={f.partnerName} onChange={(e) => set({ partnerName: e.target.value })} /></div>
           <div className="grid gap-1.5"><Label>Số điện thoại</Label><Input value={f.partnerPhone} onChange={(e) => set({ partnerPhone: e.target.value })} /></div>
@@ -83,9 +92,9 @@ export function CashVoucherDialog({ type, onClose }: Props) {
             <Checkbox checked={f.accounting} onCheckedChange={(v) => set({ accounting: v === true })} /> Hạch toán vào kết quả hoạt động kinh doanh
           </label>
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Bỏ qua</Button>
-          <Button disabled={save.isPending || f.amount <= 0 || !f.category.trim()} onClick={() => save.mutate()}>Lưu</Button>
+        <DialogFooter className="-mx-5 -mb-5 rounded-b-lg bg-background px-5 py-3">
+          <Button variant="outline" className="h-8 rounded-md px-3" onClick={onClose}>Bỏ qua</Button>
+          <Button className="h-8 rounded-md px-4" disabled={save.isPending || f.amount <= 0 || !f.category.trim() || f.partnerType === "SUPPLIER"} onClick={() => save.mutate()}>Lưu</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

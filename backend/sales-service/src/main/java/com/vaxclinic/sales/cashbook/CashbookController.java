@@ -1,5 +1,6 @@
 package com.vaxclinic.sales.cashbook;
 
+import com.vaxclinic.common.audit.AuditLogger;
 import com.vaxclinic.common.error.BusinessException;
 import com.vaxclinic.sales.common.Actor;
 import jakarta.validation.Valid;
@@ -34,21 +35,26 @@ public class CashbookController {
     private final CashVoucherRepository vouchers;
     private final BankAccountRepository banks;
     private final NamedParameterJdbcTemplate jdbc;
+    private final AuditLogger audit;
 
     public CashbookController(CashbookQuery query, CashbookService service, CashVoucherRepository vouchers,
-                              BankAccountRepository banks, NamedParameterJdbcTemplate jdbc) {
+                              BankAccountRepository banks, NamedParameterJdbcTemplate jdbc, AuditLogger audit) {
         this.query = query;
         this.service = service;
         this.vouchers = vouchers;
         this.banks = banks;
         this.jdbc = jdbc;
+        this.audit = audit;
     }
 
     public record Allocated(UUID invoiceId, String invoiceCode, Instant soldAt, BigDecimal invoiceTotal, BigDecimal amount) {
     }
 
+    /** kind: BANK (mặc định) / EWALLET — với ví: bankName = tên ví, accountNo = số điện thoại / mã ví. */
     public record BankAccountRequest(@NotBlank String bankName, String bankBin, @NotBlank String accountNo,
-                                     @NotBlank String accountName) {
+                                     @NotBlank String accountName,
+                                     @jakarta.validation.constraints.Pattern(regexp = "BANK|EWALLET") String kind,
+                                     @jakarta.validation.constraints.Size(max = 300) String note) {
     }
 
     @GetMapping("/api/cashbook")
@@ -92,18 +98,29 @@ public class CashbookController {
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAuthority('cashbook.manage')")
     public CashVoucher create(@Valid @RequestBody CashbookService.ManualRequest req, @AuthenticationPrincipal Jwt jwt) {
-        return service.createManual(req, Actor.of(jwt));
+        CashVoucher v = service.createManual(req, Actor.of(jwt));
+        Actor.of(jwt).audit(audit, v.getBranchId(), voucherFeature(v), "Tạo", v.getCode(), "Tạo phiếu " + v.getCode() + ": "
+                + v.getCategory() + ", " + Actor.money(v.getAmount()) + (v.getPartnerName() == null ? "" : ", đối tượng " + v.getPartnerName()));
+        return v;
+    }
+
+    private static String voucherFeature(CashVoucher v) {
+        return "RECEIPT".equals(v.getVoucherType()) ? "Phiếu thu" : "Phiếu chi";
     }
 
     @PostMapping("/api/cashbook/{id}/cancel")
     @PreAuthorize("hasAuthority('cashbook.manage')")
-    public void cancel(@PathVariable UUID id) {
+    public void cancel(@PathVariable UUID id, @AuthenticationPrincipal Jwt jwt) {
         service.cancel(id);
+        vouchers.findById(id).ifPresent(v -> Actor.of(jwt).audit(audit, v.getBranchId(), voucherFeature(v), "Hủy", v.getCode(),
+                "Hủy phiếu " + v.getCode() + ": " + v.getCategory() + ", " + Actor.money(v.getAmount())));
     }
 
+    /** Mặc định chỉ trả tài khoản ngân hàng (ô chọn tài khoản tạo QR); kind=EWALLET → ví điện tử; kind=ALL → tất cả. */
     @GetMapping("/api/bank-accounts")
-    public List<BankAccount> bankAccounts() {
-        return banks.findByActiveTrueOrderByBankNameAsc();
+    public List<BankAccount> bankAccounts(@RequestParam(defaultValue = "BANK") String kind) {
+        return banks.findByActiveTrueOrderByBankNameAsc().stream()
+                .filter(b -> "ALL".equals(kind) || kind.equals(b.getKind())).toList();
     }
 
     @PostMapping("/api/bank-accounts")
@@ -112,11 +129,27 @@ public class CashbookController {
     public BankAccount createBankAccount(@Valid @RequestBody BankAccountRequest req) {
         var b = new BankAccount();
         b.setId(UUID.randomUUID());
+        applyAccount(b, req);
+        return banks.save(b);
+    }
+
+    @org.springframework.web.bind.annotation.PutMapping("/api/bank-accounts/{id}")
+    @PreAuthorize("hasAuthority('cashbook.manage')")
+    @org.springframework.transaction.annotation.Transactional
+    public BankAccount updateBankAccount(@PathVariable UUID id, @Valid @RequestBody BankAccountRequest req) {
+        BankAccount b = banks.findById(id)
+                .orElseThrow(() -> BusinessException.notFound("BANK_ACCOUNT_NOT_FOUND", "Không tìm thấy tài khoản"));
+        applyAccount(b, req);
+        return banks.save(b);
+    }
+
+    private static void applyAccount(BankAccount b, BankAccountRequest req) {
+        b.setKind(req.kind() == null ? "BANK" : req.kind());
         b.setBankName(req.bankName().trim());
-        b.setBankBin(Actor.blankToNull(req.bankBin()));
+        b.setBankBin("EWALLET".equals(b.getKind()) ? null : Actor.blankToNull(req.bankBin()));
         b.setAccountNo(req.accountNo().trim());
         b.setAccountName(req.accountName().trim().toUpperCase());
-        return banks.save(b);
+        b.setNote(Actor.blankToNull(req.note()));
     }
 
     /** Nội dung mã VietQR cho tài khoản (frontend vẽ thành ảnh QR). */

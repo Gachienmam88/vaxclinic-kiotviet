@@ -23,8 +23,9 @@ import java.util.UUID;
 public class ShipmentQuery {
 
     /** branches: đã giao với chi nhánh người dùng; from/to theo thời gian tạo vận đơn. */
-    public record Filter(String q, List<String> statuses, UUID partnerId, String area, Instant from, Instant to,
-                         List<UUID> branches, Boolean reconciled, int page, int size) {
+    /** provinceCode: lọc theo mã tỉnh; vận đơn cũ chưa có mã thì khớp theo tên (area). */
+    public record Filter(String q, List<String> statuses, UUID partnerId, String area, String provinceCode, Instant from,
+                         Instant to, List<UUID> branches, Boolean reconciled, int page, int size) {
     }
 
     private static final String FROM = " from shipments s join invoices i on i.id = s.invoice_id"
@@ -48,9 +49,16 @@ public class ShipmentQuery {
             w.append(" and s.partner_id = :partner");
             p.addValue("partner", f.partnerId());
         }
-        if (f.area() != null && !f.area().isBlank()) {
-            w.append(" and (s.area ilike :area or s.receiver_address ilike :area)");
+        boolean byArea = f.area() != null && !f.area().isBlank();
+        if (byArea) {
             p.addValue("area", "%" + f.area().trim() + "%");
+        }
+        String areaMatch = "(s.area ilike :area or s.receiver_address ilike :area)";
+        if (f.provinceCode() != null && !f.provinceCode().isBlank()) {
+            w.append(" and (s.province_code = :province").append(byArea ? " or (s.province_code is null and " + areaMatch + "))" : ")");
+            p.addValue("province", f.provinceCode().trim());
+        } else if (byArea) {
+            w.append(" and ").append(areaMatch);
         }
         if (f.from() != null) {
             w.append(" and s.created_at >= :from");
@@ -87,7 +95,7 @@ public class ShipmentQuery {
                 + " and s.id = :id", p, (rs, n) -> new ShipmentDetail(item(rs), (Integer) rs.getObject("weight_gram"),
                 rs.getString("note"), instant(rs, "delivered_at"), rs.getObject("return_id", UUID.class), rs.getString("return_code"),
                 rs.getString("settlement_code"), rs.getString("created_by_name"), rs.getBigDecimal("invoice_total"),
-                rs.getBigDecimal("invoice_paid"), List.of()));
+                rs.getBigDecimal("invoice_paid"), rs.getBigDecimal("fee_posted"), rs.getBigDecimal("return_fee"), List.of()));
         if (rows.isEmpty()) {
             throw BusinessException.notFound("SHIPMENT_NOT_FOUND", "Không tìm thấy vận đơn");
         }
@@ -96,7 +104,7 @@ public class ShipmentQuery {
                         rs.getString("changed_by_name"), rs.getTimestamp("changed_at").toInstant()));
         var d = rows.get(0);
         return new ShipmentDetail(d.item(), d.weightGram(), d.note(), d.deliveredAt(), d.returnId(), d.returnCode(),
-                d.settlementCode(), d.createdByName(), d.invoiceTotal(), d.invoicePaid(), logs);
+                d.settlementCode(), d.createdByName(), d.invoiceTotal(), d.invoicePaid(), d.feePosted(), d.returnFee(), logs);
     }
 
     private static ShipmentListItem item(ResultSet rs) throws SQLException {
@@ -105,7 +113,8 @@ public class ShipmentQuery {
                 rs.getString("receiver_name"), rs.getString("receiver_phone"), rs.getString("receiver_address"),
                 rs.getString("area"), rs.getObject("partner_id", UUID.class), rs.getString("partner_name"),
                 rs.getBigDecimal("shipping_fee"), rs.getString("fee_payer"), rs.getBigDecimal("cod_amount"),
-                rs.getString("status"), rs.getObject("settlement_id") != null, rs.getObject("branch_id", UUID.class));
+                rs.getString("status"), rs.getObject("settlement_id") != null, rs.getObject("branch_id", UUID.class),
+                rs.getString("province_code"), rs.getString("ward_code"));
     }
 
     private static Instant instant(ResultSet rs, String col) throws SQLException {

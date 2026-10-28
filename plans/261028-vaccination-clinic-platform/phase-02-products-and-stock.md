@@ -15,6 +15,7 @@ Priority: P0 | Status: in progress (core done 2026-10-28)
 - [x] Danh sách + bộ lọc: nhóm hàng, thuế, giảm thuế, tồn kho, thời gian tạo, trạng thái; tìm theo tên/mã/mã vạch
 - [x] Chi tiết tab: Thông tin, Mô tả, Thẻ kho, Tồn kho (+ lô/HSD, cảnh báo cận hạn < 90 ngày), Hàng hóa cùng loại
 - [x] E2E 16 kịch bản qua BFF (script ngoài repo)
+- [x] Thiết lập giá (bảng giá theo chi nhánh / nhóm khách / người bán, công thức, nhập/xuất CSV, tự cập nhật theo giá chung, đưa vào danh mục màn bán hàng (sale)) — xem `plans/reports/implementer-261028-price-books.md`
 
 ## Chưa làm
 - [ ] Ảnh hàng hóa (MinIO)

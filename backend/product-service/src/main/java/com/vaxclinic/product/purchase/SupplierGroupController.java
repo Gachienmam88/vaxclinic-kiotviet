@@ -109,7 +109,7 @@ public class SupplierGroupController {
 
     private void checkUnique(String name, UUID exceptId) {
         Long n = jdbc.queryForObject("select count(*) from supplier_groups where lower(name) = lower(?) and id is distinct from ?",
-                Long.class, name, exceptId);
+                Long.class, name, exceptId == null ? new UUID(0, 0) : exceptId);
         if (n != null && n > 0) {
             throw BusinessException.conflict("SUPPLIER_GROUP_EXISTS", "Tên nhóm nhà cung cấp đã tồn tại");
         }

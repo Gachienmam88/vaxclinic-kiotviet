@@ -17,15 +17,23 @@ public class PurchaseLineSupport {
 
     private final ProductRepository products;
     private final SupplierRepository suppliers;
+    private final com.vaxclinic.common.settings.ShopSettingsClient settings;
 
-    public PurchaseLineSupport(ProductRepository products, SupplierRepository suppliers) {
+    public PurchaseLineSupport(ProductRepository products, SupplierRepository suppliers,
+                               com.vaxclinic.common.settings.ShopSettingsClient settings) {
         this.products = products;
         this.suppliers = suppliers;
+        this.settings = settings;
+    }
+
+    /** Khóa sổ (Thiết lập → Khóa sổ): chứng từ thuộc kỳ đã khóa không được tạo / sửa / hủy. */
+    public void checkNotLocked(UUID branchId, java.time.Instant documentTime) {
+        settings.get().checkNotLocked(branchId, documentTime);
     }
 
     public void checkBranch(Actor actor, UUID branchId) {
         if (!actor.branchIds().contains(branchId.toString())) {
-            throw BusinessException.badRequest("BRANCH_NOT_ALLOWED", "Bạn không làm việc tại điểm tiêm này");
+            throw BusinessException.badRequest("BRANCH_NOT_ALLOWED", "Bạn không làm việc tại chi nhánh này");
         }
     }
 

@@ -27,7 +27,6 @@ function useUserPref<T>(name: string, userId: string | undefined, fallback: T) {
   const key = userId ? `kv.invoices.${name}.${userId}` : null;
   const [value, setValue] = useState<T>(fallback);
   // Đọc lại khi biết user (lần đầu render chưa có /auth/me)
-  // eslint-disable-next-line react-hooks/set-state-in-effect -- đồng bộ từ localStorage sau khi có user id
   useEffect(() => { if (key) setValue(read(key, fallback)); }, [key]); // eslint-disable-line react-hooks/exhaustive-deps
   const update = useCallback((next: T) => { setValue(next); if (key) write(key, next); }, [key]);
   return [value, update] as const;

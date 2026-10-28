@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment } from "react";
+import { DeepLinkRoute, type DeepLink } from "@/components/ui/deep-link-route";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PurchaseFilterSidebar } from "@/features/purchases/purchase-filter-sidebar";
 import {
@@ -13,17 +14,17 @@ import { exportStockIssuesCsv } from "./inventory-csv-export";
 import { defaultInventoryFilters, useStockIssues } from "./inventory-queries";
 import { ISSUE_CONFIG, ISSUE_STATUS_LABEL, type IssueType } from "./inventory-types";
 import { StockIssueDetailPanel } from "./stock-issue-detail-panel";
-import { useInventoryListState } from "./use-inventory-list-state";
+import { useInventoryExpanded, useInventoryListState } from "./use-inventory-list-state";
 
 const COLS = 6;
 
-/** Danh sách Xuất hủy (/inventory/damages) và Xuất dùng nội bộ (/inventory/internal-use) — cùng bố cục Mua hàng. */
-export function StockIssueListPage({ type }: { type: IssueType }) {
+function StockIssueList({ type, link }: { type: IssueType; link: DeepLink }) {
   const cfg = ISSUE_CONFIG[type];
   const { can } = useCurrentUser();
-  const s = useInventoryListState(defaultInventoryFilters(["DRAFT", "COMPLETED"]));
+  const s = useInventoryListState(defaultInventoryFilters(["DRAFT", "COMPLETED"]), link, Object.keys(ISSUE_STATUS_LABEL));
   const { data, isLoading } = useStockIssues(type, s.filters, s.page, s.size);
   const pages = data ? Math.max(1, Math.ceil(data.total / s.size)) : 1;
+  const x = useInventoryExpanded(data?.items, link);
 
   return (
     <PurchaseListLayout title={cfg.title}
@@ -49,9 +50,9 @@ export function StockIssueListPage({ type }: { type: IssueType }) {
             )}
             {data?.items.map((d) => (
               <Fragment key={d.id}>
-                <TableRow onClick={() => s.toggle(d.id)} onKeyDown={(e) => e.key === "Enter" && s.toggle(d.id)} tabIndex={0}
-                  aria-expanded={s.expanded === d.id}
-                  className={cn("cursor-pointer align-top [&>td]:py-2.5", s.expanded === d.id && "bg-[#e3f0fc] hover:bg-[#e3f0fc]",
+                <TableRow onClick={() => x.toggle(d.id)} onKeyDown={(e) => e.key === "Enter" && x.toggle(d.id)} tabIndex={0}
+                  aria-expanded={x.expanded === d.id}
+                  className={cn("cursor-pointer align-top [&>td]:py-2.5", x.expanded === d.id && "bg-primary-tint hover:bg-primary-tint",
                     d.status === "CANCELLED" && "text-muted-foreground")}>
                   <TableCell className="pl-4">{d.code}</TableCell>
                   <TableCell className="text-right">{formatMoney(d.totalValue)}</TableCell>
@@ -59,9 +60,9 @@ export function StockIssueListPage({ type }: { type: IssueType }) {
                   <TableCell className="max-w-64 truncate" title={d.note ?? ""}>{d.note}</TableCell>
                   <TableCell className="pr-4"><DocStatusBadge status={d.status} label={ISSUE_STATUS_LABEL[d.status]} /></TableCell>
                 </TableRow>
-                {s.expanded === d.id && (
+                {x.expanded === d.id && (
                   <TableRow className="hover:bg-transparent">
-                    <TableCell colSpan={COLS} className="p-0 whitespace-normal"><StockIssueDetailPanel type={type} id={d.id} /></TableCell>
+                    <TableCell colSpan={COLS} className="p-0 whitespace-normal"><StockIssueDetailPanel type={type} id={d.id} onClose={() => x.toggle(d.id)} /></TableCell>
                   </TableRow>
                 )}
               </Fragment>
@@ -73,4 +74,12 @@ export function StockIssueListPage({ type }: { type: IssueType }) {
         total={data?.total ?? 0} unit="phiếu" onPage={s.setPage} />
     </PurchaseListLayout>
   );
+}
+
+/**
+ * Danh sách Xuất hủy (/inventory/damages) và Xuất dùng nội bộ (/inventory/internal-use) — cùng bố cục Mua hàng.
+ * Link sâu ?code=XH000001 / XNB000001 → lọc theo mã (mọi trạng thái, toàn thời gian) + mở sẵn chi tiết.
+ */
+export function StockIssueListPage({ type }: { type: IssueType }) {
+  return <DeepLinkRoute>{(link) => <StockIssueList type={type} link={link} />}</DeepLinkRoute>;
 }

@@ -15,9 +15,14 @@ export type User = {
   roleCode: string;
   roleName: string;
   branches: BranchRef[];
+  /** Đã bật xác thực 2 lớp (danh sách người dùng). */
+  twoFactorEnabled?: boolean;
+  /** Chủ gian hàng. */
+  owner?: boolean;
 };
 
-export type Me = { user: User; permissions: string[] };
+/** twoFactorEnabled: đã bật xác thực 2 lớp; storeOwner: là chủ gian hàng (Hồ sơ cửa hàng). */
+export type Me = { user: User; permissions: string[]; twoFactorEnabled?: boolean; storeOwner?: boolean };
 
 /** Logged-in user + permissions (drives menu visibility; backend still enforces). */
 export function useCurrentUser() {

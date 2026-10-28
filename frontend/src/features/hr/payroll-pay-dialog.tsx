@@ -7,6 +7,7 @@ import { api } from "@/lib/api-client";
 import { formatMoney, parseNumber } from "@/lib/format";
 import { useHrMutation } from "./hr-queries";
 import type { PayrollDetail } from "./hr-types";
+import { DocCodeLink } from "@/components/ui/doc-code-link";
 
 type Row = { cash: string; advance: string };
 const box = "h-7 w-28 rounded border border-[#d9dbe0] px-1.5 text-right outline-none focus:border-primary";
@@ -62,7 +63,7 @@ export function PayrollPayDialog({ detail, onClose }: { detail: PayrollDetail; o
               const maxAdv = Math.max(0, Math.min(s.total - s.paid, s.advanceBalance));
               return (
                 <tr key={s.id} className="border-b border-[#eceef1] [&_td]:px-2 [&_td]:py-1.5">
-                  <td>{s.employeeCode} - {s.employeeName}</td>
+                  <td><DocCodeLink code={s.employeeCode} /> - {s.employeeName}</td>
                   <td className="text-right">{formatMoney(s.total - s.paid)}</td>
                   <td className="text-right">{formatMoney(s.advanceBalance)}</td>
                   <td className="text-right"><input aria-label={`Tiền trả ${s.employeeName}`} className={box} value={r.cash}

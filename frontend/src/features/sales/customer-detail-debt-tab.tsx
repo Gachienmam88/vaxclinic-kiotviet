@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { Calculator, CircleDollarSign, PencilLine, QrCode } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { DocCodeLink } from "@/components/ui/doc-code-link";
+import { ListEmptyRow } from "@/components/ui/list-empty-state";
 import { formatDateTime, formatMoney } from "@/lib/format";
 import { useCurrentUser } from "@/lib/use-current-user";
 import { CsvExportButton, downloadCsv } from "./customer-csv-export";
@@ -37,10 +39,10 @@ export function CustomerDetailDebtTab({ c }: { c: Customer }) {
         <thead className={kvSubHead}><tr><th>Mã phiếu</th><th>Thời gian</th><th>Loại</th>
           <th className="text-right">Giá trị</th><th className="text-right">Dư nợ khách hàng</th></tr></thead>
         <tbody>
-          {!rows.length && <tr className={kvSubRow}><td colSpan={5} className="text-center text-muted-foreground">Chưa có phát sinh công nợ</td></tr>}
+          {!rows.length && <ListEmptyRow cols={5} what="giao dịch" compact />}
           {rows.map((d) => (
             <tr key={d.id} className={kvSubRow}>
-              <td className="text-primary">{d.docCode}</td><td>{formatDateTime(d.occurredAt)}</td>
+              <td><DocCodeLink code={d.docCode} /></td><td>{formatDateTime(d.occurredAt)}</td>
               <td>{DEBT_TYPE_LABEL[d.docType] ?? d.docType}</td>
               <td className="text-right">{formatMoney(d.amount)}</td><td className="text-right">{formatMoney(d.balanceAfter)}</td>
             </tr>

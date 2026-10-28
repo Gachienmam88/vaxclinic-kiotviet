@@ -78,7 +78,7 @@ export function CustomerFilter({ value, onChange }: { value: PickedCustomer; onC
   return (
     <FilterSection title="Khách hàng">
       {value ? (
-        <div className="flex h-[30px] items-center justify-between rounded-md border bg-[#e3f0fc] px-2 text-[13px]">
+        <div className="flex h-[30px] items-center justify-between rounded-md border bg-primary-tint px-2 text-[13px]">
           <span className="truncate">{value.label}</span>
           <button type="button" aria-label="Bỏ chọn khách" onClick={() => { onChange(null); setQ(""); }}><X className="size-3.5" /></button>
         </div>
@@ -89,7 +89,7 @@ export function CustomerFilter({ value, onChange }: { value: PickedCustomer; onC
             <div className="absolute inset-x-0 top-8 z-30 max-h-64 overflow-y-auto rounded-md border bg-background shadow-lg">
               {!data?.items.length && <p className="p-2 text-xs text-muted-foreground">Không tìm thấy khách hàng</p>}
               {data?.items.map((c) => (
-                <button key={c.id} type="button" className="block w-full px-2 py-1.5 text-left text-xs hover:bg-[#e3f0fc]"
+                <button key={c.id} type="button" className="block w-full px-2 py-1.5 text-left text-xs hover:bg-primary-tint"
                   onClick={() => onChange({ id: c.id, label: `${c.name} (${c.code})` })}>
                   <b>{c.name}</b><br /><span className="text-muted-foreground">{c.code}{c.phone ? ` · ${c.phone}` : ""}</span></button>))}
             </div>)}

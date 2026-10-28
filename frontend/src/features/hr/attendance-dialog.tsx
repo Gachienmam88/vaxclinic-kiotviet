@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { dmy, hm, timeOf, useHrMutation } from "./hr-queries";
 import type { AttendanceCell, EmployeeRow, Shift } from "./hr-types";
 import { ATTENDANCE_STATUS } from "./hr-types";
+import { TimePicker } from "@/components/ui/time-picker";
 
 const SOURCES: Record<string, string> = { MANUAL: "Thủ công", PHONE: "Điện thoại (QR)", MACHINE: "Máy chấm công", AUTO: "Tự động" };
 type Mode = "WORK" | "PAID" | "UNPAID";
@@ -58,7 +59,7 @@ export function AttendanceDialog({ cell, shift, date, employees, onClose }: {
               <div className="max-h-32 overflow-y-auto rounded-md border">
                 {list.map((e) => (
                   <button key={e.id} type="button" onClick={() => setEmployeeId(e.id)}
-                    className={cn("block w-full px-2.5 py-1 text-left hover:bg-[#f3f6fa]", employeeId === e.id && "bg-[#e5f0ff] text-primary")}>
+                    className={cn("block w-full px-2.5 py-1 text-left hover:bg-[#f3f6fa]", employeeId === e.id && "bg-primary-tint text-primary")}>
                     {e.name} <span className="text-muted-foreground">{e.code}</span></button>
                 ))}
                 {!list.length && <p className="px-2.5 py-1 text-muted-foreground">Không tìm thấy nhân viên</p>}
@@ -79,9 +80,9 @@ export function AttendanceDialog({ cell, shift, date, employees, onClose }: {
           {mode === "WORK" && (
             <div className="grid grid-cols-2 gap-3">
               <label className="grid gap-1.5"><span className="font-medium">Giờ vào</span>
-                <Input type="time" value={checkIn} onChange={(e) => setCheckIn(e.target.value)} /></label>
+                <TimePicker value={checkIn} onChange={(v) => setCheckIn(v)} /></label>
               <label className="grid gap-1.5"><span className="font-medium">Giờ ra</span>
-                <Input type="time" value={checkOut} onChange={(e) => setCheckOut(e.target.value)} /></label>
+                <TimePicker value={checkOut} onChange={(v) => setCheckOut(v)} /></label>
             </div>
           )}
           <label className="grid gap-1.5"><span className="font-medium">Ghi chú</span>

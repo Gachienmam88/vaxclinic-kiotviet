@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { FileText } from "lucide-react";
+import { DocCodeLink } from "@/components/ui/doc-code-link";
 import { timeAgo } from "./dashboard-date-utils";
 import type { AuditLog } from "./dashboard-queries";
 
@@ -25,7 +26,7 @@ export function RecentActivityCard({ items, isLoading }: { items: AuditLog[]; is
               <p>
                 <span className="text-primary">{l.userName ?? "Hệ thống"}</span> vừa{" "}
                 <span className="text-primary">{l.action.toLowerCase()} {l.feature.toLowerCase()}</span>
-                {l.docCode && <b className="font-semibold"> {l.docCode}</b>}
+                {l.docCode && <> <DocCodeLink code={l.docCode} className="font-semibold" /></>}
               </p>
               {l.detail && <p className="line-clamp-2 text-xs text-muted-foreground">{l.detail}</p>}
               <time dateTime={l.occurredAt} className="text-[11px] text-muted-foreground" title={new Date(l.occurredAt).toLocaleString("vi-VN")}>

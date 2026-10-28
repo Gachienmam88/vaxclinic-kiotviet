@@ -48,7 +48,8 @@ export const PRINT_DEFS: Record<PrintType, Def> = {
   INVOICE: {
     label: "Hóa đơn", group: "Đơn hàng",
     fields: [...STORE, ["Ma_Hoa_Don", "Mã hóa đơn"], ["Ngay_Ban", "Ngày bán"], ["Khach_Hang", "Khách hàng"],
-      ["Ma_Khach_Hang", "Mã khách hàng"], ["SDT_Khach_Hang", "SĐT khách hàng"], ["Nguoi_Ban", "Người bán"],
+      ["Ma_Khach_Hang", "Mã khách hàng"], ["SDT_Khach_Hang", "SĐT khách hàng"], ["Dia_Chi_Khach_Hang", "Địa chỉ khách hàng"],
+      ["Dia_Chi_Giao_Hang", "Địa chỉ giao hàng"], ["Nguoi_Ban", "Người bán"],
       ["Tong_So_Luong", "Tổng số lượng"], ["Tong_Tien_Hang", "Tổng tiền hàng"], ["Giam_Gia", "Giảm giá hóa đơn"],
       ["Tong_Cong", "Tổng cộng"], ["Tong_Cong_Bang_Chu", "Tổng cộng bằng chữ"], ["Khach_Da_Tra", "Khách đã trả"],
       ["Con_No", "Còn nợ"], ["PT_Thanh_Toan", "Phương thức thanh toán"], ["Ghi_Chu", "Ghi chú"]],
@@ -57,6 +58,7 @@ export const PRINT_DEFS: Record<PrintType, Def> = {
 <h2 class="c" style="margin-top:8px">HÓA ĐƠN BÁN HÀNG</h2>
 <p class="c">Số: <b>{Ma_Hoa_Don}</b> — {Ngay_Ban}</p>
 <p>Khách hàng: <b>{Khach_Hang}</b> — SĐT: {SDT_Khach_Hang}</p>
+<p>Địa chỉ: {Dia_Chi_Khach_Hang}</p>
 ${LINES_TABLE("<th>Số lô</th>", "<td>{So_Lo}</td>")}
 <table style="margin-top:4px">
 <tr><td class="r">Tổng tiền hàng:</td><td class="r" style="width:30%">{Tong_Tien_Hang}</td></tr>

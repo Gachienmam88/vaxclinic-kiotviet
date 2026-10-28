@@ -1,5 +1,6 @@
 package com.vaxclinic.sales.delivery;
 
+import com.vaxclinic.common.address.AdminUnitCodes;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -26,13 +27,17 @@ public final class DeliveryPartnerDtos {
                                  @NotBlank(message = "Chưa nhập tên đối tác") @Size(max = 200) String name,
                                  @Size(max = 20) String phone, @Email(message = "Email không hợp lệ") @Size(max = 150) String email,
                                  @Size(max = 300) String address, @Size(max = 2000) String note,
-                                 @Pattern(regexp = "MANUAL") String partnerType, Boolean active) {
+                                 @Pattern(regexp = "MANUAL") String partnerType, Boolean active,
+                                 @Size(max = 100) String province, @Size(max = 100) String ward,
+                                 @Pattern(regexp = AdminUnitCodes.PROVINCE, message = AdminUnitCodes.PROVINCE_MSG) String provinceCode,
+                                 @Pattern(regexp = AdminUnitCodes.WARD, message = AdminUnitCodes.WARD_MSG) String wardCode) {
     }
 
     /** Dòng danh sách: tổng đơn (trừ đã hủy), phí giao hàng, cần thu hộ (đơn chưa chuyển hoàn), nợ hiện tại. */
     public record PartnerRow(UUID id, String code, String name, String phone, String email, String address, String note,
                              String partnerType, boolean active, long shipmentCount, BigDecimal totalFee, BigDecimal totalCod,
-                             BigDecimal debt, Instant createdAt) {
+                             BigDecimal debt, Instant createdAt, String province, String ward, String provinceCode,
+                             String wardCode) {
     }
 
     public record PartnerListResponse(List<PartnerRow> items, long total, int page, int size, BigDecimal sumFee,

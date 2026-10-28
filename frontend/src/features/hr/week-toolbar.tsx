@@ -52,12 +52,12 @@ export function EmployeeSearch({ employees, value, onChange }: {
   return (
     <div ref={ref} className="relative w-[162px]">
       <Search className="absolute top-1/2 left-2 size-3.5 -translate-y-1/2 text-muted-foreground" />
-      <input role="combobox" aria-expanded={open} aria-label="Tìm kiếm nhân viên" placeholder="Tìm kiếm nhân viên"
+      <input role="combobox" aria-expanded={open} aria-controls="hr-employee-search-list" aria-label="Tìm kiếm nhân viên" placeholder="Tìm kiếm nhân viên"
         className="h-[30px] w-full rounded-md border border-[#d9dbe0] bg-white pr-6 pl-7 text-[12px] outline-none placeholder:text-muted-foreground focus:border-primary"
         value={open ? q : selected?.name ?? ""} onFocus={() => { setOpen(true); setQ(""); }} onChange={(e) => setQ(e.target.value)} />
       <ChevronDown className="pointer-events-none absolute top-1/2 right-2 size-3.5 -translate-y-1/2 text-foreground" />
       {open && (
-        <ul role="listbox" className="absolute top-8 left-0 z-30 max-h-72 w-64 overflow-y-auto rounded-md border bg-white py-1 text-[12px] shadow-lg">
+        <ul id="hr-employee-search-list" role="listbox" className="absolute top-8 left-0 z-30 max-h-72 w-64 overflow-y-auto rounded-md border bg-white py-1 text-[12px] shadow-lg">
           <li><button type="button" className="w-full px-3 py-1.5 text-left hover:bg-[#f3f6fa]" onClick={() => { onChange(""); setOpen(false); }}>
             Tất cả nhân viên</button></li>
           {list.map((e) => (
@@ -90,12 +90,12 @@ export function ViewSelect<T extends string>({ value, options, onChange, icon, l
 }
 
 /** Tiêu đề cột ngày: "Thứ tư (28)" — hôm nay chữ xanh, số ngày trong vòng tròn xanh. */
-export function DayHeader({ label, day, today }: { label: string; day: number; today: boolean }) {
+export function DayHeader({ label, day, today, pad }: { label: string; day: number; today: boolean; pad?: boolean }) {
   return (
     <span className={cn("inline-flex items-center gap-2 text-[12px] font-normal", today ? "text-primary" : "text-muted-foreground")}>
       {label}
       <span className={cn("inline-flex min-w-5 items-center justify-center font-semibold",
-        today ? "size-5 rounded-full bg-primary text-[11px] text-white" : "text-foreground")}>{String(day).padStart(2, "0")}</span>
+        today ? "size-5 rounded-full bg-primary text-[11px] text-white" : "text-foreground")}>{pad ? String(day).padStart(2, "0") : day}</span>
     </span>
   );
 }

@@ -2,6 +2,7 @@
 
 import { Info } from "lucide-react";
 import { NumberInput } from "@/components/number-input";
+import { DOC_CODE_LINK_CLASS } from "@/components/ui/doc-code-link";
 import { ListEmptyState } from "@/components/ui/list-empty-state";
 import { kvSubHead, kvSubRow, kvSubTable } from "@/features/sales/customer-ui-primitives";
 import { formatDateTime, formatMoney } from "@/lib/format";
@@ -41,10 +42,10 @@ export function SupplierAllocationTable({ kind, receipts, alloc, unallocated, on
             </tr>
           )}
           {!receipts && <tr className={kvSubRow}><td colSpan={7} className="text-center text-muted-foreground">Đang tải...</td></tr>}
-          {receipts && !rows.length && <tr><td colSpan={7}><ListEmptyState compact what="phiếu nhập còn nợ" period="" /></td></tr>}
+          {receipts && !rows.length && <tr><td colSpan={7}><ListEmptyState compact what="phiếu nhập còn nợ" /></td></tr>}
           {rows.map((r) => (
             <tr key={r.id} className={kvSubRow}>
-              <td><button type="button" className="text-primary hover:underline" onClick={() => onOpen(r.id)}>{r.code}</button></td>
+              <td><button type="button" className={DOC_CODE_LINK_CLASS} onClick={() => onOpen(r.id)}>{r.code}</button></td>
               <td>{formatDateTime(r.receivedAt)}</td><td className="text-right">{formatMoney(r.total)}</td>
               {pay && <td className="text-right">{formatMoney(r.paidBefore)}</td>}
               <td className="text-right">{formatMoney(r.remaining)}</td>

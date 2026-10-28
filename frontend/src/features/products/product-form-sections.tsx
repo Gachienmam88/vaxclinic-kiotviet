@@ -10,6 +10,7 @@ import { useBranches } from "@/features/settings/settings-queries";
 import { useCurrentUser } from "@/lib/use-current-user";
 import { newKey, type ProductForm } from "./product-form-state";
 import { useTaxRates } from "./product-queries";
+import { DatePicker } from "@/components/ui/date-picker";
 
 export type SectionProps = { form: ProductForm; set: (patch: Partial<ProductForm>) => void; isCreate: boolean };
 
@@ -17,15 +18,16 @@ export type SectionProps = { form: ProductForm; set: (patch: Partial<ProductForm
 export function FormSection({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
   const [open, setOpen] = useState(true);
   return (
-    <section className="rounded-lg border">
-      <button type="button" onClick={() => setOpen(!open)} className="flex w-full items-start justify-between p-3 text-left">
+    <section className="rounded-lg border border-[#e5e7eb]">
+      <button type="button" aria-expanded={open} onClick={() => setOpen(!open)}
+        className="flex w-full items-start justify-between gap-3 px-3 pt-3 pb-2 text-left">
         <span>
-          <span className="block text-sm font-semibold">{title}</span>
-          {hint && <span className="block text-xs text-muted-foreground">{hint}</span>}
+          <span className="block text-[13px] font-bold">{title}</span>
+          {hint && <span className="mt-0.5 block text-xs text-muted-foreground">{hint}</span>}
         </span>
-        {open ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
+        {open ? <ChevronUp className="size-4 shrink-0" /> : <ChevronDown className="size-4 shrink-0" />}
       </button>
-      {open && <div className="px-3 pb-3">{children}</div>}
+      {open && <div className="px-3 pb-4">{children}</div>}
     </section>
   );
 }
@@ -86,7 +88,7 @@ export function StockSection({ form, set, isCreate }: SectionProps) {
           <NumberInput value={form.maxStock} onValueChange={(maxStock) => set({ maxStock })} /></div>
       </div>
       {isCreate && myBranches.length > 1 && (
-        <div className="mt-3 grid max-w-xs gap-1.5"><Label>Tồn đầu kỳ tại điểm tiêm</Label>
+        <div className="mt-3 grid max-w-xs gap-1.5"><Label>Tồn đầu kỳ tại chi nhánh</Label>
           <NativeSelect value={form.openingBranchId} onChange={(e) => set({ openingBranchId: e.target.value })}>
             {myBranches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
           </NativeSelect></div>
@@ -97,7 +99,7 @@ export function StockSection({ form, set, isCreate }: SectionProps) {
           {form.openingLots.map((l) => (
             <div key={l.key} className="grid grid-cols-[1fr_1fr_8rem_auto] items-center gap-2">
               <Input placeholder="Số lô" value={l.lotNumber} onChange={(e) => setLot(l.key, { lotNumber: e.target.value })} />
-              <Input type="date" value={l.expiryDate} onChange={(e) => setLot(l.key, { expiryDate: e.target.value })} />
+              <DatePicker value={l.expiryDate} onChange={(v) => setLot(l.key, { expiryDate: v })} />
               <NumberInput placeholder="Số lượng" value={l.quantity} onValueChange={(quantity) => setLot(l.key, { quantity })} />
               <Button type="button" variant="ghost" size="icon" aria-label="Xóa lô"
                 onClick={() => set({ openingLots: form.openingLots.filter((x) => x.key !== l.key) })}>

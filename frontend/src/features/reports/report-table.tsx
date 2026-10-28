@@ -68,3 +68,7 @@ export function linesToCsv<T>(columns: ReportColumn<T>[], lines: ReportLine<T>[]
   lines.forEach(walk);
   return { header: columns.map((c) => (typeof c.label === "string" ? c.label : c.key)), rows: out };
 }
+
+/** Bảng không phụ thuộc kiểu dòng — để 1 màn chọn giữa nhiều bảng có kiểu dòng khác nhau. */
+export type AnyTable = { columns: ReportColumn<unknown>[]; lines: ReportLine<unknown>[] };
+export const asTable = <T,>(columns: ReportColumn<T>[], lines: ReportLine<T>[]) => ({ columns, lines }) as unknown as AnyTable;

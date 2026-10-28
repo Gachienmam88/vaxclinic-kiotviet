@@ -12,25 +12,27 @@ import { TimeFilter } from "./report-time-filter";
 import { rangeText, timeRange, type TimeValue } from "./report-time-presets";
 import { ReportViewer } from "./report-viewer";
 import { top10 } from "./summary-table-kit";
+import { DocCodeLink } from "@/components/ui/doc-code-link";
 
 type Concern = "purchase" | "products" | "debt";
 const CONCERNS: [Concern, string][] = [["purchase", "Nhập hàng"], ["products", "Hàng nhập theo NCC"], ["debt", "Công nợ"]];
 const TITLES: Record<Concern, string> = { purchase: "Báo cáo nhập hàng theo nhà cung cấp", products: "Báo cáo hàng nhập theo nhà cung cấp", debt: "Báo cáo công nợ nhà cung cấp" };
 
-type SAgg = { code: string; name: string; product: string; qtyIn: number; valueIn: number; qtyReturned: number; valueReturned: number; net: number };
-const toAgg = (s: SupplierRow): SAgg => ({ code: s.supplierCode ?? "", name: s.supplierName, product: s.productName ? `${s.productCode} - ${s.productName}` : "",
+type SAgg = { code: string; name: string; product: string; productCode: string; qtyIn: number; valueIn: number; qtyReturned: number; valueReturned: number; net: number };
+const toAgg = (s: SupplierRow): SAgg => ({ code: s.supplierCode ?? "", name: s.supplierName, product: s.productName ? `${s.productCode} - ${s.productName}` : "", productCode: s.productCode ?? "",
   qtyIn: +s.qtyIn, valueIn: +s.valueIn, qtyReturned: +s.qtyReturned, valueReturned: +s.valueReturned, net: +s.valueIn - +s.valueReturned });
 const m = (key: keyof SAgg, label: string, type: "money" | "qty" = "money"): ReportColumn<SAgg> => ({ key, label, type, value: (r) => r[key] });
-const CODE: ReportColumn<SAgg> = { key: "code", label: "Mã NCC", value: (r) => r.code, render: (r) => <b className="rp-link">{r.code}</b> };
+const CODE: ReportColumn<SAgg> = { key: "code", label: "Mã NCC", value: (r) => r.code, render: (r) => <b><DocCodeLink code={r.code} /></b> };
 const NAME: ReportColumn<SAgg> = { key: "name", label: "Tên NCC", value: (r) => r.name };
 const PURCHASE_COLS = [CODE, NAME, m("valueIn", "Giá trị nhập"), m("valueReturned", "Giá trị trả"), m("net", "Giá trị nhập thuần")];
-const PRODUCT_COLS = [CODE, NAME, { key: "product", label: "Hàng hóa", value: (r: SAgg) => r.product }, m("qtyIn", "SL nhập", "qty"), m("valueIn", "Giá trị nhập"),
+const PRODUCT_COLS = [CODE, NAME, { key: "product", label: "Hàng hóa", value: (r: SAgg) => r.product,
+  render: (r: SAgg) => (r.productCode ? <><DocCodeLink code={r.productCode} />{r.product.slice(r.productCode.length)}</> : r.product) }, m("qtyIn", "SL nhập", "qty"), m("valueIn", "Giá trị nhập"),
   m("qtyReturned", "SL trả", "qty"), m("valueReturned", "Giá trị trả"), m("net", "Giá trị nhập thuần")];
 
 function lines(rows: SAgg[], label: string): ReportLine<SAgg>[] {
   if (!rows.length) return [];
   const s = (k: keyof SAgg) => sumOf(rows, (r) => r[k] as number);
-  return [{ id: "sum", kind: "sum", label, data: { code: "", name: "", product: "", qtyIn: s("qtyIn"), valueIn: s("valueIn"), qtyReturned: s("qtyReturned"),
+  return [{ id: "sum", kind: "sum", label, data: { code: "", name: "", product: "", productCode: "", qtyIn: s("qtyIn"), valueIn: s("valueIn"), qtyReturned: s("qtyReturned"),
     valueReturned: s("valueReturned"), net: s("net") } }, ...rows.map((r, i) => ({ id: `${r.code}-${r.product}-${i}`, kind: "row" as const, data: r }))];
 }
 

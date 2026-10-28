@@ -3,6 +3,8 @@
 import * as React from "react";
 import { cn } from "cn";
 import { pad2 } from "@/lib/date-input-format";
+import { useT } from "@/lib/i18n";
+import { commonNs } from "@/messages/common";
 
 const HOURS = Array.from({ length: 24 }, (_, i) => pad2(i));
 const MINUTES = Array.from({ length: 60 }, (_, i) => pad2(i));
@@ -51,11 +53,12 @@ function TimeColumn({ label, items, value, onPick, autoFocus }: {
  * `value` "HH:mm" hoặc rỗng.
  */
 export function TimeListPanel({ value, onPick }: { value: string; onPick: (hm: string, done: boolean) => void }) {
+  const tc = useT(commonNs);
   const [h, m] = /^\d{2}:\d{2}$/.test(value) ? value.split(":") : ["", ""];
   return (
     <div className="flex gap-2">
-      <TimeColumn label="Giờ" items={HOURS} value={h} autoFocus onPick={(v) => onPick(`${v}:${m || "00"}`, false)} />
-      <TimeColumn label="Phút" items={MINUTES} value={m} onPick={(v) => onPick(`${h || pad2(new Date().getHours())}:${v}`, true)} />
+      <TimeColumn label={tc("calendar.hour")} items={HOURS} value={h} autoFocus onPick={(v) => onPick(`${v}:${m || "00"}`, false)} />
+      <TimeColumn label={tc("calendar.minute")} items={MINUTES} value={m} onPick={(v) => onPick(`${h || pad2(new Date().getHours())}:${v}`, true)} />
     </div>
   );
 }

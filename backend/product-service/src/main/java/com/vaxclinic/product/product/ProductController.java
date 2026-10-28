@@ -1,6 +1,8 @@
 package com.vaxclinic.product.product;
 
+import com.vaxclinic.common.audit.AuditLogger;
 import com.vaxclinic.common.web.PageResponse;
+import com.vaxclinic.product.pricebook.SalePriceBookQuery;
 import com.vaxclinic.product.product.ProductDtos.LedgerLine;
 import com.vaxclinic.product.product.ProductDtos.LotResponse;
 import com.vaxclinic.product.product.ProductDtos.ProductDetail;
@@ -37,14 +39,25 @@ public class ProductController {
     private final ProductCommandService commands;
     private final ProductListQuery listQuery;
     private final ProductDetailQuery detailQuery;
-    private final PosCatalogQuery posCatalog;
+    private final SaleCatalogQuery saleCatalog;
+    private final SalePriceBookQuery salePriceBooks;
+    private final AuditLogger audit;
 
     public ProductController(ProductCommandService commands, ProductListQuery listQuery,
-                             ProductDetailQuery detailQuery, PosCatalogQuery posCatalog) {
+                             ProductDetailQuery detailQuery, SaleCatalogQuery saleCatalog, SalePriceBookQuery salePriceBooks,
+                             AuditLogger audit) {
         this.commands = commands;
         this.listQuery = listQuery;
         this.detailQuery = detailQuery;
-        this.posCatalog = posCatalog;
+        this.saleCatalog = saleCatalog;
+        this.salePriceBooks = salePriceBooks;
+        this.audit = audit;
+    }
+
+    /** Ghi lịch sử thao tác hàng hóa. */
+    private void log(Jwt jwt, String action, ProductDetail p, String detail) {
+        audit.record(UUID.fromString(jwt.getSubject()), jwt.getClaimAsString("name"), null, "Hàng hóa", action,
+                p.units().isEmpty() ? null : p.units().get(0).code(), detail);
     }
 
     @GetMapping
@@ -63,10 +76,18 @@ public class ProductController {
                 createdFrom, createdTo, active, Math.max(page, 0), Math.min(Math.max(size, 1), 100)));
     }
 
-    /** Danh mục màn bán hàng (lưu cục bộ để bán khi mất mạng). Thu ngân có catalog.view. */
-    @GetMapping("/pos-catalog")
-    public List<PosCatalogQuery.PosProduct> posCatalog(@RequestParam UUID branchId) {
-        return posCatalog.load(branchId);
+    /** Danh mục + bảng giá đang áp dụng tại điểm tiêm (withPriceBooks=true). */
+    public record SaleCatalogResponse(List<SaleCatalogQuery.SaleProduct> products, List<SalePriceBookQuery.SalePriceBook> priceBooks) {
+    }
+
+    /**
+     * Danh mục màn bán hàng (lưu cục bộ để bán khi mất mạng). Thu ngân có catalog.view.
+     * Mặc định trả mảng hàng hóa như cũ; withPriceBooks=true trả {products, priceBooks} để bán theo bảng giá khi offline.
+     */
+    @GetMapping("/sale-catalog")
+    public Object saleCatalog(@RequestParam UUID branchId, @RequestParam(defaultValue = "false") boolean withPriceBooks) {
+        List<SaleCatalogQuery.SaleProduct> products = saleCatalog.load(branchId);
+        return withPriceBooks ? new SaleCatalogResponse(products, salePriceBooks.load(branchId)) : products;
     }
 
     @GetMapping("/{id}")
@@ -92,28 +113,37 @@ public class ProductController {
     public ProductDetail create(@Valid @RequestBody ProductRequest req, @AuthenticationPrincipal Jwt jwt) {
         List<String> branches = jwt.getClaimAsStringList("branches");
         UUID id = commands.create(req, UUID.fromString(jwt.getSubject()), branches == null ? List.of() : branches);
-        return detailQuery.get(id);
+        ProductDetail p = detailQuery.get(id);
+        log(jwt, "Tạo", p, "Tạo hàng hóa " + p.name());
+        return p;
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('catalog.manage')")
-    public ProductDetail update(@PathVariable UUID id, @Valid @RequestBody ProductRequest req) {
+    public ProductDetail update(@PathVariable UUID id, @Valid @RequestBody ProductRequest req, @AuthenticationPrincipal Jwt jwt) {
         commands.update(id, req);
-        return detailQuery.get(id);
+        ProductDetail p = detailQuery.get(id);
+        log(jwt, "Sửa", p, "Cập nhật hàng hóa " + p.name());
+        return p;
     }
 
     /** Ngừng kinh doanh / cho phép kinh doanh. Body: {"active": false} */
     @PatchMapping("/{id}/active")
     @PreAuthorize("hasAuthority('catalog.manage')")
-    public ProductDetail setActive(@PathVariable UUID id, @RequestBody Map<String, Boolean> body) {
-        commands.setActive(id, Boolean.TRUE.equals(body.get("active")));
-        return detailQuery.get(id);
+    public ProductDetail setActive(@PathVariable UUID id, @RequestBody Map<String, Boolean> body, @AuthenticationPrincipal Jwt jwt) {
+        boolean active = Boolean.TRUE.equals(body.get("active"));
+        commands.setActive(id, active);
+        ProductDetail p = detailQuery.get(id);
+        log(jwt, active ? "Kinh doanh" : "Ngừng kinh doanh", p, (active ? "Cho phép kinh doanh " : "Ngừng kinh doanh ") + p.name());
+        return p;
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasAuthority('catalog.manage')")
-    public void delete(@PathVariable UUID id) {
+    public void delete(@PathVariable UUID id, @AuthenticationPrincipal Jwt jwt) {
+        ProductDetail p = detailQuery.get(id);
         commands.delete(id);
+        log(jwt, "Xóa", p, "Xóa hàng hóa " + p.name());
     }
 }

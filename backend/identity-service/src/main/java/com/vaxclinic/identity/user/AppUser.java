@@ -45,6 +45,10 @@ public class AppUser {
     @Column(nullable = false)
     private boolean active = true;
 
+    /** Chủ gian hàng (đúng 1 user, vai trò ADMIN): đổi tên, bảo lưu, chuyển nhượng gian hàng. */
+    @Column(nullable = false)
+    private boolean owner;
+
     @ManyToOne(fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "role_id")
     private Role role;

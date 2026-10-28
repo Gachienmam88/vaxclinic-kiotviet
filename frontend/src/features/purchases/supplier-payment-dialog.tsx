@@ -25,6 +25,7 @@ import { SupplierAllocationTable } from "./supplier-allocation-table";
 import { useSupplierPaymentPrinter } from "./supplier-payment-print";
 import { useInvalidateSuppliers, useUnpaidReceipts } from "./supplier-queries";
 import { SUPPLIER_PAYMENT_METHODS, type SupplierDebtDoc, type SupplierRow } from "./supplier-types";
+import { DateTimePicker } from "@/components/ui/date-time-picker";
 
 const select = "h-8 w-full rounded-md border border-[#d9dbe0] bg-white px-2.5 text-[13px] outline-none focus:border-primary";
 
@@ -83,7 +84,7 @@ export function SupplierPaymentDialog({ kind, supplier, onClose }: { kind: "paym
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className={cn(kvDialog, "flex max-h-[92vh] flex-col sm:max-w-[640px]")}>
+      <DialogContent className={cn(kvDialog, "flex max-h-[92vh] flex-col sm:max-w-[857px]")}>
         <DialogHeader className={cn(kvDialogHeader, "gap-1")}>
           <DialogTitle className={kvDialogTitle}>{pay ? "Thanh toán" : "Chiết khấu thanh toán"}</DialogTitle>
           <p className="flex items-center gap-1.5 text-[12px] text-foreground/70">
@@ -92,7 +93,7 @@ export function SupplierPaymentDialog({ kind, supplier, onClose }: { kind: "paym
         <div className={cn(kvDialogBody, "overflow-y-auto")}>
           <div className="grid grid-cols-1 gap-x-4 gap-y-3 md:grid-cols-2">
             <div className="grid gap-1.5"><Label className={kvLabel}>Thời gian</Label>
-              <Input type="datetime-local" aria-label="Thời gian" className={kvInput} value={at} onChange={(e) => setAt(e.target.value)} /></div>
+              <DateTimePicker aria-label="Thời gian" className={kvInput} value={at} onChange={(v) => setAt(v)} /></div>
             <div className="grid gap-1.5"><Label className={kvLabel}>{pay ? "Người chi" : "Người thực hiện"}</Label>
               <select className={select} aria-label={pay ? "Người chi" : "Người thực hiện"} value={staffId} onChange={(e) => setStaffId(e.target.value)}>
                 {users.map((u) => <option key={u.id} value={u.id}>{u.fullName}</option>)}

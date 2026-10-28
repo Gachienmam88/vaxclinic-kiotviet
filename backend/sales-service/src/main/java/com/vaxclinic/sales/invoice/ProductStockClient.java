@@ -22,9 +22,17 @@ import java.util.UUID;
 @Component
 public class ProductStockClient {
 
-    /** Bán: unitId + quantity. Trả hàng: lotNumber + baseQuantity (đơn vị cơ bản). */
+    /**
+     * Bán: unitId + quantity. Trả hàng: lotNumber + baseQuantity (đơn vị cơ bản);
+     * expiryDate: trả nhanh nhập lô mới (lô đã có tại chi nhánh thì phải trùng hạn).
+     */
     public record Line(UUID lineId, UUID productId, UUID unitId, BigDecimal quantity, String lotNumber,
-                       BigDecimal baseQuantity) {
+                       BigDecimal baseQuantity, LocalDate expiryDate) {
+        public Line(UUID lineId, UUID productId, UUID unitId, BigDecimal quantity, String lotNumber,
+                    BigDecimal baseQuantity) {
+            this(lineId, productId, unitId, quantity, lotNumber, baseQuantity, null);
+        }
+
         public static Line sale(UUID lineId, UUID productId, UUID unitId, BigDecimal quantity) {
             return new Line(lineId, productId, unitId, quantity, null, null);
         }

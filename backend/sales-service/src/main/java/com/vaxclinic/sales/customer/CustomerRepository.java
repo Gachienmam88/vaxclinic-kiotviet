@@ -23,6 +23,6 @@ public interface CustomerRepository extends JpaRepository<Customer, UUID> {
     @Query("select c from Customer c where c.id = ?1")
     Optional<Customer> findForUpdate(UUID id);
 
-    @Query("select distinct c.groupName from Customer c where c.groupName is not null order by c.groupName")
+    @Query("select g.name from CustomerGroup g order by g.name")
     List<String> findGroupNames();
 }

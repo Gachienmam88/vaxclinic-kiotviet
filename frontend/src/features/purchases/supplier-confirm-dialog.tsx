@@ -11,7 +11,7 @@ export function SupplierConfirmDialog({ message, pending, onConfirm, onClose }: 
 }) {
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className={cn(kvDialog, "sm:max-w-[388px]")}>
+      <DialogContent className={cn(kvDialog, "sm:max-w-[520px]")}>
         <DialogHeader className={kvDialogHeader}><DialogTitle className={kvDialogTitle}>Xác nhận</DialogTitle></DialogHeader>
         <p className="px-5 pb-4 text-[13px]">{message}</p>
         <DialogFooter className={kvDialogFooter}>

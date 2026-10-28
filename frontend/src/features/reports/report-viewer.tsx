@@ -43,8 +43,8 @@ export function ReportViewer({ title, meta, note, landscape, onExport, onRefresh
             <CloudDownload className="size-4" /><ChevronDown className="size-3" /></button>
           {menu && onExport && (
             <div className="absolute top-8 left-0 z-30 w-44 rounded-md border bg-background py-1 text-foreground shadow-lg">
-              <button type="button" className="block w-full px-3 py-1.5 text-left hover:bg-[#e3f0fc]" onClick={() => { setMenu(false); onExport(); }}>Excel (CSV)</button>
-              <button type="button" className="block w-full px-3 py-1.5 text-left hover:bg-[#e3f0fc]" onClick={() => { setMenu(false); print(); }}>PDF (In ra file PDF)</button>
+              <button type="button" className="block w-full px-3 py-1.5 text-left hover:bg-primary-tint" onClick={() => { setMenu(false); onExport(); }}>Excel (CSV)</button>
+              <button type="button" className="block w-full px-3 py-1.5 text-left hover:bg-primary-tint" onClick={() => { setMenu(false); print(); }}>PDF (In ra file PDF)</button>
             </div>)}
         </div>
         <button type="button" className={ICON} title="In" onClick={print}><Printer className="size-4" /></button>

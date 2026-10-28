@@ -31,11 +31,11 @@ export const emptyEditor = (branchId: string, personId: string): EditorState => 
   receiptId: null, receiptCode: null, lines: [],
 });
 
-type DocLine = { productId: string; unitId: string; quantity: number; unitPrice: number; discount?: number;
+export type DocLine = { productId: string; unitId: string; quantity: number; unitPrice: number; discount?: number;
   lotNumber: string | null; expiryDate?: string | null };
 
 /** Dựng dòng soạn từ dòng chứng từ đã lưu (cần tải chi tiết hàng để có danh sách đơn vị). */
-async function linesFromDoc(lines: DocLine[]): Promise<LineForm[]> {
+export async function linesFromDoc(lines: DocLine[]): Promise<LineForm[]> {
   const ids = [...new Set(lines.map((l) => l.productId))];
   const products = new Map((await Promise.all(ids.map((id) => api<ProductDetail>(`/products/${id}`)))).map((p) => [p.id, p]));
   return lines.map((l) => {

@@ -5,7 +5,7 @@ import type { DailyRevenue } from "@/features/accounting/tax-calc";
 import type { ProductDetail } from "@/features/products/product-types";
 import type { InvoiceList } from "@/features/sales/sales-types";
 import { api, type PageResponse } from "@/lib/api-client";
-import { addDays, instantRange, ymd } from "./dashboard-date-utils";
+import { instantRange, ymd } from "./dashboard-date-utils";
 
 export type AuditLog = {
   id: number; occurredAt: string; userName: string | null; feature: string; action: string; docCode: string | null; detail: string | null;
@@ -70,11 +70,4 @@ export function useProductNames(ids: string[]) {
     })),
   });
   return new Map(ids.map((id, i) => [id, results[i]?.data?.name]));
-}
-
-/** Ngày đầu tiên cần tải để đủ mọi kỳ trên Tổng quan (đầu tháng trước, hoặc 6 ngày trước nếu sớm hơn). */
-export function earliestNeeded(today: Date) {
-  const lastMonthStart = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-  const week = addDays(today, -6);
-  return week < lastMonthStart ? week : lastMonthStart;
 }

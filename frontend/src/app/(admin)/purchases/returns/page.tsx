@@ -1,13 +1,15 @@
 "use client";
 
 import { Fragment, useEffect, useState } from "react";
+import { DeepLinkRoute, useDeepLinkExpanded, type DeepLink } from "@/components/ui/deep-link-route";
+import { DocCodeLink } from "@/components/ui/doc-code-link";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { exportReturnsCsv } from "@/features/purchases/purchase-csv-export";
 import { PurchaseFilterSidebar } from "@/features/purchases/purchase-filter-sidebar";
 import {
   DocStatusBadge, LIST_HEADER_ROW, PurchaseEmptyState, PurchaseListLayout, PurchaseListPager, PurchaseListToolbar,
 } from "@/features/purchases/purchase-list-chrome";
-import { DEFAULT_PURCHASE_FILTERS, useReturns } from "@/features/purchases/purchase-queries";
+import { DEFAULT_PURCHASE_FILTERS, deepLinkPurchaseFilters, useReturns } from "@/features/purchases/purchase-queries";
 import { RETURN_STATUS_LABEL } from "@/features/purchases/purchase-types";
 import { ReturnDetailPanel } from "@/features/purchases/return-detail-panel";
 import { formatDateTime, formatMoney } from "@/lib/format";
@@ -17,13 +19,12 @@ import { cn } from "@/lib/utils";
 const COLS = 10;
 const NUM = "text-right";
 
-export default function PurchaseReturnsPage() {
+function PurchaseReturnsPage({ link }: { link: DeepLink }) {
   const { can } = useCurrentUser();
-  const [filters, setFilters] = useState(DEFAULT_PURCHASE_FILTERS);
-  const [search, setSearch] = useState("");
+  const [filters, setFilters] = useState(link.code ? deepLinkPurchaseFilters(link.code) : DEFAULT_PURCHASE_FILTERS);
+  const [search, setSearch] = useState(link.code ?? "");
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(15);
-  const [expanded, setExpanded] = useState<string | null>(null);
   useEffect(() => {
     const t = setTimeout(() => { setFilters((f) => ({ ...f, q: search })); setPage(0); }, 300);
     return () => clearTimeout(t);
@@ -31,7 +32,7 @@ export default function PurchaseReturnsPage() {
   const { data, isLoading } = useReturns(filters, page, size);
   const pages = data ? Math.max(1, Math.ceil(data.total / size)) : 1;
   const applyFilters = (f: typeof filters) => { setFilters(f); setPage(0); };
-  const toggle = (id: string) => setExpanded(expanded === id ? null : id);
+  const { open: expanded, setOpen: setExpanded, toggle } = useDeepLinkExpanded(data?.items, link, (r) => [r.code]);
 
   return (
     <PurchaseListLayout title="Trả hàng nhập"
@@ -73,7 +74,7 @@ export default function PurchaseReturnsPage() {
               <Fragment key={r.id}>
                 <TableRow onClick={() => toggle(r.id)} onKeyDown={(e) => e.key === "Enter" && toggle(r.id)} tabIndex={0}
                   aria-expanded={expanded === r.id}
-                  className={cn("cursor-pointer align-top [&>td]:py-2.5", expanded === r.id && "bg-[#e3f0fc] hover:bg-[#e3f0fc]",
+                  className={cn("cursor-pointer align-top [&>td]:py-2.5", expanded === r.id && "bg-primary-tint hover:bg-primary-tint",
                     r.status === "CANCELLED" && "text-muted-foreground")}>
                   <TableCell className="pl-4">{r.code}</TableCell><TableCell>{formatDateTime(r.returnedAt)}</TableCell>
                   <TableCell className="w-48 max-w-48 whitespace-normal">{r.supplierName}</TableCell>
@@ -82,12 +83,12 @@ export default function PurchaseReturnsPage() {
                   <TableCell className={NUM}>{formatMoney(r.vatAmount)}</TableCell>
                   <TableCell className={NUM}>{formatMoney(r.total)}</TableCell>
                   <TableCell className={NUM}>{formatMoney(r.refundAmount)}</TableCell>
-                  <TableCell>{r.receiptCode}</TableCell>
+                  <TableCell><DocCodeLink code={r.receiptCode} /></TableCell>
                   <TableCell className="pr-4"><DocStatusBadge status={r.status} label={RETURN_STATUS_LABEL[r.status]} /></TableCell>
                 </TableRow>
                 {expanded === r.id && (
                   <TableRow className="hover:bg-transparent">
-                    <TableCell colSpan={COLS} className="p-0 whitespace-normal"><ReturnDetailPanel id={r.id} /></TableCell>
+                    <TableCell colSpan={COLS} className="p-0 whitespace-normal"><ReturnDetailPanel id={r.id} onClose={() => setExpanded(null)} /></TableCell>
                   </TableRow>
                 )}
               </Fragment>
@@ -99,4 +100,9 @@ export default function PurchaseReturnsPage() {
         total={data?.total ?? 0} unit="phiếu" onPage={setPage} />
     </PurchaseListLayout>
   );
+}
+
+/** /purchases/returns?code=THN000123 → lọc theo mã (mọi trạng thái, toàn thời gian) + mở sẵn chi tiết. */
+export default function Page() {
+  return <DeepLinkRoute>{(link) => <PurchaseReturnsPage link={link} />}</DeepLinkRoute>;
 }

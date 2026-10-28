@@ -12,6 +12,8 @@ import { rangeText, timeLabel, timeRange, type TimeValue } from "./report-time-p
 import { ReportViewer } from "./report-viewer";
 import { dayChart, dayKey, profitColumns, revenueColumns, summaryLines } from "./summary-table-kit";
 import { useCurrentUser } from "@/lib/use-current-user";
+import { useChannelOptions, usePriceBookOptions } from "./report-filter-options";
+import { DocCodeLink } from "@/components/ui/doc-code-link";
 
 type Concern = "time" | "profit" | "discount" | "returns" | "seller" | "branch";
 const CONCERNS: [Concern, string][] = [["time", "Thời gian"], ["profit", "Lợi nhuận"], ["discount", "Giảm giá HĐ"], ["returns", "Trả hàng"],
@@ -26,7 +28,7 @@ type DocAgg = { code: string; time: string; customer: string; qty: number; subto
 const docAgg = (d: DocRow): DocAgg => ({ code: d.code, time: new Date(d.time).toLocaleString("vi-VN"), customer: d.customerName ?? "Khách lẻ",
   qty: Math.abs(d.qty), subtotal: Math.abs(d.subtotal), discount: Math.abs(d.discount), revenue: Math.abs(d.revenue), fee: d.fee, paid: Math.abs(d.paid) });
 const dm = (key: keyof DocAgg, label: string, type: "money" | "qty" = "money"): ReportColumn<DocAgg> => ({ key, label, type, value: (r) => r[key] });
-const DOC_COLS = { code: { key: "code", label: "Mã chứng từ", value: (r: DocAgg) => r.code, render: (r: DocAgg) => <span className="rp-link">{r.code}</span> },
+const DOC_COLS = { code: { key: "code", label: "Mã chứng từ", value: (r: DocAgg) => r.code, render: (r: DocAgg) => <DocCodeLink code={r.code} /> },
   time: { key: "time", label: "Thời gian", value: (r: DocAgg) => r.time }, customer: { key: "customer", label: "Khách hàng", value: (r: DocAgg) => r.customer } };
 const DISCOUNT_COLS: ReportColumn<DocAgg>[] = [DOC_COLS.code, DOC_COLS.time, DOC_COLS.customer, dm("subtotal", "Tổng tiền hàng"), dm("discount", "Giảm giá HĐ"), dm("revenue", "Doanh thu")];
 const RETURN_COLS: ReportColumn<DocAgg>[] = [DOC_COLS.code, DOC_COLS.time, DOC_COLS.customer, dm("qty", "SL", "qty"), dm("revenue", "Giá trị trả"), dm("fee", "Phí trả hàng"), dm("paid", "Đã trả khách")];
@@ -38,10 +40,14 @@ export function SalesReport() {
   const [time, setTime] = useState<TimeValue>({ mode: "preset", preset: "thisWeek" });
   const [saleMode, setSaleMode] = useState("");
   const [branch, setBranch] = useState("");
+  const [channel, setChannel] = useState("");
+  const [priceBook, setPriceBook] = useState("");
+  const priceBooks = usePriceBookOptions();
+  const channels = useChannelOptions();
   const branchLabel = useBranchLabel(branch);
   const { data: me } = useCurrentUser();
   const range = timeRange(time);
-  const params = { branchIds: branch || undefined, saleModes: saleMode || undefined };
+  const params = { branchIds: branch || undefined, saleModes: saleMode || undefined, channels: channel || undefined, priceBookIds: priceBook || undefined };
   const group = GROUP[concern];
   const sumQ = useReport<SummaryRow[]>("/reports/sales/summary", spanOf(range), { ...params, groupBy: group }, !!group);
   const docQ = useReport<DocRow[]>("/reports/end-of-day/sales", spanOf(range), params, !group);
@@ -79,12 +85,10 @@ export function SalesReport() {
       <ViewModeFilter value={mode} onChange={setMode} />
       <SelectFilter title="Mối quan tâm" value={concern} onChange={(v) => setConcern(v as Concern)} options={CONCERNS} />
       <BranchFilter value={branch} onChange={setBranch} />
-      <SelectFilter title="Bảng giá" value="" onChange={() => undefined} placeholder="Chọn bảng giá" options={[]} disabled
-        hint="Hóa đơn chưa lưu bảng giá đã áp dụng nên chưa lọc được theo bảng giá" />
+      <SelectFilter title="Bảng giá" value={priceBook} onChange={setPriceBook} placeholder="Chọn bảng giá" options={priceBooks} />
       <TimeFilter value={time} onChange={setTime} />
       <SelectFilter title="Phương thức bán hàng" value={saleMode} onChange={setSaleMode} placeholder="Chọn phương thức bán hàng" options={SALE_MODES} />
-      <SelectFilter title="Kênh bán" value="" onChange={() => undefined} placeholder="Chọn kênh bán" options={[["DIRECT", "Bán trực tiếp"]]}
-        hint="Mọi hóa đơn hiện bán tại cửa hàng (Bán trực tiếp)" />
+      <SelectFilter title="Kênh bán" value={channel} onChange={setChannel} placeholder="Chọn kênh bán" options={channels} />
     </>}>
       {mode === "chart" ? chart() : (
         <ReportViewer title={TITLES[concern]} meta={[rangeText(range), `Chi nhánh: ${branchLabel}`]} landscape={concern !== "time"}

@@ -73,7 +73,7 @@ public class MachineImportController {
         boolean header = cols[3] == 1;
         Map<String, UUID> employees = new HashMap<>();
         jdbc.query("select timekeeping_code, id from hr_employees where timekeeping_code is not null and status = 'WORKING'",
-                rs -> { employees.put(rs.getString(1).trim().toUpperCase(), rs.getObject(2, UUID.class)); });
+                rs -> { employees.put(stripZeros(rs.getString(1).trim().toUpperCase()), rs.getObject(2, UUID.class)); });
         boolean unscheduled = settings.timekeeping().allowUnscheduled();
         Set<String> unknown = new LinkedHashSet<>();
         List<String> errors = new ArrayList<>();
@@ -94,7 +94,7 @@ public class MachineImportController {
                 }
                 continue;
             }
-            UUID emp = employees.get(code.replaceFirst("^0+(?=.)", "")) != null ? employees.get(code.replaceFirst("^0+(?=.)", "")) : employees.get(code);
+            UUID emp = employees.get(stripZeros(code)); // máy thường xuất "00012" cho mã 12
             if (emp == null) {
                 unknown.add(code);
                 continue;
@@ -168,11 +168,11 @@ public class MachineImportController {
             long secs = Math.round((d - 25569) * 86400);
             return LocalDateTime.ofEpochSecond(secs, 0, java.time.ZoneOffset.UTC).atZone(ShopSettings.ZONE).toInstant();
         }
-        v = v.replaceAll("(?i)\\s*(SA|CH|AM|PM)$", m -> m.group().trim().equalsIgnoreCase("PM") || m.group().trim().equalsIgnoreCase("CH") ? " PM" : " AM");
-        boolean pm = v.endsWith(" PM");
-        boolean ampm = pm || v.endsWith(" AM");
+        String up = v.toUpperCase();
+        boolean pm = up.endsWith(" PM") || up.endsWith(" CH"); // CH = chiều, SA = sáng (Windows tiếng Việt)
+        boolean ampm = pm || up.endsWith(" AM") || up.endsWith(" SA");
         if (ampm) {
-            v = v.substring(0, v.length() - 3);
+            v = v.substring(0, v.length() - 3).trim();
         }
         for (DateTimeFormatter f : FORMATS) {
             try {
@@ -188,6 +188,10 @@ public class MachineImportController {
             }
         }
         return null;
+    }
+
+    private static String stripZeros(String code) {
+        return code.replaceFirst("^0+(?=.)", "");
     }
 
     private static String cell(List<String> r, int i) {

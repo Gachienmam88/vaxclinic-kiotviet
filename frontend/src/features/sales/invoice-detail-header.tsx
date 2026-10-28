@@ -3,12 +3,13 @@
 import Link from "next/link";
 import { SquareArrowOutUpRight } from "lucide-react";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
+import { DOC_CODE_LINK_CLASS, DocCodeLink, docCodeHref } from "@/components/ui/doc-code-link";
 import { useSalesChannels } from "@/features/delivery/delivery-queries";
 import { useUserLookup } from "@/features/purchases/purchase-queries";
 import { useBranches, useShopSettings } from "@/features/settings/settings-queries";
-import { STATE_TONE, stateLabel, type invoiceState } from "./invoice-filter-model";
+import { STATE_TONE, stateLabel } from "./invoice-filter-model";
 import { StatusBadge } from "./invoice-list-kit";
-import type { Invoice } from "./sales-types";
+import type { Invoice, InvoiceState } from "./sales-types";
 
 const FIELD = "h-[30px] w-full rounded-md border bg-background px-2 text-[13px] outline-none focus-visible:border-primary disabled:bg-muted/40";
 const ROW = "flex min-h-[30px] items-center gap-2";
@@ -22,7 +23,7 @@ export type InvoiceInfoDraft = { sellerId: string; at: string; channel: string; 
  * Người tạo | Người bán (chọn) | Ngày bán (ngày giờ) / Kênh bán (chọn) | Bảng giá.
  */
 export function InvoiceDetailHeader({ inv, state, f, set, editable }: {
-  inv: Invoice; state: ReturnType<typeof invoiceState>; f: InvoiceInfoDraft; set: (p: Partial<InvoiceInfoDraft>) => void; editable: boolean;
+  inv: Invoice; state: InvoiceState; f: InvoiceInfoDraft; set: (p: Partial<InvoiceInfoDraft>) => void; editable: boolean;
 }) {
   const { data: users = [] } = useUserLookup();
   const { data: branches = [] } = useBranches();
@@ -34,14 +35,15 @@ export function InvoiceDetailHeader({ inv, state, f, set, editable }: {
   return (
     <>
       <div className="flex flex-wrap items-center gap-3">
-        <span className="text-base font-bold">{inv.customerCode ? `${inv.customerCode} - ` : ""}{inv.customerName}</span>
+        <span className="text-base font-bold">
+          {inv.customerCode && <><DocCodeLink code={inv.customerCode} kind="/customers" /> - </>}{inv.customerName}</span>
         {inv.customerCode && (
-          <Link href={`/customers?code=${encodeURIComponent(inv.customerCode)}`} target="_blank" className="text-primary"
-            aria-label="Mở khách hàng" title="Mở khách hàng"><SquareArrowOutUpRight className="size-4" /></Link>)}
+          <Link href={docCodeHref(inv.customerCode, "/customers")!} target="_blank" className={DOC_CODE_LINK_CLASS}
+            aria-label="Mở khách hàng ở tab mới" title="Mở khách hàng ở tab mới"><SquareArrowOutUpRight className="size-4" /></Link>)}
         <span>{inv.code}</span>
         <StatusBadge tone={STATE_TONE[state]}>{stateLabel(state)}</StatusBadge>
         {inv.offline && <StatusBadge tone="gray">Bán offline</StatusBadge>}
-        {inv.orderCode && <StatusBadge tone="blue">Từ đơn đặt hàng {inv.orderCode}</StatusBadge>}
+        {inv.orderCode && <StatusBadge tone="blue">Từ đơn đặt hàng <DocCodeLink code={inv.orderCode} kind="/orders" /></StatusBadge>}
         <span className="ml-auto">{branches.find((b) => b.id === inv.branchId)?.name}</span>
       </div>
       <div className="grid grid-cols-1 gap-x-8 gap-y-2 text-xs md:grid-cols-3">

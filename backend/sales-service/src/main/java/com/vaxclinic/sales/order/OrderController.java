@@ -1,6 +1,7 @@
 package com.vaxclinic.sales.order;
 
 import com.vaxclinic.common.audit.AuditLogger;
+import com.vaxclinic.common.error.BusinessException;
 import com.vaxclinic.sales.common.Actor;
 import com.vaxclinic.sales.invoice.InvoiceDtos.InvoiceRequest;
 import com.vaxclinic.sales.invoice.InvoiceDtos.InvoiceResponse;
@@ -91,15 +92,22 @@ public class OrderController {
         return r;
     }
 
-    /** refundMethod: hình thức hoàn tiền cọc (mặc định tiền mặt). */
+    /**
+     * refundMethod: tiền cọc hoàn bằng CASH (mặc định) / TRANSFER (bankAccountId) / CARD / EWALLET → phiếu chi PC{mã đơn};
+     * CREDIT = giữ cọc làm tiền khách trả trước (không lập phiếu chi, công nợ khách giữ nguyên số âm).
+     */
     @PostMapping("/{id}/cancel")
     @PreAuthorize("hasAuthority('sales.cancel')")
     public OrderResponse cancel(@PathVariable UUID id, @RequestParam(required = false) String refundMethod,
-                                @AuthenticationPrincipal Jwt jwt) {
+                                @RequestParam(required = false) UUID bankAccountId, @AuthenticationPrincipal Jwt jwt) {
+        if (refundMethod != null && !refundMethod.matches("CASH|TRANSFER|CARD|EWALLET|CREDIT")) {
+            throw BusinessException.badRequest("REFUND_METHOD_INVALID", "Hình thức hoàn cọc không hợp lệ");
+        }
         var before = query.detail(id).deposit();
-        OrderResponse r = query.detail(service.cancel(id, refundMethod, Actor.of(jwt)).getId());
-        log(jwt, r, "Hủy", "Hủy đơn đặt hàng " + r.code()
-                + (before.signum() > 0 ? ", hoàn tiền cọc " + Actor.money(before) + " (phiếu PC" + r.code() + ")" : ""));
+        OrderResponse r = query.detail(service.cancel(id, refundMethod, bankAccountId, Actor.of(jwt)).getId());
+        log(jwt, r, "Hủy", "Hủy đơn đặt hàng " + r.code() + (before.signum() <= 0 ? "" : "CREDIT".equals(refundMethod)
+                ? ", giữ tiền cọc " + Actor.money(before) + " làm công nợ (tiền khách trả trước)"
+                : ", hoàn tiền cọc " + Actor.money(before) + " (phiếu PC" + r.code() + ")"));
         return r;
     }
 

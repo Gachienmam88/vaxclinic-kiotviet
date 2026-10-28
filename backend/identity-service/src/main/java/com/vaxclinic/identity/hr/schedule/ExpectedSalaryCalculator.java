@@ -43,15 +43,13 @@ public class ExpectedSalaryCalculator {
                 (rs, i) -> new Emp(rs.getObject(1, UUID.class), rs.getString(2), rs.getBigDecimal(3), rs.getObject(4, UUID.class)));
         Map<UUID, BigDecimal> out = new HashMap<>();
         Map<UUID, Map<LocalDate, Integer>> minutesByDay = new HashMap<>();
-        jdbc.query("select employee_id, shift_id, work_date from hr_schedules where work_date between ? and ?", rs -> {
-            Shift sh = shifts.get(rs.getObject(2, UUID.class));
-            minutesByDay.computeIfAbsent(rs.getObject(1, UUID.class), k -> new HashMap<>())
-                    .merge(rs.getObject(3, LocalDate.class), sh == null ? 0 : sh.minutes(), Integer::sum);
-        }, from, to);
         Map<UUID, List<Object[]>> slots = new HashMap<>();
         jdbc.query("select employee_id, shift_id, work_date from hr_schedules where work_date between ? and ?", rs -> {
-            slots.computeIfAbsent(rs.getObject(1, UUID.class), k -> new java.util.ArrayList<>())
-                    .add(new Object[]{shifts.get(rs.getObject(2, UUID.class)), rs.getObject(3, LocalDate.class)});
+            UUID emp = rs.getObject(1, UUID.class);
+            Shift sh = shifts.get(rs.getObject(2, UUID.class));
+            LocalDate d = rs.getObject(3, LocalDate.class);
+            minutesByDay.computeIfAbsent(emp, k -> new HashMap<>()).merge(d, sh == null ? 0 : sh.minutes(), Integer::sum);
+            slots.computeIfAbsent(emp, k -> new java.util.ArrayList<>()).add(new Object[]{sh, d});
         }, from, to);
         for (Emp e : emps) {
             List<Integer> workdays = e.branch() == null ? HrSettingsService.ALL_DAYS : settings.workdaysOf(e.branch());

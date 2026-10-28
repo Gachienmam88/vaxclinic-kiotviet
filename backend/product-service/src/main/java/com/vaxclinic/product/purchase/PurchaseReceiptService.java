@@ -31,14 +31,17 @@ public class PurchaseReceiptService {
     private final PurchaseLineSupport support;
     private final StockMovementService stock;
     private final CashflowOutbox cashflows;
+    private final SupplierDebtService debts;
 
     public PurchaseReceiptService(PurchaseReceiptRepository receipts, PurchaseReturnRepository returns,
-                                  PurchaseLineSupport support, StockMovementService stock, CashflowOutbox cashflows) {
+                                  PurchaseLineSupport support, StockMovementService stock, CashflowOutbox cashflows,
+                                  SupplierDebtService debts) {
         this.receipts = receipts;
         this.returns = returns;
         this.support = support;
         this.stock = stock;
         this.cashflows = cashflows;
+        this.debts = debts;
     }
 
     /** Tạo mới (id = null) hoặc sửa phiếu tạm; complete = true thì nhập kho luôn. */
@@ -49,10 +52,16 @@ public class PurchaseReceiptService {
             throw BusinessException.badRequest("RECEIPT_NOT_DRAFT", "Chỉ sửa được phiếu tạm");
         }
         support.checkBranch(actor, req.branchId());
-        support.supplierOrNull(req.supplierId());
+        Supplier supplier = support.supplierOrNull(req.supplierId());
+        if (supplier != null && !supplier.isActive() && !supplier.getId().equals(r.getSupplierId())) {
+            throw BusinessException.badRequest("SUPPLIER_INACTIVE", "Nhà cung cấp " + supplier.getName() + " đã ngừng hoạt động");
+        }
         r.setBranchId(req.branchId());
         r.setSupplierId(req.supplierId());
         r.setReceivedAt(req.receivedAt() == null ? Instant.now() : req.receivedAt());
+        if (complete) {
+            support.checkNotLocked(req.branchId(), r.getReceivedAt());
+        }
         r.setReceiverId(req.receiverId() == null ? actor.id() : req.receiverId());
         r.setReceiverName(req.receiverId() == null ? actor.name() : req.receiverName());
         r.setInputInvoiceNo(PurchaseLineSupport.blankToNull(req.inputInvoiceNo()));
@@ -75,6 +84,12 @@ public class PurchaseReceiptService {
         PurchaseReceipt r = find(id);
         if (r.getStatus() == DocStatus.CANCELLED) {
             throw BusinessException.badRequest("RECEIPT_CANCELLED", "Phiếu đã hủy");
+        }
+        if (r.getStatus() == DocStatus.COMPLETED) {
+            support.checkNotLocked(r.getBranchId(), r.getReceivedAt());
+            if (req.receivedAt() != null) {
+                support.checkNotLocked(r.getBranchId(), req.receivedAt());
+            }
         }
         if (req.receivedAt() != null) {
             r.setReceivedAt(req.receivedAt());
@@ -99,6 +114,7 @@ public class PurchaseReceiptService {
                 throw BusinessException.badRequest("RECEIPT_HAS_RETURNS", "Phiếu đã có trả hàng nhập, hãy hủy phiếu trả trước");
             }
             support.checkBranch(actor, r.getBranchId());
+            support.checkNotLocked(r.getBranchId(), r.getReceivedAt());
             Map<UUID, Product> cache = support.newCache();
             for (var line : r.getLines()) {
                 Product p = support.product(cache, line.getProductId());
@@ -106,6 +122,7 @@ public class PurchaseReceiptService {
                 stock.apply(p, new Movement(r.getBranchId(), baseQty.negate(), line.getLotNumber(), null,
                         DocType.PURCHASE_CANCEL, r.getId(), r.getCode(), lineCost(r, line), supplierName(r), actor.id()));
             }
+            debts.receiptCancelled(r); // phiếu chi lúc nhập hủy theo; phân bổ khác thành "chưa phân bổ"
             cashflows.receiptCancelled(r);
         }
         r.setStatus(DocStatus.CANCELLED);
@@ -185,6 +202,7 @@ public class PurchaseReceiptService {
         r.setStatus(DocStatus.COMPLETED);
         r.setCompletedAt(Instant.now());
         cashflows.receiptPaid(r, support.supplierOrNull(r.getSupplierId())); // phiếu chi trả NCC → Sổ quỹ
+        debts.receiptPaid(r); // + sổ công nợ NCC (PC{mã PN} phân bổ vào chính phiếu này)
     }
 
     private static BigDecimal lineCost(PurchaseReceipt r, PurchaseReceiptLine line) {

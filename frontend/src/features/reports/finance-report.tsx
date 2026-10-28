@@ -1,28 +1,30 @@
 "use client";
 
 import { useState } from "react";
-import { CalendarDays } from "lucide-react";
 import { downloadCsv } from "@/features/accounting/tax-calc";
 import { ymd } from "@/features/dashboard/dashboard-date-utils";
 import { FILTER_FIELD, FilterSection, RadioOption } from "@/features/sales/invoice-list-kit";
 import { useReport, type MonthRow } from "./report-api";
 import { BranchFilter, ReportLayout, SelectFilter, useBranchLabel, ViewModeFilter } from "./report-sidebar-kit";
 import { linesToCsv, ReportTable, type ReportColumn, type ReportLine } from "./report-table";
-import { dmy, parseYmd, rangeText } from "./report-time-presets";
+import { parseYmd, rangeText } from "./report-time-presets";
 import { ReportViewer } from "./report-viewer";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
 
-type Totals = MonthRow & { damage: number };
+type Totals = MonthRow & { damage: number; supplierDiscount: number };
+type MonthValue = { month: string; value: number };
 type Line = { label: string; values: number[] };
 const ZERO = () => 0;
 
 /**
- * Dòng Báo cáo kết quả hoạt động kinh doanh. Các khoản ứng dụng chưa có nguồn dữ liệu (voucher, phí trả ĐTGH,
- * hoàn tiền, thanh toán bằng điểm, chênh lệch làm tròn) luôn 0.
+ * Dòng Báo cáo kết quả hoạt động kinh doanh. Phí trả ĐTGH = phí giao hàng cửa hàng chịu (sổ công nợ đối tác giao hàng).
+ * Chiết khấu thanh toán nhận từ NCC = phiếu chiết khấu (CKN…) còn hiệu lực trên sổ công nợ NCC → thu nhập khác.
+ * Các khoản ứng dụng chưa có nguồn dữ liệu (voucher, hoàn tiền, thanh toán bằng điểm, chênh lệch làm tròn) luôn 0.
  */
 const ROWS: { label: string; level?: 1; f: (t: Totals) => number }[] = (() => {
   const net = (t: Totals) => t.sales - t.invoiceDiscount - t.returnValue;
-  const cost = (t: Totals) => t.damage + t.paymentDiscount + t.salary;
-  const other = (t: Totals) => t.returnFee + t.otherIncome;
+  const cost = (t: Totals) => t.damage + t.paymentDiscount + t.salary + t.deliveryFee;
+  const other = (t: Totals) => t.returnFee + t.otherIncome + t.supplierDiscount;
   return [
     { label: "Doanh thu bán hàng (1)", f: (t) => t.sales },
     { label: "Giảm trừ Doanh thu (2 = 2.1+2.2)", f: (t) => t.invoiceDiscount + t.returnValue },
@@ -32,7 +34,7 @@ const ROWS: { label: string; level?: 1; f: (t: Totals) => number }[] = (() => {
     { label: "Giá vốn hàng bán (4)", f: (t) => t.cogs },
     { label: "Lợi nhuận gộp về bán hàng (5=3-4)", f: (t) => net(t) - t.cogs },
     { label: "Chi phí (6)", f: cost },
-    { label: "Chi phí voucher", level: 1, f: ZERO }, { label: "Phí trả ĐTGH", level: 1, f: ZERO }, { label: "Hoàn tiền cho khách", level: 1, f: ZERO },
+    { label: "Chi phí voucher", level: 1, f: ZERO }, { label: "Phí trả ĐTGH", level: 1, f: (t) => t.deliveryFee }, { label: "Hoàn tiền cho khách", level: 1, f: ZERO },
     { label: "Xuất hủy hàng hóa", level: 1, f: (t) => t.damage }, { label: "Giá trị thanh toán bằng điểm", level: 1, f: ZERO },
     { label: "Chiết khấu thanh toán cho khách", level: 1, f: (t) => t.paymentDiscount }, { label: "Chi trả lương NV", level: 1, f: (t) => t.salary },
     { label: "Chênh lệch làm tròn nhập hàng", level: 1, f: ZERO }, { label: "Chênh lệch làm tròn bán hàng", level: 1, f: ZERO },
@@ -40,14 +42,15 @@ const ROWS: { label: string; level?: 1; f: (t: Totals) => number }[] = (() => {
     { label: "Thu nhập khác (8)", f: other },
     { label: "Phí trả hàng", level: 1, f: (t) => t.returnFee }, { label: "Chênh lệch làm tròn nhập hàng", level: 1, f: ZERO },
     { label: "Chênh lệch làm tròn bán hàng", level: 1, f: ZERO }, { label: "Thu khác (Sổ quỹ)", level: 1, f: (t) => t.otherIncome },
+    { label: "Chiết khấu thanh toán nhận từ nhà cung cấp", level: 1, f: (t) => t.supplierDiscount },
     { label: "Chi phí khác (9)", f: (t) => t.otherExpense },
     { label: "Lợi nhuận thuần (10=7+8-9)", f: (t) => net(t) - t.cogs - cost(t) + other(t) - t.otherExpense },
   ];
 })();
 
-const KEYS = ["sales", "invoiceDiscount", "returnValue", "cogs", "returnFee", "paymentDiscount", "salary", "otherExpense", "otherIncome", "damage"] as const;
+const KEYS = ["sales", "invoiceDiscount", "returnValue", "cogs", "returnFee", "paymentDiscount", "salary", "otherExpense", "otherIncome", "damage", "deliveryFee", "supplierDiscount"] as const;
 const total = (rows: Totals[]): Totals => {
-  const t = { month: "", damage: 0 } as Totals;
+  const t = { month: "" } as Totals;
   KEYS.forEach((k) => { t[k] = rows.reduce((s, r) => s + Number(r[k] || 0), 0); });
   return t;
 };
@@ -65,10 +68,16 @@ export function FinanceReport() {
   const span = { from: range.from, to: new Date(range.to.getFullYear(), range.to.getMonth(), range.to.getDate() + 1) };
   const p = { branchIds: branch || undefined };
   const salesQ = useReport<MonthRow[]>("/reports/finance", span, p);
-  const dmgQ = useReport<{ month: string; value: number }[]>("/reports/inventory/damages/monthly", span, p);
+  const dmgQ = useReport<MonthValue[]>("/reports/inventory/damages/monthly", span, p);
+  const supQ = useReport<MonthValue[]>("/reports/suppliers/payment-discounts/monthly", span, p);
   const byMonth = new Map<string, Totals>();
-  (salesQ.data ?? []).forEach((r) => byMonth.set(r.month, { ...r, damage: 0 }));
-  (dmgQ.data ?? []).forEach((d) => byMonth.set(d.month, { ...(byMonth.get(d.month) ?? total([])), month: d.month, damage: Number(d.value) }));
+  (salesQ.data ?? []).forEach((r) => byMonth.set(r.month, { ...r, damage: 0, supplierDiscount: 0 }));
+  // Gộp số liệu product-service (xuất hủy, chiết khấu NCC) theo tháng vào dòng sales-service
+  const merge = (rows: MonthValue[] | undefined, key: "damage" | "supplierDiscount") => (rows ?? []).forEach((d) =>
+    byMonth.set(d.month, { ...(byMonth.get(d.month) ?? total([])), month: d.month, [key]: Number(d.value) }));
+  merge(dmgQ.data, "damage");
+  merge(supQ.data, "supplierDiscount");
+  const queries = [salesQ, dmgQ, supQ];
   const months = [...byMonth.values()];
   const buckets: { label: string; t: Totals }[] = mode === "month"
     ? Array.from({ length: 12 }, (_, i) => ({ label: `Tháng ${i + 1}`, t: total(months.filter((r) => r.month === `${year}-${String(i + 1).padStart(2, "0")}`)) }))
@@ -92,18 +101,13 @@ export function FinanceReport() {
             onChange={(e) => setMode(e.target.value as "month" | "quarter")}><option value="month">Theo Tháng</option><option value="quarter">Theo Quý</option></select>
         </RadioOption>
         <RadioOption checked={mode === "range"} onSelect={() => setMode("range")}>
-          <span className={box}>{dmy(parseYmd(from))} - {dmy(parseYmd(to))} <CalendarDays className="size-4 shrink-0 text-muted-foreground" /></span>
+          <DateRangePicker className={box} value={{ from, to }} onChange={(r) => { setFrom(r.from); setTo(r.to); setMode("range"); }} />
         </RadioOption>
-        {mode === "range" && (
-          <div className="grid gap-1.5 pl-6">
-            <input type="date" aria-label="Từ ngày" className={FILTER_FIELD} value={from} onChange={(e) => e.target.value && setFrom(e.target.value)} />
-            <input type="date" aria-label="Đến ngày" className={FILTER_FIELD} value={to} onChange={(e) => e.target.value && setTo(e.target.value)} />
-          </div>)}
       </FilterSection>
     </>}>
       <ReportViewer title="Báo cáo kết quả hoạt động kinh doanh" meta={[rangeText(range), branchLabel]} landscape
-        loading={salesQ.isFetching || dmgQ.isFetching} onRefresh={() => { salesQ.refetch(); dmgQ.refetch(); }} onExport={exportCsv}>
-        {salesQ.isError || dmgQ.isError ? <p className="rp-empty">Không tải được báo cáo</p> : <ReportTable columns={columns} lines={lines} />}
+        loading={queries.some((q) => q.isFetching)} onRefresh={() => queries.forEach((q) => q.refetch())} onExport={exportCsv}>
+        {queries.some((q) => q.isError) ? <p className="rp-empty">Không tải được báo cáo</p> : <ReportTable columns={columns} lines={lines} />}
       </ReportViewer>
     </ReportLayout>
   );

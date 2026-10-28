@@ -8,7 +8,7 @@ import { eodCashLines, EOD_CASH_COLUMNS, eodSummaryLines, PRODUCT_COLUMNS, produ
 import { EOD_HORIZONTAL, EOD_VERTICAL, eodSalesLines } from "./end-of-day-sales-lines";
 import { PAYMENT_METHODS, SALE_MODES, useReport, type DocRow, type ProductRow, type VoucherRow } from "./report-api";
 import { BranchFilter, CustomerFilter, ReportLayout, SelectFilter, useBranchLabel, ViewModeFilter, type PickedCustomer } from "./report-sidebar-kit";
-import { linesToCsv, ReportTable, type ReportColumn, type ReportLine } from "./report-table";
+import { asTable, linesToCsv, ReportTable } from "./report-table";
 import { DayFilter, dayRange, type DayValue } from "./report-time-filter";
 import { ReportViewer } from "./report-viewer";
 
@@ -44,12 +44,11 @@ export function EndOfDayReport() {
     { ...base, sellerId: seller || undefined, methods: method || undefined, saleModes: saleMode || undefined }, concern === "products" || concern === "summary");
   const toggle = (id: string) => setExpanded((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
 
-  // Bảng theo mối quan tâm (kiểu dòng khác nhau nên ép về unknown cho bảng chung)
-  let columns: ReportColumn<unknown>[], lines: ReportLine<unknown>[];
-  if (concern === "sales") [columns, lines] = [horizontal ? EOD_HORIZONTAL : EOD_VERTICAL, eodSalesLines(salesQ.data ?? [], horizontal)] as never;
-  else if (concern === "cashflow") [columns, lines] = [EOD_CASH_COLUMNS, eodCashLines(cashQ.data ?? [], horizontal)] as never;
-  else if (concern === "products") [columns, lines] = [PRODUCT_COLUMNS, productLines(prodQ.data ?? [])] as never;
-  else [columns, lines] = [SUMMARY_COLUMNS, eodSummaryLines(salesQ.data ?? [], cashQ.data ?? [], prodQ.data ?? [])] as never;
+  // Bảng theo mối quan tâm
+  const { columns, lines } = concern === "sales" ? asTable(horizontal ? EOD_HORIZONTAL : EOD_VERTICAL, eodSalesLines(salesQ.data ?? [], horizontal))
+    : concern === "cashflow" ? asTable(EOD_CASH_COLUMNS, eodCashLines(cashQ.data ?? [], horizontal))
+      : concern === "products" ? asTable(PRODUCT_COLUMNS, productLines(prodQ.data ?? []))
+        : asTable(SUMMARY_COLUMNS, eodSummaryLines(salesQ.data ?? [], cashQ.data ?? [], prodQ.data ?? []));
   const active = concern === "cashflow" ? cashQ : concern === "products" ? prodQ : salesQ;
   const exportCsv = () => { const t = linesToCsv(columns, lines); downloadCsv(`bao-cao-cuoi-ngay-${concern}-${ymd(span.from)}.csv`, t.header, t.rows); };
 
@@ -68,7 +67,7 @@ export function EndOfDayReport() {
         disabled={concern === "cashflow"} hint={concern === "cashflow" ? "Phiếu thu chi không gắn phương thức bán hàng" : undefined} />
     </>}>
       <ReportViewer title={TITLES[concern]} landscape={horizontal && concern !== "summary"} loading={active.isFetching}
-        onRefresh={() => { salesQ.refetch(); if (concern !== "sales") { cashQ.refetch(); prodQ.refetch(); } }} onExport={lines.length ? exportCsv : undefined}
+        onRefresh={() => (concern === "summary" ? [salesQ, cashQ, prodQ] : [active]).forEach((q) => q.refetch())} onExport={lines.length ? exportCsv : undefined}
         meta={[`Ngày bán: ${span.label}`, `Ngày thanh toán: ${span.label}`, `Chi nhánh: ${branchLabel}`]}>
         {active.isError ? <p className="rp-empty">Không tải được báo cáo</p>
           : <ReportTable columns={columns} lines={lines} expanded={expanded} onToggle={toggle} />}

@@ -53,16 +53,18 @@ public class SupplierController {
         this.audit = audit;
     }
 
-    /** buyFrom/buyTo: Tổng mua (giá trị); from/to: thời gian tính Tổng mua; debtFrom/debtTo: Nợ hiện tại. */
+    /** buyFrom/buyTo: Tổng mua (giá trị); from/to: thời gian tính Tổng mua; debtFrom/debtTo: Nợ hiện tại;
+     *  docCode: NCC có phiếu công nợ (PCN/CKN/DCN…) đúng mã này — link sâu từ mã phiếu. */
     @GetMapping
     public SupplierPage search(@RequestParam(defaultValue = "") String q, @RequestParam(required = false) UUID groupId,
                                @RequestParam(required = false) Boolean active,
                                @RequestParam(required = false) BigDecimal buyFrom, @RequestParam(required = false) BigDecimal buyTo,
                                @RequestParam(required = false) Instant from, @RequestParam(required = false) Instant to,
                                @RequestParam(required = false) BigDecimal debtFrom, @RequestParam(required = false) BigDecimal debtTo,
+                               @RequestParam(required = false) String docCode,
                                @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "15") int size) {
         return query.search(new SupplierListQuery.Filter(q, groupId, active, buyFrom, buyTo, from, to, debtFrom, debtTo,
-                Math.max(page, 0), Math.min(Math.max(size, 1), 100)));
+                docCode, Math.max(page, 0), Math.min(Math.max(size, 1), 100)));
     }
 
     @GetMapping("/{id}")

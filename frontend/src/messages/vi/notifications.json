@@ -1,0 +1,14 @@
+{
+  "title": "Hộp thư đến",
+  "markAllRead": "Đánh dấu đã đọc tất cả",
+  "tabs": {
+    "all": "Tất cả",
+    "alert": "Cảnh báo",
+    "update": "Cập nhật"
+  },
+  "unread": "Chưa đọc",
+  "loadingMore": "Đang tải thêm...",
+  "emptyWhat": "thông báo",
+  "offlineTitle": "Có {count} phiếu bán offline trên máy này chưa đồng bộ lên hệ thống",
+  "offlineSub": "Mở màn hình Bán hàng khi có mạng để đồng bộ"
+}

@@ -1,6 +1,6 @@
 /**
  * Chọn giá bán theo bảng giá — chạy hoàn toàn phía máy bán hàng (offline) trên dữ liệu
- * GET /products/pos-catalog?branchId=..&withPriceBooks=true → { products, priceBooks }.
+ * GET /products/sale-catalog?branchId=..&withPriceBooks=true → { products, priceBooks }.
  * File thuần (không import React/alias) để chạy test bằng `node --experimental-strip-types`.
  */
 

@@ -125,7 +125,7 @@ public class ProductCommandService {
     private void applyOpeningStock(Product p, ProductRequest req, OpeningStock opening, UUID userId,
                                    Collection<String> allowedBranches) {
         if (!allowedBranches.contains(opening.branchId().toString())) {
-            throw BusinessException.badRequest("BRANCH_NOT_ALLOWED", "Bạn không làm việc tại điểm tiêm này");
+            throw BusinessException.badRequest("BRANCH_NOT_ALLOWED", "Bạn không làm việc tại chi nhánh này");
         }
         if (p.isLotManaged()) {
             if (opening.lots() == null) {

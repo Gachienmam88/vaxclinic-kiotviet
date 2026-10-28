@@ -71,6 +71,15 @@ public class StockTakeService {
         return takes.saveAndFlush(t).getId();
     }
 
+    /** "Hoàn thành" phiếu tạm đã lưu, giữ nguyên các dòng đã nhập. */
+    @Transactional
+    public UUID complete(UUID id, Actor actor) {
+        StockTake t = find(id);
+        var lines = t.getLines().stream().map(l -> new TakeLineInput(l.getProductId(), l.getLotNumber(), l.getExpiryDate(),
+                l.getActualQty())).toList();
+        return save(id, new TakeRequest(t.getBranchId(), t.getNote(), lines), true, actor);
+    }
+
     @Transactional
     public void cancel(UUID id) {
         StockTake t = find(id);

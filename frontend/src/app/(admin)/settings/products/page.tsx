@@ -10,7 +10,7 @@ import { useCurrentUser } from "@/lib/use-current-user";
 function Count({ text, onClick }: { text: string; onClick?: () => void }) {
   return (
     <button type="button" disabled={!onClick} onClick={onClick}
-      className="flex items-center gap-1 text-sm font-medium enabled:hover:text-primary disabled:cursor-default">
+      className="flex items-center gap-1 text-[13px] font-medium enabled:hover:text-primary disabled:cursor-default">
       {text} {onClick && <ChevronRight className="size-4 text-muted-foreground" />}
     </button>
   );
@@ -37,7 +37,7 @@ export default function ProductSettingsPage() {
         <SettingRow title="Quản lý theo lô, hạn sử dụng" description="Bật cho từng hàng hóa. Hàng theo lô bán theo nguyên tắc hết hạn trước xuất trước (FEFO) và không bán lô đã hết hạn." />
       </SettingsCard>
       <SettingsCard id="cost" title="Giá vốn, tồn kho">
-        <SettingRow title="Phương pháp tính giá vốn" control={<span className="text-sm font-medium">Giá vốn trung bình</span>}
+        <SettingRow title="Phương pháp tính giá vốn" control={<span className="text-[13px] font-medium">Giá vốn trung bình</span>}
           description="Giá vốn được tính lại sau mỗi lần nhập hàng / trả hàng nhập theo bình quân gia quyền (giá nhập đã gồm VAT)." />
       </SettingsCard>
       {dialog === "categories" && <CategoryManagerDialog onClose={() => setDialog(null)} />}

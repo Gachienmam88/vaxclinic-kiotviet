@@ -113,7 +113,10 @@ public class SupplierImportService {
         Function<String, String> v = f -> col.containsKey(f) || existing == null ? get.apply(f) : current(existing, f);
         var req = new SupplierRequest(v.apply("name"), code, v.apply("phone"), v.apply("email"), v.apply("address"),
                 v.apply("province"), v.apply("ward"), col.containsKey("groupName") || existing == null ? null : existing.getGroupId(),
-                v.apply("groupName"), v.apply("note"), v.apply("companyName"), v.apply("taxCode"), v.apply("idNumber"), null);
+                v.apply("groupName"), v.apply("note"), v.apply("companyName"), v.apply("taxCode"), v.apply("idNumber"), null,
+                // File chỉ có tên khu vực: cột có trong file → bỏ mã cũ (tên mới có thể khác); không có cột → giữ mã cũ
+                col.containsKey("province") || existing == null ? null : existing.getProvinceCode(),
+                col.containsKey("province") || col.containsKey("ward") || existing == null ? null : existing.getWardCode());
         var violations = validator.validate(req);
         if (!violations.isEmpty()) {
             throw BusinessException.badRequest("IMPORT_ROW_INVALID",

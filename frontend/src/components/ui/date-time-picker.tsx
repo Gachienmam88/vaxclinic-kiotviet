@@ -5,6 +5,8 @@ import { CalendarDays, Clock } from "lucide-react";
 import { dateTimeToDisplay, DATETIME_MASK, displayToDateTime, pad2, toLocalDateTime, toYmd } from "@/lib/date-input-format";
 import { useMaskedDateText } from "@/lib/use-masked-date-text";
 import { TodayButton, type PickerInputProps } from "./date-picker";
+import { useT } from "@/lib/i18n";
+import { commonNs } from "@/messages/common";
 import { MonthCalendar } from "./month-calendar";
 import { PICKER_INPUT, PickerFieldShell, PickerPopover } from "./picker-popover";
 import { TimeListPanel } from "./time-list-panel";
@@ -20,6 +22,7 @@ export function DateTimePicker({ value, onChange, className, disabled, placehold
   value: string | null | undefined;
   onChange: (value: string) => void;
 }) {
+  const tc = useT(commonNs);
   const field = React.useRef<HTMLDivElement>(null);
   const [open, setOpen] = React.useState<"date" | "time" | null>(null);
   const local = toLocalDateTime(value) ?? "";
@@ -39,11 +42,11 @@ export function DateTimePicker({ value, onChange, className, disabled, placehold
       <input {...rest} type="text" inputMode="numeric" autoComplete="off" className={PICKER_INPUT} disabled={disabled}
         placeholder={placeholder} value={t.text} aria-invalid={t.invalid || undefined} onChange={t.onInputChange} onBlur={t.onBlur}
         onKeyDown={(e) => { if (e.altKey && e.key === "ArrowDown") { e.preventDefault(); toggle("date")(true); } }} />
-      <PickerPopover open={open === "date"} onOpenChange={toggle("date")} anchor={field} icon={<CalendarDays />} label="Chọn ngày" disabled={disabled}>
+      <PickerPopover open={open === "date"} onOpenChange={toggle("date")} anchor={field} icon={<CalendarDays />} label={tc("calendar.pickDate")} disabled={disabled}>
         <MonthCalendar month={month} onMonthChange={setMonth} selected={ymd || undefined} onPick={pickDay} />
         <TodayButton onClick={() => pickDay(toYmd(new Date()))} />
       </PickerPopover>
-      <PickerPopover open={open === "time"} onOpenChange={toggle("time")} anchor={field} icon={<Clock />} label="Chọn giờ" disabled={disabled}>
+      <PickerPopover open={open === "time"} onOpenChange={toggle("time")} anchor={field} icon={<Clock />} label={tc("calendar.pickTime")} disabled={disabled}>
         <TimeListPanel value={hm} onPick={(h, done) => { t.commit(`${ymd || toYmd(new Date())}T${h}`); if (done) setOpen(null); }} />
       </PickerPopover>
     </PickerFieldShell>

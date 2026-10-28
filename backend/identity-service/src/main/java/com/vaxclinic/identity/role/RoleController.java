@@ -1,5 +1,8 @@
 package com.vaxclinic.identity.role;
 
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import com.vaxclinic.common.audit.AuditLogger;
 import com.vaxclinic.common.error.BusinessException;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -35,10 +38,17 @@ public class RoleController {
 
     private final RoleRepository roles;
     private final JdbcTemplate jdbc;
+    private final AuditLogger audit;
 
-    public RoleController(RoleRepository roles, JdbcTemplate jdbc) {
+    public RoleController(RoleRepository roles, JdbcTemplate jdbc, AuditLogger audit) {
         this.roles = roles;
         this.jdbc = jdbc;
+        this.audit = audit;
+    }
+
+    /** Ghi lịch sử thao tác (tính năng "Thiết lập cửa hàng" / "Người dùng"). */
+    private void log(Jwt jwt, String feature, String action, String detail) {
+        audit.record(UUID.fromString(jwt.getSubject()), jwt.getClaimAsString("name"), null, feature, action, null, detail);
     }
 
     public record RoleResponse(UUID id, String code, String name, String description, boolean system,
@@ -69,20 +79,21 @@ public class RoleController {
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAuthority('user.manage')")
     @Transactional
-    public RoleResponse create(@Valid @RequestBody RoleRequest req) {
+    public RoleResponse create(@Valid @RequestBody RoleRequest req, @AuthenticationPrincipal Jwt jwt) {
         var r = new Role();
         r.setId(UUID.randomUUID());
         r.setCode("CUSTOM_" + r.getId().toString().substring(0, 8).toUpperCase());
         r.setSystem(false);
         apply(r, req);
         roles.save(r);
+        log(jwt, "Người dùng", "Tạo vai trò", "Tạo vai trò " + r.getName() + ", quyền " + r.getPermissions());
         return find(r.getId());
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('user.manage')")
     @Transactional
-    public RoleResponse update(@PathVariable UUID id, @Valid @RequestBody RoleRequest req) {
+    public RoleResponse update(@PathVariable UUID id, @Valid @RequestBody RoleRequest req, @AuthenticationPrincipal Jwt jwt) {
         Role r = load(id);
         if ("ADMIN".equals(r.getCode())) {
             r.setName(req.name().trim());
@@ -91,13 +102,14 @@ public class RoleController {
             apply(r, req);
         }
         roles.flush();
+        log(jwt, "Người dùng", "Sửa vai trò", "Cập nhật vai trò " + r.getName() + ", quyền " + r.getPermissions());
         return find(id);
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('user.manage')")
     @Transactional
-    public void delete(@PathVariable UUID id) {
+    public void delete(@PathVariable UUID id, @AuthenticationPrincipal Jwt jwt) {
         Role r = load(id);
         if (r.isSystem()) {
             throw BusinessException.badRequest("ROLE_SYSTEM", "Không xóa được vai trò mặc định của hệ thống");
@@ -107,6 +119,7 @@ public class RoleController {
             throw BusinessException.badRequest("ROLE_IN_USE", "Vai trò đang được gán cho " + users + " tài khoản, hãy đổi vai trò của họ trước");
         }
         roles.delete(r);
+        log(jwt, "Người dùng", "Xóa vai trò", "Xóa vai trò " + r.getName());
     }
 
     private void apply(Role r, RoleRequest req) {

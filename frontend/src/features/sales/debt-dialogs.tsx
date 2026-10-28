@@ -21,6 +21,7 @@ import { useDebtReceiptPrinter } from "./customer-debt-receipt-print";
 import { KvChip, kvDialog, kvDialogBody, kvDialogFooter, kvDialogHeader, kvDialogTitle, kvFooterBtn, kvInput, kvLabel } from "./customer-ui-primitives";
 import { SALES_KEYS } from "./sales-queries";
 import { PAYMENT_METHODS, type Customer, type InvoiceList } from "./sales-types";
+import { DateTimePicker } from "@/components/ui/date-time-picker";
 
 type Kind = "payment" | "discount" | "adjust";
 type Props = { kind: Kind; customer: Customer; onClose: () => void };
@@ -62,8 +63,8 @@ export function DebtDialog({ kind, customer, onClose }: Props) {
   const alloc = manual ?? auto;
   const allocated = Object.values(alloc).reduce((s, v) => s + v, 0);
 
-  const save = useMutation({
-    mutationFn: (_print: boolean) => {
+  const save = useMutation<{ code: string }, Error, boolean>({
+    mutationFn: () => {
       if (kind === "adjust") {
         return api<{ code: string }>(`/customers/${customer.id}/adjustments`, { method: "POST", body: { occurredAt: fromLocalInput(at), newDebt: amount, note } });
       }
@@ -84,8 +85,8 @@ export function DebtDialog({ kind, customer, onClose }: Props) {
 
   const remaining = Number(customer.debt) - (kind === "adjust" ? 0 : amount);
   const invalid = save.isPending || (kind !== "adjust" && amount <= 0) || allocated > amount;
-  const timeInput = <Input type="datetime-local" aria-label={kind === "adjust" ? "Ngày điều chỉnh" : "Thời gian"} className={kvInput}
-    value={at} onChange={(e) => setAt(e.target.value)} />;
+  const timeInput = <DateTimePicker aria-label={kind === "adjust" ? "Ngày điều chỉnh" : "Thời gian"} className={kvInput}
+    value={at} onChange={(v) => setAt(v)} />;
   const amountInput = <NumberInput autoFocus aria-label={kind === "adjust" ? "Giá trị nợ điều chỉnh" : kind === "payment" ? "Số tiền" : "Chiết khấu cho khách"}
     className={kvInput} value={amount} onValueChange={(v) => { setAmount(v); setManual(null); }} />;
 

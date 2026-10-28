@@ -59,6 +59,7 @@ services:
       DB_PASSWORD: ${DB_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
       SALES_URL: http://sales-service:8086
+      IDENTITY_URL: http://identity-service:8081
     depends_on:
       postgres: { condition: service_healthy }
 
@@ -71,6 +72,8 @@ services:
       DB_PASSWORD: ${DB_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
       PRODUCT_URL: http://product-service:8082
+      IDENTITY_URL: http://identity-service:8081
+      INTEGRATION_URL: http://integration-service:8088
     depends_on:
       postgres: { condition: service_healthy }
 
@@ -84,6 +87,7 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       ENCRYPTION_KEY: ${ENCRYPTION_KEY}
       SALES_URL: http://sales-service:8086
+      IDENTITY_URL: http://identity-service:8081
     depends_on:
       postgres: { condition: service_healthy }
 

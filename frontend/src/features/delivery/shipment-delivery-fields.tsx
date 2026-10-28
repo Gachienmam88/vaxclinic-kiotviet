@@ -2,28 +2,31 @@
 
 import { NumberInput } from "@/components/number-input";
 import { Input } from "@/components/ui/input";
+import { VnAddressFields } from "@/components/ui/vn-address-fields";
 import { kvInput, kvLabel } from "@/features/sales/customer-ui-primitives";
+import { fromDeliveryAddress, toDeliveryAddress, type DeliveryAreaFields } from "./delivery-address";
 import { usePartnerOptions } from "./delivery-queries";
 import { FEE_PAYERS } from "./delivery-types";
 
 /** Thông tin giao của vận đơn (dùng cho "Sửa vận đơn" và "Tạo vận đơn" từ chi tiết hóa đơn). */
-export type DeliveryForm = {
-  partnerId: string; receiverName: string; receiverPhone: string; receiverAddress: string; area: string; weightGram: number;
+export type DeliveryForm = DeliveryAreaFields & {
+  partnerId: string; receiverName: string; receiverPhone: string; weightGram: number;
   shippingFee: number; feePayer: "SHOP" | "CUSTOMER"; note: string;
 };
 
 /** Ô nhập người nhận, địa chỉ, đối tác (chỉ đối tác đang hoạt động + đối tác đang chọn), trọng lượng, phí, người trả phí. */
 export function ShipmentDeliveryFields({ v, set }: { v: DeliveryForm; set: (p: Partial<DeliveryForm>) => void }) {
   const { data: partners = [] } = usePartnerOptions();
-  const text = (key: "receiverName" | "receiverPhone" | "receiverAddress" | "area" | "note", label: string, required = false) => (
+  const text = (key: "receiverName" | "receiverPhone" | "note", label: string, required = false) => (
     <label className="block space-y-1"><span className={kvLabel}>{label}{required && " *"}</span>
       <Input required={required} className={kvInput} value={v[key]} onChange={(e) => set({ [key]: e.target.value })} /></label>
   );
   return (
     <>
       {text("receiverName", "Tên người nhận", true)}{text("receiverPhone", "Số điện thoại", true)}
-      <div className="col-span-2">{text("receiverAddress", "Địa chỉ", true)}</div>
-      {text("area", "Khu vực")}
+      <VnAddressFields idPrefix="shipment" value={toDeliveryAddress(v)} onChange={(a) => set(fromDeliveryAddress(a))} addressRequired
+        fieldClassName="block space-y-1" addressFieldClassName="col-span-2" labelClassName={kvLabel} controlClassName={kvInput}
+        labels={{ address: "Địa chỉ *" }} />
       <label className="block space-y-1"><span className={kvLabel}>Đối tác giao hàng *</span>
         <select required className={`${kvInput} w-full border px-2`} value={v.partnerId} onChange={(e) => set({ partnerId: e.target.value })}>
           {!v.partnerId && <option value="">-- Chọn đối tác --</option>}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -11,6 +12,7 @@ import { addDays, dmy, hm, isoDate, parseIso, useHrMutation, useShifts } from ".
 import type { EmployeeRow } from "./hr-types";
 import { WEEKDAY_SHORT } from "./hr-types";
 import { ShiftFormDialog } from "./shift-form-dialog";
+import { DatePicker } from "@/components/ui/date-picker";
 
 /**
  * Thêm lịch làm việc cho 1 nhân viên vào 1 ngày: chọn ca (nhiều ca), lặp lại hàng tuần theo thứ + ngày kết thúc,
@@ -36,7 +38,7 @@ export function ScheduleAddDialog({ employee, date, employees, onClose }: {
     body: { employeeIds: [employee.id, ...others], shiftIds, date, repeatWeekly: repeat, weekdays: repeat ? weekdays : undefined,
       until: repeat ? until : undefined },
   }), undefined, (r) => {
-    import("sonner").then(({ toast }) => toast.success(r.created ? `Đã xếp ${r.created} ca làm việc` : "Các ca này đã có trong lịch"));
+    toast.success(r.created ? `Đã xếp ${r.created} ca làm việc` : "Các ca này đã có trong lịch");
     onClose();
   });
 
@@ -56,7 +58,7 @@ export function ScheduleAddDialog({ employee, date, employees, onClose }: {
           {!active.length && <p className="text-[13px] text-muted-foreground">Chưa có ca làm việc. Bấm &quot;Tạo ca&quot; để thêm.</p>}
           <div className="grid grid-cols-2 gap-2">
             {active.map((s) => (
-              <label key={s.id} className={cn(box, shiftIds.includes(s.id) && "border-primary bg-[#e5f0ff]")}>
+              <label key={s.id} className={cn(box, shiftIds.includes(s.id) && "border-primary bg-primary-tint")}>
                 <input type="checkbox" className="size-4 accent-primary" checked={shiftIds.includes(s.id)} onChange={() => setShiftIds(toggle(shiftIds, s.id))} />
                 <span><span className="font-medium">{s.name}</span><br /><span className="text-xs text-muted-foreground">{hm(s.startTime)} - {hm(s.endTime)}</span></span>
               </label>
@@ -76,7 +78,7 @@ export function ScheduleAddDialog({ employee, date, employees, onClose }: {
                 ))}
               </div>
               <label className="flex items-center gap-2">Kết thúc
-                <Input type="date" className="h-8 w-40" value={until} min={date} onChange={(e) => setUntil(e.target.value)} /></label>
+                <DatePicker className="h-8 w-40" value={until} min={date} onChange={(v) => setUntil(v)} /></label>
             </div>
           )}
         </section>

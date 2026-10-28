@@ -27,6 +27,7 @@ public final class EmployeeDtos {
                                   LocalDate birthday,
                                   @Pattern(regexp = "MALE|FEMALE") String gender,
                                   LocalDate startDate,
+                                  LocalDate endDate,
                                   UUID mainBranchId,
                                   List<UUID> branchIds,
                                   UUID departmentId,
@@ -53,7 +54,7 @@ public final class EmployeeDtos {
     }
 
     public record Employee(UUID id, String code, String timekeepingCode, String name, String phone, String idNumber,
-                           LocalDate birthday, String gender, LocalDate startDate, UUID mainBranchId, List<BranchRef> branches,
+                           LocalDate birthday, String gender, LocalDate startDate, LocalDate endDate, UUID mainBranchId, List<BranchRef> branches,
                            UUID departmentId, String departmentName, UUID jobTitleId, String jobTitleName,
                            UUID userId, String username, String status, String note,
                            String salaryType, BigDecimal salaryAmount, BigDecimal overtimePercent,

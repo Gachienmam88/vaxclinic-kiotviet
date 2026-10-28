@@ -61,6 +61,15 @@ public class CustomerOrder implements Persistable<UUID> {
     @Column(nullable = false)
     private BigDecimal deposit = BigDecimal.ZERO;
     private String note;
+    @Column(name = "price_book_id")
+    private UUID priceBookId;
+    @Column(name = "price_book_name")
+    private String priceBookName;
+    @Column(name = "sales_channel", nullable = false)
+    private String salesChannel = "DIRECT";
+    /** Thời gian giao hàng hẹn với khách. */
+    @Column(name = "expected_delivery_at")
+    private Instant expectedDeliveryAt;
     @Column(name = "invoice_id")
     private UUID invoiceId;
     @Column(name = "cancelled_at")

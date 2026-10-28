@@ -1,11 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { CalendarDays, ChevronRight } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { ymd } from "@/features/dashboard/dashboard-date-utils";
 import { FILTER_FIELD, FilterSection, RadioOption } from "@/features/sales/invoice-list-kit";
 import { cn } from "@/lib/utils";
-import { dmy, PRESET_GROUPS, PRESET_LABELS, presetRange, timeRange, type TimeValue } from "./report-time-presets";
+import { dmy, PRESET_GROUPS, PRESET_LABELS, timeRange, type TimeValue } from "./report-time-presets";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
+import { DatePicker } from "@/components/ui/date-picker";
+import { TimePicker } from "@/components/ui/time-picker";
 
 const BOX = "flex h-[30px] w-full items-center justify-between rounded-md border bg-background px-2 text-left text-[13px] hover:border-primary";
 
@@ -38,8 +41,7 @@ function PresetPopup({ value, onPick }: { value: string | null; onPick: (p: keyo
 }
 
 /**
- * Bộ lọc Thời gian: (•) mốc có sẵn [Tuần này >] / ( ) Tùy chỉnh [từ – đến]. allowAll: thêm mốc "Toàn thời gian"
- * (onAll được gọi; dùng cho "Thời gian giao hàng" của Báo cáo đặt hàng).
+ * Bộ lọc Thời gian: (•) mốc có sẵn [Tuần này >] / ( ) Tùy chỉnh [từ – đến].
  */
 export function TimeFilter({ title = "Thời gian", value, onChange }: { title?: string; value: TimeValue; onChange: (v: TimeValue) => void }) {
   const [open, setOpen] = useState(false);
@@ -56,13 +58,9 @@ export function TimeFilter({ title = "Thời gian", value, onChange }: { title?:
         </div>
       </RadioOption>
       <RadioOption checked={value.mode === "custom"} onSelect={() => onChange({ mode: "custom", from: ymd(r.from), to: ymd(r.to) })}>
-        <span className={BOX}>{value.mode === "custom" ? `${dmy(r.from)} - ${dmy(r.to)}` : "Tùy chỉnh"} <CalendarDays className="size-4 shrink-0 text-muted-foreground" /></span>
+        <DateRangePicker className={BOX} value={value.mode === "custom" ? { from: ymd(r.from), to: ymd(r.to) } : null}
+          onChange={(x) => onChange({ mode: "custom", ...x })} />
       </RadioOption>
-      {value.mode === "custom" && (
-        <div className="grid gap-1.5 pl-6">
-          <input type="date" aria-label="Từ ngày" className={FILTER_FIELD} value={value.from} onChange={(e) => e.target.value && onChange({ ...value, from: e.target.value })} />
-          <input type="date" aria-label="Đến ngày" className={FILTER_FIELD} value={value.to} onChange={(e) => e.target.value && onChange({ ...value, to: e.target.value })} />
-        </div>)}
     </FilterSection>
   );
 }
@@ -89,24 +87,18 @@ export function DayFilter({ value, onChange }: { value: DayValue; onChange: (v: 
   return (
     <FilterSection title="Thời gian">
       <RadioOption checked={value.mode === "day"} onSelect={() => onChange(day)}>
-        <input type="date" aria-label="Ngày" className={FILTER_FIELD} value={day.day} onChange={(e) => e.target.value && onChange({ ...day, day: e.target.value })} />
+        <DatePicker aria-label="Ngày" className={FILTER_FIELD} value={day.day} onChange={(v) => v && onChange({ ...day, day: v })} />
       </RadioOption>
       <div className="grid grid-cols-2 gap-1.5 pl-6">
-        <input type="time" aria-label="Từ giờ" title="Từ" className={tf} value={day.fromTime} disabled={value.mode !== "day"}
-          onChange={(e) => onChange({ ...day, fromTime: e.target.value })} />
-        <input type="time" aria-label="Đến giờ" title="Đến" className={tf} value={day.toTime} disabled={value.mode !== "day"}
-          onChange={(e) => onChange({ ...day, toTime: e.target.value })} />
+        <TimePicker aria-label="Từ giờ" title="Từ" placeholder="Từ" className={tf} value={day.fromTime} disabled={value.mode !== "day"}
+          onChange={(v) => onChange({ ...day, fromTime: v })} />
+        <TimePicker aria-label="Đến giờ" title="Đến" placeholder="Đến" className={tf} value={day.toTime} disabled={value.mode !== "day"}
+          onChange={(v) => onChange({ ...day, toTime: v })} />
       </div>
       <RadioOption checked={value.mode === "custom"} onSelect={() => onChange({ mode: "custom", from: day.day, to: day.day })}>
-        <span className={BOX}>Tùy chỉnh <CalendarDays className="size-4 text-muted-foreground" /></span>
+        <DateRangePicker className={BOX} value={value.mode === "custom" ? value : null} onChange={(x) => onChange({ mode: "custom", ...x })} />
       </RadioOption>
-      {value.mode === "custom" && (
-        <div className="grid gap-1.5 pl-6">
-          <input type="date" aria-label="Từ ngày" className={FILTER_FIELD} value={value.from} onChange={(e) => e.target.value && onChange({ ...value, from: e.target.value })} />
-          <input type="date" aria-label="Đến ngày" className={FILTER_FIELD} value={value.to} onChange={(e) => e.target.value && onChange({ ...value, to: e.target.value })} />
-        </div>)}
     </FilterSection>
   );
 }
 
-export { presetRange };

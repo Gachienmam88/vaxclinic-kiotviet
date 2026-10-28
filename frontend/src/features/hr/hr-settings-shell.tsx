@@ -41,7 +41,7 @@ export function HrSettingsShell({ children }: { children: React.ReactNode }) {
                 return (
                   <Link key={i.href} href={i.href} aria-current={active ? "page" : undefined}
                     className={cn("flex h-[26px] my-1.5 items-center gap-2.5 rounded-md px-3 text-[12px] hover:bg-[#f3f6fa]",
-                      active && "bg-[#e5f0ff] text-primary hover:bg-[#e5f0ff]")}>
+                      active && "bg-primary-tint text-primary hover:bg-primary-tint")}>
                     <i.icon className="size-[14px] shrink-0" strokeWidth={1.8} /> {i.label}
                   </Link>
                 );

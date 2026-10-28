@@ -6,6 +6,7 @@ import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { DOC_CODE_LINK_CLASS } from "@/components/ui/doc-code-link";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,6 +25,7 @@ import { SupplierConfirmDialog } from "./supplier-confirm-dialog";
 import { useSupplierPaymentPrinter } from "./supplier-payment-print";
 import { useInvalidateSuppliers, useSupplierDoc } from "./supplier-queries";
 import { SUPPLIER_PAYMENT_METHODS, type SupplierDebtDoc } from "./supplier-types";
+import { DateTimePicker } from "@/components/ui/date-time-picker";
 
 const TITLE = { PAYMENT: "Phiếu chi", DISCOUNT: "Chiết khấu thanh toán", ADJUSTMENT: "Điều chỉnh công nợ" } as const;
 const ro = cn(kvInput, "bg-[#eff0f3]");
@@ -34,7 +36,7 @@ export function SupplierDebtDocDialog({ docId, supplierPhone, onClose }: { docId
   const { data: d } = useSupplierDoc(docId);
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className={cn(kvDialog, "flex max-h-[92vh] flex-col sm:max-w-[640px]")}>
+      <DialogContent className={cn(kvDialog, "flex max-h-[92vh] flex-col sm:max-w-[857px]")}>
         {!d ? <div className="p-6 text-[13px] text-muted-foreground">Đang tải...</div>
           : <DocBody key={d.id + d.occurredAt + (d.note ?? "")} d={d} supplierPhone={supplierPhone} onClose={onClose} />}
       </DialogContent>
@@ -77,7 +79,7 @@ function DocBody({ d, supplierPhone, onClose }: { d: SupplierDebtDoc; supplierPh
           <div className="grid gap-1.5"><Label className={kvLabel}>{label.code}</Label><Input readOnly className={ro} value={d.code} /></div>
           <div className="grid gap-1.5"><Label className={kvLabel}>Người tạo</Label><Input readOnly className={ro} value={d.createdByName} /></div>
           <div className="grid gap-1.5"><Label className={kvLabel}>Thời gian</Label>
-            <Input type="datetime-local" aria-label="Thời gian" disabled={!active} className={kvInput} value={at} onChange={(e) => setAt(e.target.value)} /></div>
+            <DateTimePicker aria-label="Thời gian" disabled={!active} className={kvInput} value={at} onChange={(v) => setAt(v)} /></div>
           <div className="grid gap-1.5"><Label className={kvLabel}>{label.staff}</Label>
             <select className={select} aria-label={label.staff} disabled={!active} value={staffId} onChange={(e) => setStaffId(e.target.value)}>
               {!users.some((u) => u.id === staffId) && <option value={staffId}>{d.staffName}</option>}
@@ -103,10 +105,10 @@ function DocBody({ d, supplierPhone, onClose }: { d: SupplierDebtDoc; supplierPh
                   <td className="text-right">{formatMoney(d.allocations.reduce((s, a) => s + Number(a.amount), 0))}</td><td /></tr>
                 {d.allocations.map((a) => (
                   <tr key={a.receiptId} className={kvSubRow}>
-                    <td><button type="button" className="text-primary hover:underline" onClick={() => setViewReceipt(a.receiptId)}>{a.code}</button></td>
+                    <td><button type="button" className={DOC_CODE_LINK_CLASS} onClick={() => setViewReceipt(a.receiptId)}>{a.code}</button></td>
                     <td>{formatDateTime(a.receivedAt)}</td><td className="text-right">{formatMoney(a.total)}</td>
                     <td className="text-right">{formatMoney(a.paidBefore)}</td><td className="text-right">{formatMoney(a.amount)}</td>
-                    <td className="text-right"><StatusBadge tone={a.fullyPaid ? "green" : "orange"}>{a.fullyPaid ? "Đã thanh toán" : "Thanh toán một phần"}</StatusBadge></td>
+                    <td className="text-right"><StatusBadge tone={a.fullyPaid ? "green" : "blue"}>{a.fullyPaid ? "Đã thanh toán" : "Thanh toán một phần"}</StatusBadge></td>
                   </tr>
                 ))}
               </tbody>

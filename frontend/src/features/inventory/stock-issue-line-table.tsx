@@ -1,6 +1,7 @@
 "use client";
 
 import { Trash2 } from "lucide-react";
+import { DocCodeLink } from "@/components/ui/doc-code-link";
 import { NumberInput } from "@/components/number-input";
 import { NativeSelect } from "@/features/products/product-form-sections";
 import { changeUnit, unitOf, type LineForm } from "@/features/purchases/purchase-line-form";
@@ -20,7 +21,7 @@ export function StockIssueLineTable({ type, lines, branchId, onChange }: Props) 
 
   return (
     <table className="w-full text-[13px]">
-      <thead className="sticky top-0 bg-[#e3f0fc] text-left text-xs font-bold">
+      <thead className="sticky top-0 bg-primary-tint text-left text-xs font-bold">
         <tr className="h-[30px]">
           <th className="w-10 px-2" /><th className="w-12 px-2">STT</th><th className="w-32 px-2">Mã hàng</th>
           <th className="px-2">Tên hàng</th><th className="w-28 px-2">ĐVT</th><th className="w-64 px-2">Lô / HSD</th>
@@ -36,7 +37,7 @@ export function StockIssueLineTable({ type, lines, branchId, onChange }: Props) 
                 onClick={() => onChange(lines.filter((x) => x.key !== l.key))}><Trash2 className="size-4" /></button>
             </td>
             <td className={`${TD} leading-8`}>{i + 1}</td>
-            <td className={`${TD} leading-8 text-primary`}>{unitOf(l).code}</td>
+            <td className={`${TD} leading-8`}><DocCodeLink code={unitOf(l).code} newTab /></td>
             <td className={`${TD} leading-8`}>{l.productName}</td>
             <td className={TD}>
               <NativeSelect value={l.unitId} disabled={l.units.length < 2} aria-label="Đơn vị tính"

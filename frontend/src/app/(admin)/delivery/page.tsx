@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import { FileOutput, HandCoins } from "lucide-react";
+import { DeepLinkRoute, type DeepLink } from "@/components/ui/deep-link-route";
 import { Button } from "@/components/ui/button";
 import { SHIPMENT_STATUSES, shipmentStatusLabel, type ShipmentStatus } from "@/features/delivery/delivery-types";
 import { useShipments } from "@/features/delivery/delivery-queries";
 import { ReconcileDialog } from "@/features/delivery/reconcile-dialog";
 import { ShipmentFilterSidebar, useShipmentListState } from "@/features/delivery/shipment-filter-sidebar";
+import { ShipmentReturnedDialog } from "@/features/delivery/shipment-returned-dialog";
 import { exportShipments, ShipmentTable } from "@/features/delivery/shipment-table";
 import { confirmStatus, useShipmentStatus } from "@/features/delivery/use-shipment-status";
 import { FILTER_FIELD, ListSearch, PageTitle, TOOLBAR_BTN } from "@/features/sales/invoice-list-kit";
@@ -17,16 +19,17 @@ import { cn } from "@/lib/utils";
 /**
  * Quản lý giao hàng (KiotViet): thanh trạng thái có số đếm, lọc thời gian / đối tác / khu vực / đối soát,
  * bảng vận đơn chọn nhiều → cập nhật trạng thái hàng loạt, "Đối soát" thu hộ với đối tác → 1 phiếu thu/chi Sổ quỹ.
- * Trạng thái cập nhật tay (chưa tích hợp API GHN / GHTK...).
+ * Trạng thái cập nhật tay (chưa tích hợp API GHN / GHTK...). Link sâu: ?code=VD000001 như trang Vận đơn.
  */
-export default function DeliveryPage() {
+function DeliveryPage({ link }: { link: DeepLink }) {
   const { can } = useCurrentUser();
-  const st = useShipmentListState();
+  const st = useShipmentListState([], link);
   const { data } = useShipments(st.params);
   const [selected, setSelected] = useState<string[]>([]);
   const [target, setTarget] = useState<ShipmentStatus | "">("");
   const [reconcile, setReconcile] = useState(false);
-  const status = useShipmentStatus(() => { setSelected([]); setTarget(""); });
+  const [returnedDialog, setReturnedDialog] = useState(false);
+  const status = useShipmentStatus(() => { setSelected([]); setTarget(""); setReturnedDialog(false); });
   const counts = data?.statusCounts;
   const total = counts ? Object.values(counts).reduce((s, n) => s + n, 0) : 0;
   const active = st.filters.statuses[0] ?? "";
@@ -37,7 +40,8 @@ export default function DeliveryPage() {
       {active === key && <span className="absolute inset-x-0 bottom-0 h-0.5 bg-primary" />}
     </button>
   );
-  const apply = () => target && confirmStatus(target, selected.length) && status.mutate({ ids: selected, status: target });
+  const apply = () => target === "RETURNED" ? setReturnedDialog(true)
+    : target && confirmStatus(target, selected.length) && status.mutate({ ids: selected, status: target });
 
   return (
     <div className="flex gap-2.5">
@@ -58,19 +62,26 @@ export default function DeliveryPage() {
           {SHIPMENT_STATUSES.map(([k, l]) => tab(k, l, counts?.[k] ?? 0))}
         </div>
         {selected.length > 0 && can("sales.perform") && (
-          <div className="flex flex-wrap items-center gap-2 rounded-lg bg-[#e3f0fc] px-4 py-2 text-[13px]">
+          <div className="flex flex-wrap items-center gap-2 rounded-lg bg-primary-tint px-4 py-2 text-[13px]">
             <span>Đã chọn <b>{selected.length}</b> vận đơn</span>
             <select aria-label="Chuyển trạng thái" className={cn(FILTER_FIELD, "w-52")} value={target} onChange={(e) => setTarget(e.target.value as ShipmentStatus)}>
               <option value="">Cập nhật trạng thái...</option>
-              {SHIPMENT_STATUSES.filter(([k]) => k !== "CANCELLED" || can("sales.cancel")).map(([k]) => <option key={k} value={k}>{shipmentStatusLabel(k)}</option>)}
+              {SHIPMENT_STATUSES.map(([k]) => <option key={k} value={k}>{shipmentStatusLabel(k)}</option>)}
             </select>
             <Button size="sm" disabled={!target || status.isPending} onClick={apply}>Cập nhật</Button>
             <Button size="sm" variant="ghost" onClick={() => setSelected([])}>Bỏ chọn</Button>
           </div>)}
-        <ShipmentTable data={data} selected={selected} onSelect={setSelected} />
+        <ShipmentTable data={data} selected={selected} onSelect={setSelected} link={link}
+          onWiden={st.filters.period.mode === "month" ? () => st.setFilters({ ...st.filters, period: { ...st.filters.period, mode: "all" } }) : undefined} />
         <ListPager total={data?.total ?? 0} page={st.page} size={st.size} unit="vận đơn" onPage={st.setPage} onSize={st.setSize} />
       </div>
+      {returnedDialog && <ShipmentReturnedDialog count={selected.length} pending={status.isPending} onClose={() => setReturnedDialog(false)}
+        onSubmit={(opts) => status.mutate({ ids: selected, status: "RETURNED", opts })} />}
       {reconcile && <ReconcileDialog partnerId={st.filters.partnerId || undefined} onClose={() => setReconcile(false)} />}
     </div>
   );
+}
+
+export default function Page() {
+  return <DeepLinkRoute>{(link) => <DeliveryPage link={link} />}</DeepLinkRoute>;
 }

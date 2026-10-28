@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { Providers } from "@/components/providers";
+import { ACCENT_BOOT_SCRIPT } from "@/lib/accent-theme";
+import { LOCALE_INFO } from "@/lib/i18n/locales";
+import { getRequestLocale, loadServerMessages } from "@/lib/i18n/server";
 import "./globals.css";
 
 // Inter ships a Vietnamese subset so diacritics render with the same font.
@@ -11,11 +14,20 @@ export const metadata: Metadata = {
   description: "Quản lý kinh doanh vắc xin và dịch vụ tiêm chủng",
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+/** Namespace của khung app (header, menu, thông báo, đăng nhập, lỗi API) — gửi sẵn cho en/ja/zh để F5 không nháy tiếng Việt. */
+const SHELL_NAMESPACES = ["common", "nav", "notifications", "auth", "errors"];
+
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const locale = await getRequestLocale();
+  const seed = await loadServerMessages(locale, SHELL_NAMESPACES);
   return (
-    <html lang="vi">
+    // suppressHydrationWarning: script trong <head> gắn màu chủ đề (style --chrome) lên <html> trước khi React hydrate
+    <html lang={LOCALE_INFO[locale].htmlLang} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: ACCENT_BOOT_SCRIPT }} />
+      </head>
       <body className={`${inter.variable} font-sans antialiased`}>
-        <Providers>{children}</Providers>
+        <Providers locale={locale} seed={seed}>{children}</Providers>
       </body>
     </html>
   );

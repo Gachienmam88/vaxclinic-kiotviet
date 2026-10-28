@@ -1,12 +1,15 @@
 package com.vaxclinic.common.settings;
 
+import com.vaxclinic.common.audit.AuditLogger;
+import com.vaxclinic.common.audit.HttpAuditLogger;
 import com.vaxclinic.common.security.ServiceTokenProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 
-/** Service nào khai báo app.identity-url thì có bean ShopSettingsClient để đọc thiết lập cửa hàng. */
+/** Service nào khai báo app.identity-url thì có ShopSettingsClient (đọc thiết lập) và AuditLogger (ghi lịch sử thao tác). */
 @AutoConfiguration
 @ConditionalOnProperty("app.identity-url")
 public class ShopSettingsAutoConfiguration {
@@ -16,5 +19,13 @@ public class ShopSettingsAutoConfiguration {
                                                  @Value("${app.jwt.secret}") String secret,
                                                  @Value("${spring.application.name}") String serviceName) {
         return new ShopSettingsClient(identityUrl, new ServiceTokenProvider(secret, serviceName));
+    }
+
+    /** Lịch sử thao tác gửi về identity-service (identity-service tự khai báo AuditLogger ghi thẳng DB). */
+    @Bean
+    @ConditionalOnMissingBean(AuditLogger.class)
+    public AuditLogger auditLogger(@Value("${app.identity-url}") String identityUrl, @Value("${app.jwt.secret}") String secret,
+                                   @Value("${spring.application.name}") String serviceName) {
+        return new HttpAuditLogger(identityUrl, new ServiceTokenProvider(secret, serviceName));
     }
 }

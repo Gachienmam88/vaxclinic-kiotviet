@@ -31,8 +31,11 @@ public final class PayrollCalculator {
                       UUID userId, List<PayItem> allowances, List<PayItem> deductions) {
     }
 
-    /** rules: productId → [rateType, value] của bảng hoa hồng nhân viên áp dụng. holidayOf: ngày → hệ số % (null = ngày thường). */
-    public record Input(Emp emp, List<Cell> cells, int standardDays, Timekeeping tk, Payroll pr, List<SellerRevenue> revenue,
+    /**
+     * rules: productId → [rateType, value] của bảng hoa hồng nhân viên áp dụng. holidayOf: ngày → hệ số % (null = ngày thường).
+     * employedDays: số ngày làm việc trong kỳ thuộc thời gian nhân viên còn làm (vào / nghỉ giữa kỳ → lương cố định chia theo tỷ lệ).
+     */
+    public record Input(Emp emp, List<Cell> cells, int standardDays, int employedDays, Timekeeping tk, Payroll pr, List<SellerRevenue> revenue,
                         Map<UUID, Object[]> rules, Function<LocalDate, BigDecimal> holidayOf, BigDecimal bonus) {
     }
 
@@ -67,7 +70,8 @@ public final class PayrollCalculator {
                 holiday = holiday.add(pay.multiply(extra(in.holidayOf().apply(d.getKey()))));
             }
             if ("FIXED".equals(type)) {
-                base = amount;
+                base = in.employedDays() >= in.standardDays() ? amount
+                        : amount.multiply(BigDecimal.valueOf(Math.max(in.employedDays(), 0))).divide(BigDecimal.valueOf(in.standardDays()), 6, RoundingMode.HALF_UP);
             }
         }
         for (Cell c : in.cells()) {
@@ -114,6 +118,7 @@ public final class PayrollCalculator {
         }
         BigDecimal total = gross.subtract(insurance).subtract(tax).max(BigDecimal.ZERO);
         details.put("standardDays", in.standardDays());
+        details.put("employedDays", Math.min(in.employedDays(), in.standardDays()));
         details.put("workedDays", workedDays);
         details.put("lateCount", late);
         details.put("earlyCount", early);

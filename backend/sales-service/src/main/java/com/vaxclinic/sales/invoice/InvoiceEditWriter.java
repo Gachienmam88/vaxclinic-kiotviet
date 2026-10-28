@@ -7,6 +7,7 @@ import com.vaxclinic.sales.common.Actor;
 import com.vaxclinic.sales.customer.Customer;
 import com.vaxclinic.sales.customer.CustomerRepository;
 import com.vaxclinic.sales.debt.DebtLedger;
+import com.vaxclinic.sales.delivery.ShipmentInvoiceHooks;
 import com.vaxclinic.sales.invoice.InvoiceDtos.InvoiceRequest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
@@ -33,9 +34,14 @@ public class InvoiceEditWriter {
     private final DebtLedger debt;
     private final InvoiceLineBuilder lineBuilder;
     private final JdbcTemplate jdbc;
+    private final ShipmentInvoiceHooks shipments;
+    private final InvoiceExtraPayments extraPayments;
 
     public InvoiceEditWriter(InvoiceRepository invoices, CustomerRepository customers, CashVoucherRepository vouchers,
-                             CashbookWriter cashbook, DebtLedger debt, InvoiceLineBuilder lineBuilder, JdbcTemplate jdbc) {
+                             CashbookWriter cashbook, DebtLedger debt, InvoiceLineBuilder lineBuilder, JdbcTemplate jdbc,
+                             ShipmentInvoiceHooks shipments, InvoiceExtraPayments extraPayments) {
+        this.extraPayments = extraPayments;
+        this.shipments = shipments;
         this.invoices = invoices;
         this.customers = customers;
         this.vouchers = vouchers;
@@ -75,7 +81,13 @@ public class InvoiceEditWriter {
         inv.setDiscount(totals.discount());
         inv.setTotal(totals.total());
         inv.setNote(req.note());
-        inv.setPaymentMethod(paid.signum() > 0 ? (req.paymentMethod() == null ? "CASH" : req.paymentMethod()) : null);
+        InvoiceWriter.applyMeta(inv, req);
+        if (req.delivery() != null) inv.setSaleMode("DELIVERY");
+        // paid = phần của phiếu TT{mã}; phiếu thu thêm (thanh toán nhiều phương thức) giữ nguyên → giữ phương thức cũ
+        boolean hasExtras = extraPayments.activeTotal(id).signum() > 0;
+        inv.setPaymentMethod(paid.signum() > 0 ? (req.paymentMethod() == null ? "CASH" : req.paymentMethod())
+                : hasExtras ? inv.getPaymentMethod() : null);
+        inv.applyEInvoiceBuyer(req.einvoiceBuyer());
         inv.setRevision(expectedRevision + 1);
         inv.setStockDocId(stockDocId);
         invoices.saveAndFlush(inv);
@@ -106,6 +118,7 @@ public class InvoiceEditWriter {
             v.setSourceId(id);
             cashbook.save(v, List.of(new CashbookWriter.Allocation(id, paid)));
         }
+        shipments.syncOnEdit(inv, req.delivery(), actor); // thu hộ = tổng mới − đã trả mới
 
         // Công nợ + tổng bán: ghi chênh lệch (cùng khách) hoặc chuyển khách
         Instant now = Instant.now();

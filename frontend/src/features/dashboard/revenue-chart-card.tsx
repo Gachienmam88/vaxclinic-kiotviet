@@ -53,7 +53,7 @@ export function RevenueChartCard({ rows, today, canInvoices }: { rows: DailyReve
     <section className="rounded-lg bg-background px-5 py-4" aria-labelledby="revenue-title">
       <div className="flex items-center gap-3">
         <h2 id="revenue-title" className="text-[13px] font-semibold">Doanh thu thuần</h2>
-        <span className="rounded-md bg-[#e5f0ff] px-2 py-0.5 text-[15px] font-semibold text-primary">{formatMoney(total)}</span>
+        <span className="rounded-md bg-primary-tint px-2 py-0.5 text-[15px] font-semibold text-primary">{formatMoney(total)}</span>
         <div className="ml-auto"><DashboardPeriodSelect label="Kỳ doanh thu" value={period} onChange={setPeriod} /></div>
       </div>
       <div role="tablist" aria-label="Kiểu biểu đồ" className="mt-4 mb-6 flex gap-1 border-b border-[#eceef1]">

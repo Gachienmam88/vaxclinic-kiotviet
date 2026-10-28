@@ -50,7 +50,7 @@ public class PurchaseReturnService {
             var receipt = receipts.findById(req.receiptId())
                     .orElseThrow(() -> BusinessException.badRequest("RECEIPT_NOT_FOUND", "Phiếu nhập không tồn tại"));
             if (receipt.getStatus() != DocStatus.COMPLETED || !receipt.getBranchId().equals(req.branchId())) {
-                throw BusinessException.badRequest("RECEIPT_NOT_RETURNABLE", "Chỉ trả theo phiếu đã nhập tại cùng điểm tiêm");
+                throw BusinessException.badRequest("RECEIPT_NOT_RETURNABLE", "Chỉ trả theo phiếu đã nhập tại cùng chi nhánh");
             }
             supplierId = receipt.getSupplierId();
         }
@@ -67,6 +67,7 @@ public class PurchaseReturnService {
         r.setUpdatedAt(Instant.now());
         r = returns.saveAndFlush(r); // keep the managed copy (see PurchaseReceiptService.save)
         if (complete) {
+            support.checkNotLocked(r.getBranchId(), r.getReturnedAt());
             if (r.getReceiptId() != null) {
                 checkNotOverReturned(r);
             }
@@ -82,6 +83,7 @@ public class PurchaseReturnService {
         PurchaseReturn r = find(id);
         if (r.getStatus() == DocStatus.COMPLETED) {
             support.checkBranch(actor, r.getBranchId());
+            support.checkNotLocked(r.getBranchId(), r.getReturnedAt());
             move(r, true, actor); // nhập lại kho số đã trả
         }
         r.setStatus(DocStatus.CANCELLED);

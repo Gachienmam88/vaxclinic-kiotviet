@@ -8,7 +8,8 @@ import { ACCESS_COOKIE, GATEWAY_URL, refreshTokens } from "@/lib/server/session-
  */
 async function forward(request: NextRequest, path: string[], accessToken?: string) {
   const url = `${GATEWAY_URL}/api/${path.map(encodeURIComponent).join("/")}${request.nextUrl.search}`;
-  const headers = new Headers({ Accept: "application/json" });
+  // Giữ Accept của trình duyệt (VD tải file CSV); mặc định JSON
+  const headers = new Headers({ Accept: request.headers.get("accept") ?? "application/json" });
   const contentType = request.headers.get("content-type");
   if (contentType) headers.set("Content-Type", contentType);
   if (accessToken) headers.set("Authorization", `Bearer ${accessToken}`);

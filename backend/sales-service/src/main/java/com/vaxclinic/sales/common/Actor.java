@@ -1,5 +1,6 @@
 package com.vaxclinic.sales.common;
 
+import com.vaxclinic.common.audit.AuditLogger;
 import com.vaxclinic.common.error.BusinessException;
 import org.springframework.security.oauth2.jwt.Jwt;
 
@@ -17,8 +18,18 @@ public record Actor(UUID id, String name, List<String> branchIds) {
 
     public void checkBranch(UUID branchId) {
         if (branchId == null || !branchIds.contains(branchId.toString())) {
-            throw BusinessException.badRequest("BRANCH_NOT_ALLOWED", "Bạn không làm việc tại điểm tiêm này");
+            throw BusinessException.badRequest("BRANCH_NOT_ALLOWED", "Bạn không làm việc tại chi nhánh này");
         }
+    }
+
+    /** Ghi lịch sử thao tác của người dùng này. */
+    public void audit(AuditLogger log, UUID branchId, String feature, String action, String docCode, String detail) {
+        log.record(id, name, branchId, feature, action, docCode, detail);
+    }
+
+    /** Số tiền dạng 1,350,000 cho phần mô tả lịch sử thao tác. */
+    public static String money(java.math.BigDecimal v) {
+        return v == null ? "0" : String.format("%,.0f", v);
     }
 
     public static String blankToNull(String v) {

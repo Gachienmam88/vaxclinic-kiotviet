@@ -1,15 +1,15 @@
 "use client";
 
-import { CalendarDays, ChevronRight } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useUserLookup, type PurchaseFilters } from "./purchase-queries";
-import type { DocStatus } from "./purchase-types";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
 
 type Props = {
   filters: PurchaseFilters;
   onChange: (f: PurchaseFilters) => void;
-  statusLabels: Record<DocStatus, string>;
-  personLabel: string; // "Người nhập" | "Người trả"
+  statusLabels: Record<string, string>;
+  personLabel?: string; // "Người nhập" | "Người trả"; bỏ trống = không có bộ lọc này (kiểm kho, xuất hủy)
   showInvoiceNo?: boolean;
 };
 
@@ -24,14 +24,14 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 export function PurchaseFilterSidebar({ filters, onChange, statusLabels, personLabel, showInvoiceNo }: Props) {
   const { data: users = [] } = useUserLookup();
   const set = (patch: Partial<PurchaseFilters>) => onChange({ ...filters, ...patch });
-  const toggleStatus = (s: DocStatus, on: boolean) =>
+  const toggleStatus = (s: string, on: boolean) =>
     set({ statuses: on ? [...filters.statuses, s] : filters.statuses.filter((x) => x !== s) });
   const custom = filters.period === "custom";
 
   return (
     <aside className="w-[200px] space-y-4 rounded-lg bg-background p-2.5">
       <Section title="Trạng thái">
-        {(Object.keys(statusLabels) as DocStatus[]).map((s) => (
+        {Object.keys(statusLabels).map((s) => (
           <label key={s} className="flex items-center gap-2 text-sm">
             <Checkbox checked={filters.statuses.includes(s)} onCheckedChange={(v) => toggleStatus(s, v === true)} />
             {statusLabels[s]}
@@ -47,14 +47,8 @@ export function PurchaseFilterSidebar({ filters, onChange, statusLabels, personL
         <label className="flex items-center gap-2">
           <input type="radio" name="purchase-period" className="size-4 shrink-0 accent-primary" checked={custom}
             onChange={() => set({ period: "custom" })} />
-          <span className={`${FIELD} flex items-center justify-between`}>Tùy chỉnh <CalendarDays className="size-4 text-muted-foreground" /></span>
+          <DateRangePicker className={FIELD} value={custom ? filters : null} onChange={(r) => set({ ...r, period: "custom" })} />
         </label>
-        {custom && (
-          <div className="grid gap-1.5 pl-6">
-            <input type="date" className={FIELD} value={filters.from} onChange={(e) => set({ from: e.target.value })} aria-label="Từ ngày" />
-            <input type="date" className={FIELD} value={filters.to} onChange={(e) => set({ to: e.target.value })} aria-label="Đến ngày" />
-          </div>
-        )}
       </Section>
       <Section title="Người tạo">
         <select className={FIELD} value={filters.createdBy} onChange={(e) => set({ createdBy: e.target.value })} aria-label="Người tạo">
@@ -68,12 +62,12 @@ export function PurchaseFilterSidebar({ filters, onChange, statusLabels, personL
             aria-label="Số hóa đơn đầu vào" onChange={(e) => set({ inputInvoiceNo: e.target.value })} />
         </Section>
       )}
-      <Section title={personLabel}>
+      {personLabel && <Section title={personLabel}>
         <select className={FIELD} value={filters.personId} onChange={(e) => set({ personId: e.target.value })} aria-label={personLabel}>
           <option value="">Chọn {personLabel.toLowerCase()}</option>
           {users.map((u) => <option key={u.id} value={u.id}>{u.fullName}</option>)}
         </select>
-      </Section>
+      </Section>}
     </aside>
   );
 }

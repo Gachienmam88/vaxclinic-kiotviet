@@ -91,7 +91,7 @@ public class AttendanceController {
         writer.upsert(req.employeeId(), req.shiftId(), req.date(), in, out, req.absence(), HrActor.blankToNull(req.note()),
                 req.approved(), "MANUAL", null);
         HrActor.of(jwt).audit(audit, "Chấm công", "Chấm công " + name + " ca " + sh.name() + " ngày " + req.date()
-                + (req.absence() != null ? ": nghỉ " + ("PAID" .equals(req.absence()) ? "có phép" : "không phép")
+                + (req.absence() != null ? ": nghỉ " + ("PAID".equals(req.absence()) ? "có phép" : "không phép")
                 : ": vào " + req.checkIn() + ", ra " + req.checkOut()));
         return query.cells(req.date(), req.date(), null, req.employeeId()).stream()
                 .filter(c -> c.shiftId().equals(req.shiftId())).findFirst().orElseThrow();

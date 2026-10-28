@@ -4,6 +4,8 @@ import * as React from "react";
 import { CalendarDays } from "lucide-react";
 import { cn } from "cn";
 import { addMonthsYmd, toYmd, ymdToDisplay } from "@/lib/date-input-format";
+import { useT } from "@/lib/i18n";
+import { commonNs } from "@/messages/common";
 import { MonthCalendar } from "./month-calendar";
 import { PickerPopover } from "./picker-popover";
 
@@ -18,7 +20,7 @@ export const rangeToDisplay = (r: DateRange) => `${ymdToDisplay(r.from)} - ${ymd
  * Ô "Tùy chỉnh" khoảng ngày kiểu KiotViet: bấm mở lịch 2 tháng, bấm ngày đầu rồi ngày cuối.
  * `value` null → hiện `placeholder` (chưa ở chế độ tùy chỉnh). Giá trị "yyyy-MM-dd" như `<input type="date">`.
  */
-export function DateRangePicker({ value, onChange, placeholder = "Tùy chỉnh", className, disabled, min, max, "aria-label": ariaLabel = "Chọn khoảng ngày" }: {
+export function DateRangePicker({ value, onChange, placeholder: placeholderProp, className, disabled, min, max, "aria-label": ariaLabelProp }: {
   value: DateRange | null;
   onChange: (range: DateRange) => void;
   placeholder?: string;
@@ -28,6 +30,9 @@ export function DateRangePicker({ value, onChange, placeholder = "Tùy chỉnh",
   max?: string;
   "aria-label"?: string;
 }) {
+  const tc = useT(commonNs);
+  const placeholder = placeholderProp ?? tc("calendar.custom");
+  const ariaLabel = ariaLabelProp ?? tc("calendar.pickRange");
   const [open, setOpen] = React.useState(false);
   const [month, setMonth] = React.useState(() => monthOf(value?.from ?? ""));
   /** Ngày đầu vừa bấm, đang chờ bấm ngày cuối. */
@@ -55,11 +60,11 @@ export function DateRangePicker({ value, onChange, placeholder = "Tùy chỉnh",
       triggerClassName={cn("flex h-[30px] w-full min-w-0 items-center justify-between gap-1 rounded-md border bg-background px-2 text-left text-[13px] outline-none hover:border-primary focus-visible:border-primary disabled:opacity-60", className)}
       icon={<><span className={cn("truncate", !shown && "text-foreground")}>{shown || placeholder}</span><CalendarDays className="size-4 shrink-0 text-muted-foreground" /></>}>
       <div className="flex flex-col gap-3 sm:flex-row">
-        <MonthCalendar key={`a${month}`} month={month} nav="prev" {...cal} />
-        <MonthCalendar key={`b${month}`} month={addMonthsYmd(month, 1)} nav="next" {...cal} />
+        <MonthCalendar month={month} nav="prev" {...cal} />
+        <MonthCalendar month={addMonthsYmd(month, 1)} nav="next" {...cal} onMonthChange={(m) => setMonth(addMonthsYmd(m, -1))} />
       </div>
       <p className="mt-1 border-t pt-1.5 text-[12px] text-muted-foreground">
-        {start ? `Từ ${ymdToDisplay(start)} — chọn ngày kết thúc` : "Chọn ngày bắt đầu và ngày kết thúc"}
+        {start ? tc("calendar.rangeHintEnd", { date: ymdToDisplay(start) }) : tc("calendar.rangeHintStart")}
       </p>
     </PickerPopover>
   );

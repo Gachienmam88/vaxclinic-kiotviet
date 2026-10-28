@@ -3,17 +3,28 @@
 export type Customer = {
   id: string; code: string; name: string; phone: string | null; phone2: string | null; email: string | null;
   facebook: string | null; birthday: string | null; gender: "MALE" | "FEMALE" | null; address: string | null;
-  province: string | null; ward: string | null; groupName: string | null; note: string | null;
+  province: string | null; ward: string | null; groupId: string | null; groupName: string | null; note: string | null;
   customerType: "PERSONAL" | "COMPANY"; buyerName: string | null; companyName: string | null; taxCode: string | null;
   invoiceAddress: string | null; invoiceProvince: string | null; invoiceWard: string | null; idNumber: string | null;
   passport: string | null; invoiceEmail: string | null; invoicePhone: string | null; bankName: string | null;
   bankAccount: string | null; debt: number; totalSales: number; totalReturns: number; branchId: string | null;
   createdByName: string | null; createdAt: string; active: boolean;
+  /** Mã ĐVHC 2 cấp; null với khách cũ chỉ có tên khu vực. */
+  provinceCode?: string | null; wardCode?: string | null; invoiceProvinceCode?: string | null; invoiceWardCode?: string | null;
 };
 
 export type CustomerListItem = {
-  id: string; code: string; name: string; phone: string | null; groupName: string | null;
+  id: string; code: string; name: string; phone: string | null; groupId: string | null; groupName: string | null;
+  groupDiscountType: GroupDiscountType | null; groupDiscountValue: number | null;
   debt: number; totalSales: number; netSales: number;
+};
+
+export type GroupDiscountType = "PERCENT" | "AMOUNT";
+
+/** Nhóm khách hàng (/customer-groups): giảm giá nhóm tự điền vào giảm giá hóa đơn ở màn bán hàng. */
+export type CustomerGroup = {
+  id: string; name: string; discountType: GroupDiscountType; discountValue: number; note: string | null;
+  customerCount: number; createdAt: string;
 };
 
 export type CustomerList = {
@@ -47,14 +58,23 @@ export type Invoice = {
   customerName: string; customerPhone: string | null; sellerId: string | null; sellerName: string | null;
   createdByName: string; soldAt: string; status: "COMPLETED" | "CANCELLED"; saleMode: string; subtotal: number;
   discount: number; total: number; paid: number; paymentMethod: string | null; note: string | null; offline: boolean;
-  revision: number; lines: InvoiceLine[]; payments: InvoicePayment[];
+  revision: number; lines: InvoiceLine[]; payments: InvoicePayment[]; orderId: string | null; orderCode: string | null;
+  /** Bảng giá áp dụng (null = Bảng giá chung), kênh bán, vận đơn (Bán giao hàng). */
+  priceBookId: string | null; priceBookName: string | null; salesChannel: string; salesChannelName: string;
+  shipment: import("@/features/delivery/delivery-types").ShipmentInfo | null;
+  /** Địa chỉ khách ghép "địa chỉ, Phường/Xã, Tỉnh/Thành phố" (null: khách lẻ / chưa có địa chỉ). */
+  customerAddress?: string | null;
 };
 
 export type InvoiceListItem = {
   id: string; code: string; soldAt: string; customerCode: string | null; customerName: string;
   sellerName: string | null; subtotal: number; discount: number; total: number; paid: number;
   status: "COMPLETED" | "CANCELLED"; paymentMethod: string | null;
+  /** Trạng thái hiển thị kiểu KiotViet (theo vận đơn), loại bán, mã phiếu trả hàng ("TH0001, TH0002"). */
+  state: InvoiceState; saleMode: string; returnCodes: string | null;
 };
+
+export type InvoiceState = "PROCESSING" | "COMPLETED" | "FAILED_DELIVERY" | "CANCELLED";
 
 export type InvoiceList = {
   items: InvoiceListItem[]; total: number; page: number; size: number;
@@ -72,7 +92,10 @@ export type CashPage = {
   summary: { opening: number; receipts: number; payments: number; closing: number };
 };
 
-export type BankAccount = { id: string; bankName: string; bankBin: string | null; accountNo: string; accountName: string };
+export type BankAccount = {
+  id: string; bankName: string; bankBin: string | null; accountNo: string; accountName: string;
+  kind?: "BANK" | "EWALLET"; note?: string | null;
+};
 
 export const PAYMENT_METHODS = [
   { value: "CASH", label: "Tiền mặt" }, { value: "TRANSFER", label: "Chuyển khoản" },

@@ -112,3 +112,17 @@ export function downloadCsv(filename: string, rows: (string | number | null | un
   a.click();
   URL.revokeObjectURL(a.href);
 }
+
+// ===== Kỳ lương (Bảng lương / Bảng hoa hồng) =====
+
+/** Kỳ lương hàng tháng chứa ngày d, bắt đầu từ ngày startDay (khớp PayRates.periodOf ở backend). */
+export function payPeriodOf(d: Date, startDay: number): { from: string; to: string } {
+  const dayIn = (y: number, m: number) => Math.min(startDay, new Date(y, m + 1, 0).getDate());
+  let start = new Date(d.getFullYear(), d.getMonth(), dayIn(d.getFullYear(), d.getMonth()));
+  if (start > d) start = new Date(d.getFullYear(), d.getMonth() - 1, dayIn(d.getFullYear(), d.getMonth() - 1));
+  const end = addDays(new Date(start.getFullYear(), start.getMonth() + 1, start.getDate()), -1);
+  return { from: isoDate(start), to: isoDate(end) };
+}
+
+/** "2025-10-01" → "01/10/2025". */
+export const dmy = (iso: string | null | undefined) => (iso ? iso.slice(0, 10).split("-").reverse().join("/") : "");

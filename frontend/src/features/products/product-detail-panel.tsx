@@ -4,7 +4,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Lock, LockOpen, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DetailTabsList } from "@/components/ui/detail-tabs-list";
+import { Tabs, TabsContent, TabsTrigger } from "@/components/ui/tabs";
 import { api, errorMessage } from "@/lib/api-client";
 import { useCurrentUser } from "@/lib/use-current-user";
 import { DetailField, ProductInfoTab } from "./product-detail-info-tab";
@@ -13,12 +14,12 @@ import { useProduct } from "./product-queries";
 import { LINE_TABS_LIST, LINE_TABS_TRIGGER } from "./product-tab-styles";
 import type { ProductDetail } from "./product-types";
 
-type Props = { productId: string; onEdit: (p: ProductDetail) => void };
+type Props = { productId: string; onEdit: (p: ProductDetail) => void; onClose?: () => void };
 
 const BTN = "h-8 rounded-md";
 
 /** Panel chi tiết mở ngay dưới dòng hàng hóa được chọn (viền xanh 1px, tab gạch chân xanh). */
-export function ProductDetailPanel({ productId, onEdit }: Props) {
+export function ProductDetailPanel({ productId, onEdit, onClose }: Props) {
   const qc = useQueryClient();
   const { can } = useCurrentUser();
   const { data: p, isLoading } = useProduct(productId);
@@ -45,13 +46,13 @@ export function ProductDetailPanel({ productId, onEdit }: Props) {
   return (
     <div className="border border-primary bg-background">
       <Tabs defaultValue="info">
-        <TabsList variant="line" className={LINE_TABS_LIST}>
+        <DetailTabsList onActiveTabClick={onClose} variant="line" className={LINE_TABS_LIST}>
           <TabsTrigger value="info" className={LINE_TABS_TRIGGER}>Thông tin</TabsTrigger>
           <TabsTrigger value="desc" className={LINE_TABS_TRIGGER}>Mô tả, ghi chú</TabsTrigger>
           <TabsTrigger value="ledger" className={LINE_TABS_TRIGGER}>Thẻ kho</TabsTrigger>
           <TabsTrigger value="stock" className={LINE_TABS_TRIGGER}>Tồn kho</TabsTrigger>
           <TabsTrigger value="units" className={LINE_TABS_TRIGGER}>Hàng hóa cùng loại</TabsTrigger>
-        </TabsList>
+        </DetailTabsList>
         <TabsContent value="info" className="px-5 py-3"><ProductInfoTab p={p} /></TabsContent>
         <TabsContent value="desc" className="space-y-3 px-5 py-3">
           <DetailField label="Mô tả" value={p.description && <p className="whitespace-pre-wrap">{p.description}</p>} />

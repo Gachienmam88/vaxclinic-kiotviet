@@ -1,0 +1,14 @@
+{
+  "title": "收件箱",
+  "markAllRead": "全部标为已读",
+  "tabs": {
+    "all": "全部",
+    "alert": "警告",
+    "update": "更新"
+  },
+  "unread": "未读",
+  "loadingMore": "正在加载更多...",
+  "emptyWhat": "通知",
+  "offlineTitle": "本设备有 {count} 张离线销售单尚未同步到系统",
+  "offlineSub": "联网时打开销售界面即可同步"
+}

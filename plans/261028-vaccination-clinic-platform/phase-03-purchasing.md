@@ -16,10 +16,11 @@ Priority: P0 | Status: in progress (core done 2026-10-28)
 - [x] Danh sách nhập hàng: lọc trạng thái, thời gian, người tạo, người nhập, số HĐ đầu vào; dòng tổng; chi tiết mở dưới dòng
 - [x] Trả hàng nhập: theo phiếu nhập hoặc trả nhanh, chọn lô đang tồn; hủy → nhập lại kho
 - [x] Unit test PurchaseMath (5) + E2E 21 kịch bản
+- [x] Màn Nhà cung cấp kiểu KiotViet (2026-10-28): nhóm NCC, lọc tổng mua/nợ/trạng thái, ngừng hoạt động/xóa, import CSV/XLSX; sổ công nợ NCC (thanh toán → phiếu chi Sổ quỹ, phân bổ vào phiếu nhập, chiết khấu thanh toán, điều chỉnh) — xem `plans/reports/implementer-261028-suppliers-screen.md`
 
 ## Chưa làm
 - [ ] Hóa đơn đầu vào (kết nối cơ quan thuế) — chờ user chốt cách A/B/C
-- [ ] Đặt hàng nhập (PO), lịch sử thanh toán NCC + sổ quỹ, công nợ NCC
+- [ ] Đặt hàng nhập (PO)
 - [ ] Xuất file Excel, in phiếu, in tem mã, import dòng hàng từ Excel
 - [ ] Trạng thái CSDL về dược (liên thông cơ sở dữ liệu dược quốc gia)
 - [ ] Danh mục Tỉnh/Phường-Xã chuẩn (đang nhập tay)

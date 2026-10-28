@@ -1,5 +1,6 @@
 package com.vaxclinic.identity.settings;
 
+import com.vaxclinic.common.audit.AuditLogger;
 import com.vaxclinic.common.error.BusinessException;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -37,10 +38,17 @@ public class PrintTemplateController {
 
     private final SettingsStore store;
     private final JdbcTemplate jdbc;
+    private final AuditLogger audit;
 
-    public PrintTemplateController(SettingsStore store, JdbcTemplate jdbc) {
+    public PrintTemplateController(SettingsStore store, JdbcTemplate jdbc, AuditLogger audit) {
         this.store = store;
         this.jdbc = jdbc;
+        this.audit = audit;
+    }
+
+    /** Ghi lịch sử thao tác (tính năng "Thiết lập cửa hàng" / "Người dùng"). */
+    private void log(Jwt jwt, String feature, String action, String detail) {
+        audit.record(UUID.fromString(jwt.getSubject()), jwt.getClaimAsString("name"), null, feature, action, null, detail);
     }
 
     @GetMapping
@@ -60,14 +68,16 @@ public class PrintTemplateController {
     public Map<String, String> save(@PathVariable String type, @Valid @RequestBody TemplateRequest req,
                                     @AuthenticationPrincipal Jwt jwt) {
         store.write("print:" + checkType(type), req, UUID.fromString(jwt.getSubject()));
+        log(jwt, "Mẫu in", "Sửa", "Sửa mẫu in " + type);
         return list();
     }
 
     /** Đặt lại về mẫu mặc định. */
     @DeleteMapping("/{type}")
     @PreAuthorize("hasAuthority('settings.manage')")
-    public Map<String, String> reset(@PathVariable String type) {
+    public Map<String, String> reset(@PathVariable String type, @AuthenticationPrincipal Jwt jwt) {
         jdbc.update("delete from app_settings where key = ?", "print:" + checkType(type));
+        log(jwt, "Mẫu in", "Đặt lại", "Đặt lại mẫu in mặc định " + type);
         return list();
     }
 

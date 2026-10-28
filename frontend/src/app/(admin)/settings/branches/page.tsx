@@ -2,13 +2,15 @@
 
 import { useState } from "react";
 import { Plus } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ListEmptyRow } from "@/components/ui/list-empty-state";
 import { BranchFormDialog } from "@/features/settings/branch-form-dialog";
 import { useBranches, type Branch } from "@/features/settings/settings-queries";
+import { SETTINGS_TABLE as T, SettingsCard, SettingsPage, StatusPill } from "@/features/settings/settings-shell";
 import { useCurrentUser } from "@/lib/use-current-user";
+import { joinAddress } from "@/lib/vn-admin-search";
 
+/** Thiết lập → Quản lý chi nhánh. */
 export default function BranchesPage() {
   const { data: branches = [], isLoading } = useBranches();
   const { can } = useCurrentUser();
@@ -16,46 +18,40 @@ export default function BranchesPage() {
   const [dialog, setDialog] = useState<{ key: number; branch?: Branch } | null>(null);
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Điểm tiêm</h1>
-        {can("branch.manage") && (
-          <Button onClick={() => setDialog({ key: Date.now() })}><Plus className="size-4" /> Thêm điểm tiêm</Button>
-        )}
-      </div>
-      <div className="rounded-md border bg-background">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-28">Mã</TableHead>
-              <TableHead>Tên điểm tiêm</TableHead>
-              <TableHead>Địa chỉ</TableHead>
-              <TableHead className="w-36">Điện thoại</TableHead>
-              <TableHead className="w-32">Trạng thái</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading && (
-              <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground">Đang tải...</TableCell></TableRow>
-            )}
-            {branches.map((b) => (
-              <TableRow key={b.id} className={can("branch.manage") ? "cursor-pointer" : undefined}
-                onClick={() => can("branch.manage") && setDialog({ key: Date.now(), branch: b })}>
-                <TableCell className="font-medium">{b.code}</TableCell>
-                <TableCell>{b.name}</TableCell>
-                <TableCell>{b.address}</TableCell>
-                <TableCell>{b.phone}</TableCell>
-                <TableCell>
-                  <Badge variant={b.active ? "default" : "secondary"}>{b.active ? "Hoạt động" : "Ngừng"}</Badge>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+    <SettingsPage hint={<>Mỗi chi nhánh (điểm tiêm) có tồn kho, sổ quỹ và người dùng riêng. Gán người dùng vào chi nhánh trong Quản lý người dùng.</>}>
+      <SettingsCard title="Quản lý chi nhánh" description="Quản lý thông tin, người dùng và địa chỉ của các chi nhánh.">
+        <div className="space-y-3 p-4">
+          {can("branch.manage") && (
+            <div className="flex justify-end">
+              <Button variant="outline" size="sm" onClick={() => setDialog({ key: Date.now() })}><Plus className="size-4" /> Tạo chi nhánh</Button>
+            </div>
+          )}
+          <table className={T.table}>
+            <thead className={T.head}><tr>
+              <th className="w-28">Mã</th><th>Tên chi nhánh</th><th>Địa chỉ</th><th className="w-36">Điện thoại</th>
+              <th className="w-32 text-right">SL người dùng</th><th className="w-32">Trạng thái</th>
+            </tr></thead>
+            <tbody>
+              {isLoading && <tr><td colSpan={6} className={T.empty}>Đang tải...</td></tr>}
+              {!isLoading && !branches.length && <ListEmptyRow cols={6} what="chi nhánh" compact />}
+              {branches.map((b) => (
+                <tr key={b.id} className={can("branch.manage") ? `${T.row} cursor-pointer hover:bg-[#f7f9fc]` : T.row}
+                  onClick={() => can("branch.manage") && setDialog({ key: Date.now(), branch: b })}>
+                  <td>{b.code}</td>
+                  <td>{b.name}</td>
+                  <td>{joinAddress(b.address, b.ward, b.province)}</td>
+                  <td>{b.phone}</td>
+                  <td className="text-right text-primary">{b.userCount}</td>
+                  <td><StatusPill on={b.active}>{b.active ? "Đang hoạt động" : "Ngừng hoạt động"}</StatusPill></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </SettingsCard>
       {dialog && (
         <BranchFormDialog key={dialog.key} open branch={dialog.branch} onOpenChange={(o) => !o && setDialog(null)} />
       )}
-    </div>
+    </SettingsPage>
   );
 }

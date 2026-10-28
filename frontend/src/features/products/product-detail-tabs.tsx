@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { DocCodeLink } from "@/components/ui/doc-code-link";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ListEmptyRow } from "@/components/ui/list-empty-state";
 import { useBranches } from "@/features/settings/settings-queries";
 import { formatDate, formatDateTime, formatMoney, formatNumber } from "@/lib/format";
 import { useProductLedger, useProductLots } from "./product-queries";
@@ -13,12 +15,6 @@ function useBranchList() {
   const { data: branches = [] } = useBranches();
   return { count: branches.length, name: (id: string) => branches.find((b) => b.id === id)?.name ?? "—" };
 }
-
-const Empty = ({ cols, text }: { cols: number; text: string }) => (
-  <TableRow className="hover:bg-transparent">
-    <TableCell colSpan={cols} className="py-6 text-center text-muted-foreground">{text}</TableCell>
-  </TableRow>
-);
 
 const sum = (xs: number[]) => xs.reduce((s, x) => s + Number(x), 0);
 
@@ -37,7 +33,7 @@ export function LedgerTab({ productId }: { productId: string }) {
         <TableHeader>
           <TableRow className={SUB_TABLE_HEAD_ROW}>
             <TableHead>Chứng từ</TableHead><TableHead>Thời gian</TableHead><TableHead>Loại giao dịch</TableHead>
-            {showBranch && <TableHead>Điểm tiêm</TableHead>}
+            {showBranch && <TableHead>Chi nhánh</TableHead>}
             {showLot && <TableHead>Lô</TableHead>}
             <TableHead className="text-right">Giá GD</TableHead><TableHead className="text-right">Giá vốn</TableHead>
             <TableHead className="text-right">Số lượng</TableHead><TableHead className="text-right">Tồn cuối</TableHead>
@@ -45,10 +41,10 @@ export function LedgerTab({ productId }: { productId: string }) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {!isLoading && !data?.items.length && <Empty cols={cols} text="Chưa có giao dịch kho" />}
+          {!isLoading && !data?.items.length && <ListEmptyRow cols={cols} what="giao dịch" compact />}
           {data?.items.map((l) => (
             <TableRow key={l.id} className="align-top [&>td]:py-3">
-              <TableCell className="text-primary">{l.docCode}</TableCell>
+              <TableCell><DocCodeLink code={l.docCode} /></TableCell>
               <TableCell>{formatDateTime(l.occurredAt)}</TableCell>
               <TableCell>{DOC_TYPE_LABEL[l.docType] ?? l.docType}</TableCell>
               {showBranch && <TableCell>{branches.name(l.branchId)}</TableCell>}
@@ -81,7 +77,7 @@ export function StockTab({ product }: { product: ProductDetail }) {
       <Table>
         <TableHeader>
           <TableRow className={SUB_TABLE_HEAD_ROW}>
-            <TableHead>Điểm tiêm</TableHead><TableHead className="text-right">Tồn kho</TableHead>
+            <TableHead>Chi nhánh</TableHead><TableHead className="text-right">Tồn kho</TableHead>
             <TableHead className="text-right">KH đặt</TableHead><TableHead className="w-48 pl-4">Trạng thái</TableHead>
           </TableRow>
         </TableHeader>
@@ -106,12 +102,12 @@ export function StockTab({ product }: { product: ProductDetail }) {
         <Table>
           <TableHeader>
             <TableRow className={SUB_TABLE_HEAD_ROW}>
-              <TableHead>Lô</TableHead><TableHead>Hạn sử dụng</TableHead><TableHead>Điểm tiêm</TableHead>
+              <TableHead>Lô</TableHead><TableHead>Hạn sử dụng</TableHead><TableHead>Chi nhánh</TableHead>
               <TableHead className="text-right">Tồn</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {!lots.length && <Empty cols={4} text="Không còn lô nào tồn" />}
+            {!lots.length && <ListEmptyRow cols={4} what="lô hàng" compact />}
             {lots.map((l) => {
               const days = (new Date(l.expiryDate).getTime() - Date.now()) / 86_400_000;
               return (

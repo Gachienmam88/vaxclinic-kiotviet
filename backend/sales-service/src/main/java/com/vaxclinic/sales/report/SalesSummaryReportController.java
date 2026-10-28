@@ -28,19 +28,25 @@ public class SalesSummaryReportController {
                              BigDecimal fee, BigDecimal cogs) {
     }
 
-    /** Biểu thức (khóa, mã, tên) cho hóa đơn (i, c = khách) và phiếu trả (r, i = HĐ gốc, c = khách của phiếu trả). */
+    /**
+     * Biểu thức (khóa, mã, tên) cho hóa đơn (i, c = khách) và phiếu trả (r, i = HĐ gốc, c = khách của phiếu trả).
+     * Phiếu trả nhanh (không hóa đơn, i null): người bán = người tạo phiếu, kênh bán = DIRECT.
+     */
     private record Dim(String invKey, String retKey, String code, String invName, String retName) {
     }
 
+    /** Tên kênh bán của hóa đơn (phiếu trả: theo hóa đơn gốc). */
+    private static final String CHANNEL_NAME = "coalesce((select sc.name from sales_channels sc where sc.code = i.sales_channel), i.sales_channel)";
     private static final String DAY = "to_char(%s at time zone " + ReportFilter.TZ + ", 'YYYY-MM-DD')";
     private static final Map<String, Dim> DIMS = Map.of(
             "DAY", new Dim(DAY.formatted("i.sold_at"), DAY.formatted("r.returned_at"), "''", "''", "''"),
-            "SELLER", new Dim("coalesce(i.seller_id, i.created_by)::text", "coalesce(i.seller_id, i.created_by)::text", "''",
-                    "coalesce(i.seller_name, i.created_by_name)", "coalesce(i.seller_name, i.created_by_name)"),
+            "SELLER", new Dim("coalesce(i.seller_id, i.created_by)::text", "coalesce(i.seller_id, i.created_by, r.created_by)::text", "''",
+                    "coalesce(i.seller_name, i.created_by_name)", "coalesce(i.seller_name, i.created_by_name, r.created_by_name)"),
             "BRANCH", new Dim("i.branch_id::text", "r.branch_id::text", "''", "''", "''"),
             "CUSTOMER", new Dim("coalesce(i.customer_id::text, '')", "coalesce(r.customer_id::text, '')", "coalesce(c.code, '')",
                     "coalesce(c.name, i.customer_name, 'Khách lẻ')", "coalesce(c.name, r.customer_name, 'Khách lẻ')"),
-            "CHANNEL", new Dim("'DIRECT'", "'DIRECT'", "''", "'Bán trực tiếp'", "'Bán trực tiếp'"));
+            "CHANNEL", new Dim("i.sales_channel", "coalesce(i.sales_channel, 'DIRECT')", "''", CHANNEL_NAME,
+                    CHANNEL_NAME.replace("i.sales_channel", "coalesce(i.sales_channel, 'DIRECT')")));
 
     private final NamedParameterJdbcTemplate jdbc;
 
@@ -48,7 +54,7 @@ public class SalesSummaryReportController {
         this.jdbc = jdbc;
     }
 
-    /** groupBy: DAY | SELLER | BRANCH | CUSTOMER | CHANNEL (ứng dụng chưa có kênh bán → mọi hóa đơn là "Bán trực tiếp"). */
+    /** groupBy: DAY | SELLER | BRANCH | CUSTOMER | CHANNEL (kênh bán lưu trên hóa đơn, phiếu trả theo hóa đơn gốc). */
     @GetMapping("/api/reports/sales/summary")
     public List<SummaryRow> summary(ReportFilter f, @RequestParam(defaultValue = "DAY") String groupBy,
                                     @AuthenticationPrincipal Jwt jwt) {
@@ -64,9 +70,9 @@ public class SalesSummaryReportController {
                   from invoices i left join customers c on c.id = i.customer_id where %s
                   union all
                   select %s, %s, %s, 0, 1, 0, 0, 0, r.subtotal - r.discount, r.fee, 0,
-                    -(select coalesce(sum(round(rl.quantity * coalesce(il.cost, 0))), 0) from sales_return_lines rl
+                    -(select coalesce(sum(round(rl.quantity * coalesce(il.cost, rl.cost, 0))), 0) from sales_return_lines rl
                       left join invoice_lines il on il.id = rl.invoice_line_id where rl.return_id = r.id)
-                  from sales_returns r join invoices i on i.id = r.invoice_id left join customers c on c.id = r.customer_id where %s
+                  from sales_returns r left join invoices i on i.id = r.invoice_id left join customers c on c.id = r.customer_id where %s
                 )
                 select k, max(code) code, max(name) name, sum(inv) inv, sum(ret) ret, sum(qty) qty, sum(subtotal) subtotal,
                   sum(discount) discount, sum(revenue) revenue, sum(rv) rv, sum(fee) fee, sum(cogs) cogs

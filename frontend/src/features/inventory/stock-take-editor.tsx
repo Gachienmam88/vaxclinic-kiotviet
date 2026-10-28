@@ -78,7 +78,7 @@ export function StockTakeEditor({ initial }: { initial: TakeEditorState }) {
         <div className="flex items-center gap-1.5">
           {TABS.map(([k, label]) => (
             <button key={k} type="button" onClick={() => setTab(k)}
-              className={cn("h-[30px] rounded-md border px-3 text-[13px]", tab === k ? "border-primary bg-[#eef5fe] font-medium text-primary" : "border-[#d1d5db] bg-background")}>
+              className={cn("h-[30px] rounded-md border px-3 text-[13px]", tab === k ? "border-primary bg-primary-tint-light font-medium text-primary" : "border-[#d1d5db] bg-background")}>
               {label} ({count(k)})
             </button>
           ))}

@@ -7,6 +7,7 @@ import type { Invoice } from "@/features/sales/sales-types";
 import { FUND_LABEL, methodLabel } from "@/features/sales/sales-types";
 import { api } from "@/lib/api-client";
 import { formatDate, formatDateTime, formatMoney, formatNumber } from "@/lib/format";
+import { joinAddress } from "@/lib/vn-admin-search";
 import { amountInWords, type PrintData } from "./print-render";
 import type { PrintType } from "./print-template-defaults";
 
@@ -29,7 +30,7 @@ export function storeFields(store: StoreInfo | null, branchName = "", createdBy 
   const now = new Date();
   return {
     Logo: store?.logo ?? "", Ten_Cua_Hang: store?.name ?? "", Dien_Thoai_Cua_Hang: store?.phone ?? "",
-    Dia_Chi_Cua_Hang: [store?.address, store?.ward, store?.province].filter(Boolean).join(", "),
+    Dia_Chi_Cua_Hang: joinAddress(store?.address, store?.ward, store?.province),
     MST_Cua_Hang: store?.taxCode ?? "", Ten_Chi_Nhanh: branchName, Nguoi_Tao: createdBy,
     Ngay: String(now.getDate()).padStart(2, "0"), Thang: String(now.getMonth() + 1).padStart(2, "0"), Nam: String(now.getFullYear()),
   };
@@ -38,13 +39,14 @@ export function storeFields(store: StoreInfo | null, branchName = "", createdBy 
 export function invoiceData(inv: Invoice): PrintData {
   return {
     Ma_Hoa_Don: inv.code, Ngay_Ban: formatDateTime(inv.soldAt), Khach_Hang: inv.customerName, Ma_Khach_Hang: inv.customerCode ?? "",
-    SDT_Khach_Hang: inv.customerPhone ?? "", Nguoi_Ban: inv.sellerName ?? "", Nguoi_Tao: inv.createdByName,
+    SDT_Khach_Hang: inv.customerPhone ?? "", Dia_Chi_Khach_Hang: inv.customerAddress ?? "",
+    Dia_Chi_Giao_Hang: inv.shipment ? joinAddress(inv.shipment.receiverAddress, inv.shipment.area) : "", Nguoi_Ban: inv.sellerName ?? "", Nguoi_Tao: inv.createdByName,
     Tong_So_Luong: formatNumber(inv.lines.reduce((s, l) => s + Number(l.quantity), 0)),
     Tong_Tien_Hang: formatMoney(inv.subtotal), Giam_Gia: formatMoney(inv.discount), Tong_Cong: formatMoney(inv.total),
     Tong_Cong_Bang_Chu: amountInWords(Number(inv.total)), Khach_Da_Tra: formatMoney(inv.paid),
     Con_No: formatMoney(Number(inv.total) - Number(inv.paid)), PT_Thanh_Toan: methodLabel(inv.paymentMethod), Ghi_Chu: inv.note ?? "",
     __lines: lines(inv.lines),
-  } as PrintData;
+  };
 }
 
 export type SalesReturnDoc = { code: string; returnedAt: string; invoiceCode: string; customerName: string; createdByName: string;
@@ -56,7 +58,7 @@ export function salesReturnData(r: SalesReturnDoc): PrintData {
     Nguoi_Tao: r.createdByName, Tong_Tien_Hang: formatMoney(r.subtotal), Giam_Gia: formatMoney(r.discount),
     Phi_Tra_Hang: formatMoney(r.fee), Can_Tra_Khach: formatMoney(r.total), Da_Tra_Khach: formatMoney(r.refunded),
     Can_Tra_Khach_Bang_Chu: amountInWords(Number(r.total)), Ghi_Chu: r.note ?? "", __lines: lines(r.lines),
-  } as PrintData;
+  };
 }
 
 export type VoucherDoc = { code: string; voucherType: string; occurredAt: string; partnerName: string | null; partnerPhone: string | null;
@@ -76,7 +78,7 @@ export function receiptData(r: Receipt): PrintData {
     Nguoi_Tao: r.createdByName, Tong_So_Luong: formatNumber(r.lines.reduce((s, l) => s + Number(l.quantity), 0)),
     Tong_Tien_Hang: formatMoney(r.subtotal), Chiet_Khau: formatMoney(r.discount), Thue_VAT: formatMoney(r.vatAmount),
     Can_Tra_NCC: formatMoney(r.total), Da_Tra_NCC: formatMoney(r.paidAmount), Ghi_Chu: r.note ?? "", __lines: lines(r.lines),
-  } as PrintData;
+  };
 }
 
 export function purchaseReturnData(r: PurchaseReturn): PrintData {
@@ -85,7 +87,7 @@ export function purchaseReturnData(r: PurchaseReturn): PrintData {
     Nguoi_Tao: r.createdByName, Tong_Tien_Hang: formatMoney(r.subtotal), Giam_Gia: formatMoney(r.discount),
     Thue_VAT: formatMoney(r.vatAmount), NCC_Can_Tra: formatMoney(r.total), NCC_Da_Tra: formatMoney(r.refundAmount),
     Ghi_Chu: r.note ?? "", __lines: lines(r.lines),
-  } as PrintData;
+  };
 }
 
 /** Dữ liệu mẫu để xem trước khi sửa mẫu in. */
@@ -100,7 +102,8 @@ export function sampleData(type: PrintType): PrintData {
   switch (type) {
     case "INVOICE":
       return invoiceData({ code: "HD000123", soldAt: new Date().toISOString(), customerName: "Nguyễn Văn An", customerCode: "KH000001",
-        customerPhone: "0987654321", sellerName: "Thu ngân", createdByName: "Thu ngân", subtotal: 2695000, discount: 0, total: 2695000,
+        customerPhone: "0987654321", customerAddress: "12 Lê Lợi, Phường Bến Thành, Thành phố Hồ Chí Minh",
+        sellerName: "Thu ngân", createdByName: "Thu ngân", subtotal: 2695000, discount: 0, total: 2695000,
         paid: 2695000, paymentMethod: "CASH", note: "", lines: sampleLines } as unknown as Invoice);
     case "SALES_RETURN":
       return salesReturnData({ code: "TH000012", returnedAt: new Date().toISOString(), invoiceCode: "HD000123", customerName: "Nguyễn Văn An",

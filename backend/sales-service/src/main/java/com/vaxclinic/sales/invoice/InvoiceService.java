@@ -6,6 +6,8 @@ import com.vaxclinic.sales.common.Actor;
 import com.vaxclinic.sales.common.SalesRules;
 import com.vaxclinic.sales.customer.Customer;
 import com.vaxclinic.sales.customer.CustomerRepository;
+import com.vaxclinic.sales.channel.SalesChannels;
+import com.vaxclinic.sales.delivery.ShipmentInvoiceHooks;
 import com.vaxclinic.sales.invoice.InvoiceDtos.InvoiceRequest;
 import com.vaxclinic.sales.order.OrderDepositLedger;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -36,11 +38,18 @@ public class InvoiceService {
     private final SalesRules rules;
     private final com.vaxclinic.common.audit.AuditLogger audit;
     private final OrderDepositLedger orderDeposits;
+    private final ShipmentInvoiceHooks shipments;
+    private final SalesChannels channels;
+    private final InvoiceExtraPayments extraPayments;
 
     public InvoiceService(InvoiceRepository invoices, CustomerRepository customers, CashVoucherRepository vouchers,
                           InvoiceWriter writer, InvoiceEditWriter editWriter, ProductStockClient stock, JdbcTemplate jdbc,
-                          SalesRules rules, com.vaxclinic.common.audit.AuditLogger audit, OrderDepositLedger orderDeposits) {
+                          SalesRules rules, com.vaxclinic.common.audit.AuditLogger audit, OrderDepositLedger orderDeposits,
+                          ShipmentInvoiceHooks shipments, SalesChannels channels, InvoiceExtraPayments extraPayments) {
+        this.extraPayments = extraPayments;
         this.orderDeposits = orderDeposits;
+        this.shipments = shipments;
+        this.channels = channels;
         this.invoices = invoices;
         this.customers = customers;
         this.vouchers = vouchers;
@@ -59,14 +68,26 @@ public class InvoiceService {
         actor.checkBranch(req.branchId());
         // Hóa đơn offline đồng bộ muộn mang ngày bán cũ: rơi vào kỳ đã khóa sổ → bị từ chối, giữ lại trên máy chờ xử lý.
         rules.checkNotLocked(req.branchId(), req.soldAt() == null ? Instant.now() : req.soldAt());
+        shipments.validate(req.saleMode(), req.delivery());
+        channels.resolve(req.salesChannel(), null);
         Customer customer = customerOf(req.customerId());
         var totals = InvoiceMath.totals(req.lines(), req.discount());
         BigDecimal paid = paidOf(req, totals);
+        BigDecimal due = totals.total(); // còn phải trả sau tiền cọc
         if (req.orderId() != null) { // từ đơn đặt hàng: tiền cọc trừ trước, khách chỉ trả phần còn lại
-            BigDecimal deposit = orderDeposits.depositForInvoice(req.orderId(), req.customerId(), req.branchId());
-            paid = paid.min(totals.total().subtract(deposit.min(totals.total())));
+            BigDecimal deposit = orderDeposits.depositForInvoice(req.orderId(), req.id(), req.customerId(), req.branchId());
+            due = totals.total().subtract(deposit.min(totals.total()));
+            paid = paid.min(due);
         }
-        if (customer == null && paid.compareTo(totals.total()) < 0) {
+        // Thanh toán nhiều phương thức: khoản thêm không vượt số còn phải trả; phương thức chính nhận phần còn lại
+        BigDecimal extras = InvoiceExtraPayments.sum(req.extraPayments());
+        if (extras.compareTo(due) > 0) {
+            if (req.orderId() != null) orderDeposits.releaseClaim(req.orderId(), req.id());
+            throw BusinessException.badRequest("EXTRA_PAYMENT_EXCEEDS", "Tổng tiền các phương thức thanh toán thêm ("
+                    + Actor.money(extras) + ") vượt quá số khách cần trả " + Actor.money(due));
+        }
+        paid = paid.min(due.subtract(extras));
+        if (customer == null && paid.add(extras).compareTo(totals.total()) < 0 && req.delivery() == null) { // giao hàng: phần còn lại = thu hộ
             throw BusinessException.badRequest("WALK_IN_DEBT", "Khách lẻ phải thanh toán đủ — chọn khách hàng để ghi nợ");
         }
         // Mã HĐ lấy trước để ghi vào thẻ kho; nếu bước sau lỗi, mã bị bỏ qua (dãy số có thể nhảy cóc).
@@ -74,12 +95,18 @@ public class InvoiceService {
         // Line ids derived from the invoice id: a retry gets the SAME ids, matching the stored stock result (cost + lots).
         List<UUID> lineIds = IntStream.range(0, req.lines().size())
                 .mapToObj(i -> UUID.nameUUIDFromBytes((req.id() + ":" + i).getBytes(StandardCharsets.UTF_8))).toList();
-        var result = stock.apply(new ProductStockClient.Request(req.id(), "SALE", code, req.branchId(),
-                customer == null ? "Khách lẻ" : customer.getName(), actor.id(), null, stockLines(req, lineIds)));
-        UUID id = writer.persist(req, actor, customer, code, lineIds, result, totals, paid);
+        UUID id;
+        try {
+            var result = stock.apply(new ProductStockClient.Request(req.id(), "SALE", code, req.branchId(),
+                    customer == null ? "Khách lẻ" : customer.getName(), actor.id(), null, stockLines(req, lineIds)));
+            id = writer.persist(req, actor, customer, code, lineIds, result, totals, paid);
+        } catch (RuntimeException e) {
+            if (req.orderId() != null) orderDeposits.releaseClaim(req.orderId(), req.id());
+            throw e;
+        }
         actor.audit(audit, req.branchId(), "Hóa đơn", "Tạo", code, "Tạo hóa đơn " + code + ", khách "
                 + (customer == null ? "Khách lẻ" : customer.getCode() + " " + customer.getName()) + ", tổng "
-                + Actor.money(totals.total()) + ", đã trả " + Actor.money(paid));
+                + Actor.money(totals.total()) + ", đã trả " + Actor.money(paid.add(extras)));
         return id;
     }
 
@@ -101,15 +128,32 @@ public class InvoiceService {
         actor.checkBranch(inv.getBranchId());
         rules.checkNotLocked(inv.getBranchId(), inv.getSoldAt());
         rules.checkEInvoiceNotPublished(id, "chỉnh sửa");
+        shipments.checkNotPickedUp(id, "sửa");
+        if (req.delivery() != null) shipments.validate(req.saleMode(), req.delivery());
+        channels.resolve(req.salesChannel(), inv.getSalesChannel());
         Customer customer = customerOf(req.customerId());
         var totals = InvoiceMath.totals(req.lines(), req.discount());
         BigDecimal paid = paidOf(req, totals);
-        if (customer == null && paid.compareTo(totals.total()) < 0) {
+        boolean delivery = req.delivery() != null || "DELIVERY".equals(inv.getSaleMode());
+        if (customer == null && paid.compareTo(totals.total()) < 0 && !delivery) {
             throw BusinessException.badRequest("WALK_IN_DEBT", "Khách lẻ phải thanh toán đủ — chọn khách hàng để ghi nợ");
         }
-        BigDecimal debtPayments = inv.getPaid().subtract(autoPaid(id)); // phiếu thu nợ (PT) + tiền cọc đơn đặt hàng
+        // Thanh toán nhiều phương thức: phiếu thu thêm giữ nguyên; paidAmount = tổng khách đã trả → TT{mã} = phần còn lại
+        BigDecimal extras = extraPayments.activeTotal(id);
+        if (extras.signum() > 0) {
+            if (paid.compareTo(extras) < 0) {
+                throw BusinessException.badRequest("INVOICE_EXTRA_PAYMENTS", "Hóa đơn thanh toán nhiều phương thức: số tiền "
+                        + "khách đã trả không được nhỏ hơn " + Actor.money(extras) + " (các phương thức thanh toán thêm)");
+            }
+            if (!java.util.Objects.equals(inv.getCustomerId(), req.customerId())) {
+                throw BusinessException.badRequest("INVOICE_EXTRA_PAYMENTS",
+                        "Hóa đơn thanh toán nhiều phương thức: không đổi khách hàng được");
+            }
+            paid = paid.subtract(extras);
+        }
+        BigDecimal debtPayments = inv.getPaid().subtract(autoPaid(id)).subtract(extras); // phiếu thu nợ (PT) + tiền cọc đơn đặt hàng
         if (debtPayments.signum() > 0 && (!java.util.Objects.equals(inv.getCustomerId(), req.customerId())
-                || totals.total().compareTo(debtPayments.add(paid)) < 0)) {
+                || totals.total().compareTo(debtPayments.add(extras).add(paid)) < 0)) {
             throw BusinessException.badRequest("INVOICE_HAS_PAYMENTS",
                     "Hóa đơn đã có phiếu thu nợ " + debtPayments + "đ: không đổi khách / không giảm tổng dưới số đã thu");
         }
@@ -131,8 +175,9 @@ public class InvoiceService {
         actor.checkBranch(inv.getBranchId());
         rules.checkNotLocked(inv.getBranchId(), inv.getSoldAt());
         rules.checkEInvoiceNotPublished(id, "hủy");
+        shipments.checkNotPickedUp(id, "hủy");
         // Kiểm tra TRƯỚC khi hoàn kho: còn phiếu thu nợ / phiếu trả hàng thì không cho hủy.
-        if (inv.getPaid().compareTo(autoPaid(id).add(orderDeposits.allocatedTo(id))) > 0) { // tiền cọc đơn gỡ ra khi hủy
+        if (inv.getPaid().compareTo(autoPaid(id).add(extraPayments.activeTotal(id)).add(orderDeposits.allocatedTo(id))) > 0) { // tiền cọc đơn gỡ ra khi hủy
             throw BusinessException.badRequest("INVOICE_HAS_PAYMENTS",
                     "Hóa đơn đã có phiếu thu nợ phân bổ, hãy hủy các phiếu thu đó trước");
         }
@@ -141,10 +186,10 @@ public class InvoiceService {
         }
         stock.apply(new ProductStockClient.Request(inv.getStockDocId(), "SALE_CANCEL", inv.getCode(), inv.getBranchId(),
                 inv.getCustomerName(), actor.id(), null, List.of()));
-        writer.markCancelled(id);
+        writer.markCancelled(id, actor);
     }
 
-    /** Sửa người bán / thời gian / ghi chú. Thiết lập "Không cho phép thay đổi thời gian giao dịch" chặn đổi thời gian. */
+    /** Sửa người bán / thời gian / kênh bán / ghi chú. Thiết lập "Không cho phép thay đổi thời gian giao dịch" chặn đổi thời gian. */
     public void updateInfo(UUID id, InvoiceDtos.InfoRequest req) {
         Invoice inv = find(id);
         rules.checkNotLocked(inv.getBranchId(), inv.getSoldAt());
@@ -154,7 +199,8 @@ public class InvoiceService {
             }
             rules.checkNotLocked(inv.getBranchId(), req.soldAt());
         }
-        writer.updateInfo(id, req);
+        String channel = req.salesChannel() == null ? null : channels.resolve(req.salesChannel(), inv.getSalesChannel());
+        writer.updateInfo(id, req, channel);
     }
 
     private Invoice find(UUID id) {

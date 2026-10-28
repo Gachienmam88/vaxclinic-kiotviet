@@ -3,6 +3,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { api, errorMessage, type PageResponse } from "@/lib/api-client";
+import { useT } from "@/lib/i18n";
+import { settingsNs } from "@/messages/settings";
 
 /** Thiết lập cảnh báo Hộp thư đến (identity-service app_settings khóa "notification"). */
 export type NotificationSettings = { expiryAlertDays: number };
@@ -23,9 +25,10 @@ export function useNotificationSettings() {
 
 export function useSaveNotificationSettings() {
   const qc = useQueryClient();
+  const t = useT(settingsNs);
   return useMutation({
     mutationFn: (body: NotificationSettings) => api<NotificationSettings>("/notifications/settings", { method: "PUT", body }),
-    onSuccess: (data) => { qc.setQueryData(["notification-settings"], data); toast.success("Thiết lập đã được cập nhật thành công"); },
+    onSuccess: (data) => { qc.setQueryData(["notification-settings"], data); toast.success(t("common.updated")); },
     onError: (e) => toast.error(errorMessage(e)),
   });
 }
@@ -40,11 +43,12 @@ export function useAnnouncements(page: number, size: number) {
 /** Tạo (id undefined) / sửa thông báo; xong làm mới danh sách và hộp thư. */
 export function useSaveAnnouncement(id: number | undefined, onDone: () => void) {
   const qc = useQueryClient();
+  const t = useT(settingsNs);
   return useMutation({
     mutationFn: (body: AnnouncementInput) =>
       api<Announcement>(id ? `/announcements/${id}` : "/announcements", { method: id ? "PUT" : "POST", body }),
     onSuccess: () => {
-      toast.success(id ? "Đã cập nhật thông báo" : "Đã gửi thông báo");
+      toast.success(id ? t("notifications.updated") : t("notifications.sent"));
       qc.invalidateQueries({ queryKey: ANN_KEY });
       qc.invalidateQueries({ queryKey: ["notifications"] });
       onDone();
@@ -55,10 +59,11 @@ export function useSaveAnnouncement(id: number | undefined, onDone: () => void) 
 
 export function useDeleteAnnouncement() {
   const qc = useQueryClient();
+  const t = useT(settingsNs);
   return useMutation({
     mutationFn: (id: number) => api(`/announcements/${id}`, { method: "DELETE" }),
     onSuccess: () => {
-      toast.success("Đã xóa thông báo");
+      toast.success(t("notifications.deleted"));
       qc.invalidateQueries({ queryKey: ANN_KEY });
       qc.invalidateQueries({ queryKey: ["notifications"] });
     },

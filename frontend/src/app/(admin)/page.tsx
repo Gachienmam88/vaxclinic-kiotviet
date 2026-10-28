@@ -29,7 +29,7 @@ export default function DashboardPage() {
       <section className="rounded-lg bg-background px-5 py-4 text-[13px]">
         <h2 className="mb-2 text-[15px] font-semibold">Xin chào, {me?.user.fullName}</h2>
         <p className="text-muted-foreground">Vai trò: {me?.user.roleName}</p>
-        <p className="text-muted-foreground">Điểm tiêm làm việc: {me?.user.branches.map((b) => b.name).join(", ")}</p>
+        <p className="text-muted-foreground">Chi nhánh làm việc: {me?.user.branches.map((b) => b.name).join(", ")}</p>
         <p className="mt-2 text-muted-foreground">Tài khoản chưa có quyền xem báo cáo doanh thu.</p>
       </section>
     );
