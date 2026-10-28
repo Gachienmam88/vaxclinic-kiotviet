@@ -65,7 +65,7 @@ public class PurchaseReturnService {
         r.setNote(req.note());
         applyLines(r, req, complete);
         r.setUpdatedAt(Instant.now());
-        returns.saveAndFlush(r);
+        r = returns.saveAndFlush(r); // keep the managed copy (see PurchaseReceiptService.save)
         if (complete) {
             if (r.getReceiptId() != null) {
                 checkNotOverReturned(r);
