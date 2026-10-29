@@ -70,3 +70,26 @@ Date: 2026-10-29 · Branch: feature/phase-01-foundation
 ### Unresolved questions
 - Need an explicit store tax-method setting (khấu trừ / trực tiếp) before the direct-method reduction (rate × 80%) can be implemented.
 - Order (đặt hàng) tabs do not support Giảm thuế / đơn thuốc; invoice created from an order can enable them on the invoice tab.
+
+---
+
+## Follow-up 3 (2026-10-30): tax-reduction trust fix + VAT method
+
+### Security fix (server no longer trusts client eligibility)
+- sales-service `TaxReductionPlanner` decides every reduced line from server data only: product-service `POST /internal/products/tax-info` (tax code, `taxReduction` flag, category chain) + identity-service `GET /internal/settings/tax` (method, sectors, category→sector). Both `/internal/**`, service JWT with `internal` authority (same `ServiceTokenProvider` as stock calls); gateway routes only `/api/**`.
+- Client `taxReducible` and line `taxCode` are ignored for eligibility (field kept only for old clients). Create, edit and the new preview endpoint all go through the planner; stored `invoices.tax_reduction`, `tax_reduction_method` (V20) and `invoice_lines.tax_reduced` are recomputed on the server.
+- Lookup failure → 503 `TAX_LOOKUP_DOWN` before any stock change (no silent reduction).
+- Tests: `TaxReductionPlannerTest` (forged flags ignored, sector mapping, no calls when off/out of window); e2e SEC1–SEC3 (forged request: only truly eligible line reduced = 2,000; forged-only cart = 0; edit with forged line = 0; preview matches).
+
+### VAT method setting + direct-method rule
+- Thiết lập → Thuế & Kế toán: "Phương pháp tính thuế GTGT" radio Khấu trừ (default) / Trực tiếp trên doanh thu (`TaxSettings.vatMethod`, old saves read as DEDUCTION). i18n vi/en/zh/ja.
+- Khấu trừ: unchanged (flag + VAT10 → 8%, net × 2/110).
+- Trực tiếp: product with `taxReduction` flag (its VAT code is ignored — direct-method goods have no VAT rate); rate = sector % of the nearest category in the product's category chain mapped in `categorySectors`, else `defaultSector` (same model the tax books use); reduction = net line revenue × rate% × 20% (1,000,000 × 1% × 20% = 2,000); sector rate 0 → no reduction. Same date window.
+- Display: sale totals use server preview `POST /api/invoices/tax-reduction-preview` (method label next to amount; offline falls back to a deduction estimate, server recomputes on save); invoice detail "Giảm thuế (khấu trừ/trực tiếp)"; print fields `Giam_Thue`, `Phuong_Phap_Giam_Thue` (rows in default INVOICE and DELIVERY_INVOICE templates).
+- E-invoice: deduction lines go to MISA at 8% (verified by unit test). **Direct method: MISA field/format for "giảm 20% tỷ lệ %" on a sales invoice could not be verified**, so integration-service refuses to auto-publish such invoices (400 `EINVOICE_DIRECT_TAX_REDUCTION_UNSUPPORTED`, clear message) instead of sending totals that don't match lines.
+- e2e DM1–DM3: direct method (sector mapped temporarily) = revenue × rate × 20%, after invoice discount, preview matches; settings restored to Khấu trừ with the original category mapping.
+
+### Builds / runs
+- Rebuilt sales, product, integration, identity (tests pass) + frontend (`tsc`, eslint, `next build`), all restarted, health 200.
+- e2e: delivery 56/56, sales 22/22, sale_backend 57/57, invoice_tools 27/27, store_profile 66/66.
+- Note: after e2e_store_profile the app shows the Terms-of-use acceptance dialog on first page load (other feature), settings page loads with no errors.
