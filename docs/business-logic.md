@@ -144,6 +144,12 @@ Nguồn: `PS/product/ProductController.java:37-115`, `PS/internal/InternalProduc
 - Danh sách không giới hạn theo chi nhánh của user.
 - Mã của hàng đã xóa mềm vẫn chiếm chỗ, không dùng lại được.
 
+**Bổ sung (parity KiotViet 30/10)**
+- `GET /api/products/{id}` thêm `suppliers[{id,code,name}]` = NCC của các phiếu nhập COMPLETED có hàng này, `received_at` mới nhất trước (bỏ phiếu hủy / phiếu tạm), và `stocks[].expectedOutDays` (cùng công thức danh sách, theo tồn + bán ròng 30 ngày từng chi nhánh; null khi bán ròng ≤ 0) (`PS/product/ProductDetailInsightRepository.java`, `PS/product/ProductDetailQuery.java`).
+- Danh sách: mỗi dòng thêm `units[{code,unitName,conversionRate,price}]` (mọi đơn vị, đơn vị cơ bản trước) (`PS/product/ProductListRepository.java`); FE chọn đơn vị trên dòng thì giá vốn ×quy đổi, tồn ÷quy đổi (`FE/features/products/product-list-table.tsx`). Giữ `otherUnits`.
+- Chân chi tiết hàng: Xóa, Sao chép | Chỉnh sửa, In tem mã, "…" (Ngừng / Cho phép kinh doanh) (`FE/features/products/product-detail-panel.tsx`). Sao chép = form tạo mới không id, mã, mã vạch, giá vốn (`FE/features/products/product-form-state.ts` `copyFormFromDetail`).
+- **In tem mã**: Code 128-B (mã vạch nếu có, không thì mã đơn vị), 2 cột tem 62×30 mm, tối đa 500 tem / lần in (`FE/features/print/barcode-code128.ts`, `FE/features/print/barcode-label-print.ts`). In tem từ phiếu nhập: mỗi dòng ceil(SL) tem, giá = giá chung của đơn vị.
+
 ---
 
 ### 1.2 Nhóm hàng
@@ -328,6 +334,8 @@ Nguồn: `PS/pricebook/PriceBookController.java:42-146`.
 - Form bảng giá FE: mặc định hiệu lực từ bây giờ tới +1 năm, Áp dụng, phạm vi Tất cả, ALLOW (`FE/features/products/price-book-form-dialog.tsx:31-38`); kiểm tra trùng phía FE như backend (`FE/features/products/price-book-form-dialog.tsx:57-68`).
 - Ô giá: Enter / rời ô = lưu, Esc = hủy, xóa trống + Enter = bỏ khỏi bảng; định dạng phải `^[\d,]+(\.\d+)?$` (`FE/features/products/price-book-price-cell.tsx:43-55`).
 
+- Link sâu `?code=` ở `/products/price-books` điền sẵn ô "Tìm mã hàng" (`FE/app/(admin)/products/price-books/page.tsx`) (parity 30/10).
+
 ---
 
 ### 1.7 Kiểm kho
@@ -499,6 +507,8 @@ Nguồn: `PS/purchase/PurchaseController.java:35-102`.
   - sửa thông tin (khi chưa hủy);
   - Hủy (xác nhận riêng cho DRAFT / COMPLETED); Sao chép; Xuất file;
   - Mở phiếu (DRAFT); Trả hàng nhập (COMPLETED).
+
+- Chi tiết phiếu nhập (parity 30/10): link "Thiết lập giá" ở đầu bảng + nhãn trên từng dòng → `/products/price-books?code=` (`FE/features/purchases/receipt-lines-table.tsx`); Sao chép chuyển vào menu "…" (`FE/features/purchases/receipt-detail-panel.tsx`).
 
 ---
 
@@ -1253,6 +1263,8 @@ Thực hiện sửa:
   - Footer: Hủy · Sao chép · Xuất file (1 HĐ) · Chỉnh sửa · Lưu · Trả hàng · In · "…" Sửa thuế.
   - Chỉnh sửa / Trả hàng / In chỉ hiện khi HĐ `COMPLETED` (`invoice-detail-footer.tsx`).
 - Trạng thái HĐĐT ở client (`invoice-einvoice-state.ts`): không có bản ghi → `NONE`; `status=FAILED` → `FAILED`; có `inv_code` → `ACCEPTED` ("CQT chấp nhận"); còn lại → `PUBLISHED`.
+
+- Chi tiết HĐ đã phát hành HĐĐT (`PUBLISHED`, parity 30/10): ẩn Sao chép / Xuất file / In; menu "…" thêm Xem hóa đơn điện tử và Cách tra cứu (`FE/features/sales/invoice-detail-footer.tsx`, `FE/features/sales/invoice-einvoice-howto-dialog.tsx`); dòng người mua hiện tên / địa chỉ / SĐT (`FE/features/sales/invoice-einvoice-card.tsx`).
 
 ---
 
@@ -2927,6 +2939,8 @@ Menu trái Thiết lập (`fe/features/settings/settings-shell.tsx:20-57`; mục
 - Form vai trò: nhóm quyền catalog/sales/cashbook/hr/vaccination/settings khớp `Permissions.java`; vai trò ADMIN hiện tick hết và khóa (`fe/features/settings/role-form-dialog.tsx:17-68`).
 - Người dùng: cột Tên hiển thị, Tên đăng nhập, SĐT, Vai trò, Chi nhánh, Trạng thái (`fe/app/(admin)/settings/users/page.tsx:48-49`).
 - Quyền dùng ở service khác (theo `@PreAuthorize` thấy được): `catalog.view/manage` (Product, PriceBook, Supplier...), `inventory.view/manage` (Purchase, StockTake, StockIssue, InputInvoice, TaxConnection...), `patient.view/manage` (Customer, CustomerGroup), `sales.perform` (Invoice, Order, SalesReturn, Shipment, EInvoice, SePay...), `sales.cancel` (Invoice, Order, SalesReturn), `cashbook.manage` (Cashbook, RevenueBook, StockBook, SePay...), `report.view` (các Report controller, EndOfDay...), `settings.manage` (job cảnh báo, SalesChannel, SePay, DigitalCertificate, EInvoicePackage), `user.manage` (EInvoiceController). **`reception.perform`, `screening.perform`, `injection.perform` không được kiểm ở controller nào** (chỉ xuất hiện trong danh mục quyền + form vai trò).
+
+- **Chặn trang theo quyền** (parity 30/10, `fe/components/layout/route-permission-guard.tsx`): thiếu quyền → chuyển về `/` + thông báo; trang không vẽ tới khi `/auth/me` tải xong. Bảng: `/products`, `/inventory`, `/purchases` → `catalog.view` / `inventory.view`; `/invoices`, `/orders`, `/returns`, `/delivery` → `sales.perform`; `/customers` → `patient.view`; `/employees` → `hr.manage`; `/cashbook` → `cashbook.manage`; `/reports`, `/accounting` → `report.view`. Backend vẫn tự kiểm quyền.
 
 ---
 
