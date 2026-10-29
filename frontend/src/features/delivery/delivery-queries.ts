@@ -3,7 +3,7 @@
 import { useQuery, type QueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
 import type {
-  DeliveryPartner, PartnerGroup, PartnerLedgerRow, PartnerList, ReconcileRow, SalesChannel, SettlementRow, ShipmentDetail, ShipmentList,
+  Cashflow, DeliveryPartner, PartnerGroup, PartnerLedgerRow, PartnerList, SettlementListRow, ShipmentDashboard, ReconcileRow, SalesChannel, SettlementRow, ShipmentDetail, ShipmentList,
 } from "./delivery-types";
 
 export const useShipments = (params: URLSearchParams) =>
@@ -11,6 +11,20 @@ export const useShipments = (params: URLSearchParams) =>
 
 export const useShipment = (id: string | null) =>
   useQuery({ queryKey: ["shipment", id], queryFn: () => api<ShipmentDetail>(`/shipments/${id}`), enabled: !!id });
+
+/** Quản lý giao hàng → Thống kê / Dòng tiền (params: from, to, partnerId, connection). */
+export const useShipmentDashboard = (params: URLSearchParams) =>
+  useQuery({ queryKey: ["shipments", "dashboard", params.toString()], queryFn: () => api<ShipmentDashboard>(`/shipments/dashboard?${params}`),
+    placeholderData: (p) => p });
+
+export const useShipmentCashflow = (params: URLSearchParams, enabled: boolean) =>
+  useQuery({ queryKey: ["shipments", "cashflow", params.toString()], queryFn: () => api<Cashflow>(`/shipments/cashflow?${params}`),
+    enabled, placeholderData: (p) => p });
+
+/** Lịch sử đối soát của mọi đối tác. */
+export const useAllSettlements = (enabled: boolean) =>
+  useQuery({ queryKey: ["delivery-settlements", "all"], queryFn: () => api<SettlementListRow[]>("/delivery-partners/settlements?size=200"),
+    enabled });
 
 export const usePartners = (params: URLSearchParams) =>
   useQuery({ queryKey: ["delivery-partners", params.toString()], queryFn: () => api<PartnerList>(`/delivery-partners?${params}`),

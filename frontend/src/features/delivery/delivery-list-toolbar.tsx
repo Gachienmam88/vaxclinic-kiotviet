@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { CircleHelp, FileOutput, ListChecks, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -56,12 +56,13 @@ export function DeliveryToolbarRight<K extends string>({ onExport, exportDisable
 
 /** Cột hiển thị lưu theo máy (localStorage); lỗi đọc / ghi → dùng mặc định. */
 export function useShownColumns<K extends string>(key: string, defaults: readonly K[]) {
-  const [cols, setCols] = useState<K[]>(() => {
+  const [cols, setCols] = useState<K[]>(() => [...defaults]);
+  useEffect(() => { // đọc sau khi hiển thị (trùng khớp bản dựng phía server)
     try {
-      const raw = typeof window === "undefined" ? null : window.localStorage.getItem(key);
-      return raw ? (JSON.parse(raw) as K[]) : [...defaults];
-    } catch { return [...defaults]; }
-  });
+      const raw = window.localStorage.getItem(key);
+      if (raw) setCols(JSON.parse(raw) as K[]);
+    } catch { /* dùng mặc định */ }
+  }, [key]);
   const toggle = (k: K, on: boolean) => setCols((prev) => {
     const next = on ? [...prev.filter((x) => x !== k), k] : prev.filter((x) => x !== k);
     try { window.localStorage.setItem(key, JSON.stringify(next)); } catch { /* bỏ qua */ }

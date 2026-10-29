@@ -19,7 +19,8 @@ const PILL = "block h-7 w-full rounded border px-2 text-left text-xs hover:borde
  * Thời gian của danh sách Hóa đơn như KiotViet: (•) [Toàn thời gian / Tháng này... >] (popup mốc 3 cột + "Toàn thời gian")
  * hoặc ( ) [Tùy chỉnh] khoảng ngày.
  */
-export function InvoiceTimeFilter({ value, onChange }: { value: InvoiceTime; onChange: (v: InvoiceTime) => void }) {
+/** title: tiêu đề mục (mặc định "Thời gian"), VD Vận đơn có "Thời gian tạo" / "Thời gian hoàn thành". */
+export function InvoiceTimeFilter({ value, onChange, title }: { value: InvoiceTime; onChange: (v: InvoiceTime) => void; title?: string }) {
   const t = useT(salesNs);
   const tr = useT(reportsNs); // mốc thời gian dùng chung với Báo cáo
   const [open, setOpen] = useState(false);
@@ -35,7 +36,7 @@ export function InvoiceTimeFilter({ value, onChange }: { value: InvoiceTime; onC
   const range = value.mode === "custom" ? { from: value.from, to: value.to } : null;
 
   return (
-    <FilterSection title={t("listKit.time")}>
+    <FilterSection title={title ?? t("listKit.time")}>
       <RadioOption checked={value.mode !== "custom"} onSelect={() => value.mode === "custom" && onChange({ mode: "all" })}>
         <div ref={ref} className="relative flex-1">
           <button type="button" className={BOX} onClick={() => setOpen(!open)}>

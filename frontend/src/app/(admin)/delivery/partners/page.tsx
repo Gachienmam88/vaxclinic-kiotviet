@@ -36,7 +36,7 @@ function DeliveryPartnersPage({ link }: { link: DeepLink }) {
   const t = useT(deliveryNs);
   const { can } = useCurrentUser();
   const settlementCode = link.code && /^DS\d/i.test(link.code) ? link.code : null;
-  const [side, setSide] = useState<PartnerSideTab>(link.code ? "other" : "other");
+  const [side, setSide] = useState<PartnerSideTab>(link.code ? "other" : "integrated");
   const [tab, setTab] = useState<MainTab>("info");
   const [search, setSearch] = useState(settlementCode ? "" : link.code ?? "");
   const [q, setQ] = useState(settlementCode ? "" : link.code ?? "");
