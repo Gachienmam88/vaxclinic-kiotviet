@@ -28,11 +28,11 @@ public class CertificateExpiryAlerts {
     private static final Logger log = LoggerFactory.getLogger(CertificateExpiryAlerts.class);
     private static final DateTimeFormatter DMY = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
-    private final JdbcTemplate jdbc;
+    private final DigitalCertificateRepository certificates;
     private final NotificationClient notifications;
 
-    public CertificateExpiryAlerts(JdbcTemplate jdbc, NotificationClient notifications) {
-        this.jdbc = jdbc;
+    public CertificateExpiryAlerts(DigitalCertificateRepository certificates, NotificationClient notifications) {
+        this.certificates = certificates;
         this.notifications = notifications;
     }
 
