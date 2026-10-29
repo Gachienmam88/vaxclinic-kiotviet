@@ -1,39 +1,43 @@
 "use client";
 
-import { Fragment, useEffect, useMemo, useState } from "react";
-import { FileOutput, Plus } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Plus } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { DeepLinkRoute, useDeepLinkExpanded, type DeepLink } from "@/components/ui/deep-link-route";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ListEmptyRow } from "@/components/ui/list-empty-state";
-import { usePartners } from "@/features/delivery/delivery-queries";
-import { PartnerDetailPanel } from "@/features/delivery/partner-detail-panel";
+import { DeepLinkRoute, type DeepLink } from "@/components/ui/deep-link-route";
+import { usePartners, useShipments } from "@/features/delivery/delivery-queries";
+import type { DeliveryPartner, PartnerList } from "@/features/delivery/delivery-types";
+import { DeliveryToolbarRight, useShownColumns } from "@/features/delivery/delivery-list-toolbar";
+import { downloadXlsx } from "@/features/delivery/delivery-xlsx";
 import { PartnerFormDialog } from "@/features/delivery/partner-form-dialog";
+import { PARTNER_COLUMNS, PartnerListTable, partnerValue, type PartnerColumn } from "@/features/delivery/partner-list-table";
+import { PartnerSettlementHistory } from "@/features/delivery/partner-settlement-history";
+import { PartnerSideCard, type PartnerSideTab } from "@/features/delivery/partner-side-card";
+import { PartnersEmpty } from "@/features/delivery/partners-empty";
+import { ShipmentTable } from "@/features/delivery/shipment-table";
 import { useSettlementOwner } from "@/features/delivery/use-settlement-owner";
-import { FilterSection, FilterSidebar, LIST_HEAD_ROW, ListSearch, PageTitle, RadioOption, TOOLBAR_BTN } from "@/features/sales/invoice-list-kit";
-import { downloadCsv, ListPager } from "@/features/sales/invoice-list-pager";
-import { formatMoney } from "@/lib/format";
+import { ListSearch, PageTitle, TOOLBAR_BTN } from "@/features/sales/invoice-list-kit";
+import { ListPager } from "@/features/sales/invoice-list-pager";
+import { api, errorMessage } from "@/lib/api-client";
 import { useT } from "@/lib/i18n";
 import { useCurrentUser } from "@/lib/use-current-user";
 import { cn } from "@/lib/utils";
-import { commonNs } from "@/messages/common";
 import { deliveryNs } from "@/messages/delivery";
 
-const COLS = 7;
-const CSV_HEAD = ["code", "name", "phone", "email", "address", "totalShipments", "fee", "codDue", "debt", "status"] as const;
+const HELP = "https://www.kiotviet.vn/huong-dan-su-dung-kiotviet/retail-giao-van/quan-ly-doi-tac-giao-hang/#iii-quan-ly-doi-tac-giao-hang-rieng-cua-cua-hang";
+type MainTab = "info" | "history" | "settlements";
 
 /**
- * Đối tác giao hàng (KiotViet): danh sách + dòng tổng (tổng đơn, phí giao hàng, cần thu hộ, nợ hiện tại), lọc trạng thái / công nợ,
- * thêm / sửa, chi tiết mở dưới dòng (vận đơn, sổ nợ, thanh toán, đối soát).
- * Link sâu: ?code=DT000001 (lọc theo mã, mở chi tiết) hoặc ?code=DS000001 (mở đối tác sở hữu phiếu → tab Lịch sử thanh toán).
+ * Đối tác giao hàng (KiotViet): thẻ trái Tích hợp (chưa có hãng tích hợp → trống) / Khác (đối tác cửa hàng); tab Thông tin
+ * (7 cột tính từ vận đơn), Lịch sử giao hàng (vận đơn mọi đối tác), Lịch sử đối soát. Xuất file xlsx, chọn cột, thiết lập, hướng dẫn.
+ * Link sâu ?code=DT000001 (mở đối tác) hoặc ?code=DS000001 (mở đối tác sở hữu phiếu → tab thanh toán).
  */
 function DeliveryPartnersPage({ link }: { link: DeepLink }) {
   const t = useT(deliveryNs);
-  const tc = useT(commonNs);
-  const ACTIVE = [["", tc("status.all")], ["true", tc("status.active")], ["false", tc("status.inactive")]] as const;
-  const DEBT = [["", tc("status.all")], ["OWING", t("partners.debtOwing")], ["PAYABLE", t("partners.debtPayable")]] as const;
-  const settlementCode = link.code && /^DS\d/i.test(link.code) ? link.code : null;
   const { can } = useCurrentUser();
+  const settlementCode = link.code && /^DS\d/i.test(link.code) ? link.code : null;
+  const [side, setSide] = useState<PartnerSideTab>(link.code ? "other" : "other");
+  const [tab, setTab] = useState<MainTab>("info");
   const [search, setSearch] = useState(settlementCode ? "" : link.code ?? "");
   const [q, setQ] = useState(settlementCode ? "" : link.code ?? "");
   const [active, setActive] = useState("");
@@ -41,7 +45,9 @@ function DeliveryPartnersPage({ link }: { link: DeepLink }) {
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(15);
   const [creating, setCreating] = useState(false);
-  useEffect(() => { const t = setTimeout(() => { setQ(search); setPage(0); }, 300); return () => clearTimeout(t); }, [search]);
+  const [exporting, setExporting] = useState(false);
+  const cols = useShownColumns<PartnerColumn>("delivery.partners.columns", PARTNER_COLUMNS);
+  useEffect(() => { const h = setTimeout(() => { setQ(search); setPage(0); }, 300); return () => clearTimeout(h); }, [search]);
   const params = useMemo(() => {
     const p = new URLSearchParams({ page: String(page), size: String(size) });
     if (q) p.set("q", q);
@@ -50,58 +56,63 @@ function DeliveryPartnersPage({ link }: { link: DeepLink }) {
     return p;
   }, [q, active, debt, page, size]);
   const { data } = usePartners(params);
+  const list = side === "integrated" ? undefined : data;
   const owner = useSettlementOwner(settlementCode, data?.items.map((p) => p.id) ?? []);
-  const { open: expanded, setOpen: setExpanded, toggle } = useDeepLinkExpanded(data?.items, link, (p) => [p.code, p.id === owner ? settlementCode : null]);
-  const csvHead: Record<(typeof CSV_HEAD)[number], string> = { code: tc("fields.code"), name: tc("fields.name"), phone: tc("fields.phone"),
-    email: tc("fields.email"), address: tc("fields.address"), totalShipments: t("partners.totalShipments"), fee: t("fields.fee"),
-    codDue: t("partners.codDue"), debt: t("partner.balance"), status: tc("fields.status") };
-  const exportCsv = () => downloadCsv(t("csv.partnersFile"), CSV_HEAD.map((k) => csvHead[k]), (data?.items ?? []).map((p) => [p.code,
-    p.name, p.phone, p.email, p.address, p.shipmentCount, p.totalFee, p.totalCod, p.debt, tc(p.active ? "status.active" : "status.inactive")]));
+  const [shipPage, setShipPage] = useState(0);
+  const shipParams = useMemo(() => new URLSearchParams({ page: String(shipPage), size: "15" }), [shipPage]);
+  const shipments = useShipments(shipParams);
+  const exportFile = async () => {
+    setExporting(true);
+    try {
+      const all: DeliveryPartner[] = [];
+      for (let pg = 0; ; pg++) {
+        const p = new URLSearchParams(params); p.set("page", String(pg)); p.set("size", "200");
+        const r = await api<PartnerList>(`/delivery-partners?${p}`);
+        all.push(...r.items);
+        if (all.length >= r.total || !r.items.length) break;
+      }
+      const shown = PARTNER_COLUMNS.filter(cols.shown);
+      await downloadXlsx(t("kv.partners.file"), shown.map((c) => t(`kv.partners.${c}`)), all.map((p) => shown.map((c) => partnerValue(p, c))),
+        shown.map((c) => c !== "code" && c !== "name" && c !== "total"));
+    } catch (e) { toast.error(errorMessage(e)); } finally { setExporting(false); }
+  };
+  const mainTab = (k: MainTab, label: string) => (
+    <button key={k} type="button" role="tab" aria-selected={tab === k} onClick={() => setTab(k)}
+      className={cn("relative h-9 text-[13px]", tab === k ? "text-primary" : "text-foreground")}>{label}
+      {tab === k && <span className="absolute inset-x-0 bottom-0 h-0.5 bg-primary" />}</button>);
 
   return (
-    <div className="flex gap-2.5">
-      <div className="space-y-3">
+    <div className="space-y-3">
+      <div className="flex items-center gap-2">
         <PageTitle>{t("partners.title")}</PageTitle>
-        <FilterSidebar>
-          <FilterSection title={tc("fields.status")}>{ACTIVE.map(([v, l]) => <RadioOption key={v} checked={active === v} onSelect={() => { setActive(v); setPage(0); }}>{l}</RadioOption>)}</FilterSection>
-          <FilterSection title={t("partners.debt")}>{DEBT.map(([v, l]) => <RadioOption key={v} checked={debt === v} onSelect={() => { setDebt(v); setPage(0); }}>{l}</RadioOption>)}</FilterSection>
-        </FilterSidebar>
+        {side === "other" && tab === "info" && <div className="ml-6"><ListSearch value={search} onChange={setSearch} placeholder={t("partners.searchPlaceholder")} /></div>}
+        <div className="ml-auto flex items-center gap-2">
+          {can("sales.perform") && <Button variant="outline" className={TOOLBAR_BTN} onClick={() => setCreating(true)}><Plus className="size-4" /> {t("partners.new")}</Button>}
+          <DeliveryToolbarRight onExport={exportFile} exportDisabled={!list?.items.length} exporting={exporting} helpUrl={HELP}
+            columns={PARTNER_COLUMNS.map((c) => [c, t(`kv.partners.${c}`)] as const)} shown={cols.shown} onToggle={cols.toggle} />
+        </div>
       </div>
-      <div className="min-w-0 flex-1 space-y-3">
-        <div className="flex items-center gap-2">
-          <ListSearch value={search} onChange={setSearch} placeholder={t("partners.searchPlaceholder")} />
-          {can("sales.perform") && <Button variant="outline" className={cn(TOOLBAR_BTN, "ml-auto")} onClick={() => setCreating(true)}><Plus className="size-4" /> {t("partners.new")}</Button>}
-          <Button variant="outline" className={cn(TOOLBAR_BTN, !can("sales.perform") && "ml-auto")} disabled={!data?.items.length} onClick={exportCsv}>
-            <FileOutput className="size-4" /> {tc("actions.export")}</Button>
+      <div className="flex gap-2.5">
+        <PartnerSideCard tab={side} onTab={setSide} active={active} onActive={(v) => { setActive(v); setPage(0); }}
+          debt={debt} onDebt={(v) => { setDebt(v); setPage(0); }} />
+        <div className="min-w-0 flex-1 space-y-2">
+          <div className="flex gap-6 px-1" role="tablist">
+            {mainTab("info", t("kv.partners.info"))}{mainTab("history", t("kv.partners.history"))}{mainTab("settlements", t("kv.partners.settlements"))}
+          </div>
+          <div className="overflow-x-auto rounded-lg bg-background">
+            {tab === "info" && (side === "integrated"
+              ? <PartnersEmpty cols={PARTNER_COLUMNS.filter(cols.shown).map((c) => t(`kv.partners.${c}`))} />
+              : <PartnerListTable data={list} shown={cols.shown} link={link} owner={owner} />)}
+            {tab === "history" && (side === "integrated" ? <PartnersEmpty cols={[t("kv.cols.waybill"), t("kv.cols.partner")]} />
+              : <ShipmentTable data={shipments.data} compact />)}
+            {tab === "settlements" && (side === "integrated" ? <PartnersEmpty cols={[t("kv.partners.stlCode"), t("kv.partners.stlPartner")]} />
+              : <PartnerSettlementHistory />)}
+          </div>
+          {tab === "info" && side === "other" && !!list?.items.length && <ListPager total={list.total} page={page} size={size}
+            unit={t("partners.unit")} onPage={setPage} onSize={(s) => { setSize(s); setPage(0); }} />}
+          {tab === "history" && side === "other" && !!shipments.data?.items.length && <ListPager total={shipments.data.total} page={shipPage}
+            size={15} unit={t("manage.unit")} onPage={setShipPage} onSize={() => undefined} />}
         </div>
-        <div className="overflow-x-auto rounded-lg bg-background">
-          <Table stickyHeader>
-            <TableHeader><TableRow className={LIST_HEAD_ROW}>
-              <TableHead className="pl-4">{t("partner.code")}</TableHead><TableHead>{t("partner.name")}</TableHead><TableHead>{tc("fields.phone")}</TableHead>
-              <TableHead className="text-right">{t("partners.totalShipments")}</TableHead><TableHead className="text-right">{t("fields.fee")}</TableHead>
-              <TableHead className="text-right">{t("partners.codDue")}</TableHead>
-              <TableHead className="pr-4 text-right" title={t("partners.debtHint")}>{t("partner.balance")}</TableHead>
-            </TableRow></TableHeader>
-            <TableBody>
-              {!!data?.items.length && <TableRow className="font-bold hover:bg-transparent">
-                <TableCell colSpan={4} /><TableCell className="text-right">{formatMoney(data.sumFee ?? 0)}</TableCell>
-                <TableCell className="text-right">{formatMoney(data.sumCod ?? 0)}</TableCell><TableCell className="pr-4 text-right">{formatMoney(data.sumDebt ?? 0)}</TableCell>
-              </TableRow>}
-              {data && !data.items.length && <ListEmptyRow cols={COLS} what={t("partners.emptyWhat")} />}
-              {data?.items.map((p) => (
-                <Fragment key={p.id}>
-                  <TableRow className={cn("cursor-pointer", expanded === p.id && "bg-primary-tint hover:bg-primary-tint", !p.active && "text-muted-foreground")}
-                    onClick={() => toggle(p.id)}>
-                    <TableCell className="pl-4">{p.code}</TableCell><TableCell>{p.name}</TableCell><TableCell>{p.phone}</TableCell>
-                    <TableCell className="text-right">{p.shipmentCount}</TableCell><TableCell className="text-right">{formatMoney(p.totalFee)}</TableCell>
-                    <TableCell className="text-right">{formatMoney(p.totalCod)}</TableCell><TableCell className="pr-4 text-right">{formatMoney(p.debt)}</TableCell>
-                  </TableRow>
-                  {expanded === p.id && <TableRow className="hover:bg-transparent"><TableCell colSpan={COLS} className="p-0 whitespace-normal"><PartnerDetailPanel partner={p} initialTab={p.id === owner ? "payments" : undefined} onClose={() => setExpanded(null)} /></TableCell></TableRow>}
-                </Fragment>))}
-            </TableBody>
-          </Table>
-        </div>
-        <ListPager total={data?.total ?? 0} page={page} size={size} unit={t("partners.unit")} onPage={setPage} onSize={(s) => { setSize(s); setPage(0); }} />
       </div>
       {creating && <PartnerFormDialog onClose={() => setCreating(false)} />}
     </div>
