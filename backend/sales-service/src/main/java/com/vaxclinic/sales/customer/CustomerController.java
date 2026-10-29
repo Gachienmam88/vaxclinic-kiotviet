@@ -1,15 +1,13 @@
 package com.vaxclinic.sales.customer;
 
-import com.vaxclinic.common.audit.AuditLogger;
 import com.vaxclinic.sales.common.Actor;
+import com.vaxclinic.sales.customer.CustomerDebtRepository.DebtLine;
 import com.vaxclinic.sales.customer.CustomerDtos.CustomerListResponse;
 import com.vaxclinic.sales.customer.CustomerDtos.CustomerRequest;
 import com.vaxclinic.sales.customer.CustomerDtos.CustomerResponse;
 import com.vaxclinic.sales.debt.DebtService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
-import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -23,36 +21,21 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+/** Khách hàng: danh sách / chi tiết / thêm / sửa, sổ nợ, thu nợ, chiết khấu, điều chỉnh nợ. Nghiệp vụ ở {@link CustomerManageService}. */
 @RestController
 @RequestMapping("/api/customers")
 @PreAuthorize("hasAuthority('patient.view') or hasAuthority('sales.perform')")
 public class CustomerController {
 
-    private final CustomerService service;
-    private final CustomerListQuery listQuery;
-    private final CustomerRepository customers;
-    private final DebtService debt;
-    private final NamedParameterJdbcTemplate jdbc;
-    private final AuditLogger audit;
+    private final CustomerManageService service;
 
-    public CustomerController(CustomerService service, CustomerListQuery listQuery, CustomerRepository customers,
-                              DebtService debt, NamedParameterJdbcTemplate jdbc, AuditLogger audit) {
-        this.audit = audit;
+    public CustomerController(CustomerManageService service) {
         this.service = service;
-        this.listQuery = listQuery;
-        this.customers = customers;
-        this.debt = debt;
-        this.jdbc = jdbc;
-    }
-
-    public record DebtLine(UUID id, String docType, String docCode, UUID docId, Instant occurredAt, BigDecimal amount,
-                           BigDecimal balanceAfter, String note) {
     }
 
     @GetMapping
@@ -65,77 +48,58 @@ public class CustomerController {
                                      @RequestParam(required = false) String customerType,
                                      @RequestParam(required = false) String gender,
                                      @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "15") int size) {
-        return listQuery.search(new CustomerListQuery.Filter(q, groupId, groupName, createdFrom, createdTo, createdBy, customerType,
+        return service.list(new CustomerListQuery.Filter(q, groupId, groupName, createdFrom, createdTo, createdBy, customerType,
                 gender, Math.max(page, 0), Math.min(Math.max(size, 1), 100)));
     }
 
     /** Tên các nhóm khách hàng (API cũ — danh sách đầy đủ ở /api/customer-groups). */
     @GetMapping("/groups")
     public List<String> groups() {
-        return customers.findGroupNames();
+        return service.groupNames();
     }
 
     @GetMapping("/{id}")
     public CustomerResponse get(@PathVariable UUID id) {
-        return CustomerResponse.of(service.find(id));
+        return service.get(id);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAuthority('patient.manage') or hasAuthority('sales.perform')")
     public CustomerResponse create(@Valid @RequestBody CustomerRequest req, @AuthenticationPrincipal Jwt jwt) {
-        Customer c = service.create(req, Actor.of(jwt));
-        Actor.of(jwt).audit(audit, c.getBranchId(), "Khách hàng", "Tạo", c.getCode(),
-                "Tạo khách hàng " + c.getCode() + ", tên " + c.getName() + (c.getPhone() == null ? "" : ", SĐT " + c.getPhone()));
-        return CustomerResponse.of(c);
+        return service.create(req, Actor.of(jwt));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('patient.manage') or hasAuthority('sales.perform')")
     public CustomerResponse update(@PathVariable UUID id, @Valid @RequestBody CustomerRequest req, @AuthenticationPrincipal Jwt jwt) {
-        Customer c = service.update(id, req);
-        Actor.of(jwt).audit(audit, c.getBranchId(), "Khách hàng", "Sửa", c.getCode(),
-                "Cập nhật thông tin khách hàng " + c.getCode() + ", tên " + c.getName());
-        return CustomerResponse.of(c);
+        return service.update(id, req, Actor.of(jwt));
     }
 
     /** Tab "Nợ cần thu từ khách" — mới nhất trước. */
     @GetMapping("/{id}/debts")
     public List<DebtLine> debts(@PathVariable UUID id) {
-        return jdbc.query("select * from customer_debt_ledger where customer_id = :id order by occurred_at desc, balance_after limit 200",
-                new MapSqlParameterSource("id", id), (rs, n) -> new DebtLine(rs.getObject("id", UUID.class),
-                        rs.getString("doc_type"), rs.getString("doc_code"), rs.getObject("doc_id", UUID.class),
-                        rs.getTimestamp("occurred_at").toInstant(), rs.getBigDecimal("amount"),
-                        rs.getBigDecimal("balance_after"), rs.getString("note")));
+        return service.debts(id);
     }
 
     @PostMapping("/{id}/payments")
     @PreAuthorize("hasAuthority('sales.perform') or hasAuthority('cashbook.manage')")
     public Map<String, String> pay(@PathVariable UUID id, @Valid @RequestBody DebtService.PaymentRequest req,
                                    @AuthenticationPrincipal Jwt jwt) {
-        String code = debt.pay(id, req, Actor.of(jwt));
-        Actor.of(jwt).audit(audit, req.branchId(), "Phiếu thu", "Thu nợ", code,
-                "Thu nợ khách " + service.find(id).getName() + ": " + Actor.money(req.amount()) + ", phiếu " + code);
-        return Map.of("code", code);
+        return service.pay(id, req, Actor.of(jwt));
     }
 
     @PostMapping("/{id}/discounts")
     @PreAuthorize("hasAuthority('cashbook.manage')")
     public Map<String, String> discount(@PathVariable UUID id, @Valid @RequestBody DebtService.PaymentRequest req,
                                         @AuthenticationPrincipal Jwt jwt) {
-        String code = debt.discount(id, req, Actor.of(jwt));
-        Actor.of(jwt).audit(audit, req.branchId(), "Khách hàng", "Chiết khấu", code,
-                "Chiết khấu thanh toán cho khách " + service.find(id).getName() + ": " + Actor.money(req.amount()));
-        return Map.of("code", code);
+        return service.discount(id, req, Actor.of(jwt));
     }
 
     @PostMapping("/{id}/adjustments")
     @PreAuthorize("hasAuthority('cashbook.manage')")
     public Map<String, String> adjust(@PathVariable UUID id, @Valid @RequestBody DebtService.AdjustRequest req,
                                       @AuthenticationPrincipal Jwt jwt) {
-        String code = debt.adjust(id, req);
-        Actor.of(jwt).audit(audit, null, "Khách hàng", "Điều chỉnh nợ", code,
-                "Điều chỉnh công nợ khách " + service.find(id).getName() + " thành " + Actor.money(req.newDebt()));
-        return Map.of("code", code);
+        return service.adjust(id, req, Actor.of(jwt));
     }
 }

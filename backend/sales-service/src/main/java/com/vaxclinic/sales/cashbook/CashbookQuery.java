@@ -33,6 +33,10 @@ public class CashbookQuery {
     public record Page(List<Item> items, long total, int page, int size, Summary summary) {
     }
 
+    /** Phân bổ của phiếu thu vào hóa đơn (chi tiết phiếu). */
+    public record Allocated(UUID invoiceId, String invoiceCode, Instant soldAt, BigDecimal invoiceTotal, BigDecimal amount) {
+    }
+
     private final NamedParameterJdbcTemplate jdbc;
 
     public CashbookQuery(NamedParameterJdbcTemplate jdbc) {
@@ -83,6 +87,16 @@ public class CashbookQuery {
                         rs.getString("source_type")));
         return new Page(items, ((Number) agg.get("cnt")).longValue(), f.page(), f.size(),
                 new Summary(opening, rec, pay, opening.add(rec).subtract(pay)));
+    }
+
+    /** Các hóa đơn được phân bổ từ phiếu, theo thời gian bán. */
+    public List<Allocated> allocations(UUID voucherId) {
+        return jdbc.query("""
+                select i.id, i.code, i.sold_at, i.total, a.amount from voucher_allocations a
+                join invoices i on i.id = a.invoice_id where a.voucher_id = :id order by i.sold_at""",
+                new MapSqlParameterSource("id", voucherId), (rs, n) -> new Allocated(rs.getObject("id", UUID.class),
+                        rs.getString("code"), rs.getTimestamp("sold_at").toInstant(), rs.getBigDecimal("total"),
+                        rs.getBigDecimal("amount")));
     }
 
     public List<String> categories() {
