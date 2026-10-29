@@ -1,6 +1,5 @@
 package com.vaxclinic.sales.delivery;
 
-import com.vaxclinic.common.audit.AuditLogger;
 import com.vaxclinic.sales.common.Actor;
 import com.vaxclinic.sales.delivery.DeliveryPartnerDtos.LedgerRow;
 import com.vaxclinic.sales.delivery.DeliveryPartnerDtos.PartnerListResponse;
@@ -27,79 +26,67 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.UUID;
 
-/** Đối tác giao hàng: danh sách / thêm / sửa / xóa, sổ công nợ, lịch sử thanh toán, vận đơn chờ đối soát. */
+/**
+ * Đối tác giao hàng: danh sách / thêm / sửa / xóa, sổ công nợ, lịch sử thanh toán, vận đơn chờ đối soát.
+ * Nghiệp vụ ở {@link DeliveryPartnerManageService}.
+ */
 @RestController
 @RequestMapping("/api/delivery-partners")
 @PreAuthorize("hasAuthority('sales.perform') or hasAuthority('report.view')")
 public class DeliveryPartnerController {
 
-    private static final String FEATURE = "Đối tác giao hàng";
+    private final DeliveryPartnerManageService service;
 
-    private final DeliveryPartnerService service;
-    private final DeliveryPartnerQuery query;
-    private final AuditLogger audit;
-
-    public DeliveryPartnerController(DeliveryPartnerService service, DeliveryPartnerQuery query, AuditLogger audit) {
+    public DeliveryPartnerController(DeliveryPartnerManageService service) {
         this.service = service;
-        this.query = query;
-        this.audit = audit;
     }
 
     @GetMapping
     public PartnerListResponse list(@RequestParam(required = false) String q, @RequestParam(required = false) Boolean active,
                                     @RequestParam(required = false) String debt, @RequestParam(defaultValue = "0") int page,
                                     @RequestParam(defaultValue = "15") int size) {
-        return query.list(q, active, debt, Math.max(page, 0), Math.min(Math.max(size, 1), 200));
+        return service.list(q, active, debt, page, size);
     }
 
     @GetMapping("/{id}")
     public PartnerRow get(@PathVariable UUID id) {
-        return query.get(id);
+        return service.get(id);
     }
 
     @GetMapping("/{id}/ledger")
     public List<LedgerRow> ledger(@PathVariable UUID id) {
-        query.get(id);
-        return query.ledger(id);
+        return service.ledger(id);
     }
 
     @GetMapping("/{id}/settlements")
     public List<SettlementRow> settlements(@PathVariable UUID id) {
-        return query.settlements(id);
+        return service.settlements(id);
     }
 
     /** Vận đơn chờ đối soát trong các chi nhánh người dùng được làm việc (branchId: lọc 1 chi nhánh). */
     @GetMapping("/{id}/reconcilable")
     public List<ReconcileRow> reconcilable(@PathVariable UUID id, @RequestParam(required = false) UUID branchId,
                                            @AuthenticationPrincipal Jwt jwt) {
-        var allowed = Actor.of(jwt).branchIds().stream().map(UUID::fromString).toList();
-        return query.reconcilable(id, branchId == null ? allowed : allowed.stream().filter(branchId::equals).toList());
+        return service.reconcilable(id, branchId, Actor.of(jwt));
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAuthority('sales.perform')")
     public PartnerRow create(@Valid @RequestBody PartnerRequest req, @AuthenticationPrincipal Jwt jwt) {
-        PartnerRow r = query.get(service.create(req, Actor.of(jwt)));
-        Actor.of(jwt).audit(audit, null, FEATURE, "Tạo", r.code(), "Tạo đối tác giao hàng " + r.code() + " " + r.name());
-        return r;
+        return service.create(req, Actor.of(jwt));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('sales.perform')")
     public PartnerRow update(@PathVariable UUID id, @Valid @RequestBody PartnerRequest req, @AuthenticationPrincipal Jwt jwt) {
-        service.update(id, req);
-        PartnerRow r = query.get(id);
-        Actor.of(jwt).audit(audit, null, FEATURE, "Sửa", r.code(), "Cập nhật đối tác giao hàng " + r.code() + " " + r.name()
-                + (r.active() ? "" : " (ngừng hoạt động)"));
-        return r;
+        return service.update(id, req, Actor.of(jwt));
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasAuthority('sales.perform')")
     public void delete(@PathVariable UUID id, @AuthenticationPrincipal Jwt jwt) {
-        String code = service.delete(id);
-        Actor.of(jwt).audit(audit, null, FEATURE, "Xóa", code, "Xóa đối tác giao hàng " + code);
+        service.delete(id, Actor.of(jwt));
     }
 }
