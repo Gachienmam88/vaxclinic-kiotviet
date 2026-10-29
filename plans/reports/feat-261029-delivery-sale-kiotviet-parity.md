@@ -93,3 +93,36 @@ Date: 2026-10-29 · Branch: feature/phase-01-foundation
 - Rebuilt sales, product, integration, identity (tests pass) + frontend (`tsc`, eslint, `next build`), all restarted, health 200.
 - e2e: delivery 56/56, sales 22/22, sale_backend 57/57, invoice_tools 27/27, store_profile 66/66.
 - Note: after e2e_store_profile the app shows the Terms-of-use acceptance dialog on first page load (other feature), settings page loads with no errors.
+
+---
+
+## Task 3 (2026-10-30): Vận đơn / Quản lý giao hàng / Đối tác giao hàng (KiotViet 227–238)
+
+### Backend (sales-service)
+- Shipment statuses extended to KiotViet's 12: + Đã lấy hàng (PICKED), Chờ lấy lại (WAIT_REPICK), Chờ giao lại (WAIT_REDELIVER), Chờ chuyển hoàn (WAIT_RETURN), Chờ chuyển hoàn lại (WAIT_RERETURN); RETURNING relabelled "Đang chuyển hoàn". They are pure workflow states — ledger/debt posting still only at Giao thành công / Đã chuyển hoàn / Đã hủy (ShipmentStatusWriter unchanged), so balances stay correct. Cancel allowed only before pickup (Chờ xử lý / Đang lấy hàng / Chờ lấy lại). Invoice state, partner "cần thu hộ" and filters updated for the new states.
+- `GET /api/shipments` new filters: completedFrom/To (delivered_at), cod (true/false), connection (MANUAL), search also by partner waybill code; items carry customerId/code, waybillCode, expectedDeliveryAt, deliveredAt, serviceType. Detail adds item quantity, invoice note, packages + dimensions, codOpen, partnerFee, partnerFeeOpen.
+- `GET /api/shipments/dashboard` (counts / COD / fee by status, Chờ giao lại, Chờ chuyển hoàn, quá giờ giao dự kiến) and `GET /api/shipments/cashflow` (partner ledger in period: COD collected, fees, net settlements, current balance).
+- Partners: `codOpen` / `feeOpen` (posted, not reconciled), `shipmentTotal`, list sums; `GET /api/delivery-partners/settlements` (all partners).
+
+### Frontend
+- **Vận đơn** (`/delivery/shipments`): KiotViet header (search "Theo mã vận đơn" + slider icon, Đối soát, Xuất file xlsx of all filtered rows / shown columns, column chooser, gear, "?" help), left filters (status multi-select, partner, Thời gian tạo default Tháng này, Thời gian hoàn thành default Toàn thời gian, Khu vực = province, COD Tất cả/Có/Không), columns per screenshots (+ Người nhận, Điện thoại, Địa chỉ, Khu vực, Thu hộ, Phí giao hàng, Thời gian hoàn thành, Dịch vụ, Mã vận đơn nội bộ), summary row, bulk status bar. Expanded row: Thông tin (người nhận / hóa đơn 2 cột + collapsible "Thông tin vận chuyển" 3 cột; TL quy đổi = D×R×C/6000 kg shown in g with ⓘ formula) and Lịch sử giao hàng (time, partner, created by, status badge); status / edit actions kept.
+- **Quản lý giao hàng** (`/delivery`, replaces the old bulk page whose bulk-update/reconcile moved to Vận đơn): back arrow title, "⟳ Cập nhật lúc HH:mm" refresh, QUẢN LÝ (Thống kê / Dòng tiền), filters Hình thức kết nối (Tất cả / Trực tiếp qua cổng giao hàng + Kết nối tài khoản HVC disabled "Chưa kết nối" / Tự giao hàng), Đối tác (searchable, Tất cả, partners, Khác = all self-managed), Thời gian tạo đơn (Hôm nay / Hôm qua / 7 ngày qua ✓ / Tháng này / Tháng trước / Tùy chọn range). Cards, summary, SVG donut (count/COD/fee) + legend, status table with total row; cards/rows/"Xem chi tiết" open Vận đơn pre-filtered.
+- **Đối tác giao hàng**: left card Tích hợp (own icon illustration, text, help link; no partners) / Khác (store partners + status/debt filters); tabs Thông tin (7 columns from shipments + totals, column chooser, xlsx export disabled when empty), Lịch sử giao hàng (shipments of all partners), Lịch sử đối soát; empty state "Không tìm thấy kết quả nào phù hợp"; create/edit modal and detail panel kept.
+
+### Not built / substitutions
+- Card "Đơn điều chỉnh cước vận chuyển 24h qua" and columns "Tiền bồi hoàn", "GTB-Thu tiền": no carrier integration / no data → left out.
+- "Đơn hàng giao thất bại" = shipments in Chờ giao lại.
+- Khu vực filter: address model is 2-level (Tỉnh/TP → Phường/Xã, post-2025), no Quận/Huyện → filter by province.
+- Gear: no dedicated delivery settings page exists → opens Thiết lập → Đơn hàng.
+- Delivery history tab shows the current partner for each status change (logs don't store the partner).
+
+## Task 4: Trả hàng list (239–242)
+- Backend `GET /api/sales-returns`: types (INVOICE / QUICK / SHIPMENT=chuyển hoàn), deliveryStatuses + partnerId (via the return's shipment, else invoice's latest shipment); items add type, seller, customer code, branch, created time/by, channel, note, discount, sale shipment code/status, partner. `GET /api/sales-returns/export` (≤5,000 returns + lines). Return picker also finds invoices by partner waybill code.
+- Frontend `/returns`: search "Theo mã phiếu trả" + slider, "+ Trả hàng" (→ /sale?returnPicker=1 opens "Chọn hóa đơn trả hàng"), "Xuất file ▾" File tổng quan / File chi tiết (xlsx via the invoice file-jobs panel), 2-column column chooser (defaults as 242), gear (Thiết lập → Đơn hàng), "?" help; filters Loại trả hàng, Trạng thái (Đã trả ✓, Đã hủy ☐), Trạng thái giao hàng, Đối tác, Thời gian; checkbox + ☆ columns (☆ stored per user on this device); empty state with "vào đây" → all time; stickyHeader.
+- Picker dialog (241) already matched (filters all server-side, primary header, pagination, Trả nhanh → existing quick-return tab); only the URL entry point was added.
+- Left out (no data): Loại "Hoàn tiền"; Trạng thái "Đang xử lý" (returns are only Đã trả / Đã hủy); Trạng thái HĐĐT filter + columns Trạng thái HĐĐT / Mã số HĐĐT (no e-invoices for returns); CSDL dược filter/columns; columns Mã vận đơn trả, Người nhận trả, Tổng tiền hàng sau thuế, VAT hoàn lại, Giảm thuế hoàn lại, Thu khác hoàn lại.
+
+### Verification
+- sales-service built (tests pass) + restarted; frontend tsc / eslint clean, `next build` OK, :3010 restarted.
+- e2e: delivery 71/71 (new KV1–KV10 shipments/dashboard/cashflow/partners vs DB incl. TL quy đổi dims, RT0–RT4 returns filters/columns/export/picker), sales 22/22, sale_backend 57/57, edit_return 18/18, invoice_tools 27/27.
+- Browser (Playwright): Vận đơn list + expanded detail, Quản lý giao hàng (Thống kê, Dòng tiền), Đối tác (Tích hợp, Khác), Trả hàng, return picker — rendered, no page errors.
