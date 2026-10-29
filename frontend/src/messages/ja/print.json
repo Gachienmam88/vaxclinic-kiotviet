@@ -102,6 +102,7 @@
     "prescriptionCode": "処方箋番号",
     "prescriber": "処方医",
     "clinic": "医療機関",
-    "diagnosis": "診断"
+    "diagnosis": "診断",
+    "taxReductionMethod": "減税方法"
   }
 }

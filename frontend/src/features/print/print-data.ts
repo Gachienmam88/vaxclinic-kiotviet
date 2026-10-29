@@ -46,6 +46,8 @@ export function invoiceData(inv: Invoice): PrintData {
     Tong_Cong_Bang_Chu: amountInWords(Number(inv.total)), Khach_Da_Tra: formatMoney(inv.paid),
     Con_No: formatMoney(Number(inv.total) - Number(inv.paid)), PT_Thanh_Toan: methodLabel(inv.paymentMethod), Ghi_Chu: inv.note ?? "",
     Giam_Thue: formatMoney(Math.max(0, Number(inv.subtotal) - Number(inv.discount) - Number(inv.total))),
+    Phuong_Phap_Giam_Thue: inv.taxReductionMethod === "DIRECT" ? "(trực tiếp: giảm 20% tỷ lệ % GTGT)"
+      : inv.taxReductionMethod === "DEDUCTION" ? "(khấu trừ: 10% → 8%)" : "",
     ...prescriptionFields(inv.prescription), __lines: lines(inv.lines),
   };
 }

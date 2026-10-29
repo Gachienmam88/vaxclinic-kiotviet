@@ -19,6 +19,8 @@ export type Sector = { code: string; name: string; vatRate: number; pitRate: num
 export type TaxSettings = {
   vatEnabled: boolean; sectors: Sector[]; defaultSector: string; categorySectors: Record<string, string>;
   defaultTaxCode: string | null; profiles: TaxProfile[];
+  /** Phương pháp tính thuế GTGT: DEDUCTION (khấu trừ, mặc định) / DIRECT (trực tiếp trên doanh thu). */
+  vatMethod?: "DEDUCTION" | "DIRECT";
 };
 
 export const useTaxSettings = () => useQuery({ queryKey: ["tax-settings"], queryFn: () => api<TaxSettings>("/settings/tax") });

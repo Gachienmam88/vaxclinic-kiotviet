@@ -171,7 +171,11 @@
       "invoiceDiscount": "Giảm giá hóa đơn",
       "taxCut": "Giảm thuế",
       "total": "Khách cần trả",
-      "paid": "Khách đã trả"
+      "paid": "Khách đã trả",
+      "taxMethod": {
+        "DEDUCTION": "khấu trừ",
+        "DIRECT": "trực tiếp"
+      }
     },
     "payments": {
       "code": "Mã phiếu",

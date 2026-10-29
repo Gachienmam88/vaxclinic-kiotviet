@@ -172,7 +172,11 @@
       "invoiceDiscount": "Invoice discount",
       "taxCut": "Tax reduction",
       "total": "Amount due",
-      "paid": "Customer paid"
+      "paid": "Customer paid",
+      "taxMethod": {
+        "DEDUCTION": "deduction",
+        "DIRECT": "direct"
+      }
     },
     "payments": {
       "code": "Voucher no.",

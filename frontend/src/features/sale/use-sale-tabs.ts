@@ -5,7 +5,7 @@ import { useT } from "@/lib/i18n";
 import { saleNs, type SaleT } from "@/messages/sale";
 import { migrateDraft } from "./sale-price-book-pricing";
 import { KEYS, load, newId, save } from "./sale-storage";
-import { taxReductionActive, taxReductionAmount } from "./sale-tax-reduction";
+import { taxPreviewKey, taxReductionActive, taxReductionAmount } from "./sale-tax-reduction";
 import type { CartLine, DraftInvoice } from "./sale-types";
 
 /** Mặc định tab mới theo Thiết lập → Thanh toán (phương thức mặc định; "Tiền khách thanh toán bằng khách cần trả"). */
@@ -138,8 +138,10 @@ export function cartTotals(t: DraftInvoice) {
   const raw = t.discountPercent != null ? (subtotal * t.discountPercent) / 100 : t.discount;
   const discount = Math.min(Math.round(raw), subtotal);
   // Giảm thuế (Nghị quyết 204/2025/QH15): chỉ hóa đơn bán, khi bật và trong thời gian áp dụng
+  // Số server xem trước (đúng phương pháp tính thuế) nếu còn khớp giỏ hàng; chưa có thì ước tính khấu trừ
+  const preview = t.taxCutPreview?.key === taxPreviewKey(t, discount) ? t.taxCutPreview : null;
   const taxCut = t.taxReduction && t.kind !== "ORDER" && t.kind !== "RETURN" && taxReductionActive()
-    ? taxReductionAmount(t.lines, subtotal, subtotal - discount) : 0;
+    ? preview?.amount ?? taxReductionAmount(t.lines, subtotal, subtotal - discount) : 0;
   const total = subtotal - discount - taxCut;
   const quantity = t.lines.reduce((s, l) => s + l.quantity, 0);
   const deposit = (t.orderOf ?? t.fromOrder)?.deposit ?? 0;
@@ -148,7 +150,7 @@ export function cartTotals(t: DraftInvoice) {
   const paid = t.paid ?? (t.kind === "ORDER" || (t.mode === "DELIVERY" && !t.editOf) ? 0 : due);
   // Tắt "Thu hộ tiền (COD)" → không thu hộ, phần chưa trả ghi công nợ khách
   const codOn = t.mode === "DELIVERY" && t.kind !== "ORDER" && t.delivery?.codEnabled !== false;
-  return { subtotal, discount, taxCut, total, quantity, deposit, due, paid, cod: codOn ? Math.max(0, due - paid) : 0 };
+  return { subtotal, discount, taxCut, taxMethod: preview?.method ?? null, total, quantity, deposit, due, paid, cod: codOn ? Math.max(0, due - paid) : 0 };
 }
 
 export type SaleTabs = ReturnType<typeof useSaleTabs>;

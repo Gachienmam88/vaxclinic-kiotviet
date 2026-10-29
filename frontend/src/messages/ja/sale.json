@@ -504,7 +504,11 @@
   },
   "taxReduction": {
     "label": "減税",
-    "tooltip": "決議204/2025/QH15に基づく減税を適用"
+    "tooltip": "決議204/2025/QH15に基づく減税を適用",
+    "methods": {
+      "DEDUCTION": "控除 10% → 8%",
+      "DIRECT": "直接 −20%税率"
+    }
   },
   "prescription": {
     "label": "処方箋販売",

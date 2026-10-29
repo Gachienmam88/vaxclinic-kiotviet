@@ -134,7 +134,13 @@
     "notChosen": "chưa chọn",
     "addTaxCode": "Thêm mã số thuế",
     "promptTaxCode": "Nhập mã số thuế (10 hoặc 13 chữ số):",
-    "noProfiles": "Chưa có mã số thuế. Bấm “Thêm mã số thuế” để bắt đầu."
+    "noProfiles": "Chưa có mã số thuế. Bấm “Thêm mã số thuế” để bắt đầu.",
+    "vatMethod": "Phương pháp tính thuế GTGT",
+    "vatMethodDesc": "Quyết định cách \"Giảm thuế\" theo Nghị quyết 204/2025/QH15 ở màn bán hàng: khấu trừ giảm thuế suất 10% → 8%; trực tiếp giảm 20% tỷ lệ % GTGT của ngành nghề.",
+    "vatMethods": {
+      "DEDUCTION": "Khấu trừ",
+      "DIRECT": "Trực tiếp trên doanh thu"
+    }
   },
   "einvoice": {
     "tocEInvoice": "Hóa đơn điện tử",

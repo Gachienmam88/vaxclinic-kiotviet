@@ -68,6 +68,8 @@ export type Invoice = {
   customerAddress?: string | null;
   /** Giảm thuế GTGT (Nghị quyết 204/2025/QH15) đã trừ trong total; prescription: "Bán thuốc theo đơn" (null = không). */
   taxReduction?: number;
+  /** DEDUCTION (khấu trừ 10% → 8%) / DIRECT (trực tiếp, 20% tỷ lệ % ngành); null = không giảm. */
+  taxReductionMethod?: "DEDUCTION" | "DIRECT" | null;
   prescription?: { code: string | null; doctor: string | null; facility: string | null; diagnosis: string | null } | null;
 };
 

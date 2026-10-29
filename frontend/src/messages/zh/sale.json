@@ -504,7 +504,11 @@
   },
   "taxReduction": {
     "label": "减税",
-    "tooltip": "按第204/2025/QH15号决议适用减税"
+    "tooltip": "按第204/2025/QH15号决议适用减税",
+    "methods": {
+      "DEDUCTION": "抵扣 10% → 8%",
+      "DIRECT": "直接 −20%比例"
+    }
   },
   "prescription": {
     "label": "凭处方售药",

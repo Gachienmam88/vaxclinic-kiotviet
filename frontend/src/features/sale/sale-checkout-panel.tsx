@@ -91,7 +91,7 @@ export function SaleCheckoutPanel({ draft, branchId, update, onPay, paying, pric
           <NumberInput aria-label={tr("checkout.invoiceDiscount")} className={`${underlineInput} w-[104px] text-[15px]`} value={t.discount}
             onValueChange={(discount) => update({ discount, discountPercent: null })} />
         </SummaryRow>
-        <SaleTaxReductionRow draft={draft} amount={t.taxCut} update={update} />
+        <SaleTaxReductionRow draft={draft} amount={t.taxCut} method={t.taxMethod} update={update} />
         <SummaryRow label={tr("checkout.due")} bold><span className="text-[17px] text-primary">{formatMoney(t.total)}</span></SummaryRow>
         {t.deposit > 0 && <SummaryRow label={tr(order ? "checkout.alreadyPaid" : "checkout.deposited")}>{formatMoney(t.deposit)}</SummaryRow>}
         <SalePaidSection draft={draft} paid={t.paid} due={t.due} update={update} onQr={() => { update({ paymentMethod: "TRANSFER", extraPayments: [] }); setQr(true); }}

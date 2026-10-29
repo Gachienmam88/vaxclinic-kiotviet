@@ -137,7 +137,13 @@
     "notChosen": "not selected",
     "addTaxCode": "Add tax code",
     "promptTaxCode": "Enter the tax code (10 or 13 digits):",
-    "noProfiles": "No tax codes yet. Click “Add tax code” to get started."
+    "noProfiles": "No tax codes yet. Click “Add tax code” to get started.",
+    "vatMethod": "VAT calculation method",
+    "vatMethodDesc": "Determines how \"Tax reduction\" under Resolution 204/2025/QH15 works at the sale screen: deduction lowers the 10% rate to 8%; direct method cuts the sector VAT % rate by 20%.",
+    "vatMethods": {
+      "DEDUCTION": "Deduction",
+      "DIRECT": "Direct on revenue"
+    }
   },
   "einvoice": {
     "tocEInvoice": "E-invoices",

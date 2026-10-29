@@ -13,7 +13,10 @@ import type { DraftInvoice } from "./sale-types";
  * Dòng "Giảm thuế ⓘ [gạt]" + số tiền giảm (xanh) dưới Giảm giá (KiotViet). Chỉ hóa đơn bán, chỉ hiện trong thời gian áp dụng
  * Nghị quyết 204/2025/QH15; dòng hàng VAT10 có cờ giảm thuế tính 8% (server tính lại khi lưu).
  */
-export function SaleTaxReductionRow({ draft, amount, update }: { draft: DraftInvoice; amount: number; update: (p: Partial<DraftInvoice>) => void }) {
+/** method: phương pháp server trả về (DEDUCTION / DIRECT) → ghi chú nhỏ cạnh số tiền. */
+export function SaleTaxReductionRow({ draft, amount, method, update }: {
+  draft: DraftInvoice; amount: number; method?: string | null; update: (p: Partial<DraftInvoice>) => void;
+}) {
   const t = useT(saleNs);
   if (draft.kind === "ORDER" || draft.kind === "RETURN" || !taxReductionActive()) return null;
   return (
@@ -26,6 +29,8 @@ export function SaleTaxReductionRow({ draft, amount, update }: { draft: DraftInv
       </span>
       <Switch className="ml-4" aria-label={t("taxReduction.label")} checked={!!draft.taxReduction}
         onCheckedChange={(on) => update({ taxReduction: on })} />
-    </>}><span className="text-[#2171bc]">{formatMoney(amount)}</span></SummaryRow>
+    </>}>
+      {draft.taxReduction && method && <span className="mr-2 text-[11px] text-[#6b7280]">{t(`taxReduction.methods.${method === "DIRECT" ? "DIRECT" : "DEDUCTION"}`)}</span>}
+      <span className="text-[#2171bc]">{formatMoney(amount)}</span></SummaryRow>
   );
 }

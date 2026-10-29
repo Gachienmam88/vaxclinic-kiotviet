@@ -504,7 +504,11 @@
   },
   "taxReduction": {
     "label": "Giảm thuế",
-    "tooltip": "Áp dụng giảm thuế theo Nghị quyết 204/2025/QH15"
+    "tooltip": "Áp dụng giảm thuế theo Nghị quyết 204/2025/QH15",
+    "methods": {
+      "DEDUCTION": "khấu trừ 10% → 8%",
+      "DIRECT": "trực tiếp −20% tỷ lệ %"
+    }
   },
   "prescription": {
     "label": "Bán thuốc theo đơn",

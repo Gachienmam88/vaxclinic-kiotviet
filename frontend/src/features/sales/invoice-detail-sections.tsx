@@ -41,7 +41,8 @@ export function InvoiceTotals({ inv }: { inv: Invoice }) {
   // Giảm thuế (giảm thuế GTGT theo nghị quyết) = phần chênh còn lại giữa tổng hàng − giảm giá và khách cần trả
   const taxCut = Math.max(0, Number(inv.subtotal) - Number(inv.discount) - Number(inv.total));
   const rows = [[t("invoices.totals.subtotal", { qty: formatNumber(qty) }), inv.subtotal], [t("invoices.totals.invoiceDiscount"), inv.discount],
-    [t("invoices.totals.taxCut"), taxCut], [t("invoices.totals.total"), inv.total]] as const;
+    [inv.taxReductionMethod && taxCut > 0 ? `${t("invoices.totals.taxCut")} (${t(`invoices.totals.taxMethod.${inv.taxReductionMethod}`)})`
+      : t("invoices.totals.taxCut"), taxCut], [t("invoices.totals.total"), inv.total]] as const;
   return (
     <div className="w-[260px] shrink-0 space-y-2.5 text-[13px]">
       {rows.map(([k, v]) => <div key={k} className="grid grid-cols-[1fr_100px] gap-4 text-right"><span>{k}</span><span>{formatMoney(v)}</span></div>)}

@@ -51,7 +51,7 @@ const VOUCHER = (title: string, person: string, signer: string) => `${HEADER}
 </tr></table>`;
 
 /** Giảm thuế (Nghị quyết 204/2025/QH15) + "Bán thuốc theo đơn". */
-const TAX_RX: Field[] = [["Giam_Thue", "taxReduction"], ["Thong_Tin_Don_Thuoc", "prescriptionSummary"],
+const TAX_RX: Field[] = [["Giam_Thue", "taxReduction"], ["Phuong_Phap_Giam_Thue", "taxReductionMethod"], ["Thong_Tin_Don_Thuoc", "prescriptionSummary"],
   ["Ma_Don_Thuoc", "prescriptionCode"], ["Bac_Si_Ke_Don", "prescriber"], ["Co_So_Kham", "clinic"], ["Chan_Doan", "diagnosis"]];
 
 /**
@@ -76,6 +76,7 @@ const DELIVERY_INVOICE_TEMPLATE = `<table><tr>
 <tr><th style="width:7%">TT</th><th>Tên Hàng</th><th style="width:10%">SL</th><th style="width:17%">Đơn giá</th><th style="width:19%">Thành tiền</th></tr>
 {#Dong_Hang}<tr><td class="c">{STT}</td><td><b>{Ten_Hang}</b></td><td class="c">{So_Luong}</td><td class="r">{Don_Gia}</td><td class="r">{Thanh_Tien}</td></tr>{/Dong_Hang}
 <tr><td></td><td class="c"><b>Cộng</b></td><td class="c">{Tong_So_Luong}</td><td></td><td class="r">{Tong_Tien_Hang}</td></tr>
+<tr><td></td><td class="c">Giảm thuế {Phuong_Phap_Giam_Thue}</td><td></td><td></td><td class="r">{Giam_Thue}</td></tr>
 <tr><td></td><td class="c"><b>Tổng Cộng</b></td><td></td><td></td><td class="r"><b>{Tong_Cong}</b></td></tr>
 <tr><td colspan="5" style="height:18px"></td></tr>
 </table>
@@ -103,7 +104,7 @@ ${LINES_TABLE("<th>Số lô</th>", "<td>{So_Lo}</td>")}
 <table style="margin-top:4px">
 <tr><td class="r">Tổng tiền hàng:</td><td class="r" style="width:30%">{Tong_Tien_Hang}</td></tr>
 <tr><td class="r">Giảm giá:</td><td class="r">{Giam_Gia}</td></tr>
-<tr><td class="r">Giảm thuế:</td><td class="r">{Giam_Thue}</td></tr>
+<tr><td class="r">Giảm thuế {Phuong_Phap_Giam_Thue}:</td><td class="r">{Giam_Thue}</td></tr>
 <tr><td class="r"><b>Tổng cộng:</b></td><td class="r"><b>{Tong_Cong}</b></td></tr>
 <tr><td class="r">Khách đã trả:</td><td class="r">{Khach_Da_Tra}</td></tr>
 <tr><td class="r">Còn nợ:</td><td class="r">{Con_No}</td></tr>

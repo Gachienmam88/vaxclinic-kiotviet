@@ -38,6 +38,15 @@ export default function TaxSettingsPage() {
               <p className="text-muted-foreground">{t("tax.vatDesc")}</p></div>
             <SettingSwitch checked={tax.vatEnabled} disabled={readOnly} onCheckedChange={(v) => update({ vatEnabled: v })} />
           </div>
+          <div className="flex items-center gap-4 pl-5" role="radiogroup" aria-label={t("tax.vatMethod")}>
+            <div className="flex-1"><p className="font-medium">{t("tax.vatMethod")}</p>
+              <p className="text-muted-foreground">{t("tax.vatMethodDesc")}</p></div>
+            {(["DEDUCTION", "DIRECT"] as const).map((m) => (
+              <label key={m} className="flex cursor-pointer items-center gap-1.5">
+                <input type="radio" name="vat-method" className="size-4 accent-primary" disabled={readOnly}
+                  checked={(tax.vatMethod ?? "DEDUCTION") === m} onChange={() => update({ vatMethod: m })} />{t(`tax.vatMethods.${m}`)}
+              </label>))}
+          </div>
           <div className="flex items-start gap-4 pl-5">
             <div className="flex-1"><p className="font-medium">{t("tax.directMethod")}</p>
               <ul className="mt-1 space-y-0.5 text-muted-foreground">

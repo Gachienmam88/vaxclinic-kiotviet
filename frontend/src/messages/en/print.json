@@ -102,6 +102,7 @@
     "prescriptionCode": "Prescription code",
     "prescriber": "Prescribing doctor",
     "clinic": "Medical facility",
-    "diagnosis": "Diagnosis"
+    "diagnosis": "Diagnosis",
+    "taxReductionMethod": "Tax reduction method"
   }
 }

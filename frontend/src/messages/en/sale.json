@@ -507,7 +507,11 @@
   },
   "taxReduction": {
     "label": "Tax reduction",
-    "tooltip": "Apply VAT reduction under Resolution 204/2025/QH15"
+    "tooltip": "Apply VAT reduction under Resolution 204/2025/QH15",
+    "methods": {
+      "DEDUCTION": "deduction 10% → 8%",
+      "DIRECT": "direct −20% of rate"
+    }
   },
   "prescription": {
     "label": "Prescription sale",

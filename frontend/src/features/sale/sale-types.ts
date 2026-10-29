@@ -95,6 +95,8 @@ export type DraftInvoice = {
   einvoiceBuyer?: EInvoiceBuyer | null;
   /** Bật "Giảm thuế" (Nghị quyết 204/2025/QH15). */
   taxReduction?: boolean;
+  /** Kết quả server xem trước giảm thuế cho giỏ hàng có khóa key (method: DEDUCTION / DIRECT / null). */
+  taxCutPreview?: { key: string; amount: number; method: string | null } | null;
   /** null / thiếu = không bán theo đơn. */
   prescription?: Prescription | null;
   extraPayments?: ExtraPayment[];

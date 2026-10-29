@@ -102,6 +102,7 @@
     "prescriptionCode": "处方编号",
     "prescriber": "开方医生",
     "clinic": "就诊机构",
-    "diagnosis": "诊断"
+    "diagnosis": "诊断",
+    "taxReductionMethod": "减税方法"
   }
 }

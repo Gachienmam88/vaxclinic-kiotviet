@@ -102,6 +102,7 @@
     "prescriptionCode": "Mã đơn thuốc",
     "prescriber": "Bác sĩ kê đơn",
     "clinic": "Cơ sở khám",
-    "diagnosis": "Chẩn đoán"
+    "diagnosis": "Chẩn đoán",
+    "taxReductionMethod": "Phương pháp giảm thuế"
   }
 }

@@ -171,7 +171,11 @@
       "invoiceDiscount": "整单折扣",
       "taxCut": "减税",
       "total": "应付金额",
-      "paid": "客户已付"
+      "paid": "客户已付",
+      "taxMethod": {
+        "DEDUCTION": "抵扣",
+        "DIRECT": "直接"
+      }
     },
     "payments": {
       "code": "单号",

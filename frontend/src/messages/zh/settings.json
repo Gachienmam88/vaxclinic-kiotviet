@@ -134,7 +134,13 @@
     "notChosen": "未选择",
     "addTaxCode": "添加税号",
     "promptTaxCode": "请输入税号（10 位或 13 位数字）：",
-    "noProfiles": "暂无税号。点击“添加税号”开始。"
+    "noProfiles": "暂无税号。点击“添加税号”开始。",
+    "vatMethod": "增值税计算方法",
+    "vatMethodDesc": "决定销售界面按第204/2025/QH15号决议\"减税\"的方式：抵扣法将10%税率降为8%；直接法将行业增值税比例降低20%。",
+    "vatMethods": {
+      "DEDUCTION": "抵扣法",
+      "DIRECT": "按营业额直接计算"
+    }
   },
   "einvoice": {
     "tocEInvoice": "电子发票",

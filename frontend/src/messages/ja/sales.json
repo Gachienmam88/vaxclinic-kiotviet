@@ -171,7 +171,11 @@
       "invoiceDiscount": "伝票値引き",
       "taxCut": "減税額",
       "total": "請求額",
-      "paid": "入金額"
+      "paid": "入金額",
+      "taxMethod": {
+        "DEDUCTION": "控除",
+        "DIRECT": "直接"
+      }
     },
     "payments": {
       "code": "伝票番号",

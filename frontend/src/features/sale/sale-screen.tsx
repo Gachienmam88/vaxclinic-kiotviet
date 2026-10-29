@@ -36,6 +36,7 @@ import { returnProblem, submitReturnDoc } from "./use-sale-return-submit";
 import { SaleSettingsProvider, useSaleSettings } from "./use-sale-settings";
 import { focusCustomerSearch, toggleFullscreen, useSaleShortcuts } from "./use-sale-shortcuts";
 import { useSaleBranch } from "./use-sale-branch";
+import { useSaleTaxPreview } from "./use-sale-tax-preview";
 import { cartTotals, useSaleTabs } from "./use-sale-tabs";
 import { openPicked, useSaleUrlDrafts } from "./use-sale-url-drafts";
 import { useSaleNewTabParam } from "./use-sale-new-tab-param";
@@ -71,6 +72,7 @@ function SaleScreenBody() {
   const submitInvoice = useSaleInvoiceSubmit(tabs, branchId, queue.enqueue);
   const priceBook = useSalePriceBook(tabs, catalog.priceBooks, branchId, !!catalog.loadedAt);
   const lookups = useSaleLookups();
+  useSaleTaxPreview(tabs, branchId); // "Giảm thuế": số server tính theo phương pháp tính thuế
   const lineKeys = useSaleLineKeys(d?.lines ?? [], settings, tabs.setLines);
   useSaleUrlDrafts(me?.user.id, catalog.products, catalog.loadedAt, tabs.open);
   useSaleNewTabParam(tabs.tabs.length > 0, () => tabs.add());
