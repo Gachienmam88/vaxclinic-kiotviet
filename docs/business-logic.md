@@ -2442,7 +2442,16 @@ Quy ước lỗi chung (mọi service): body `ApiError {code, message, details[]
 
 **2. Dữ liệu**
 - `roles(id, code UNIQUE, name, system, description)`, `role_permissions(role_id, permission)` (`mig/V1__init_identity_schema.sql:13-24`, `mig/V2__settings_and_role_description.sql:9`).
-- Vai trò hệ thống seed (system=true): `ADMIN` Quản trị hệ thống, `MANAGER` Quản lý điểm tiêm, `RECEPTIONIST` Tiếp đón, `DOCTOR` Bác sĩ khám sàng lọc, `NURSE` Điều dưỡng tiêm, `CASHIER` Thu ngân, `STOREKEEPER` Thủ kho (`mig/V1__init_identity_schema.sql:58-65`). Migration không seed `role_permissions` cho vai trò ngoài ADMIN (ADMIN được bơm quyền lúc khởi động).
+- Vai trò hệ thống seed (system=true): `ADMIN` Quản trị hệ thống, `MANAGER` Quản lý điểm tiêm, `RECEPTIONIST` Tiếp đón, `DOCTOR` Bác sĩ khám sàng lọc, `NURSE` Điều dưỡng tiêm, `CASHIER` Thu ngân, `STOREKEEPER` Thủ kho (`mig/V1__init_identity_schema.sql:58-65`). Quyền mặc định seed bởi `mig/V11__system_role_default_permissions.sql` (audit #5) — **chỉ cho vai trò hệ thống chưa có quyền nào** (vai trò đã tùy chỉnh giữ nguyên; ADMIN được bơm đủ quyền lúc khởi động):
+
+  | Vai trò | Quyền mặc định |
+  |---|---|
+  | `MANAGER` Quản lý điểm tiêm | catalog.view/manage, inventory.view/manage, patient.view/manage, reception/screening/injection.perform, sales.perform, sales.cancel, cashbook.manage, report.view, hr.manage (không user/branch/settings.manage) |
+  | `RECEPTIONIST` Tiếp đón | catalog.view, patient.view, patient.manage, reception.perform |
+  | `DOCTOR` Bác sĩ khám sàng lọc | catalog.view, patient.view, screening.perform |
+  | `NURSE` Điều dưỡng tiêm | catalog.view, inventory.view, patient.view, injection.perform |
+  | `CASHIER` Thu ngân | catalog.view, patient.view, patient.manage (tạo khách tại quầy), sales.perform (không sales.cancel, cashbook.manage) |
+  | `STOREKEEPER` Thủ kho | catalog.view, inventory.view, inventory.manage |
 - Vai trò tự tạo: mã `CUSTOM_` + 8 ký tự đầu UUID viết hoa (`id/role/RoleService.java:44-48`).
 - Tìm kiếm không dấu: hàm `immutable_unaccent` + chỉ mục GIN trigram trên `users.full_name`, `hr_employees.name` (`mig/V10__accent_insensitive_search.sql:5-13`).
 
@@ -2951,7 +2960,7 @@ Menu trái Thiết lập (`fe/features/settings/settings-shell.tsx:20-57`; mục
 
 1. ~~Logout BFF không thu hồi refresh token~~ — đã sửa: `/api/auth/logout` public, xem mục 4.14.
 2. `reception.perform`, `screening.perform`, `injection.perform` không có endpoint nào kiểm — giữ lại cho quy trình tiêm tương lai hay bỏ?
-3. Vai trò hệ thống ngoài ADMIN không được seed quyền mặc định trong migration (comment `Permissions.java:7` nói "seeded by migrations") — có migration ở nơi khác không, hay vai trò mặc định đang rỗng quyền?
+3. ~~Vai trò hệ thống không có quyền mặc định~~ — đã sửa: `mig/V11__system_role_default_permissions.sql` (mục 4.3).
 4. Cấu hình HĐĐT / chứng thư số (`/api/store-profile/einvoice|certificates`) thuộc integration-service — cách mã hóa bí mật cần xem ở phần tài liệu integration.
 5. Phiếu xác thực Hồ sơ cửa hàng dùng lại được trong 10 phút (không đánh dấu đã dùng) — có chấp nhận không?
 
