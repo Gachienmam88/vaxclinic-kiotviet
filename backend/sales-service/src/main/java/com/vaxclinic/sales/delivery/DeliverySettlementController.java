@@ -1,6 +1,5 @@
 package com.vaxclinic.sales.delivery;
 
-import com.vaxclinic.common.audit.AuditLogger;
 import com.vaxclinic.sales.common.Actor;
 import com.vaxclinic.sales.delivery.DeliveryPartnerDtos.PaymentRequest;
 import com.vaxclinic.sales.delivery.DeliveryPartnerDtos.ReconcileRequest;
@@ -16,47 +15,35 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.UUID;
 
-/** Đối soát thu hộ / thanh toán với đối tác giao hàng (phiếu thu / chi Sổ quỹ) và hủy phiếu đối soát. */
+/**
+ * Đối soát thu hộ / thanh toán với đối tác giao hàng (phiếu thu / chi Sổ quỹ) và hủy phiếu đối soát.
+ * Nghiệp vụ ở {@link DeliverySettlementManageService}.
+ */
 @RestController
 @RequestMapping("/api/delivery-partners")
 @PreAuthorize("hasAuthority('sales.perform')")
 public class DeliverySettlementController {
 
-    private static final String FEATURE = "Đối tác giao hàng";
+    private final DeliverySettlementManageService service;
 
-    private final DeliverySettlementService service;
-    private final AuditLogger audit;
-
-    public DeliverySettlementController(DeliverySettlementService service, AuditLogger audit) {
+    public DeliverySettlementController(DeliverySettlementManageService service) {
         this.service = service;
-        this.audit = audit;
     }
 
     @PostMapping("/{id}/reconcile")
     public DeliverySettlementService.Result reconcile(@PathVariable UUID id, @Valid @RequestBody ReconcileRequest req,
                                                       @AuthenticationPrincipal Jwt jwt) {
-        Actor actor = Actor.of(jwt);
-        var r = service.reconcile(id, req, actor);
-        actor.audit(audit, req.branchId(), FEATURE, "Đối soát", r.code(), "Đối soát " + req.shipmentIds().size()
-                + " vận đơn, chênh lệch " + Actor.money(r.amount()) + (r.voucherCode() == null ? "" : ", phiếu " + r.voucherCode()));
-        return r;
+        return service.reconcile(id, req, Actor.of(jwt));
     }
 
     @PostMapping("/{id}/payments")
     public DeliverySettlementService.Result pay(@PathVariable UUID id, @Valid @RequestBody PaymentRequest req,
                                                 @AuthenticationPrincipal Jwt jwt) {
-        Actor actor = Actor.of(jwt);
-        var r = service.pay(id, req, actor);
-        actor.audit(audit, req.branchId(), FEATURE, "Thanh toán", r.code(), ("RECEIPT".equals(req.direction())
-                ? "Thu tiền đối tác " : "Chi trả đối tác ") + Actor.money(req.amount()) + ", phiếu " + r.voucherCode());
-        return r;
+        return service.pay(id, req, Actor.of(jwt));
     }
 
     @PostMapping("/settlements/{settlementId}/cancel")
     public DeliverySettlementService.Result cancel(@PathVariable UUID settlementId, @AuthenticationPrincipal Jwt jwt) {
-        Actor actor = Actor.of(jwt);
-        var r = service.cancel(settlementId, actor);
-        actor.audit(audit, null, FEATURE, "Hủy đối soát", r.code(), "Hủy phiếu " + r.code() + ", số tiền " + Actor.money(r.amount()));
-        return r;
+        return service.cancel(settlementId, Actor.of(jwt));
     }
 }
