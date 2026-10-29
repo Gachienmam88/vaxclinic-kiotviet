@@ -8,6 +8,10 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,24 +27,50 @@ public class InvoiceQueryRepository {
         this.jdbc = jdbc;
     }
 
+    /** Cột thêm của 1 dòng danh sách (sau i.*): khách, vận đơn s, đối tác giao hàng, mã đặt hàng / trả hàng, kênh bán. */
+    static final String ITEM_COLUMNS = "select i.*, c.code customer_code, c.email customer_email, c.phone customer_phone,"
+            + " c.address customer_address, c.province customer_province, c.ward customer_ward, c.birthday customer_birthday, "
+            + InvoiceFilterSql.STATE + " state,"
+            + " (select string_agg(r.code, ', ' order by r.created_at) from sales_returns r where r.invoice_id = i.id"
+            + " and r.status = 'COMPLETED') return_codes,"
+            + " (select o.code from customer_orders o where o.id = i.order_id) order_code,"
+            + " (select ch.name from sales_channels ch where ch.code = i.sales_channel) channel_name,"
+            + " s.id shipment_id, s.code shipment_code, s.status shipment_status, dp.name partner_name, s.cod_amount,"
+            + " s.shipping_fee + s.return_fee partner_fee, s.expected_delivery_at";
+    static final String ITEM_JOINS = " left join delivery_partners dp on dp.id = s.partner_id";
+
     /** einvoiceIds: id hóa đơn theo trạng thái HĐĐT (null = không lọc HĐĐT), xem {@link InvoiceFilterSql#where}. */
     public InvoiceListResponse search(InvoiceQuery.Filter f, Map<String, List<UUID>> einvoiceIds) {
         var p = new MapSqlParameterSource();
-        String w = InvoiceFilterSql.where(f, p, einvoiceIds);
+        String w = InvoiceFilterSql.where(f, p, einvoiceIds, ITEM_JOINS);
         var agg = jdbc.queryForMap("select count(*) cnt, coalesce(sum(i.subtotal),0) sub, coalesce(sum(i.discount),0) disc,"
                 + " coalesce(sum(i.total),0) tot, coalesce(sum(i.paid),0) paid" + w, p);
         p.addValue("limit", f.size()).addValue("offset", (long) f.page() * f.size());
-        var items = jdbc.query("select i.*, c.code customer_code, " + InvoiceFilterSql.STATE + " state,"
-                + " (select string_agg(r.code, ', ' order by r.created_at) from sales_returns r where r.invoice_id = i.id"
-                + " and r.status = 'COMPLETED') return_codes" + w + " order by i.sold_at desc limit :limit offset :offset", p,
-                (rs, n) -> new InvoiceListItem(rs.getObject("id", UUID.class), rs.getString("code"),
-                        rs.getTimestamp("sold_at").toInstant(), rs.getString("customer_code"), rs.getString("customer_name"),
-                        rs.getString("seller_name"), rs.getBigDecimal("subtotal"), rs.getBigDecimal("discount"),
-                        rs.getBigDecimal("total"), rs.getBigDecimal("paid"), rs.getString("status"),
-                        rs.getString("payment_method"), rs.getString("state"), rs.getString("sale_mode"),
-                        rs.getString("return_codes")));
+        var items = jdbc.query(ITEM_COLUMNS + w + " order by i.sold_at desc, i.code desc limit :limit offset :offset", p,
+                (rs, n) -> item(rs));
         return new InvoiceListResponse(items, ((Number) agg.get("cnt")).longValue(), f.page(), f.size(),
                 (BigDecimal) agg.get("sub"), (BigDecimal) agg.get("disc"), (BigDecimal) agg.get("tot"), (BigDecimal) agg.get("paid"));
+    }
+
+    private static InvoiceListItem item(ResultSet rs) throws SQLException {
+        var birthday = rs.getDate("customer_birthday");
+        return new InvoiceListItem(rs.getObject("id", UUID.class), rs.getString("code"),
+                rs.getTimestamp("sold_at").toInstant(), rs.getString("customer_code"), rs.getString("customer_name"),
+                rs.getString("seller_name"), rs.getBigDecimal("subtotal"), rs.getBigDecimal("discount"),
+                rs.getBigDecimal("total"), rs.getBigDecimal("paid"), rs.getString("status"),
+                rs.getString("payment_method"), rs.getString("state"), rs.getString("sale_mode"),
+                rs.getString("return_codes"), instant(rs, "created_at"), instant(rs, "updated_at"), rs.getString("order_code"),
+                rs.getString("customer_email"), rs.getString("customer_phone"), rs.getString("customer_address"),
+                rs.getString("customer_province"), rs.getString("customer_ward"), birthday == null ? null : birthday.toLocalDate(),
+                rs.getObject("branch_id", UUID.class), rs.getString("created_by_name"), rs.getString("channel_name"),
+                rs.getString("note"), rs.getString("price_book_name"), rs.getObject("shipment_id", UUID.class),
+                rs.getString("shipment_code"), rs.getString("shipment_status"), rs.getString("partner_name"),
+                rs.getBigDecimal("cod_amount"), rs.getBigDecimal("partner_fee"), instant(rs, "expected_delivery_at"));
+    }
+
+    private static Instant instant(ResultSet rs, String col) throws SQLException {
+        Timestamp t = rs.getTimestamp(col);
+        return t == null ? null : t.toInstant();
     }
 
     /** Số lượng đã trả của từng dòng hóa đơn (phiếu trả hàng còn hiệu lực); dòng chưa trả không có trong map. */

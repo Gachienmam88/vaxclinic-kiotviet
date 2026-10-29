@@ -46,16 +46,11 @@ public class InvoiceMergeRepository {
                 (rs, n) -> row(rs));
     }
 
-    /** Phiếu thu chính (TT{mã}) còn hiệu lực đầu tiên theo thứ tự hóa đơn gốc; null nếu các hóa đơn chưa thu tiền lúc bán. */
-    public UUID firstMainVoucher(List<UUID> orderedIds) {
-        for (UUID id : orderedIds) {
-            var found = jdbc.queryForList("select id from cash_vouchers where source_type = 'INVOICE' and source_id = :id"
-                    + " and status = 'PAID' limit 1", new MapSqlParameterSource("id", id), UUID.class);
-            if (!found.isEmpty()) {
-                return found.get(0);
-            }
-        }
-        return null;
+    /** Phiếu thu chính (TT{mã}) còn hiệu lực của hóa đơn; null nếu lúc bán không thu tiền bằng phương thức chính. */
+    public UUID mainVoucher(UUID invoiceId) {
+        var found = jdbc.queryForList("select id from cash_vouchers where source_type = 'INVOICE' and source_id = :id"
+                + " and status = 'PAID' limit 1", new MapSqlParameterSource("id", invoiceId), UUID.class);
+        return found.isEmpty() ? null : found.get(0);
     }
 
     /**

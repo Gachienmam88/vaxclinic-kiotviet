@@ -60,7 +60,7 @@ public class UserService {
     @Transactional(readOnly = true)
     public java.util.List<UserLookup> lookup() {
         return users.findAll(Sort.by("fullName")).stream().filter(AppUser::isActive)
-                .map(u -> new UserLookup(u.getId(), u.getFullName())).toList();
+                .map(u -> new UserLookup(u.getId(), u.getFullName(), u.getUsername())).toList();
     }
 
     @Transactional(readOnly = true)

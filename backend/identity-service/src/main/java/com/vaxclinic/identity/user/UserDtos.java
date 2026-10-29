@@ -45,8 +45,8 @@ public final class UserDtos {
     public record Actor(UUID id, String name) {
     }
 
-    /** Danh sách rút gọn user đang hoạt động (ô chọn "Người nhập", "Người tạo"). */
-    public record UserLookup(UUID id, String fullName) {
+    /** Danh sách rút gọn user đang hoạt động (ô chọn "Người nhập", "Người tạo"; import hóa đơn tra người bán theo tên đăng nhập). */
+    public record UserLookup(UUID id, String fullName, String username) {
     }
 
         public record BranchRef(UUID id, String code, String name) {

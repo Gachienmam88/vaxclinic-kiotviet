@@ -51,10 +51,16 @@ public class InvoiceMergeWriter {
         Invoice first = locked.get(0);
         Invoice last = locked.get(locked.size() - 1);
         List<UUID> fromIds = locked.stream().map(Invoice::getId).toList();
-        UUID mainVoucher = merges.firstMainVoucher(fromIds);
-        String mainMethod = mainVoucher == null ? first.getPaymentMethod() : locked.stream()
-                .filter(o -> o.getPaymentMethod() != null && o.getPaid().signum() > 0).map(Invoice::getPaymentMethod)
-                .findFirst().orElse(first.getPaymentMethod());
+        // Phiếu thu chính (TT{mã}) đầu tiên → phiếu chính của hóa đơn gộp; phương thức thanh toán theo hóa đơn sở hữu phiếu đó
+        UUID mainVoucher = null;
+        String mainMethod = first.getPaymentMethod();
+        for (Invoice o : locked) {
+            mainVoucher = merges.mainVoucher(o.getId());
+            if (mainVoucher != null) {
+                mainMethod = o.getPaymentMethod();
+                break;
+            }
+        }
 
         var inv = new Invoice();
         inv.setId(id);

@@ -105,7 +105,15 @@ public final class InvoiceDtos {
                                   String sellerName, BigDecimal subtotal, BigDecimal discount, BigDecimal total,
                                   BigDecimal paid, String status, String paymentMethod,
                                   /* Trạng thái hiển thị: PROCESSING / COMPLETED / FAILED_DELIVERY / CANCELLED */ String state,
-                                  String saleMode, /* Mã phiếu trả hàng còn hiệu lực, cách nhau ", " */ String returnCodes) {
+                                  String saleMode, /* Mã phiếu trả hàng còn hiệu lực, cách nhau ", " */ String returnCodes,
+                                  Instant createdAt, Instant updatedAt, String orderCode, String customerEmail,
+                                  String customerPhone, String customerAddress, /* Khu vực */ String customerProvince,
+                                  String customerWard, java.time.LocalDate customerBirthday, UUID branchId,
+                                  String createdByName, String salesChannelName, String note, String priceBookName,
+                                  /* Vận đơn còn hiệu lực mới nhất (null = không giao hàng) */ UUID shipmentId,
+                                  String shipmentCode, String shipmentStatus, String deliveryPartnerName,
+                                  /* Còn cần thu (COD) */ BigDecimal cod, /* Phí trả ĐTGH = phí giao + phí chuyển hoàn */ BigDecimal partnerFee,
+                                  /* Thời gian giao hàng */ Instant deliveryTime) {
     }
 
     public record InvoiceListResponse(List<InvoiceListItem> items, long total, int page, int size, BigDecimal sumSubtotal,

@@ -60,6 +60,14 @@ public class InvoiceService {
     }
 
     public UUID create(InvoiceRequest req, Actor actor) {
+        return create(req, actor, null, null);
+    }
+
+    /**
+     * Import hóa đơn từ file: fixedCode = mã hóa đơn trong file (đã kiểm tra chưa tồn tại); lineLots = số lô xuất cho từng
+     * dòng (null / phần tử null = tự phân bổ FEFO). Còn lại đi đúng đường bán hàng thường (kho, phiếu thu, công nợ).
+     */
+    public UUID create(InvoiceRequest req, Actor actor, String fixedCode, List<String> lineLots) {
         if (invoices.existsById(req.id())) {
             return req.id();
         }
@@ -90,7 +98,7 @@ public class InvoiceService {
             throw BusinessException.badRequest("WALK_IN_DEBT", "Khách lẻ phải thanh toán đủ — chọn khách hàng để ghi nợ");
         }
         // Mã HĐ lấy trước để ghi vào thẻ kho; nếu bước sau lỗi, mã bị bỏ qua (dãy số có thể nhảy cóc).
-        String code = "HD%06d".formatted(invoices.nextCodeNumber());
+        String code = fixedCode != null ? fixedCode : "HD%06d".formatted(invoices.nextCodeNumber());
         // Line ids derived from the invoice id: a retry gets the SAME ids, matching the stored stock result (cost + lots).
         List<UUID> lineIds = IntStream.range(0, req.lines().size())
                 .mapToObj(i -> UUID.nameUUIDFromBytes((req.id() + ":" + i).getBytes(StandardCharsets.UTF_8))).toList();
@@ -100,7 +108,7 @@ public class InvoiceService {
             // Ghi nhận lần thanh toán TRƯỚC khi trừ kho → lưu hóa đơn lỗi mà không ai gửi lại thì job đối soát hoàn kho.
             UUID stockDocId = checkouts.begin(req, code, partner, actor, totals.total());
             var result = applySale(req.id(), new ProductStockClient.Request(stockDocId, "SALE", code, req.branchId(),
-                    partner, actor.id(), null, stockLines(req, lineIds)));
+                    partner, actor.id(), null, stockLines(req, lineIds, lineLots)));
             id = writer.persist(req, actor, customer, code, lineIds, result, totals, paid);
         } catch (RuntimeException e) {
             if (req.orderId() != null) orderDeposits.releaseClaim(req.orderId(), req.id());
@@ -183,7 +191,16 @@ public class InvoiceService {
     }
 
     private static List<ProductStockClient.Line> stockLines(InvoiceRequest req, List<UUID> lineIds) {
-        return IntStream.range(0, req.lines().size()).mapToObj(i -> ProductStockClient.Line.sale(lineIds.get(i),
-                req.lines().get(i).productId(), req.lines().get(i).unitId(), req.lines().get(i).quantity())).toList();
+        return stockLines(req, lineIds, null);
+    }
+
+    /** lots[i] != null → product-service xuất đúng lô đó cho dòng i (hàng theo lô), không FEFO. */
+    private static List<ProductStockClient.Line> stockLines(InvoiceRequest req, List<UUID> lineIds, List<String> lots) {
+        return IntStream.range(0, req.lines().size()).mapToObj(i -> {
+            var l = req.lines().get(i);
+            String lot = lots == null ? null : lots.get(i);
+            return lot == null ? ProductStockClient.Line.sale(lineIds.get(i), l.productId(), l.unitId(), l.quantity())
+                    : new ProductStockClient.Line(lineIds.get(i), l.productId(), l.unitId(), l.quantity(), lot, null);
+        }).toList();
     }
 }

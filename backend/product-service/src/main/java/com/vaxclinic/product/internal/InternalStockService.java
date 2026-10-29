@@ -26,6 +26,9 @@ import java.util.UUID;
  * - SALE_CANCEL: hoàn đúng các lô của chứng từ bán hiện hành (SALE hoặc SALE_REPLACE cùng docId).
  * - SALE_REPLACE (sửa hóa đơn): hoàn lô của previousDocId + xuất lại theo dòng mới, CÙNG 1 transaction
  *   → thiếu hàng ở bản mới thì kho giữ nguyên như trước khi sửa.
+ * - SALE có lotNumber trên dòng (import hóa đơn từ file): xuất đúng lô đó (còn hạn, đủ tồn), không FEFO.
+ * - SALE_MERGE (gộp hóa đơn): hoàn các chứng từ previousDocIds + xuất lại ĐÚNG các lô cũ cho dòng mới (sourceLineId =
+ *   dòng gốc), cùng 1 transaction → tồn kho không đổi; chứng từ cũ được đánh dấu SALE_CANCEL để không hoàn lần 2.
  * - SALE_RETURN: nhập lại đúng các lô sales-service chỉ định (lotNumber + baseQuantity); lô chưa có + có expiryDate
  *   (trả nhanh) → tạo lô mới; SALE_RETURN_CANCEL: đảo lại.
  */
@@ -37,11 +40,12 @@ public class InternalStockService {
      * expiryDate chỉ dùng cho trả nhanh nhập lô MỚI (lô chưa có tại chi nhánh) — lô đã có thì phải trùng hạn.
      */
     public record LineInput(UUID lineId, UUID productId, UUID unitId, BigDecimal quantity, String lotNumber,
-                            BigDecimal baseQuantity, LocalDate expiryDate) {
+                            BigDecimal baseQuantity, LocalDate expiryDate, UUID sourceLineId) {
     }
 
+    /** previousDocIds: chỉ dùng cho SALE_MERGE — các chứng từ bán của hóa đơn được gộp. */
     public record StockDocRequest(UUID docId, String docType, String docCode, UUID branchId, String partnerName,
-                                  UUID userId, UUID previousDocId, List<LineInput> lines) {
+                                  UUID userId, UUID previousDocId, List<LineInput> lines, List<UUID> previousDocIds) {
     }
 
     public record Allocation(String lotNumber, LocalDate expiryDate, BigDecimal baseQuantity) {
@@ -86,6 +90,7 @@ public class InternalStockService {
                 reverse(req, List.of("SALE", "SALE_REPLACE"), req.previousDocId(), DocType.SALE_CANCEL, true);
                 yield sale(req, DocType.SALE);
             }
+            case "SALE_MERGE" -> merge(req);
             case "SALE_RETURN" -> saleReturn(req);
             case "SALE_RETURN_CANCEL" -> reverse(req, List.of("SALE_RETURN"), req.docId(), DocType.SALE_RETURN, false);
             default -> throw BusinessException.badRequest("DOC_TYPE_UNSUPPORTED", "Loại chứng từ kho không hỗ trợ");
@@ -103,7 +108,9 @@ public class InternalStockService {
             BigDecimal baseQty = line.quantity().multiply(unit.getConversionRate());
             BigDecimal unitCost = p.getCost().multiply(unit.getConversionRate()).setScale(4, RoundingMode.HALF_UP);
             var allocations = new ArrayList<Allocation>();
-            if (p.isLotManaged()) {
+            if (p.isLotManaged() && line.lotNumber() != null && !line.lotNumber().isBlank()) {
+                allocations.add(saleFromLot(p, req, line.lotNumber().trim(), baseQty, type));
+            } else if (p.isLotManaged()) {
                 // Lock the (product, branch) balance row BEFORE reading lots: concurrent sales of the same item
                 // at the same branch then read lot quantities strictly one after another (no double allocation).
                 balances.findForUpdate(new StockBalance.Key(p.getId(), req.branchId()));
@@ -126,6 +133,54 @@ public class InternalStockService {
                 allocations.add(new Allocation(null, null, baseQty));
             }
             results.add(new LineResult(line.lineId(), p.getId(), unitCost, unit.getConversionRate(), allocations));
+        }
+        return new StockDocResult(req.docId(), req.docType(), results);
+    }
+
+    /** Xuất đúng 1 lô chỉ định: lô phải có tại chi nhánh, còn hạn sử dụng và đủ tồn. */
+    private Allocation saleFromLot(Product p, StockDocRequest req, String lotNumber, BigDecimal baseQty, DocType type) {
+        balances.findForUpdate(new StockBalance.Key(p.getId(), req.branchId()));
+        ProductLot lot = lots.findByProductIdAndBranchIdAndLotNumber(p.getId(), req.branchId(), lotNumber)
+                .orElseThrow(() -> BusinessException.badRequest("LOT_NOT_FOUND", p.getName() + ": không có lô " + lotNumber + " tại chi nhánh"));
+        if (lot.getExpiryDate().isBefore(LocalDate.now())) {
+            throw BusinessException.badRequest("LOT_EXPIRED", p.getName() + ": lô " + lotNumber + " đã hết hạn sử dụng");
+        }
+        if (lot.getQuantity().compareTo(baseQty) < 0) {
+            throw BusinessException.badRequest("INSUFFICIENT_LOT_STOCK", p.getName() + ": lô " + lotNumber + " không đủ tồn (còn "
+                    + lot.getQuantity().stripTrailingZeros().toPlainString() + ")");
+        }
+        move(p, req, baseQty.negate(), lotNumber, type);
+        return new Allocation(lotNumber, lot.getExpiryDate(), baseQty);
+    }
+
+    /**
+     * Gộp hóa đơn: hoàn từng chứng từ cũ (ghi luôn SALE_CANCEL cho chứng từ đó → hủy lại sau này không hoàn lần 2),
+     * rồi xuất lại đúng lô + giá vốn của dòng gốc cho dòng mới.
+     */
+    private StockDocResult merge(StockDocRequest req) {
+        if (req.previousDocIds() == null || req.previousDocIds().size() < 2) {
+            throw BusinessException.badRequest("MERGE_DOCS_REQUIRED", "Cần ít nhất 2 chứng từ bán để gộp");
+        }
+        var source = new java.util.HashMap<UUID, LineResult>();
+        for (UUID prev : req.previousDocIds()) {
+            if (load(prev, List.of("SALE_CANCEL")) != null) {
+                throw BusinessException.badRequest("STOCK_DOC_CANCELLED", "Chứng từ kho của hóa đơn gộp đã được hoàn trước đó");
+            }
+            StockDocResult reversed = reverse(req, List.of("SALE", "SALE_REPLACE"), prev, DocType.SALE_CANCEL, true);
+            docs.insert(prev, "SALE_CANCEL", req.docCode(), reversed);
+            reversed.lines().forEach(l -> source.put(l.lineId(), l));
+        }
+        var results = new ArrayList<LineResult>();
+        for (var line : req.lines()) {
+            LineResult src = source.get(line.sourceLineId());
+            if (src == null) {
+                throw BusinessException.badRequest("MERGE_LINE_NOT_FOUND", "Dòng hàng gộp không thuộc chứng từ kho gốc");
+            }
+            Product p = product(src.productId());
+            for (var a : src.allocations()) {
+                move(p, req, a.baseQuantity().negate(), a.lotNumber(), DocType.SALE);
+            }
+            results.add(new LineResult(line.lineId(), src.productId(), src.unitCost(), src.conversionRate(), src.allocations()));
         }
         return new StockDocResult(req.docId(), req.docType(), results);
     }
