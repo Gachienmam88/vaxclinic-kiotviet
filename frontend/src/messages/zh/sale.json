@@ -75,7 +75,8 @@
     "serviceType": "服务类型",
     "services": {
       "STANDARD": "普通配送",
-      "EXPRESS": "快速配送"
+      "EXPRESS": "快速配送",
+      "SAME_DAY": "当日达"
     },
     "waybill": "运单号",
     "deliveryTime": "配送时间",
@@ -95,7 +96,8 @@
     "postmanNote": "给快递员的备注",
     "codToggle": "代收货款 (COD)",
     "collapse": "收起配送信息",
-    "expand": "展开配送信息"
+    "expand": "展开配送信息",
+    "addressDetail": "详细地址（门牌号、巷、街道）"
   },
   "detail": {
     "category": "商品分类",

@@ -14,8 +14,8 @@ export type PartnerGroup = { id: string; name: string; partnerCount: number };
 /** Tỷ lệ giao thành công theo SĐT người nhận (rate null = chưa có vận đơn kết thúc). */
 export type ReceiverStats = { finished: number; delivered: number; rate: number | null };
 /** Loại dịch vụ tự giao. */
-export type ServiceType = "STANDARD" | "EXPRESS";
-export const SERVICE_TYPES: ServiceType[] = ["STANDARD", "EXPRESS"];
+export type ServiceType = "STANDARD" | "EXPRESS" | "SAME_DAY";
+export const SERVICE_TYPES: ServiceType[] = ["STANDARD", "EXPRESS", "SAME_DAY"];
 /** Trạng thái chọn được khi tạo đơn ở màn bán hàng. */
 export const INITIAL_SHIPMENT_STATUSES = ["PENDING", "PICKING", "DELIVERING", "DELIVERED"] as const;
 export type PartnerList = { items: DeliveryPartner[]; total: number; page: number; size: number; sumFee: number; sumCod: number; sumDebt: number };

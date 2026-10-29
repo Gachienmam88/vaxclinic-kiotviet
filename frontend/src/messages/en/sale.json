@@ -75,7 +75,8 @@
     "serviceType": "Service type",
     "services": {
       "STANDARD": "Standard",
-      "EXPRESS": "Express"
+      "EXPRESS": "Express",
+      "SAME_DAY": "Same day"
     },
     "waybill": "Waybill no.",
     "deliveryTime": "Delivery time",
@@ -95,7 +96,8 @@
     "postmanNote": "Note for courier",
     "codToggle": "Cash on delivery (COD)",
     "collapse": "Collapse delivery info",
-    "expand": "Expand delivery info"
+    "expand": "Expand delivery info",
+    "addressDetail": "Street address (house no., alley, street)"
   },
   "detail": {
     "category": "Category",

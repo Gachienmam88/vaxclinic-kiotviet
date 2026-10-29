@@ -64,7 +64,7 @@ export function SaleDeliveryReceiverFields({ id, v, set, customer }: {
       <div className="space-y-1.5 pt-1.5 pl-7">
         <VnAddressFields idPrefix={`sale-delivery-${id}`} value={toDeliveryAddress(v)} onChange={(a) => set(fromDeliveryAddress(a))}
           labels={{ address: t("delivery.address"), province: t("delivery.area"), ward: t("delivery.ward") }}
-          addressPlaceholder={t("delivery.address")} selectPlaceholders={{ province: t("delivery.area"), ward: t("delivery.ward") }}
+          addressPlaceholder={t("delivery.addressDetail")} selectPlaceholders={{ province: t("delivery.area"), ward: t("delivery.ward") }}
           renderRow={(key, _label, control) => <div key={key}>{control}</div>}
           controlClassName={`${lineField} h-10 rounded-none shadow-none dark:bg-transparent`} />
       </div>

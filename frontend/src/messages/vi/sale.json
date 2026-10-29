@@ -75,7 +75,8 @@
     "serviceType": "Loại dịch vụ",
     "services": {
       "STANDARD": "Giao thường",
-      "EXPRESS": "Giao nhanh"
+      "EXPRESS": "Giao nhanh",
+      "SAME_DAY": "Giao trong ngày"
     },
     "waybill": "Mã vận đơn",
     "deliveryTime": "Thời gian giao hàng",
@@ -95,7 +96,8 @@
     "postmanNote": "Ghi chú cho bưu tá",
     "codToggle": "Thu hộ tiền (COD)",
     "collapse": "Thu gọn thông tin giao hàng",
-    "expand": "Mở thông tin giao hàng"
+    "expand": "Mở thông tin giao hàng",
+    "addressDetail": "Địa chỉ chi tiết (Số nhà, ngõ, đường)"
   },
   "detail": {
     "category": "Nhóm hàng",

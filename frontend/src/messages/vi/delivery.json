@@ -202,7 +202,8 @@
     "serviceType": "Loại dịch vụ",
     "serviceTypes": {
       "STANDARD": "Giao thường",
-      "EXPRESS": "Giao nhanh"
+      "EXPRESS": "Giao nhanh",
+      "SAME_DAY": "Giao trong ngày"
     },
     "waybill": "Mã vận đơn",
     "deliveryTime": "Thời gian giao hàng",

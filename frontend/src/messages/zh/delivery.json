@@ -202,7 +202,8 @@
     "serviceType": "服务类型",
     "serviceTypes": {
       "STANDARD": "普通配送",
-      "EXPRESS": "快速配送"
+      "EXPRESS": "快速配送",
+      "SAME_DAY": "当日达"
     },
     "waybill": "运单号",
     "deliveryTime": "配送时间",

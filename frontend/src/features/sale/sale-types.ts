@@ -43,7 +43,7 @@ export type DeliveryDraft = {
   /** Khu vực theo ĐVHC 2 cấp (area = tên ghép); tab lưu từ bản cũ có thể thiếu. */
   provinceCode?: string; wardCode?: string; provinceName?: string; wardName?: string;
   /** Tự giao hàng (như KiotViet): loại dịch vụ, mã vận đơn của đối tác, thời gian giao (yyyy-MM-ddTHH:mm), trạng thái ban đầu. */
-  serviceType?: "STANDARD" | "EXPRESS"; waybillCode?: string; expectedDeliveryAt?: string; status?: "PENDING" | "PICKING" | "DELIVERING" | "DELIVERED";
+  serviceType?: "STANDARD" | "EXPRESS" | "SAME_DAY"; waybillCode?: string; expectedDeliveryAt?: string; status?: "PENDING" | "PICKING" | "DELIVERING" | "DELIVERED";
   /** Kiện hàng: số kiện, kích thước (cm); weightUnit chỉ để hiển thị (lưu weightGram). */
   packageCount?: number; lengthCm?: number | null; widthCm?: number | null; heightCm?: number | null; weightUnit?: "g" | "kg";
   /** Thu hộ tiền (COD): mặc định bật; tắt = phần khách chưa trả ghi công nợ khách. */

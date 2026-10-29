@@ -75,7 +75,8 @@
     "serviceType": "サービス種類",
     "services": {
       "STANDARD": "通常配送",
-      "EXPRESS": "速達"
+      "EXPRESS": "速達",
+      "SAME_DAY": "当日配送"
     },
     "waybill": "送り状番号",
     "deliveryTime": "配送日時",
@@ -95,7 +96,8 @@
     "postmanNote": "配達員へのメモ",
     "codToggle": "代金引換 (COD)",
     "collapse": "配送情報を折りたたむ",
-    "expand": "配送情報を開く"
+    "expand": "配送情報を開く",
+    "addressDetail": "番地・建物（番地、路地、通り）"
   },
   "detail": {
     "category": "商品グループ",

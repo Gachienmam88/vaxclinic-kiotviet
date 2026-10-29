@@ -202,7 +202,8 @@
     "serviceType": "サービス種類",
     "serviceTypes": {
       "STANDARD": "通常配送",
-      "EXPRESS": "速達"
+      "EXPRESS": "速達",
+      "SAME_DAY": "当日配送"
     },
     "waybill": "送り状番号",
     "deliveryTime": "配送日時",

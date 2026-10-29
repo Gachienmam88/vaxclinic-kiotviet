@@ -43,8 +43,8 @@ public final class ShipmentDtos {
         }
     }
 
-    /** Loại dịch vụ tự giao: Giao thường / Giao nhanh. */
-    public static final String SERVICE_TYPES = "STANDARD|EXPRESS";
+    /** Loại dịch vụ tự giao: Giao thường / Giao nhanh / Giao trong ngày. */
+    public static final String SERVICE_TYPES = "STANDARD|EXPRESS|SAME_DAY";
     /** Trạng thái chọn được khi tạo đơn ("Trạng thái giao hàng" ở màn bán hàng). */
     public static final String INITIAL_STATUSES = "PENDING|PICKING|DELIVERING|DELIVERED";
 

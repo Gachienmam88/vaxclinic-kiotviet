@@ -204,7 +204,8 @@
     "serviceType": "Service type",
     "serviceTypes": {
       "STANDARD": "Standard",
-      "EXPRESS": "Express"
+      "EXPRESS": "Express",
+      "SAME_DAY": "Same day"
     },
     "waybill": "Waybill no.",
     "deliveryTime": "Delivery time",

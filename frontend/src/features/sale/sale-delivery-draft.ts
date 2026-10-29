@@ -1,10 +1,10 @@
 import type { DeliveryDraft, DraftInvoice } from "./sale-types";
 
-/** Thông tin giao mặc định của tab Bán giao hàng (như KiotViet: 1 kiện 500 gram, 1×1×1 cm, Giao thường, Chờ xử lý, bật thu hộ). */
+/** Thông tin giao mặc định của tab Bán giao hàng (như KiotViet: 1 kiện 500 gram, 10×10×10 cm, Giao thường, Chờ xử lý, bật thu hộ). */
 export const EMPTY_DELIVERY: DeliveryDraft = {
   partnerId: "", receiverName: "", receiverPhone: "", receiverAddress: "", area: "", weightGram: 500, shippingFee: 0, feePayer: "SHOP",
-  note: "", serviceType: "STANDARD", waybillCode: "", expectedDeliveryAt: "", status: "PENDING", packageCount: 1, lengthCm: 1,
-  widthCm: 1, heightCm: 1, weightUnit: "g", codEnabled: true,
+  note: "", serviceType: "STANDARD", waybillCode: "", expectedDeliveryAt: "", status: "PENDING", packageCount: 1, lengthCm: 10,
+  widthCm: 10, heightCm: 10, weightUnit: "g", codEnabled: true,
 };
 
 /** Thông tin giao của tab (tab lưu từ bản cũ thiếu trường mới → lấy mặc định). */
