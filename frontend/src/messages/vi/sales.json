@@ -114,7 +114,8 @@
       "tabPayments": "Lịch sử thanh toán",
       "saved": "Đã lưu hóa đơn",
       "cancelled": "Đã hủy hóa đơn, hàng đã hoàn lại kho",
-      "notePlaceholder": "Ghi chú..."
+      "notePlaceholder": "Ghi chú...",
+      "tabDelivery": "Lịch sử giao hàng"
     },
     "header": {
       "openCustomer": "Mở khách hàng ở tab mới",

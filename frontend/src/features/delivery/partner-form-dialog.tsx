@@ -71,17 +71,17 @@ export function PartnerFormDialog({ partner, onClose, onSaved }: {
           <DialogTitle className={kvDialogTitle}>{t(partner ? "partner.titleEdit" : "partner.titleNew")}</DialogTitle>
         </DialogHeader>
         <form id="partner-form" className="max-h-[70vh] overflow-y-auto px-5 pb-4" onSubmit={(e) => { e.preventDefault(); save.mutate(); }}>
-          <Row label={t("partner.kind")}>{radio("partner-kind", [["PERSONAL", t("partner.kinds.PERSONAL")], ["COMPANY", t("partner.kinds.COMPANY")]] as const,
+          <Row label={t("selfShip.kind")}>{radio("partner-kind", [["PERSONAL", t("selfShip.kinds.PERSONAL")], ["COMPANY", t("selfShip.kinds.COMPANY")]] as const,
             v.partnerKind, (partnerKind) => set({ partnerKind }))}</Row>
           <Row label={t("partner.code")} htmlFor="partner-code">{input("code", { placeholder: t("partner.codePlaceholder"), maxLength: 30 })}</Row>
           <Row label={t("partner.name")} required htmlFor="partner-name">{input("name", { required: true, autoFocus: true, maxLength: 200 })}</Row>
           <Row label={tc("fields.phone")} htmlFor="partner-phone">{input("phone", { maxLength: 20, inputMode: "tel" })}</Row>
           <Row label={tc("fields.email")} htmlFor="partner-email">{input("email", { type: "email", maxLength: 150 })}</Row>
           <VnAddressFields idPrefix="partner" value={addr} onChange={setAddr} controlClassName={LINE}
-            labels={{ address: t("partner.addressDetail"), province: t("partner.area"), ward: t("partner.ward") }}
-            addressPlaceholder={t("partner.addressPlaceholder")} selectPlaceholders={{ province: "", ward: "" }}
+            labels={{ address: t("selfShip.addressDetail"), province: t("selfShip.area"), ward: t("selfShip.ward") }}
+            addressPlaceholder={t("selfShip.addressPlaceholder")} selectPlaceholders={{ province: "", ward: "" }}
             renderRow={(key, label, control) => <Row key={key} label={label} htmlFor={`partner-${key}`}>{control}</Row>} />
-          <Row label={t("partner.group")}><PartnerGroupSelect value={v.groupId} onChange={(groupId) => set({ groupId })} className={LINE} /></Row>
+          <Row label={t("selfShip.group")}><PartnerGroupSelect value={v.groupId} onChange={(groupId) => set({ groupId })} className={LINE} /></Row>
           <Row label={tc("fields.note")} htmlFor="partner-note">
             <textarea id="partner-note" maxLength={2000} rows={2} className={`${LINE} h-auto min-h-9 resize-none py-2`} value={v.note}
               onChange={(e) => set({ note: e.target.value })} /></Row>

@@ -28,7 +28,7 @@ export function InvoiceShipmentBar({ s }: { s: ShipmentInfo }) {
     <div className="rounded-md border border-[#e5e7eb] bg-[#f8f9fa] text-[13px]">
       <button type="button" aria-expanded={open} onClick={() => setOpen(!open)} className="flex h-11 w-full items-center gap-2 px-4 text-left">
         <ShoppingBasket className="size-4 text-[#4b5563]" />
-        <span className="min-w-0 flex-1 truncate">{t("invoiceInfo.selfDeliverTo")} <b>{joinAddress(s.receiverAddress, s.area)}</b></span>
+        <span className="min-w-0 flex-1 truncate">{t("selfShip.selfDeliverTo")} <b>{joinAddress(s.receiverAddress, s.area)}</b></span>
         <ChevronDown className={`size-4 shrink-0 transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
       {open && (
@@ -42,16 +42,16 @@ export function InvoiceShipmentBar({ s }: { s: ShipmentInfo }) {
           </div>
           <div className="grid grid-cols-1 gap-x-8 md:grid-cols-3">
             {item(t("fields.partnerShort"), s.partnerName)}
-            {item(t("fields.serviceType"), t(`serviceTypes.${s.serviceType ?? "STANDARD"}`))}
+            {item(t("selfShip.serviceType"), t(`selfShip.serviceTypes.${s.serviceType ?? "STANDARD"}`))}
             {item(t("fields.fee"), `${formatMoney(s.shippingFee)} (${t(FEE_PAYER_KEY[s.feePayer])})`)}
-            {item(t("fields.waybill"), s.waybillCode || "—")}
-            {item(t("fields.deliveryTime"), s.expectedDeliveryAt ? formatDateTime(s.expectedDeliveryAt) : "—")}
-            {item(t("fields.deliveryStatus"), t(SHIPMENT_STATUS_KEY[s.status]))}
+            {item(t("selfShip.waybill"), s.waybillCode || "—")}
+            {item(t("selfShip.deliveryTime"), s.expectedDeliveryAt ? formatDateTime(s.expectedDeliveryAt) : "—")}
+            {item(t("selfShip.deliveryStatus"), t(SHIPMENT_STATUS_KEY[s.status]))}
             {item(t("fields.receiver"), `${s.receiverName} - ${s.receiverPhone}`)}
-            {item(t("fields.cod"), <b className="text-primary">{s.codEnabled === false ? t("invoiceInfo.codOff") : formatMoney(s.codAmount)}</b>)}
-            {item(t("fields.package"), `${t("invoiceInfo.packages", { count: s.packageCount ?? 1 })}${s.weightGram ? ` · ${formatNumber(s.weightGram)} g` : ""}${dims}`)}
+            {item(t("fields.cod"), <b className="text-primary">{s.codEnabled === false ? t("selfShip.codOff") : formatMoney(s.codAmount)}</b>)}
+            {item(t("selfShip.package"), `${t("selfShip.packages", { count: s.packageCount ?? 1 })}${s.weightGram ? ` · ${formatNumber(s.weightGram)} g` : ""}${dims}`)}
             {s.deliveredAt && item(t("fields.completed"), formatDateTime(s.deliveredAt))}
-            {s.note && item(t("fields.postmanNote"), s.note, true)}
+            {s.note && item(t("selfShip.postmanNote"), s.note, true)}
           </div>
         </div>)}
     </div>

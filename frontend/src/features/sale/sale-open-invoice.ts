@@ -1,5 +1,6 @@
 import { api } from "@/lib/api-client";
 import { areaFromServer } from "@/features/delivery/delivery-address";
+import { toLocalInput } from "@/features/purchases/purchase-line-form";
 import type { Invoice } from "@/features/sales/sales-types";
 import type { SaleT } from "@/messages/sale";
 import { KEYS, load, newId } from "./sale-storage";
@@ -71,7 +72,11 @@ export async function draftFromInvoice(invoiceId: string, mode: "edit" | "return
 /** Vận đơn đã lưu → khung giao hàng (sửa hóa đơn trước khi lấy hàng). */
 function deliveryDraftOf(s: Invoice["shipment"]): DeliveryDraft | null {
   return s ? { partnerId: s.partnerId, receiverName: s.receiverName, receiverPhone: s.receiverPhone, receiverAddress: s.receiverAddress,
-    ...areaFromServer(s), weightGram: s.weightGram, shippingFee: Number(s.shippingFee), feePayer: s.feePayer, note: s.note ?? "" } : null;
+    ...areaFromServer(s), weightGram: s.weightGram, shippingFee: Number(s.shippingFee), feePayer: s.feePayer, note: s.note ?? "",
+    serviceType: s.serviceType ?? "STANDARD", waybillCode: s.waybillCode ?? "",
+    expectedDeliveryAt: s.expectedDeliveryAt ? toLocalInput(s.expectedDeliveryAt) : "", packageCount: s.packageCount ?? 1,
+    lengthCm: s.lengthCm ?? null, widthCm: s.widthCm ?? null, heightCm: s.heightCm ?? null, codEnabled: s.codEnabled !== false,
+    status: s.status === "PICKING" ? "PICKING" : "PENDING" } : null;
 }
 
 /**

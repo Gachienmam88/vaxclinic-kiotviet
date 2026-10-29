@@ -36,7 +36,7 @@ type Props = {
  * Chọn khách: khách thuộc nhóm có giảm giá → tự điền giảm giá hóa đơn (% tính lại theo giỏ hàng; vẫn sửa tay được).
  * Bỏ chọn khách khi đang giảm theo % của nhóm → bỏ luôn giảm giá đó.
  */
-function customerPatch(customer: SaleCustomer | null, draft: DraftInvoice): Partial<DraftInvoice> {
+export function customerPatch(customer: SaleCustomer | null, draft: DraftInvoice): Partial<DraftInvoice> {
   if (!customer && draft.discountPercent != null) return { customer, discountPercent: null, discount: 0 };
   const g = customer?.groupDiscount;
   if (!g) return { customer };

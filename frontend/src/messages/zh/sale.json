@@ -49,18 +49,53 @@
       "noPartner": "未选择配送伙伴",
       "receiverRequired": "请填写收件人姓名、电话和地址"
     },
-    "fee": "运费",
+    "fee": "适用费用",
     "feePayer": {
       "label": "运费支付方"
     },
     "noPartners": "暂无伙伴 — 请在配送伙伴中添加",
     "note": "配送备注",
     "partner": "配送伙伴",
-    "pickPartner": "选择配送伙伴",
-    "receiverName": "收件人姓名",
+    "pickPartner": "选择合作方",
+    "receiverName": "收件人",
     "receiverPhone": "电话",
     "title": "配送信息",
-    "weight": "重量（克）"
+    "weight": "重量",
+    "tabs": {
+      "portal": "KiotViet 门户",
+      "self": "自行配送"
+    },
+    "portalHint": "请填写完整的取件和收件地址（合并前/合并后同一格式）以查询运费并创建订单。",
+    "portalNotConnected": "店铺尚未连接任何配送门户，无法通过承运商查询运费或下单。请使用自行配送并选择店铺的配送合作方。",
+    "portalSettings": "配送门户设置（未连接）",
+    "useSelf": "切换到自行配送",
+    "addPartner": "添加配送合作方",
+    "editPartner": "编辑配送合作方",
+    "partnerOffline": "添加/编辑配送合作方需要网络连接",
+    "serviceType": "服务类型",
+    "services": {
+      "STANDARD": "普通配送",
+      "EXPRESS": "快速配送"
+    },
+    "waybill": "运单号",
+    "deliveryTime": "配送时间",
+    "status": "配送状态",
+    "pickup": "取件地址",
+    "pickupHint": "请添加新的取件地址",
+    "area": "地区",
+    "ward": "坊/社",
+    "newReceiver": "新收件人",
+    "successRate": "配送成功率 {rate}%（{delivered}/{finished} 个已完结订单）",
+    "packages": "{count} 件",
+    "packageCount": "件数",
+    "weightUnit": "重量单位",
+    "length": "长 (cm)",
+    "width": "宽 (cm)",
+    "height": "高 (cm)",
+    "postmanNote": "给快递员的备注",
+    "codToggle": "代收货款 (COD)",
+    "collapse": "收起配送信息",
+    "expand": "展开配送信息"
   },
   "detail": {
     "category": "商品分类",

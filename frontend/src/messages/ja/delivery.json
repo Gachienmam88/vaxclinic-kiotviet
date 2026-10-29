@@ -197,5 +197,34 @@
     "debtHint": "プラス: 業者が店舗に未払、マイナス: 店舗が業者に未払",
     "emptyWhat": "配送業者",
     "unit": "業者"
+  },
+  "selfShip": {
+    "serviceType": "サービス種類",
+    "serviceTypes": {
+      "STANDARD": "通常配送",
+      "EXPRESS": "速達"
+    },
+    "waybill": "送り状番号",
+    "deliveryTime": "配送日時",
+    "deliveryStatus": "配送状況",
+    "package": "荷物",
+    "postmanNote": "配達員へのメモ",
+    "selfDeliverTo": "自社配送先",
+    "codOff": "代引きなし",
+    "packages": "{count} 個口",
+    "kind": "パートナー種別",
+    "kinds": {
+      "PERSONAL": "個人",
+      "COMPANY": "法人"
+    },
+    "addressDetail": "番地・建物",
+    "area": "地域",
+    "ward": "坊/社",
+    "addressPlaceholder": "番地、建物、路地、通り",
+    "group": "パートナーグループ",
+    "pickGroup": "パートナーグループを選択",
+    "addGroup": "パートナーグループを追加",
+    "newGroup": "新しいグループ名",
+    "cancelGroup": "キャンセル"
   }
 }

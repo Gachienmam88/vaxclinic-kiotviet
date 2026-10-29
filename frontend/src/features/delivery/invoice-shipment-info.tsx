@@ -1,18 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { Plus, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { DocCodeLink } from "@/components/ui/doc-code-link";
-import { StatusBadge } from "@/features/sales/invoice-list-kit";
 import type { Invoice } from "@/features/sales/sales-types";
-import { formatDateTime, formatMoney, formatNumber } from "@/lib/format";
+import { formatMoney } from "@/lib/format";
 import { useT } from "@/lib/i18n";
-import { renderRichText } from "@/lib/i18n/render-rich-text";
 import { useCurrentUser } from "@/lib/use-current-user";
 import { deliveryNs } from "@/messages/delivery";
-import { FEE_PAYER_KEY, SHIPMENT_STATUS_KEY, SHIPMENT_TONE } from "./delivery-types";
+import { InvoiceShipmentBar as ShipmentBar } from "./invoice-shipment-bar";
 import { ShipmentCreateDialog } from "./shipment-create-dialog";
 
 /**
@@ -41,27 +37,7 @@ export function InvoiceShipmentInfo({ inv, withMeta = true }: { inv: Invoice; wi
           {can("sales.perform") && (
             <Button size="sm" className="ml-auto h-7" onClick={() => setCreating(true)}><Plus className="size-4" /> {t("invoiceInfo.createShipment")}</Button>)}
         </div>)}
-      {s && s.status !== "CANCELLED" && (
-        <div className="rounded-md border border-dashed border-primary/40 bg-primary/5 px-3 py-2">
-          <div className="mb-1 flex flex-wrap items-center gap-3 text-[13px]">
-            <Truck className="size-4 text-primary" /><b>{renderRichText(t("invoiceInfo.shipment"), { code: <DocCodeLink code={s.code} kind="/delivery/shipments" /> })}</b>
-            <StatusBadge tone={SHIPMENT_TONE[s.status]}>{t(SHIPMENT_STATUS_KEY[s.status])}</StatusBadge>
-            {s.returnCode && <StatusBadge tone="red">{renderRichText(t("invoiceInfo.returnDoc"),
-              { code: <DocCodeLink code={s.returnCode} kind="/returns" /> })}</StatusBadge>}
-            <Link href="/delivery" className="ml-auto text-primary hover:underline">{t("invoiceInfo.manage")}</Link>
-          </div>
-          <div className="grid grid-cols-1 gap-x-8 md:grid-cols-3">
-            <div className={cell}><span className="w-24 shrink-0">{t("fields.receiver")}:</span>{s.receiverName} - {s.receiverPhone}</div>
-            <div className={`${cell} md:col-span-2`}><span className="w-24 shrink-0">{t("fields.address")}:</span>{s.receiverAddress}{s.area ? ` (${s.area})` : ""}</div>
-            <div className={cell}><span className="w-24 shrink-0">{t("fields.partnerShort")}:</span>{s.partnerName}</div>
-            <div className={cell}><span className="w-24 shrink-0">{t("fields.fee")}:</span>
-              {formatMoney(s.shippingFee)} ({t(FEE_PAYER_KEY[s.feePayer])})</div>
-            <div className={cell}><span className="w-24 shrink-0">{t("fields.cod")}:</span><b className="text-primary">{formatMoney(s.codAmount)}</b></div>
-            {s.weightGram ? <div className={cell}><span className="w-24 shrink-0">{t("fields.weight")}:</span>{formatNumber(s.weightGram)} g</div> : null}
-            {s.deliveredAt && <div className={cell}><span className="w-24 shrink-0">{t("fields.completed")}:</span>{formatDateTime(s.deliveredAt)}</div>}
-            {s.note && <div className={`${cell} md:col-span-3`}><span className="w-24 shrink-0">{t("fields.note")}:</span>{s.note}</div>}
-          </div>
-        </div>)}
+      {s && s.status !== "CANCELLED" && <ShipmentBar s={s} />}
       {creating && <ShipmentCreateDialog inv={inv} onClose={() => setCreating(false)} />}
     </div>
   );

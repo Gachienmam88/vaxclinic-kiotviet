@@ -5,6 +5,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { DetailTabsList } from "@/components/ui/detail-tabs-list";
 import { Tabs, TabsContent, TabsTrigger } from "@/components/ui/tabs";
+import { InvoiceDeliveryHistory } from "@/features/delivery/invoice-delivery-history";
 import { InvoiceShipmentInfo } from "@/features/delivery/invoice-shipment-info";
 import { useEInvoiceRecords } from "@/features/integrations/integration-queries";
 import { fromLocalInput, toLocalInput } from "@/features/purchases/purchase-line-form";
@@ -26,7 +27,7 @@ import { SALES_KEYS, useInvoice } from "./sales-queries";
 
 /**
  * Chi tiết hóa đơn mở dưới dòng (KiotViet): tab Thông tin (sửa người bán / ngày bán / kênh bán / ghi chú → Lưu,
- * thẻ Hoá đơn điện tử, vận đơn, dòng hàng, tổng) + tab Lịch sử thanh toán. Bấm lại tab đang mở = thu gọn.
+ * thẻ Hoá đơn điện tử, thanh "Tự giao đến…", dòng hàng, tổng) + tab Lịch sử giao hàng (hóa đơn có vận đơn) + tab Lịch sử thanh toán. Bấm lại tab đang mở = thu gọn.
  */
 export function InvoiceDetailPanel({ id, onClose }: { id: string; onClose?: () => void }) {
   const t = useT(salesNs);
@@ -61,12 +62,14 @@ export function InvoiceDetailPanel({ id, onClose }: { id: string; onClose?: () =
   const f: InvoiceInfoDraft = edit ?? { sellerId: inv.sellerId ?? "", at: toLocalInput(inv.soldAt), channel: inv.salesChannel ?? "DIRECT", note: inv.note ?? "" };
   const set = (p: Partial<InvoiceInfoDraft>) => setEdit({ ...f, ...p });
   const active = inv.status === "COMPLETED";
+  const shipmentId = inv.shipment?.id ?? null;
 
   return (
     <div className={DETAIL_PANEL}>
       <Tabs defaultValue="info" className="gap-0">
         <DetailTabsList onActiveTabClick={onClose} variant="line" className={DETAIL_TABS_LIST}>
           <TabsTrigger value="info" className={DETAIL_TAB}>{tc("detailTabs.info")}</TabsTrigger>
+          {shipmentId && <TabsTrigger value="delivery" className={DETAIL_TAB}>{t("invoices.detail.tabDelivery")}</TabsTrigger>}
           <TabsTrigger value="payments" className={DETAIL_TAB}>{t("invoices.detail.tabPayments")}</TabsTrigger>
         </DetailTabsList>
         <TabsContent value="info">
@@ -85,6 +88,7 @@ export function InvoiceDetailPanel({ id, onClose }: { id: string; onClose?: () =
             dirty={!!edit} saving={save.isPending} onSave={() => save.mutate()} published={published} onEditTax={() => setTaxDialog(true)} />
           {taxDialog && <InvoiceTaxDialog invoice={inv} onClose={() => setTaxDialog(false)} />}
         </TabsContent>
+        {shipmentId && <TabsContent value="delivery"><InvoiceDeliveryHistory shipmentId={shipmentId} /></TabsContent>}
         <TabsContent value="payments"><InvoicePaymentHistory inv={inv} /></TabsContent>
       </Tabs>
     </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { api } from "@/lib/api-client";
 import type { DeliveryPartner, PartnerList, SalesChannel } from "@/features/delivery/delivery-types";
 import { KEYS, load, save } from "./sale-storage";
@@ -31,7 +31,15 @@ export function useSaleLookups() {
     return () => { alive = false; };
   }, []);
 
-  return data;
+  /** Đối tác vừa thêm / sửa ở màn bán hàng: cập nhật ngay vào danh sách (và bản lưu trên máy); ngừng hoạt động thì bỏ khỏi danh sách. */
+  const upsertPartner = useCallback((p: DeliveryPartner) => setData((prev) => {
+    const rest = prev.partners.filter((x) => x.id !== p.id);
+    const next = { ...prev, partners: p.active ? [{ id: p.id, code: p.code, name: p.name, phone: p.phone }, ...rest] : rest };
+    save(KEYS.lookups, next);
+    return next;
+  }), []);
+
+  return { ...data, upsertPartner };
 }
 
 export type SaleLookups = ReturnType<typeof useSaleLookups>;

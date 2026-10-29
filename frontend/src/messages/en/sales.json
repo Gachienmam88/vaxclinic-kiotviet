@@ -115,7 +115,8 @@
       "tabPayments": "Payment history",
       "saved": "Invoice saved",
       "cancelled": "Invoice cancelled; items returned to stock",
-      "notePlaceholder": "Note..."
+      "notePlaceholder": "Note...",
+      "tabDelivery": "Delivery history"
     },
     "header": {
       "openCustomer": "Open customer in new tab",

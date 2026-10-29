@@ -114,7 +114,8 @@
       "tabPayments": "付款记录",
       "saved": "销售单已保存",
       "cancelled": "销售单已作废，商品已退回库存",
-      "notePlaceholder": "备注..."
+      "notePlaceholder": "备注...",
+      "tabDelivery": "配送记录"
     },
     "header": {
       "openCustomer": "在新标签页打开客户",

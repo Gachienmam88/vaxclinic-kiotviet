@@ -22,15 +22,18 @@ const FIELDS = [
 export const hasBuyer = (b: EInvoiceBuyer | null | undefined) => !!b && Object.values(b).some((v) => v.trim());
 
 /** Ô "Thông tin xuất HĐĐT · Chi tiết" ở đáy cột trái: mở hộp thoại nhập thông tin người mua (lưu trên hóa đơn). */
-export function SaleEInvoiceBox({ value, customer, onChange }: {
+export function SaleEInvoiceBox({ value, customer, onChange, plain }: {
   value: EInvoiceBuyer | null | undefined; customer: SaleCustomer | null; onChange: (v: EInvoiceBuyer | null) => void;
+  /** plain: chỉ 1 dòng chữ (đặt trong thẻ tổng tiền của Bán giao hàng), không khung thẻ riêng. */
+  plain?: boolean;
 }) {
   const t = useT(saleNs);
   const tc = useT(commonNs);
   const [open, setOpen] = useState(false);
   return (
     <>
-      <div className="flex h-[46px] shrink-0 items-center gap-1.5 rounded-lg bg-background px-3 text-[13px] shadow-[0_1px_2px_rgba(0,0,0,0.06)]">
+      <div className={plain ? "flex h-7 items-center gap-1.5 text-[13px]"
+        : "flex h-[46px] shrink-0 items-center gap-1.5 rounded-lg bg-background px-3 text-[13px] shadow-[0_1px_2px_rgba(0,0,0,0.06)]"}>
         <FileText className="size-4 fill-[#1f2329] text-white" />
         <span className={hasBuyer(value) ? "font-medium" : ""} title={tc("legal.vietnameseOnly")}>{t("einvoice.box")}</span>
         <button type="button" className="ml-1 text-primary hover:underline" onClick={() => setOpen(true)}>{t("einvoice.details")}</button>

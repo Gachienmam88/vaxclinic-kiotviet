@@ -22,6 +22,8 @@ type Props = {
   addressRequired?: boolean;
   labels?: Partial<Record<"address" | "province" | "ward", string>>;
   addressPlaceholder?: string;
+  /** Chữ gợi ý ô chọn (mặc định "Chọn Tỉnh/Thành phố" / "Chọn Phường/Xã"), VD màn bán giao hàng dùng "Khu vực" / "Phường/Xã". */
+  selectPlaceholders?: Partial<Record<"province" | "ward", string>>;
   /** Kiểu ô nhập/ô chọn để khớp form đang dùng. */
   controlClassName?: string;
   fieldClassName?: string;
@@ -37,7 +39,7 @@ type Props = {
  * Trả về các ô liền nhau (fragment) để form cha tự xếp lưới.
  */
 export function VnAddressFields({ value, onChange, hideAddress, addressRequired, labels = {}, addressPlaceholder,
-  controlClassName, fieldClassName = "grid gap-1", addressFieldClassName, labelClassName = "text-xs", renderRow, idPrefix = "addr" }: Props) {
+  selectPlaceholders = {}, controlClassName, fieldClassName = "grid gap-1", addressFieldClassName, labelClassName = "text-xs", renderRow, idPrefix = "addr" }: Props) {
   const tc = useT(commonNs);
   const data = useVnAdmin();
   const set = (patch: Partial<VnAddress>) => onChange({ ...value, ...patch });
@@ -49,7 +51,7 @@ export function VnAddressFields({ value, onChange, hideAddress, addressRequired,
   const province = row("province", labels.province ?? tc("address.province"), (
     <SearchableSelect id={`${idPrefix}-province`} aria-label={labels.province ?? tc("address.province")} className={controlClassName}
       options={data?.provinces ?? []} value={value.provinceCode} fallbackLabel={value.provinceName}
-      placeholder={tc("address.pickProvince")} searchPlaceholder={tc("address.searchProvince")}
+      placeholder={selectPlaceholders.province ?? tc("address.pickProvince")} searchPlaceholder={tc("address.searchProvince")}
       onChange={(p) => p?.code === value.provinceCode ? undefined
         : set({ provinceCode: p?.code ?? "", provinceName: p?.name ?? "", wardCode: "", wardName: "" })} />));
 
@@ -57,7 +59,7 @@ export function VnAddressFields({ value, onChange, hideAddress, addressRequired,
     <SearchableSelect id={`${idPrefix}-ward`} aria-label={labels.ward ?? tc("address.ward")} className={controlClassName}
       options={data && value.provinceCode ? data.wardsOf(value.provinceCode) : []} value={value.wardCode}
       fallbackLabel={value.wardName} disabled={!value.provinceCode && !value.wardName}
-      placeholder={value.provinceCode ? tc("address.pickWard") : tc("address.pickProvinceFirst")} searchPlaceholder={tc("address.searchWard")}
+      placeholder={selectPlaceholders.ward ?? (value.provinceCode ? tc("address.pickWard") : tc("address.pickProvinceFirst"))} searchPlaceholder={tc("address.searchWard")}
       onChange={(w) => set({ wardCode: w?.code ?? "", wardName: w?.name ?? "" })} />));
 
   const address = hideAddress ? null : row("address", labels.address ?? tc("address.address"), (

@@ -142,7 +142,9 @@ export function cartTotals(t: DraftInvoice) {
   const due = Math.max(0, total - deposit);
   // Bán giao hàng: mặc định khách chưa trả → toàn bộ là tiền thu hộ (COD)
   const paid = t.paid ?? (t.kind === "ORDER" || (t.mode === "DELIVERY" && !t.editOf) ? 0 : due);
-  return { subtotal, discount, total, quantity, deposit, due, paid, cod: t.mode === "DELIVERY" && t.kind !== "ORDER" ? Math.max(0, due - paid) : 0 };
+  // Tắt "Thu hộ tiền (COD)" → không thu hộ, phần chưa trả ghi công nợ khách
+  const codOn = t.mode === "DELIVERY" && t.kind !== "ORDER" && t.delivery?.codEnabled !== false;
+  return { subtotal, discount, total, quantity, deposit, due, paid, cod: codOn ? Math.max(0, due - paid) : 0 };
 }
 
 export type SaleTabs = ReturnType<typeof useSaleTabs>;

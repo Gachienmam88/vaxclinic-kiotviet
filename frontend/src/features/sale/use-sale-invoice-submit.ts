@@ -67,7 +67,7 @@ export function useSaleInvoiceSubmit(tabs: SaleTabs, branchId: string, enqueue: 
       if (t.paid > t.due) parts.push(tr("invoice.change", { amount: formatMoney(t.paid - t.due) }));
       toast.success(parts.join(" — "), { duration: 8000, action: { label: tr("invoice.print"), onClick: () => print(inv) } });
       if (settings.speakPaid) speak(Math.min(t.paid, t.due));
-      if (settings.autoPrint) print(inv);
+      if (settings.autoPrint || inv.shipment) print(inv); // Bán giao hàng: luôn mở bản in hóa đơn giao hàng sau khi thanh toán
       tabs.resetActive();
       return true;
     } catch (e) {

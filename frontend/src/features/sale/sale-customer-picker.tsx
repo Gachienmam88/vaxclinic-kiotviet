@@ -16,10 +16,11 @@ import { KEYS, load, save } from "./sale-storage";
 import { normalize } from "./use-sale-catalog";
 import type { SaleCustomer } from "./sale-types";
 
-type Props = { value: SaleCustomer | null; onChange: (c: SaleCustomer | null) => void; branchId: string; inputId?: string };
+/** nameClassName: màu tên khách đã chọn (mặc định màu chủ đạo; Bán giao hàng dùng xanh như KiotViet). */
+type Props = { value: SaleCustomer | null; onChange: (c: SaleCustomer | null) => void; branchId: string; inputId?: string; nameClassName?: string };
 
 /** Tìm khách (F4). Có mạng: tìm trên server; mất mạng: tìm trong khách đã lưu trên máy. */
-export function SaleCustomerPicker({ value, onChange, branchId, inputId = "sale-customer" }: Props) {
+export function SaleCustomerPicker({ value, onChange, branchId, inputId = "sale-customer", nameClassName = "text-primary" }: Props) {
   const tr = useT(saleNs);
   const [text, setText] = useState("");
   const [open, setOpen] = useState(false);
@@ -54,7 +55,7 @@ export function SaleCustomerPicker({ value, onChange, branchId, inputId = "sale-
     return (
       <div className="flex min-h-[30px] flex-wrap items-center gap-x-2 gap-y-1 rounded-md bg-[#eef0f3] px-2.5 py-1 text-[13px]">
         <UserRound className="size-3.5 fill-[#6b7280] text-[#6b7280]" />
-        <span className="font-bold text-primary">{value.name} {value.phone}</span>
+        <span className={`font-bold ${nameClassName}`}>{value.name} {value.phone}</span>
         {value.debt ? <span className="text-xs text-destructive">{tr("customer.debt", { amount: formatMoney(value.debt) })}</span> : null}
         {overLimit && <span className="flex items-center gap-1 rounded bg-destructive/10 px-1.5 text-xs font-semibold text-destructive">
           <TriangleAlert className="size-3" /> {tr("customer.overLimit", { amount: formatMoney(debtLimit!) })}</span>}

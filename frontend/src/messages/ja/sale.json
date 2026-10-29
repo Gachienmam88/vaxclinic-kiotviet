@@ -49,18 +49,53 @@
       "noPartner": "配送業者が選択されていません",
       "receiverRequired": "受取人の氏名・電話・住所を入力してください"
     },
-    "fee": "配送料",
+    "fee": "適用料金",
     "feePayer": {
       "label": "配送料の負担者"
     },
     "noPartners": "配送業者がありません — 配送業者画面で追加",
     "note": "配送メモ",
     "partner": "配送業者",
-    "pickPartner": "配送業者を選択",
-    "receiverName": "受取人名",
+    "pickPartner": "パートナーを選択",
+    "receiverName": "受取人",
     "receiverPhone": "電話番号",
     "title": "配送情報",
-    "weight": "重量 (g)"
+    "weight": "重量",
+    "tabs": {
+      "portal": "KiotViet ポータル",
+      "self": "自社配送"
+    },
+    "portalHint": "送料の確認と注文作成のため、集荷先と配送先の住所（合併前/合併後で同じ形式）を入力してください。",
+    "portalNotConnected": "配送ポータルが未接続のため、配送業者の送料確認・注文作成はできません。店舗の配送パートナーで自社配送をご利用ください。",
+    "portalSettings": "配送ポータル設定（未接続）",
+    "useSelf": "自社配送に切り替える",
+    "addPartner": "配送パートナーを追加",
+    "editPartner": "配送パートナーを編集",
+    "partnerOffline": "配送パートナーの追加・編集にはネット接続が必要です",
+    "serviceType": "サービス種類",
+    "services": {
+      "STANDARD": "通常配送",
+      "EXPRESS": "速達"
+    },
+    "waybill": "送り状番号",
+    "deliveryTime": "配送日時",
+    "status": "配送状況",
+    "pickup": "集荷先住所",
+    "pickupHint": "新しい集荷先住所を追加してください",
+    "area": "地域",
+    "ward": "坊/社",
+    "newReceiver": "新しい受取人",
+    "successRate": "配送成功率 {rate}%（完了 {finished} 件中 {delivered} 件）",
+    "packages": "{count} 個口",
+    "packageCount": "個口数",
+    "weightUnit": "重量単位",
+    "length": "長さ (cm)",
+    "width": "幅 (cm)",
+    "height": "高さ (cm)",
+    "postmanNote": "配達員へのメモ",
+    "codToggle": "代金引換 (COD)",
+    "collapse": "配送情報を折りたたむ",
+    "expand": "配送情報を開く"
   },
   "detail": {
     "category": "商品グループ",

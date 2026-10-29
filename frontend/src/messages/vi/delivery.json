@@ -197,5 +197,34 @@
     "debtHint": "Dương: đối tác nợ cửa hàng; âm: cửa hàng nợ đối tác",
     "emptyWhat": "đối tác giao hàng",
     "unit": "đối tác"
+  },
+  "selfShip": {
+    "serviceType": "Loại dịch vụ",
+    "serviceTypes": {
+      "STANDARD": "Giao thường",
+      "EXPRESS": "Giao nhanh"
+    },
+    "waybill": "Mã vận đơn",
+    "deliveryTime": "Thời gian giao hàng",
+    "deliveryStatus": "Trạng thái giao hàng",
+    "package": "Kiện hàng",
+    "postmanNote": "Ghi chú cho bưu tá",
+    "selfDeliverTo": "Tự giao đến",
+    "codOff": "Không thu hộ",
+    "packages": "{count} kiện",
+    "kind": "Loại đối tác",
+    "kinds": {
+      "PERSONAL": "Cá nhân",
+      "COMPANY": "Công ty"
+    },
+    "addressDetail": "Địa chỉ chi tiết",
+    "area": "Khu vực",
+    "ward": "Phường/Xã",
+    "addressPlaceholder": "Số nhà, tòa nhà, ngõ, đường",
+    "group": "Nhóm đối tác",
+    "pickGroup": "Chọn nhóm đối tác",
+    "addGroup": "Thêm nhóm đối tác",
+    "newGroup": "Tên nhóm mới",
+    "cancelGroup": "Bỏ qua"
   }
 }

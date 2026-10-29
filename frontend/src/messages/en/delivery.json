@@ -199,5 +199,34 @@
     "debtHint": "Positive: partner owes the store; negative: store owes the partner",
     "emptyWhat": "delivery partners",
     "unit": "partners"
+  },
+  "selfShip": {
+    "serviceType": "Service type",
+    "serviceTypes": {
+      "STANDARD": "Standard",
+      "EXPRESS": "Express"
+    },
+    "waybill": "Waybill no.",
+    "deliveryTime": "Delivery time",
+    "deliveryStatus": "Delivery status",
+    "package": "Package",
+    "postmanNote": "Note for courier",
+    "selfDeliverTo": "Self delivery to",
+    "codOff": "No COD",
+    "packages": "{count} package(s)",
+    "kind": "Partner type",
+    "kinds": {
+      "PERSONAL": "Individual",
+      "COMPANY": "Company"
+    },
+    "addressDetail": "Street address",
+    "area": "Area",
+    "ward": "Ward/Commune",
+    "addressPlaceholder": "House no., building, alley, street",
+    "group": "Partner group",
+    "pickGroup": "Select partner group",
+    "addGroup": "Add partner group",
+    "newGroup": "New group name",
+    "cancelGroup": "Cancel"
   }
 }

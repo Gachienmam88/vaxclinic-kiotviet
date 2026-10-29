@@ -11,7 +11,7 @@ import { useUserLookup } from "@/features/purchases/purchase-queries";
 import { SALES_KEYS } from "@/features/sales/sales-queries";
 import { SaleCart } from "./sale-cart";
 import { SaleCheckoutPanel } from "./sale-checkout-panel";
-import { SaleDeliveryForm } from "./sale-delivery-form";
+import { SaleDeliveryLayout } from "./sale-delivery-layout";
 import { SaleEInvoiceBox } from "./sale-einvoice-dialog";
 import { SaleFooter } from "./sale-footer";
 import { SaleHeader } from "./sale-header";
@@ -23,7 +23,7 @@ import { ReturnLines } from "./sale-return-panel";
 import { SaleScreenDialogs, type SaleDialog } from "./sale-screen-dialogs";
 import { SaleOrderNote } from "./sale-ui-parts";
 import { addProductToTab } from "./sale-add-product";
-import { deliveryProblem } from "./sale-invoice-body";
+import { deliveryProblem, walkInMustPayFull } from "./sale-invoice-body";
 import { newId } from "./sale-storage";
 import { useOfflineQueue } from "./use-offline-queue";
 import { useSaleCatalog } from "./use-sale-catalog";
@@ -101,7 +101,7 @@ function SaleScreenBody() {
     }
     if (!d.lines.length) return;
     const totals = cartTotals(d);
-    if (d.kind !== "ORDER" && d.mode !== "DELIVERY" && !d.customer && totals.paid < totals.total) return toast.error(t("screen.walkInMustPayFull"));
+    if (walkInMustPayFull(d) && totals.paid < totals.total) return toast.error(t("screen.walkInMustPayFull"));
     const missing = deliveryProblem(t, d);
     if (missing) return toast.error(missing);
     if (d.lines.some((l) => l.quantity <= 0)) return toast.error(t("screen.qtyPositive"));
@@ -135,24 +135,28 @@ function SaleScreenBody() {
 
   if (!me || !d) return <div className="p-6 text-sm text-muted-foreground">{t("screen.loading")}</div>;
   const cartView = !d.returnOf;
+  // Bán giao hàng: bố cục 3 cột riêng (giỏ hàng | thông tin giao | đối tác + THANH TOÁN)
+  const deliveryView = cartView && d.mode === "DELIVERY" && d.kind !== "ORDER" && d.kind !== "RETURN" && !d.quickReturn;
+  const cart = (
+    <SaleCart lines={d.lines} customerId={d.customer?.id ?? null} onChange={tabs.setLines} resolveUnit={priceBook.resolve}
+      products={catalog.products} branchId={branchId} quickReturn={!!d.quickReturn} selectedKey={lineKeys.selected} onSelect={lineKeys.select} />
+  );
 
   return (
     <div className="flex h-screen flex-col bg-[#e8eaed] text-[13px] text-[#1f2329] dark:bg-muted dark:text-foreground">
       <SaleHeader products={catalog.products} onPick={addProduct} tabs={tabs} online={online && !catalog.offline}
         pending={queue.queue.length} userName={me.user.fullName} onAction={setDialog} />
       <main className="flex min-h-0 flex-1 gap-2 p-2">
+        {deliveryView ? (
+          <SaleDeliveryLayout draft={d} update={tabs.update} lookups={lookups} branchId={branchId} cart={cart} onPay={pay} paying={paying} />
+        ) : (<>
         <section className="flex min-w-0 flex-1 flex-col gap-2">
           {!cartView ? (
             <div className="min-h-0 flex-1 overflow-y-auto"><ReturnLines draft={d} update={tabs.update} /></div>
           ) : (
             <>
-              <div className={`min-h-0 overflow-y-auto ${d.mode === "NORMAL" && !d.quickReturn ? "h-1/2" : "flex-1"}`}>
-                <SaleCart lines={d.lines} customerId={d.customer?.id ?? null} onChange={tabs.setLines} resolveUnit={priceBook.resolve}
-                  products={catalog.products} branchId={branchId} quickReturn={!!d.quickReturn} selectedKey={lineKeys.selected} onSelect={lineKeys.select} />
-              </div>
+              <div className={`min-h-0 overflow-y-auto ${d.mode === "NORMAL" && !d.quickReturn ? "h-1/2" : "flex-1"}`}>{cart}</div>
               {d.mode === "NORMAL" && !d.quickReturn && <SaleProductGrid products={catalog.products} onPick={addProduct} />}
-              {d.mode === "DELIVERY" && d.kind !== "ORDER" && !d.quickReturn && <div className="max-h-[48%] shrink-0 overflow-y-auto">
-                <SaleDeliveryForm draft={d} update={tabs.update} lookups={lookups} cod={cartTotals(d).cod} /></div>}
             </>
           )}
           <div className="flex gap-2 px-2.5 pb-0.5">
@@ -165,6 +169,7 @@ function SaleScreenBody() {
             ? <ReturnCheckout draft={d} branchId={branchId} update={tabs.update} onSubmit={pay} busy={paying} />
             : <SaleCheckoutPanel draft={d} branchId={branchId} update={tabs.update} onPay={pay} paying={paying} priceBook={priceBook} lookups={lookups} />}
         </aside>
+        </>)}
       </main>
       <SaleFooter mode={d.mode} showModes={d.kind !== "RETURN"} allowDelivery={d.kind !== "ORDER"} loadedAt={catalog.loadedAt}
         onMode={(mode) => tabs.update(mode === "DELIVERY" || d.mode === "DELIVERY" ? { mode, paid: null, extraPayments: [] } : { mode })}

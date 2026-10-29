@@ -3,7 +3,7 @@
 import { useQuery, type QueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
 import type {
-  DeliveryPartner, PartnerLedgerRow, PartnerList, ReconcileRow, SalesChannel, SettlementRow, ShipmentDetail, ShipmentList,
+  DeliveryPartner, PartnerGroup, PartnerLedgerRow, PartnerList, ReconcileRow, SalesChannel, SettlementRow, ShipmentDetail, ShipmentList,
 } from "./delivery-types";
 
 export const useShipments = (params: URLSearchParams) =>
@@ -20,6 +20,10 @@ export const usePartners = (params: URLSearchParams) =>
 export const usePartnerOptions = () =>
   useQuery({ queryKey: ["delivery-partners", "options"], queryFn: () => api<PartnerList>("/delivery-partners?size=200"),
     select: (d) => d.items, staleTime: 60_000 });
+
+/** Nhóm đối tác giao hàng (ô "Nhóm đối tác"). */
+export const usePartnerGroups = () =>
+  useQuery({ queryKey: ["delivery-partner-groups"], queryFn: () => api<PartnerGroup[]>("/delivery-partners/groups"), staleTime: 60_000 });
 
 export const usePartner = (id: string | null) =>
   useQuery({ queryKey: ["delivery-partner", id], queryFn: () => api<DeliveryPartner>(`/delivery-partners/${id}`), enabled: !!id });

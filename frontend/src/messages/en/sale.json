@@ -49,18 +49,53 @@
       "noPartner": "No delivery partner selected",
       "receiverRequired": "Enter the receiver's name, phone and address"
     },
-    "fee": "Shipping fee",
+    "fee": "Fee",
     "feePayer": {
       "label": "Shipping fee paid by"
     },
     "noPartners": "No partners — add one under Delivery partners",
     "note": "Delivery note",
     "partner": "Delivery partner",
-    "pickPartner": "Select delivery partner",
+    "pickPartner": "Select partner",
     "receiverName": "Receiver name",
     "receiverPhone": "Phone",
     "title": "Delivery information",
-    "weight": "Weight (grams)"
+    "weight": "Weight",
+    "tabs": {
+      "portal": "KiotViet portal",
+      "self": "Self delivery"
+    },
+    "portalHint": "Enter complete pickup and delivery addresses (same format, before/after the 2025 merger) to get rates and create orders.",
+    "portalNotConnected": "No delivery portal is connected, so carrier rates and orders are not available. Use Self delivery with the shop's own partners.",
+    "portalSettings": "Delivery portal settings (not connected)",
+    "useSelf": "Switch to Self delivery",
+    "addPartner": "Add delivery partner",
+    "editPartner": "Edit delivery partner",
+    "partnerOffline": "A connection is required to add / edit delivery partners",
+    "serviceType": "Service type",
+    "services": {
+      "STANDARD": "Standard",
+      "EXPRESS": "Express"
+    },
+    "waybill": "Waybill no.",
+    "deliveryTime": "Delivery time",
+    "status": "Delivery status",
+    "pickup": "Pickup address",
+    "pickupHint": "Please add a new pickup address",
+    "area": "Area",
+    "ward": "Ward/Commune",
+    "newReceiver": "New receiver",
+    "successRate": "Delivery success rate {rate}% ({delivered}/{finished} finished orders)",
+    "packages": "{count} package(s)",
+    "packageCount": "Packages",
+    "weightUnit": "Weight unit",
+    "length": "Length (cm)",
+    "width": "Width (cm)",
+    "height": "Height (cm)",
+    "postmanNote": "Note for courier",
+    "codToggle": "Cash on delivery (COD)",
+    "collapse": "Collapse delivery info",
+    "expand": "Expand delivery info"
   },
   "detail": {
     "category": "Category",

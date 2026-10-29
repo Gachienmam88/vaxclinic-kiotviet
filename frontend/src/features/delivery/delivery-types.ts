@@ -6,7 +6,18 @@ export type DeliveryPartner = {
   id: string; code: string; name: string; phone: string | null; email: string | null; address: string | null; note: string | null;
   partnerType: string; active: boolean; shipmentCount: number; totalFee: number; totalCod: number; debt: number; createdAt: string;
   province?: string | null; ward?: string | null; provinceCode?: string | null; wardCode?: string | null;
+  /** PERSONAL = Cá nhân, COMPANY = Công ty. */
+  partnerKind?: "PERSONAL" | "COMPANY"; groupId?: string | null; groupName?: string | null;
 };
+/** Nhóm đối tác giao hàng (/delivery-partners/groups). */
+export type PartnerGroup = { id: string; name: string; partnerCount: number };
+/** Tỷ lệ giao thành công theo SĐT người nhận (rate null = chưa có vận đơn kết thúc). */
+export type ReceiverStats = { finished: number; delivered: number; rate: number | null };
+/** Loại dịch vụ tự giao. */
+export type ServiceType = "STANDARD" | "EXPRESS";
+export const SERVICE_TYPES: ServiceType[] = ["STANDARD", "EXPRESS"];
+/** Trạng thái chọn được khi tạo đơn ở màn bán hàng. */
+export const INITIAL_SHIPMENT_STATUSES = ["PENDING", "PICKING", "DELIVERING", "DELIVERED"] as const;
 export type PartnerList = { items: DeliveryPartner[]; total: number; page: number; size: number; sumFee: number; sumCod: number; sumDebt: number };
 
 export type PartnerLedgerRow = {
@@ -47,6 +58,8 @@ export type ShipmentInfo = {
   receiverAddress: string; area: string | null; weightGram: number | null; shippingFee: number; feePayer: "SHOP" | "CUSTOMER";
   codAmount: number; note: string | null; deliveredAt: string | null; returnCode: string | null;
   provinceCode?: string | null; wardCode?: string | null;
+  serviceType?: ServiceType; waybillCode?: string | null; expectedDeliveryAt?: string | null; packageCount?: number;
+  lengthCm?: number | null; widthCm?: number | null; heightCm?: number | null; codEnabled?: boolean; createdAt?: string;
 };
 export type StatusResult = { id: string; code: string | null; ok: boolean; status: string | null; message: string | null };
 

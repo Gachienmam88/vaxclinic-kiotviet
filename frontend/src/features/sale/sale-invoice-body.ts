@@ -3,8 +3,6 @@ import type { SaleT } from "@/messages/sale";
 import { splitPayments } from "./sale-payment-split";
 import type { DeliveryDraft, DraftInvoice } from "./sale-types";
 
-
-
 /**
  * Body gửi POST /invoices (bán mới / offline queue / tạo hóa đơn từ đơn đặt hàng — kèm orderId) và PUT /invoices/{id}.
  * Cũng dùng cho POST/PUT /orders (đặt hàng): paidAmount = tiền khách trả thêm lần này (đặt cọc), kèm thời gian giao hàng.
@@ -33,7 +31,17 @@ const deliveryBody = (v: DeliveryDraft) => ({
   partnerId: v.partnerId, receiverName: v.receiverName.trim(), receiverPhone: v.receiverPhone.trim(),
   receiverAddress: v.receiverAddress.trim(), area: v.area.trim() || null, weightGram: v.weightGram, shippingFee: v.shippingFee,
   feePayer: v.feePayer, note: v.note.trim() || null, provinceCode: v.provinceCode || null, wardCode: v.wardCode || null,
+  serviceType: v.serviceType ?? "STANDARD", waybillCode: v.waybillCode?.trim() || null,
+  expectedDeliveryAt: v.expectedDeliveryAt ? new Date(v.expectedDeliveryAt).toISOString() : null, packageCount: v.packageCount || 1,
+  lengthCm: v.lengthCm ?? null, widthCm: v.widthCm ?? null, heightCm: v.heightCm ?? null, codEnabled: v.codEnabled !== false,
+  status: v.status ?? "PENDING",
 });
+
+/** Khách lẻ phải trả đủ, trừ Bán giao hàng đang bật thu hộ (phần còn lại do bưu tá thu). */
+export function walkInMustPayFull(d: DraftInvoice): boolean {
+  if (d.kind === "ORDER" || d.customer) return false;
+  return d.mode !== "DELIVERY" || d.delivery?.codEnabled === false;
+}
 
 /** Lỗi thiếu thông tin giao hàng (null = đủ) — kiểm tra trước khi thanh toán tab Bán giao hàng. */
 export function deliveryProblem(t: SaleT, d: DraftInvoice): string | null {

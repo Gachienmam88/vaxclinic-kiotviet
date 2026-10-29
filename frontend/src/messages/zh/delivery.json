@@ -197,5 +197,34 @@
     "debtHint": "正数：配送方欠店铺；负数：店铺欠配送方",
     "emptyWhat": "配送合作方",
     "unit": "个配送方"
+  },
+  "selfShip": {
+    "serviceType": "服务类型",
+    "serviceTypes": {
+      "STANDARD": "普通配送",
+      "EXPRESS": "快速配送"
+    },
+    "waybill": "运单号",
+    "deliveryTime": "配送时间",
+    "deliveryStatus": "配送状态",
+    "package": "包裹",
+    "postmanNote": "给快递员的备注",
+    "selfDeliverTo": "自行配送至",
+    "codOff": "不代收",
+    "packages": "{count} 件",
+    "kind": "合作方类型",
+    "kinds": {
+      "PERSONAL": "个人",
+      "COMPANY": "公司"
+    },
+    "addressDetail": "详细地址",
+    "area": "地区",
+    "ward": "坊/社",
+    "addressPlaceholder": "门牌号、楼宇、巷、街道",
+    "group": "合作方分组",
+    "pickGroup": "选择合作方分组",
+    "addGroup": "添加合作方分组",
+    "newGroup": "新分组名称",
+    "cancelGroup": "取消"
   }
 }

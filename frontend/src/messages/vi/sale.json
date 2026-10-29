@@ -49,18 +49,53 @@
       "noPartner": "Chưa chọn đối tác giao hàng",
       "receiverRequired": "Nhập đủ tên, SĐT, địa chỉ người nhận"
     },
-    "fee": "Phí giao hàng",
+    "fee": "Phí áp dụng",
     "feePayer": {
       "label": "Người trả phí giao hàng"
     },
     "noPartners": "Chưa có đối tác — thêm ở Đối tác giao hàng",
     "note": "Ghi chú giao hàng",
     "partner": "Đối tác giao hàng",
-    "pickPartner": "Chọn đối tác giao hàng",
+    "pickPartner": "Chọn đối tác",
     "receiverName": "Tên người nhận",
     "receiverPhone": "Số điện thoại",
     "title": "Thông tin giao hàng",
-    "weight": "Trọng lượng (gram)"
+    "weight": "Trọng lượng",
+    "tabs": {
+      "portal": "Cổng KiotViet",
+      "self": "Tự giao hàng"
+    },
+    "portalHint": "Nhập đầy đủ địa chỉ lấy và giao (cùng loại trước sáp nhập/sau sáp nhập) để tra cước và tạo đơn.",
+    "portalNotConnected": "Cửa hàng chưa kết nối cổng giao hàng nào nên chưa tra cước / tạo đơn qua hãng vận chuyển được. Hãy dùng Tự giao hàng với đối tác của cửa hàng.",
+    "portalSettings": "Thiết lập cổng giao hàng (chưa kết nối)",
+    "useSelf": "Chuyển sang Tự giao hàng",
+    "addPartner": "Thêm đối tác giao hàng",
+    "editPartner": "Sửa đối tác giao hàng",
+    "partnerOffline": "Cần có mạng để thêm / sửa đối tác giao hàng",
+    "serviceType": "Loại dịch vụ",
+    "services": {
+      "STANDARD": "Giao thường",
+      "EXPRESS": "Giao nhanh"
+    },
+    "waybill": "Mã vận đơn",
+    "deliveryTime": "Thời gian giao hàng",
+    "status": "Trạng thái giao hàng",
+    "pickup": "Địa chỉ lấy hàng",
+    "pickupHint": "Vui lòng thêm địa chỉ lấy hàng mới",
+    "area": "Khu vực",
+    "ward": "Phường/Xã",
+    "newReceiver": "Người nhận mới",
+    "successRate": "Tỷ lệ giao thành công {rate}% ({delivered}/{finished} đơn đã kết thúc)",
+    "packages": "{count} kiện",
+    "packageCount": "Số kiện",
+    "weightUnit": "Đơn vị trọng lượng",
+    "length": "Dài (cm)",
+    "width": "Rộng (cm)",
+    "height": "Cao (cm)",
+    "postmanNote": "Ghi chú cho bưu tá",
+    "codToggle": "Thu hộ tiền (COD)",
+    "collapse": "Thu gọn thông tin giao hàng",
+    "expand": "Mở thông tin giao hàng"
   },
   "detail": {
     "category": "Nhóm hàng",

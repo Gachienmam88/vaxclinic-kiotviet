@@ -114,7 +114,8 @@
       "tabPayments": "入金履歴",
       "saved": "売上伝票を保存しました",
       "cancelled": "売上伝票を取り消し、商品を在庫に戻しました",
-      "notePlaceholder": "備考..."
+      "notePlaceholder": "備考...",
+      "tabDelivery": "配送履歴"
     },
     "header": {
       "openCustomer": "新しいタブで顧客を開く",
