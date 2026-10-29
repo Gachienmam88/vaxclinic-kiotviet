@@ -3,6 +3,7 @@
 import { SUB_HEAD, StatusBadge } from "@/features/sales/invoice-list-kit";
 import { enumLabel } from "@/features/sales/i18n-enum-label";
 import { useInvoice } from "@/features/sales/sales-queries";
+import { useTaxSettings } from "@/features/accounting/tax-queries";
 import { formatDateTime, formatMoney, formatNumber } from "@/lib/format";
 import { useT } from "@/lib/i18n";
 import { ordersNs } from "@/messages/orders";
@@ -11,14 +12,20 @@ import type { Order } from "./order-types";
 import { ListEmptyRow } from "@/components/ui/list-empty-state";
 import { DocCodeLink } from "@/components/ui/doc-code-link";
 
-/** Khối tổng tiền bên phải chi tiết đơn: tổng tiền hàng, giảm giá, khách cần trả, khách đã trả (đặt cọc). */
+/**
+ * Khối tổng tiền bên phải chi tiết đơn (như KiotViet): tổng tiền hàng, giảm giá, Thuế GTGT (nhãn theo ngành nghề thuế mặc định
+ * của cửa hàng), Giảm thuế, khách cần trả, khách đã trả (đặt cọc). Đơn đặt hàng không lưu thuế → 2 dòng thuế luôn 0đ.
+ */
 export function OrderTotals({ order }: { order: Order }) {
   const t = useT(ordersNs);
+  const { data: tax } = useTaxSettings();
+  const sector = tax?.sectors.find((x) => x.code === tax.defaultSector);
+  const vatLabel = sector ? `${t("kv.detail.vat")} (${sector.name} ${formatNumber(sector.vatRate)}%)` : t("kv.detail.vat");
   const qty = order.lines.reduce((s, l) => s + Number(l.quantity), 0);
   const rows = [[t("totals.subtotal", { qty: formatNumber(qty) }), order.subtotal], [t("totals.discount"), order.discount],
-    [t("totals.total"), order.total]] as const;
+    [vatLabel, 0], [t("kv.detail.taxCut"), 0], [t("totals.total"), order.total]] as const;
   return (
-    <div className="w-[260px] shrink-0 space-y-2.5 text-[13px]">
+    <div className="w-[340px] shrink-0 space-y-2.5 text-[13px]">
       {rows.map(([k, v]) => <div key={k} className="grid grid-cols-[1fr_100px] gap-4 text-right"><span>{k}</span><span>{formatMoney(v)}</span></div>)}
       <div className="grid grid-cols-[1fr_100px] gap-4 text-right"><span>{t("totals.paid")}</span><b>{formatMoney(order.deposit)}</b></div>
     </div>

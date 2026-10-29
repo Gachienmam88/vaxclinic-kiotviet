@@ -37,13 +37,17 @@ export type Order = {
   status: OrderStatus; subtotal: number; discount: number; total: number; deposit: number; note: string | null;
   invoiceId: string | null; invoiceCode: string | null; cancelledAt: string | null; lines: OrderLine[]; payments: OrderPayment[];
   priceBookId: string | null; priceBookName: string | null; salesChannel: string; expectedDeliveryAt: string | null;
+  /** Khu vực giao hàng (mặc định theo địa chỉ khách); "Gộp đơn": đơn gốc đã hủy trỏ sang đơn gộp. */
+  area?: OrderArea | null; mergedIntoId?: string | null; mergedIntoCode?: string | null;
 };
+
+export type OrderArea = { province: string | null; provinceCode: string | null; ward: string | null; wardCode: string | null };
 
 export type OrderListItem = {
   id: string; code: string; orderedAt: string; customerCode: string | null; customerName: string; createdByName: string;
   subtotal: number; discount: number; total: number; deposit: number; status: OrderStatus; invoiceCode: string | null;
   expectedDeliveryAt: string | null; salesChannel: string; sellerName?: string | null; customerPhone?: string | null;
-  invoiceId?: string | null;
+  invoiceId?: string | null; receiverProvince?: string | null; receiverWard?: string | null;
 };
 
 export type OrderList = {

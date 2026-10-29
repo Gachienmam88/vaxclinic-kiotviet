@@ -95,6 +95,12 @@ public class InvoiceService {
                     + Actor.money(extras) + ") vượt quá số khách cần trả " + Actor.money(due));
         }
         paid = paid.min(due.subtract(extras));
+        // Đơn đặt hàng chỉ được tạo hóa đơn (hoàn thành) khi đã thanh toán đủ: tiền cọc + khách trả lần này ≥ tổng hóa đơn
+        if (req.orderId() != null && paid.add(extras).compareTo(due) < 0) {
+            orderDeposits.releaseClaim(req.orderId(), req.id());
+            throw BusinessException.badRequest("ORDER_NOT_FULLY_PAID", "Khách chưa thanh toán đủ. Còn thiếu "
+                    + Actor.money(due.subtract(paid).subtract(extras)));
+        }
         if (customer == null && paid.add(extras).compareTo(totals.total()) < 0
                 && (req.delivery() == null || !req.delivery().collectsCod())) { // giao hàng có thu hộ: phần còn lại = thu hộ
             throw BusinessException.badRequest("WALK_IN_DEBT", "Khách lẻ phải thanh toán đủ — chọn khách hàng để ghi nợ");

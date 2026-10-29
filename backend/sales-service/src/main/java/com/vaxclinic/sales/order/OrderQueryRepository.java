@@ -76,7 +76,7 @@ public class OrderQueryRepository {
                 rs.getString("invoice_code"),
                 rs.getTimestamp("expected_delivery_at") == null ? null : rs.getTimestamp("expected_delivery_at").toInstant(),
                 rs.getString("sales_channel"), rs.getString("seller_name"), rs.getString("customer_phone"),
-                rs.getObject("invoice_id", UUID.class));
+                rs.getObject("invoice_id", UUID.class), rs.getString("receiver_province"), rs.getString("receiver_ward"));
     }
 
     private static String where(OrderQuery.Filter f, MapSqlParameterSource p) {
@@ -98,6 +98,10 @@ public class OrderQueryRepository {
         if (f.deliveryTo() != null) {
             w.append(" and o.expected_delivery_at < :dto");
             p.addValue("dto", Timestamp.from(f.deliveryTo()));
+        }
+        if (f.areas() != null && !f.areas().isEmpty()) { // mã Tỉnh/Thành (2 số) hoặc Phường/Xã (5 số)
+            w.append(" and (o.receiver_province_code in (:areas) or o.receiver_ward_code in (:areas))");
+            p.addValue("areas", f.areas());
         }
         if (f.sellerId() != null) {
             w.append(" and o.seller_id = :sellerId");
@@ -151,6 +155,11 @@ public class OrderQueryRepository {
                 new MapSqlParameterSource("id", orderId), (rs, n) -> new OrderPayment(rs.getObject("id", UUID.class),
                         rs.getString("code"), rs.getString("voucher_type"), rs.getTimestamp("occurred_at").toInstant(),
                         rs.getString("created_by_name"), rs.getBigDecimal("amount"), rs.getString("fund"), rs.getString("status")));
+    }
+
+    public String orderCode(UUID orderId) {
+        return jdbc.queryForObject("select code from customer_orders where id = :id",
+                new MapSqlParameterSource("id", orderId), String.class);
     }
 
     public String invoiceCode(UUID invoiceId) {

@@ -64,6 +64,7 @@ public class OrderService {
         o.setCreatedByName(actor.name());
         o.setOrderedAt(now);
         apply(o, req, customer, totals, actor);
+        o.areaFrom(customer); // khu vực giao hàng mặc định theo địa chỉ khách
         orders.saveAndFlush(o);
         BigDecimal paid = paidNow(req, totals, BigDecimal.ZERO);
         if (paid.signum() > 0) {
@@ -88,9 +89,13 @@ public class OrderService {
             throw BusinessException.badRequest("ORDER_TOTAL_BELOW_DEPOSIT",
                     "Khách đã trả " + Actor.money(o.getDeposit()) + ", tổng đơn không được nhỏ hơn số này");
         }
+        boolean customerChanged = !Objects.equals(o.getCustomerId(), customer.getId());
         o.getLines().clear();
         orders.flush();
         apply(o, req, customer, totals, actor);
+        if (customerChanged) {
+            o.areaFrom(customer);
+        }
         orders.saveAndFlush(o);
         if (paid.signum() > 0) {
             deposits.receive(o, customer, paid, req.paymentMethod(), req.bankAccountId(), actor);
@@ -162,6 +167,12 @@ public class OrderService {
         }
         o.setExpectedDeliveryAt(r.expectedDeliveryAt());
         o.setNote(r.note());
+        if (r.area() != null) {
+            o.setReceiverProvince(Actor.blankToNull(r.area().province()));
+            o.setReceiverProvinceCode(Actor.blankToNull(r.area().provinceCode()));
+            o.setReceiverWard(Actor.blankToNull(r.area().ward()));
+            o.setReceiverWardCode(Actor.blankToNull(r.area().wardCode()));
+        }
         if (r.status() != null && o.isOpen()) {
             o.setStatus(r.status());
         }

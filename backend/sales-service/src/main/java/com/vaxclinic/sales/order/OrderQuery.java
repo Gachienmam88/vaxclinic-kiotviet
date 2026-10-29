@@ -20,11 +20,12 @@ public class OrderQuery {
 
     /**
      * productQ: mã / tên hàng; customerQ: mã / tên / SĐT khách; deliveryFrom/To: thời gian giao dự kiến; sellerId: người nhận đặt;
-     * channels: kênh bán; paymentMethods: quỹ của phiếu cọc (CASH / BANK / EWALLET).
+     * channels: kênh bán; paymentMethods: quỹ của phiếu cọc (CASH / BANK / EWALLET); areas: mã Tỉnh/Thành hoặc Phường/Xã giao hàng.
      */
     public record Filter(String q, List<String> statuses, Instant from, Instant to, UUID createdBy, UUID customerId,
                          UUID branchId, int page, int size, String productQ, String customerQ, Instant deliveryFrom,
-                         Instant deliveryTo, UUID sellerId, List<String> channels, List<String> paymentMethods) {
+                         Instant deliveryTo, UUID sellerId, List<String> channels, List<String> paymentMethods,
+                         List<String> areas) {
     }
 
     private final OrderQueryRepository queries;
@@ -64,6 +65,8 @@ public class OrderQuery {
                 customer == null ? null : customer.getCode(), o.getCustomerName(), customer == null ? null : customer.getPhone(),
                 o.getSellerId(), o.getSellerName(), o.getCreatedByName(), o.getOrderedAt(), o.getStatus(), o.getSubtotal(),
                 o.getDiscount(), o.getTotal(), o.getDeposit(), o.getNote(), o.getInvoiceId(), invoiceCode, o.getCancelledAt(),
-                lines, payments, o.getPriceBookId(), o.getPriceBookName(), o.getSalesChannel(), o.getExpectedDeliveryAt());
+                lines, payments, o.getPriceBookId(), o.getPriceBookName(), o.getSalesChannel(), o.getExpectedDeliveryAt(),
+                new OrderDtos.Area(o.getReceiverProvince(), o.getReceiverProvinceCode(), o.getReceiverWard(), o.getReceiverWardCode()),
+                o.getMergedIntoId(), o.getMergedIntoId() == null ? null : queries.orderCode(o.getMergedIntoId()));
     }
 }

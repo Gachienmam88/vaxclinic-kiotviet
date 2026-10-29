@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ChevronDown, CircleHelp, FileOutput, Plus, Settings } from "lucide-react";
+import { ChevronDown, CircleHelp, FileOutput, Merge, Plus, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PickerPopover } from "@/components/ui/picker-popover";
 import { ColumnChooser } from "@/features/delivery/delivery-list-toolbar";
@@ -16,10 +16,10 @@ const HELP = "https://www.kiotviet.vn/huong-dan-su-dung-kiotviet/retail-dat-hang
 
 /**
  * Nút phải trang Đặt hàng: "+ Đặt hàng" (màn bán hàng, tab đặt hàng mới), "Xuất file ▾" (tổng quan / chi tiết), chọn cột,
- * thiết lập đơn hàng, hướng dẫn (tab mới). Chưa có "Gộp đơn" (gộp đơn đặt hàng chưa có nghiệp vụ phía server).
+ * thiết lập đơn hàng, hướng dẫn (tab mới); "Gộp đơn" mở hộp thoại gộp đơn cùng khách trong 7 ngày.
  */
-export function OrderListToolbar({ canOrder, exportDisabled, onExport, shown, onToggle }: {
-  canOrder: boolean; exportDisabled: boolean; onExport: (kind: "overview" | "detail") => void;
+export function OrderListToolbar({ canOrder, onMerge, exportDisabled, onExport, shown, onToggle }: {
+  canOrder: boolean; onMerge: () => void; exportDisabled: boolean; onExport: (kind: "overview" | "detail") => void;
   shown: (c: OrderColumn) => boolean; onToggle: (c: OrderColumn, on: boolean) => void;
 }) {
   const t = useT(ordersNs);
@@ -28,6 +28,7 @@ export function OrderListToolbar({ canOrder, exportDisabled, onExport, shown, on
     <div className="ml-auto flex items-center gap-2">
       {canOrder && <Button variant="outline" className={TOOLBAR_BTN} render={<Link href="/sale?newOrder=1" />}>
         <Plus className="size-4" /> {t("kv.newOrder")}</Button>}
+      {canOrder && <Button variant="outline" className={TOOLBAR_BTN} onClick={onMerge}><Merge className="size-4" /> {t("kv.merge.button")}</Button>}
       <PickerPopover open={open} onOpenChange={setOpen} label={t("kv.export")} align="end" disabled={exportDisabled}
         triggerClassName={`${TOOLBAR_BTN} inline-flex items-center gap-1.5 border disabled:opacity-50`} className="w-44 p-1"
         icon={<><FileOutput className="size-4" />{t("kv.export")}<ChevronDown className="size-3.5" /></>}>

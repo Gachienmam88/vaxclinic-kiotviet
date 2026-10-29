@@ -194,13 +194,29 @@
       "orderSaved": "受注 {code} を保存しました",
       "needCustomer": "受注には顧客の選択が必要です",
       "invoiceDone": "請求書を更新しました",
-      "deposited": "顧客支払済み"
+      "deposited": "顧客支払済み",
+      "notFullyPaid": "お客様の支払いが不足しています。不足額 {amount}",
+      "missing": "不足額"
     },
     "advance": "（前受金振替）",
     "cancelPay": {
       "title": "支払の取消",
       "body": "関連する入金伝票も取り消しますか？",
       "confirm": "確認"
+    },
+    "area": "配送エリア",
+    "areaPh": "省・市 - 坊・社を選択",
+    "areaSearch": "省・市、坊・社を検索",
+    "ward": "坊・社",
+    "merge": {
+      "button": "注文をまとめる",
+      "title": "注文の統合",
+      "intro": "同じ顧客の過去7日以内に作成された請求書未発行の仮・確定注文を最も古い注文に統合します。前受金は統合先に移り、他の注文は取消になります。",
+      "target": "(統合先)",
+      "empty": "統合できる注文はありません",
+      "submit": "{n} グループを統合",
+      "done": "{n} グループを統合しました：{codes}",
+      "mergedInto": "統合先"
     }
   }
 }

@@ -46,10 +46,11 @@ public class OrderController {
                                   @RequestParam(required = false) String productQ, @RequestParam(required = false) String customerQ,
                                   @RequestParam(required = false) Instant deliveryFrom, @RequestParam(required = false) Instant deliveryTo,
                                   @RequestParam(required = false) UUID sellerId, @RequestParam(required = false) List<String> channels,
-                                  @RequestParam(required = false) List<String> paymentMethods) {
+                                  @RequestParam(required = false) List<String> paymentMethods,
+                                  @RequestParam(required = false) List<String> areas) {
         return service.list(new OrderQuery.Filter(q, statuses, from, to, createdBy, customerId, branchId,
                 Math.max(page, 0), Math.min(Math.max(size, 1), 100), productQ, customerQ, deliveryFrom, deliveryTo, sellerId,
-                channels, paymentMethods));
+                channels, paymentMethods, areas));
     }
 
     /** "Xuất file" (tổng quan / chi tiết): đơn khớp bộ lọc + dòng hàng. */
@@ -62,9 +63,10 @@ public class OrderController {
                                            @RequestParam(required = false) Instant deliveryTo,
                                            @RequestParam(required = false) UUID sellerId,
                                            @RequestParam(required = false) List<String> channels,
-                                           @RequestParam(required = false) List<String> paymentMethods) {
+                                           @RequestParam(required = false) List<String> paymentMethods,
+                                           @RequestParam(required = false) List<String> areas) {
         return service.export(new OrderQuery.Filter(q, statuses, from, to, createdBy, null, null, 0, 5000, productQ, customerQ,
-                deliveryFrom, deliveryTo, sellerId, channels, paymentMethods));
+                deliveryFrom, deliveryTo, sellerId, channels, paymentMethods, areas));
     }
 
     /** "Lưu" ở chi tiết đơn (người nhận đặt, ngày đặt, kênh bán, dự kiến giao, trạng thái, ghi chú). */
@@ -72,6 +74,20 @@ public class OrderController {
     @PreAuthorize("hasAuthority('sales.perform')")
     public OrderResponse updateInfo(@PathVariable UUID id, @Valid @RequestBody OrderDtos.InfoRequest req, @AuthenticationPrincipal Jwt jwt) {
         return service.updateInfo(id, req, Actor.of(jwt));
+    }
+
+    /** "Gộp đơn": nhóm đơn mở cùng khách (≥ 2 đơn, 7 ngày qua) của chi nhánh. */
+    @GetMapping("/merge-candidates")
+    @PreAuthorize("hasAuthority('sales.perform')")
+    public OrderDtos.MergeCandidatesResponse mergeCandidates(@RequestParam UUID branchId, @AuthenticationPrincipal Jwt jwt) {
+        return service.mergeCandidates(branchId, Actor.of(jwt));
+    }
+
+    /** "Gộp đơn": gộp các đơn cùng khách vào đơn cũ nhất; trả đơn gộp. */
+    @PostMapping("/merge")
+    @PreAuthorize("hasAuthority('sales.perform')")
+    public OrderResponse merge(@Valid @RequestBody OrderDtos.MergeRequest req, @AuthenticationPrincipal Jwt jwt) {
+        return service.merge(req, Actor.of(jwt));
     }
 
     /** "Kết thúc": chuyển Hoàn thành không tạo hóa đơn. */

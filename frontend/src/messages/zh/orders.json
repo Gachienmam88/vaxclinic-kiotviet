@@ -194,13 +194,29 @@
       "orderSaved": "订单 {code} 已保存",
       "needCustomer": "下单必须选择客户",
       "invoiceDone": "发票已成功更新",
-      "deposited": "客户已付"
+      "deposited": "客户已付",
+      "notFullyPaid": "客户尚未付清。还差 {amount}",
+      "missing": "还差"
     },
     "advance": "（转为预付）",
     "cancelPay": {
       "title": "取消付款",
       "body": "是否同时取消相关的付款单？",
       "confirm": "确认"
+    },
+    "area": "送货区域",
+    "areaPh": "选择省/市 - 坊/社",
+    "areaSearch": "搜索省/市、坊/社",
+    "ward": "坊/社",
+    "merge": {
+      "button": "合并订单",
+      "title": "合并订货单",
+      "intro": "同一客户在过去7天内创建、尚未开票的草稿/已确认订单将合并到最早的订单中。定金转入合并后的订单，其余订单变为已取消。",
+      "target": "(合并目标)",
+      "empty": "没有可合并的订单",
+      "submit": "合并 {n} 组",
+      "done": "已合并 {n} 组：{codes}",
+      "mergedInto": "已合并到"
     }
   }
 }

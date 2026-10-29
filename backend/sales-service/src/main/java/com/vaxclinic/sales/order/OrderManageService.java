@@ -26,9 +26,11 @@ public class OrderManageService {
     private final InvoiceService invoices;
     private final InvoiceQuery invoiceQuery;
     private final AuditLogger audit;
+    private final OrderMergeService merges;
 
     public OrderManageService(OrderService service, OrderQuery query, InvoiceService invoices, InvoiceQuery invoiceQuery,
-                              AuditLogger audit) {
+                              AuditLogger audit, OrderMergeService merges) {
+        this.merges = merges;
         this.service = service;
         this.query = query;
         this.invoices = invoices;
@@ -75,6 +77,18 @@ public class OrderManageService {
     public OrderResponse updateInfo(UUID id, OrderDtos.InfoRequest req, Actor actor) {
         OrderResponse r = query.detail(service.updateInfo(id, req, actor).getId());
         log(actor, r, "Sửa", "Cập nhật thông tin đơn đặt hàng " + r.code());
+        return r;
+    }
+
+    public OrderDtos.MergeCandidatesResponse mergeCandidates(UUID branchId, Actor actor) {
+        return merges.candidates(branchId, actor);
+    }
+
+    /** "Gộp đơn": ghi lịch sử mã các đơn gốc → đơn gộp. */
+    public OrderResponse merge(OrderDtos.MergeRequest req, Actor actor) {
+        var codes = req.orderIds().stream().distinct().map(id -> query.detail(id).code()).sorted().toList();
+        OrderResponse r = query.detail(merges.merge(req, actor).getId());
+        log(actor, r, "Gộp đơn", "Gộp đơn đặt hàng " + String.join(", ", codes) + " vào " + r.code());
         return r;
     }
 

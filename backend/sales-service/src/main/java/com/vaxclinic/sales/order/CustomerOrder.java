@@ -74,6 +74,18 @@ public class CustomerOrder implements Persistable<UUID> {
     private UUID invoiceId;
     @Column(name = "cancelled_at")
     private Instant cancelledAt;
+    /** "Gộp đơn": đơn gốc (đã hủy) trỏ sang đơn gộp. */
+    @Column(name = "merged_into_id")
+    private UUID mergedIntoId;
+    /** Khu vực giao hàng (lọc danh sách): mặc định theo địa chỉ khách lúc tạo đơn, sửa ở chi tiết đơn. */
+    @Column(name = "receiver_province")
+    private String receiverProvince;
+    @Column(name = "receiver_province_code")
+    private String receiverProvinceCode;
+    @Column(name = "receiver_ward")
+    private String receiverWard;
+    @Column(name = "receiver_ward_code")
+    private String receiverWardCode;
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
 
@@ -93,6 +105,14 @@ public class CustomerOrder implements Persistable<UUID> {
     @jakarta.persistence.PostPersist
     void markNotNew() {
         this.isNew = false;
+    }
+
+    /** Khu vực giao hàng theo địa chỉ khách (tỉnh + phường/xã, cả mã và tên). */
+    public void areaFrom(com.vaxclinic.sales.customer.Customer c) {
+        receiverProvince = c.getProvince();
+        receiverProvinceCode = c.getProvinceCode();
+        receiverWard = c.getWard();
+        receiverWardCode = c.getWardCode();
     }
 
     /** Còn sửa / tạo hóa đơn / hủy được. */

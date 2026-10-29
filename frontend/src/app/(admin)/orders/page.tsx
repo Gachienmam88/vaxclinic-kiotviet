@@ -12,6 +12,7 @@ import { OrderDetailPanel } from "@/features/orders/order-detail-panel";
 import { DEFAULT_ORDER_FILTERS, OrderFilterSidebar, type OrderFilters } from "@/features/orders/order-filter-sidebar";
 import { DEFAULT_ORDER_COLUMNS, ORDER_COLUMNS, ORDER_MONEY, orderCell } from "@/features/orders/order-list-columns";
 import { OrderListToolbar } from "@/features/orders/order-list-toolbar";
+import { OrderMergeDialog } from "@/features/orders/order-merge-dialog";
 import { useOrders } from "@/features/orders/order-queries";
 import { EMPTY_ORDER_SEARCH, OrderSearchPanel, type OrderSearch } from "@/features/orders/order-search-panel";
 import { exportOrderDetail, exportOrderOverview } from "@/features/orders/order-xlsx-export";
@@ -46,7 +47,8 @@ function useFavourites() {
  */
 function OrdersPage({ link }: { link: DeepLink }) {
   const t = useT(ordersNs);
-  const { can } = useCurrentUser();
+  const { can, data: me } = useCurrentUser();
+  const [merging, setMerging] = useState(false);
   const deepLink = !!(link.code || link.id);
   const [search, setSearch] = useState<OrderSearch>({ ...EMPTY_ORDER_SEARCH, q: link.code ?? "" });
   const [q, setQ] = useState(search);
@@ -67,6 +69,7 @@ function OrdersPage({ link }: { link: DeepLink }) {
     (["q", "productQ", "customerQ"] as const).forEach((k) => { if (q[k].trim()) p.set(k, q[k].trim()); });
     filters.statuses.forEach((s) => p.append("statuses", s));
     filters.funds.forEach((f) => p.append("paymentMethods", f));
+    filters.areas.forEach((a) => p.append("areas", a));
     if (filters.channel) p.set("channels", filters.channel);
     if (filters.createdBy) p.set("createdBy", filters.createdBy);
     if (filters.sellerId) p.set("sellerId", filters.sellerId);
@@ -100,7 +103,7 @@ function OrdersPage({ link }: { link: DeepLink }) {
       <div className="min-w-0 flex-1 space-y-3">
         <div className="flex items-center gap-2">
           <OrderSearchPanel value={search} onChange={setSearch} />
-          <OrderListToolbar canOrder={can("sales.perform")} exportDisabled={!data?.items.length} onExport={exportFile}
+          <OrderListToolbar canOrder={can("sales.perform")} onMerge={() => setMerging(true)} exportDisabled={!data?.items.length} onExport={exportFile}
             shown={cols.shown} onToggle={cols.toggle} />
         </div>
         <div className="overflow-x-auto rounded-lg bg-background">
@@ -135,6 +138,7 @@ function OrdersPage({ link }: { link: DeepLink }) {
         </div>
         <ListPager total={data?.total ?? 0} page={page} size={size} unit={t("list.unit")} onPage={setPage} onSize={(s) => { setSize(s); setPage(0); }} />
       </div>
+      {merging && <OrderMergeDialog branchId={me?.user.branches[0]?.id ?? ""} onClose={() => setMerging(false)} />}
     </div>
   );
 }

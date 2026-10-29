@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { api } from "@/lib/api-client";
 import { useT } from "@/lib/i18n";
 import { formatMoney } from "@/lib/format";
+import { ordersNs } from "@/messages/orders";
 import { saleNs } from "@/messages/sale";
 import type { Order } from "@/features/orders/order-types";
 import { SALES_KEYS } from "@/features/sales/sales-queries";
@@ -53,21 +54,36 @@ export function useSaleOrderSubmit(tabs: SaleTabs, branchId: string, enqueue: (q
 }
 
 /**
- * TẠO HÓA ĐƠN ở tab đơn đã lưu ("DHxxx", KiotViet): lưu thay đổi của đơn (PUT; "Khách thanh toán" nhập ở đây là cọc thêm),
- * rồi thay tab bằng tab hóa đơn "Hóa đơn N" gắn đơn — tiền cọc trừ vào khách cần trả, THANH TOÁN mới tạo hóa đơn và trừ kho.
+ * TẠO HÓA ĐƠN ở tab đơn đã lưu ("DHxxx"): đơn chỉ được tạo hóa đơn khi đã thanh toán đủ. P = tiền cọc + "Khách thanh toán" gõ ở tab.
+ * - P < tổng: không tạo hóa đơn; lưu đơn, số gõ (> 0) thành phiếu cọc thêm TT{DH}-n; báo "Khách chưa thanh toán đủ. Còn thiếu …";
+ *   tab đơn nạp lại (cọc mới).
+ * - P ≥ tổng: lưu đơn không cọc thêm, trả về bản nháp hóa đơn gắn đơn (số gõ + phương thức = tiền khách trả, thừa = tiền thừa)
+ *   để màn bán hàng thanh toán ngay (cọc "(Chuyển tạm ứng)" + phiếu thu TT{HĐ}). Server cũng chặn ORDER_NOT_FULLY_PAID.
  */
 export function useSaleOrderToInvoice(tabs: SaleTabs, branchId: string, catalog: CatalogProduct[], userId: string) {
   const qc = useQueryClient();
   const tr = useT(saleNs);
-  return async (d: DraftInvoice, sellerName: string | undefined) => {
-    if (!d.orderOf) return;
+  const to = useT(ordersNs);
+  return async (d: DraftInvoice, sellerName: string | undefined): Promise<DraftInvoice | null> => {
+    if (!d.orderOf) return null;
+    const t = cartTotals(d);
+    const typed = Math.max(0, d.paid ?? 0);
+    const missing = t.total - t.deposit - typed;
     try {
-      await api<Order>(`/orders/${d.orderOf.orderId}`, { method: "PUT", body: toBody(d, branchId, sellerName, false) });
-      const inv = await draftFromOrder(d.orderOf.orderId, "invoice", catalog, userId, tr);
-      tabs.replaceActive((label) => ({ ...inv, label }));
+      await api<Order>(`/orders/${d.orderOf.orderId}`, { method: "PUT",
+        body: toBody({ ...d, paid: missing > 0 ? typed : 0, extraPayments: [] }, branchId, sellerName, false) });
       SALES_KEYS.forEach((k) => qc.invalidateQueries({ queryKey: k }));
+      if (missing > 0) {
+        toast.error(to("kv.sale.notFullyPaid", { amount: formatMoney(missing) }));
+        const fresh = await draftFromOrder(d.orderOf.orderId, "edit", catalog, userId, tr);
+        tabs.replaceActive(() => ({ ...fresh, paid: null }));
+        return null;
+      }
+      const inv = await draftFromOrder(d.orderOf.orderId, "invoice", catalog, userId, tr);
+      return { ...inv, paid: typed, paymentMethod: d.paymentMethod };
     } catch (e) {
       toast.error(isNetworkError(e) ? tr("order.editNeedsNetwork") : (e as Error).message);
+      return null;
     }
   };
 }

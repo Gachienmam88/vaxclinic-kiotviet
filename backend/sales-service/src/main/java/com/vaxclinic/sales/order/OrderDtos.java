@@ -42,7 +42,29 @@ public final class OrderDtos {
 
     /** Sửa nhanh ở chi tiết đơn ("Lưu"): người nhận đặt, ngày đặt, kênh bán, dự kiến giao, trạng thái (Phiếu tạm / Đã xác nhận), ghi chú. */
     public record InfoRequest(UUID sellerId, @Size(max = 150) String sellerName, Instant orderedAt, @Size(max = 30) String salesChannel,
-                              Instant expectedDeliveryAt, @Pattern(regexp = "DRAFT|CONFIRMED") String status, String note) {
+                              Instant expectedDeliveryAt, @Pattern(regexp = "DRAFT|CONFIRMED") String status, String note,
+                              @Valid Area area) {
+    }
+
+    /** Khu vực giao hàng: Tỉnh/Thành + Phường/Xã (mã + tên; chuỗi rỗng = bỏ trống). null ở InfoRequest = giữ nguyên. */
+    public record Area(@Size(max = 100) String province, @Size(max = 10) String provinceCode, @Size(max = 100) String ward,
+                       @Size(max = 10) String wardCode) {
+    }
+
+    /** "Gộp đơn": các đơn cùng khách cần gộp (đơn cũ nhất giữ lại làm đơn gộp). */
+    public record MergeRequest(@NotNull UUID branchId,
+                               @NotNull @Size(min = 2, max = 50, message = "Chọn ít nhất 2 đơn để gộp") List<UUID> orderIds) {
+    }
+
+    public record MergeCandidate(UUID id, String code, Instant orderedAt, String status, BigDecimal total, BigDecimal deposit) {
+    }
+
+    /** Nhóm gộp được: ≥ 2 đơn mở của cùng 1 khách, cùng chi nhánh, tạo trong 7 ngày qua. */
+    public record MergeGroup(UUID customerId, String customerCode, String customerName, String customerPhone,
+                             List<MergeCandidate> orders) {
+    }
+
+    public record MergeCandidatesResponse(List<MergeGroup> groups) {
     }
 
     /** "Xuất file": đơn khớp bộ lọc (tối đa 5.000) + dòng hàng. */
@@ -64,13 +86,15 @@ public final class OrderDtos {
                                 BigDecimal discount, BigDecimal total, BigDecimal deposit, String note,
                                 UUID invoiceId, String invoiceCode, Instant cancelledAt,
                                 List<OrderLineResponse> lines, List<OrderPayment> payments, UUID priceBookId,
-                                String priceBookName, String salesChannel, Instant expectedDeliveryAt) {
+                                String priceBookName, String salesChannel, Instant expectedDeliveryAt, Area area,
+                                UUID mergedIntoId, String mergedIntoCode) {
     }
 
     public record OrderListItem(UUID id, String code, Instant orderedAt, String customerCode, String customerName,
                                 String createdByName, BigDecimal subtotal, BigDecimal discount, BigDecimal total,
                                 BigDecimal deposit, String status, String invoiceCode, Instant expectedDeliveryAt,
-                                String salesChannel, String sellerName, String customerPhone, UUID invoiceId) {
+                                String salesChannel, String sellerName, String customerPhone, UUID invoiceId,
+                                String receiverProvince, String receiverWard) {
     }
 
     public record OrderListResponse(List<OrderListItem> items, long total, int page, int size, BigDecimal sumSubtotal,

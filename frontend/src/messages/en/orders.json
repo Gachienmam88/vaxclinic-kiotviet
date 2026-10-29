@@ -194,13 +194,29 @@
       "orderSaved": "Order {code} saved",
       "needCustomer": "An order requires a customer",
       "invoiceDone": "Invoice updated successfully",
-      "deposited": "Customer paid"
+      "deposited": "Customer paid",
+      "notFullyPaid": "The customer has not paid in full. Still missing {amount}",
+      "missing": "Still missing"
     },
     "advance": "(Advance transfer)",
     "cancelPay": {
       "title": "Cancel payments",
       "body": "Do you want to cancel the related payment vouchers?",
       "confirm": "Confirm"
+    },
+    "area": "Delivery area",
+    "areaPh": "Choose province - ward",
+    "areaSearch": "Search province, ward",
+    "ward": "Ward",
+    "merge": {
+      "button": "Merge orders",
+      "title": "Merge orders",
+      "intro": "Draft / confirmed orders without an invoice of the same customer, created in the last 7 days, are merged into the oldest order. Deposits move to the merged order; the others become Cancelled.",
+      "target": "(target)",
+      "empty": "No orders can be merged",
+      "submit": "Merge {n} groups",
+      "done": "Merged {n} groups: {codes}",
+      "mergedInto": "Merged into"
     }
   }
 }

@@ -120,12 +120,14 @@ function SaleScreenBody() {
     setPaying(false);
   }
 
-  /** Tab đơn "DHxxx" → TẠO HÓA ĐƠN: lưu đơn rồi chuyển thành tab hóa đơn gắn đơn (THANH TOÁN mới trừ kho). */
+  /** Tab đơn "DHxxx" → TẠO HÓA ĐƠN: trả đủ → lưu đơn rồi thanh toán hóa đơn gắn đơn ngay (trừ kho, tab đơn thành tab trống). */
   async function createInvoiceFromOrderTab() {
     if (!d?.orderOf || paying || !d.lines.length) return;
     if (d.lines.some((l) => l.quantity <= 0)) return toast.error(t("screen.qtyPositive"));
     setPaying(true);
-    await orderToInvoice(d, users.find((u) => u.id === d.sellerId)?.fullName);
+    const sellerName = users.find((u) => u.id === d.sellerId)?.fullName;
+    const inv = await orderToInvoice(d, sellerName);
+    if (inv && await submitInvoice(inv, sellerName)) refreshAfterSave();
     setPaying(false);
   }
 

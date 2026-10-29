@@ -103,9 +103,9 @@ export function SaleCheckoutPanel({ draft, branchId, update, onPay, onCreateInvo
           onQr={() => { update({ paymentMethod: "TRANSFER", extraPayments: [] }); setQr(true); }}
           allowMixed={!order && !draft.editOf} suggest={settings.suggestPaid && !delivery} />}
         {change > 0 && <SummaryRow label={tr("checkout.change")}>{formatMoney(change)}</SummaryRow>}
-        {change < 0 && !order && !delivery && <div className="text-destructive"><SummaryRow label={tr("checkout.toDebt")}>{formatMoney(-change)}</SummaryRow></div>}
+        {change < 0 && !order && !delivery && <div className="text-destructive"><SummaryRow label={draft.fromOrder ? to("kv.sale.missing") : tr("checkout.toDebt")}>{formatMoney(-change)}</SummaryRow></div>}
         {delivery && <SummaryRow bold label={tr("checkout.cod")}><span className="text-primary">{formatMoney(t.cod)}</span></SummaryRow>}
-        {change < 0 && order && <SummaryRow label={tr("checkout.toDebt")}>{formatMoney(-change)}</SummaryRow>}
+        {change < 0 && order && <SummaryRow label={to("kv.sale.missing")}>{formatMoney(-change)}</SummaryRow>}
         {order && <SummaryRow label={tr("checkout.deliveryTime")}>
           <DateTimePicker aria-label={tr("checkout.deliveryTime")} className={`${underlineInput} w-[180px]`}
             value={draft.expectedDeliveryAt ?? ""} onChange={(v) => update({ expectedDeliveryAt: v || null })} />

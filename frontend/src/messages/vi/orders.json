@@ -194,13 +194,29 @@
       "orderSaved": "Đã lưu đơn đặt hàng {code}",
       "needCustomer": "Đặt hàng phải chọn khách hàng",
       "invoiceDone": "Hóa đơn đã được cập nhật thành công",
-      "deposited": "Khách đã trả"
+      "deposited": "Khách đã trả",
+      "notFullyPaid": "Khách chưa thanh toán đủ. Còn thiếu {amount}",
+      "missing": "Còn thiếu"
     },
     "advance": "(Chuyển tạm ứng)",
     "cancelPay": {
       "title": "Hủy thanh toán",
       "body": "Bạn có muốn hủy những phiếu thanh toán liên quan?",
       "confirm": "Xác nhận"
+    },
+    "area": "Khu vực giao hàng",
+    "areaPh": "Chọn Tỉnh/TP - Phường/Xã",
+    "areaSearch": "Tìm Tỉnh/Thành phố, Phường/Xã",
+    "ward": "Phường/Xã",
+    "merge": {
+      "button": "Gộp đơn",
+      "title": "Gộp đơn đặt hàng",
+      "intro": "Các đơn Phiếu tạm / Đã xác nhận chưa có hóa đơn của cùng 1 khách, tạo trong 7 ngày qua, được gộp vào đơn cũ nhất. Tiền cọc chuyển sang đơn gộp, đơn còn lại chuyển Đã hủy.",
+      "target": "(đơn gộp)",
+      "empty": "Không có đơn nào gộp được",
+      "submit": "Gộp {n} nhóm",
+      "done": "Đã gộp {n} nhóm: {codes}",
+      "mergedInto": "Đã gộp vào"
     }
   }
 }

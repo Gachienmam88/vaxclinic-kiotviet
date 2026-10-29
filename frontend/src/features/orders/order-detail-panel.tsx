@@ -61,7 +61,8 @@ function OrderDetailBody({ o, onClose }: { o: Order; onClose?: () => void }) {
   const save = useMutation({
     mutationFn: () => api(`/orders/${o.id}/info`, { method: "PATCH", body: {
       sellerId: draft.sellerId || null, sellerName: users.find((u) => u.id === draft.sellerId)?.fullName ?? o.sellerName, orderedAt: iso(draft.orderedAt), salesChannel: draft.salesChannel,
-      expectedDeliveryAt: iso(draft.expectedDeliveryAt), status: draft.status, note: draft.note } }),
+      expectedDeliveryAt: iso(draft.expectedDeliveryAt), status: draft.status, note: draft.note,
+      area: { province: draft.area.provinceName, provinceCode: draft.area.provinceCode, ward: draft.area.wardName, wardCode: draft.area.wardCode } } }),
     onSuccess: () => { toast.success(t("kv.detail.saved")); SALES_KEYS.forEach((k) => qc.invalidateQueries({ queryKey: k })); },
     onError: (e) => toast.error(errorMessage(e)),
   });
@@ -87,6 +88,7 @@ function OrderDetailBody({ o, onClose }: { o: Order; onClose?: () => void }) {
                 className="text-[#2171bc] hover:text-[#1a9dcc]"><ExternalLink className="size-4" /></Link>}
               <span>{o.code}</span>
               <StatusBadge tone={ORDER_STATUS_TONE[o.status]}>{t(ORDER_STATUS_KEY[o.status])}</StatusBadge>
+              {o.mergedIntoCode && <span className="text-[13px]">{t("kv.merge.mergedInto")} <DocCodeLink code={o.mergedIntoCode} kind="/orders" /></span>}
               {o.invoiceCode && <span className="text-[13px]">{t("kv.detail.invoice")}: <DocCodeLink code={o.invoiceCode} kind="/invoices" /></span>}
               <span className="ml-auto">{branches.find((b) => b.id === o.branchId)?.name}</span>
             </div>
