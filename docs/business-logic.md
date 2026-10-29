@@ -1293,13 +1293,15 @@ Thực hiện sửa:
   - Khác khách → `MERGE_DIFFERENT_CUSTOMERS`.
   - Khác chi nhánh → `MERGE_DIFFERENT_BRANCH`.
   - Khóa sổ theo từng HĐ gốc.
+  - Khác nhau về giảm thuế (có / không `tax_reduction`), đơn thuốc (có ↔ không, hoặc khác nội dung) hoặc thông tin người mua xuất HĐĐT → 400 `MERGE_ATTRIBUTES_DIFFER` "Không gộp được: hóa đơn X và Y khác nhau về …" (audit #12, `InvoiceMergeService.checkSameAttributes`).
   - Id đã tồn tại → trả HĐ đã gộp.
 - Kho `SALE_MERGE`: hoàn các `previousDocIds` rồi xuất lại đúng lô cho dòng mới (`sourceLineId`); tồn kho không đổi (`ProductStockClient.java:67-87`).
 - Ghi DB (khóa HĐ gốc theo id tăng dần để tránh deadlock):
   - HĐ gốc không còn `COMPLETED` → 409 `INVOICE_ALREADY_CANCELLED`.
   - HĐ mới:
     - Khách / chi nhánh / `sale_mode` theo HĐ sớm nhất; người bán và `sold_at` theo HĐ mới nhất.
-    - Tổng (subtotal / discount / total / paid) = Σ các HĐ gốc.
+    - Tổng **tính lại ở server** trên toàn bộ dòng (audit #12): giảm giá = Σ giảm giá HĐ gốc, giảm thuế + phương pháp + cờ `tax_reduced` từng dòng theo `TaxReductionPlanner` (hàng + thiết lập thuế + ngày bán của HĐ gộp), `total = subtotal − discount − tax_reduction` (`InvoiceMergeService.mergedTotals`, gọi trước khi ghi). `paid` = Σ các HĐ gốc; nếu `paid > total` sau khi tính lại → 409 `MERGE_TOTAL_CHANGED`.
+    - Đơn thuốc và thông tin người mua HĐĐT (đã kiểm giống nhau) copy từ HĐ gốc.
     - Ghi chú "Gộp từ hóa đơn …".
     - Bảng giá / kênh: giữ nếu mọi HĐ gốc giống nhau, ngược lại null / kênh của HĐ đầu.
     - Dòng copy nguyên (giá, giá vốn, lô, mã thuế) + copy `invoice_line_lots`.
@@ -1308,7 +1310,7 @@ Thực hiện sửa:
   - Phiếu thu: chuyển phân bổ sang HĐ mới. Phiếu `TT` đầu tiên thành phiếu chính `INVOICE`, còn lại thành `INVOICE_EXTRA`; mã phiếu giữ nguyên, sổ quỹ không đổi.
   - Sổ nợ: `SALE_CANCEL −total` từng HĐ gốc ("Gộp vào hóa đơn …") + `SALE +total` HĐ mới; các dòng thanh toán giữ nguyên.
   - Audit "Gộp đơn".
-- Giới hạn thấy trong code: writer không copy `tax_reduction`, `tax_reduction_method`, cờ `tax_reduced` của dòng, đơn thuốc, thông tin HĐĐT buyer; `total` vẫn là Σ total đã trừ giảm thuế (`InvoiceMergeWriter.java:65-109`). `customers.total_sales` không cần chỉnh vì Σ không đổi.
+- ~~Writer không copy giảm thuế / cờ dòng / đơn thuốc / người mua HĐĐT~~ — đã sửa (audit #12). Sổ nợ ghi `SALE_CANCEL` từng HĐ gốc + `SALE` theo total mới, nên lệch làm tròn giảm thuế (nếu có) đi vào nợ khách; `customers.total_sales` không chỉnh lại.
 
 ---
 

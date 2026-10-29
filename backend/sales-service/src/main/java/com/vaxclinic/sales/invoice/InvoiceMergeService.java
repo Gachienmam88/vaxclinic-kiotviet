@@ -25,7 +25,9 @@ import java.util.UUID;
  * "Gộp đơn" (KiotViet): hóa đơn cùng khách trong 7 ngày qua → 1 hóa đơn mới giữ nguyên dòng hàng + lô, cộng dồn thanh toán;
  * hóa đơn gốc chuyển Đã hủy (merged_into_id = hóa đơn gộp). Không mở transaction (gọi product-service):
  * kiểm tra → kho SALE_MERGE (idempotent, tồn không đổi) → ghi DB 1 transaction ({@link InvoiceMergeWriter}).
- * Chặn gộp: đã trả hàng, có vận đơn, đã phát hành HĐĐT, đơn đặt hàng liên quan chưa hoàn thành, có phiếu thu nợ / tiền cọc.
+ * Chặn gộp: đã trả hàng, có vận đơn, đã phát hành HĐĐT, đơn đặt hàng liên quan chưa hoàn thành, có phiếu thu nợ / tiền cọc;
+ * các hóa đơn khác nhau về giảm thuế / đơn thuốc / thông tin xuất HĐĐT (MERGE_ATTRIBUTES_DIFFER). Hóa đơn gộp giữ đơn thuốc +
+ * người mua HĐĐT chung, giảm thuế + cờ giảm thuế từng dòng tính lại ở server trên toàn bộ dòng (TaxReductionPlanner).
  */
 @Service
 public class InvoiceMergeService {
@@ -38,10 +40,12 @@ public class InvoiceMergeService {
     private final SalesRules rules;
     private final AuditLogger audit;
     private final InvoiceQuery query;
+    private final TaxReductionPlanner taxPlanner;
 
     public InvoiceMergeService(InvoiceMergeRepository merges, InvoiceRepository invoices, InvoiceMergeWriter writer,
                                ProductStockClient stock, EInvoiceLookupClient einvoices, SalesRules rules, AuditLogger audit,
-                               InvoiceQuery query) {
+                               InvoiceQuery query, TaxReductionPlanner taxPlanner) {
+        this.taxPlanner = taxPlanner;
         this.merges = merges;
         this.invoices = invoices;
         this.writer = writer;
@@ -109,6 +113,8 @@ public class InvoiceMergeService {
             }
             rules.checkNotLocked(inv.getBranchId(), inv.getSoldAt()); // hủy hóa đơn gốc trong kỳ đã khóa sổ → chặn
         }
+        checkSameAttributes(originals);
+        InvoiceMath.Totals totals = mergedTotals(originals); // gọi product / identity → ngoài transaction ghi
         String code = "HD%06d".formatted(invoices.nextCodeNumber());
         var lineIds = new ArrayList<UUID>();
         var stockLines = new ArrayList<ProductStockClient.MergeLine>();
@@ -121,11 +127,38 @@ public class InvoiceMergeService {
         }
         stock.applyMerge(new ProductStockClient.MergeRequest(req.id(), code, req.branchId(), originals.get(0).getCustomerName(),
                 actor.id(), originals.stream().map(Invoice::getStockDocId).toList(), stockLines));
-        Invoice merged = writer.persist(req.id(), code, originals, lineIds, actor);
+        Invoice merged = writer.persist(req.id(), code, originals, lineIds, totals, actor);
         actor.audit(audit, merged.getBranchId(), "Hóa đơn", "Gộp đơn", code, "Gộp hóa đơn "
                 + String.join(", ", originals.stream().map(Invoice::getCode).toList()) + " thành " + code + ", khách "
                 + merged.getCustomerName() + ", tổng " + Actor.money(merged.getTotal()) + ", đã trả " + Actor.money(merged.getPaid()));
         return query.detail(merged.getId());
+    }
+
+    /** Giảm thuế, đơn thuốc, người mua HĐĐT phải giống nhau giữa các hóa đơn gốc (không tự chọn bên nào thắng). */
+    private static void checkSameAttributes(List<Invoice> originals) {
+        Invoice first = originals.get(0);
+        for (Invoice o : originals) {
+            String what = (o.getTaxReduction().signum() > 0) != (first.getTaxReduction().signum() > 0) ? "giảm thuế GTGT"
+                    : !java.util.Objects.equals(o.prescriptionInfo(), first.prescriptionInfo()) ? "thông tin đơn thuốc"
+                    : !java.util.Objects.equals(o.einvoiceBuyer(), first.einvoiceBuyer()) ? "thông tin người mua xuất hóa đơn điện tử"
+                    : null;
+            if (what != null) {
+                throw BusinessException.badRequest("MERGE_ATTRIBUTES_DIFFER", "Không gộp được: hóa đơn " + first.getCode() + " và "
+                        + o.getCode() + " khác nhau về " + what + ". Sửa cho giống nhau trước khi gộp");
+            }
+        }
+    }
+
+    /** Tổng hóa đơn gộp tính lại trên toàn bộ dòng: giảm giá = Σ giảm giá, giảm thuế theo hàng + ngày bán của hóa đơn gộp. */
+    private InvoiceMath.Totals mergedTotals(List<Invoice> originals) {
+        var lines = originals.stream().flatMap(o -> o.getLines().stream())
+                .map(l -> new InvoiceDtos.LineInput(l.getProductId(), l.getUnitId(), l.getProductCode(), l.getProductName(),
+                        l.getUnitName(), l.getQuantity(), l.getUnitPrice(), l.getDiscount(), l.getNote(), l.getTaxCode(), null))
+                .toList();
+        var discount = originals.stream().map(Invoice::getDiscount).reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
+        boolean reduce = originals.get(0).getTaxReduction().signum() > 0;
+        Instant soldAt = originals.get(originals.size() - 1).getSoldAt(); // hóa đơn gộp lấy ngày bán của hóa đơn mới nhất
+        return InvoiceMath.totals(lines, discount, taxPlanner.plan(lines, reduce, soldAt));
     }
 
     /** null = gộp được; còn lại = mã lý do chặn. */

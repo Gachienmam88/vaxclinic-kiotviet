@@ -34,7 +34,8 @@ public class InvoiceMergeWriter {
 
     /** originals: đã sắp theo thời gian bán; lineIds: id dòng mới theo đúng thứ tự dòng của originals. */
     @Transactional
-    public Invoice persist(UUID id, String code, List<Invoice> originals, List<UUID> lineIds, Actor actor) {
+    /** totals: tổng tính lại ở server (InvoiceMergeService.mergedTotals) — giảm thuế + dòng được giảm theo thứ tự dòng. */
+    public Invoice persist(UUID id, String code, List<Invoice> originals, List<UUID> lineIds, InvoiceMath.Totals totals, Actor actor) {
         var existing = invoices.findById(id);
         if (existing.isPresent()) {
             return existing.get();
@@ -74,10 +75,18 @@ public class InvoiceMergeWriter {
         inv.setCreatedByName(actor.name());
         inv.setSoldAt(last.getSoldAt()); // doanh thu vẫn nằm trong kỳ của hóa đơn gốc mới nhất
         inv.setSaleMode(first.getSaleMode());
-        inv.setSubtotal(sum(locked, Invoice::getSubtotal));
-        inv.setDiscount(sum(locked, Invoice::getDiscount));
-        inv.setTotal(sum(locked, Invoice::getTotal));
+        inv.setSubtotal(totals.subtotal());
+        inv.setDiscount(totals.discount());
+        inv.setTotal(totals.total());
+        inv.setTaxReduction(totals.taxReduction());
+        inv.setTaxReductionMethod(totals.taxMethod());
         inv.setPaid(sum(locked, Invoice::getPaid));
+        if (inv.getPaid().compareTo(inv.getTotal()) > 0) { // giảm thuế tính lại lớn hơn tổng các hóa đơn gốc → thừa tiền đã thu
+            throw BusinessException.conflict("MERGE_TOTAL_CHANGED", "Tổng hóa đơn gộp sau khi tính lại giảm thuế ("
+                    + Actor.money(inv.getTotal()) + ") nhỏ hơn số khách đã trả " + Actor.money(inv.getPaid()) + ", không gộp được");
+        }
+        inv.applyPrescription(first.prescriptionInfo()); // đã kiểm giống nhau giữa các hóa đơn gốc
+        inv.applyEInvoiceBuyer(first.einvoiceBuyer());
         inv.setPaymentMethod(mainMethod);
         inv.setNote("Gộp từ hóa đơn " + String.join(", ", locked.stream().map(Invoice::getCode).toList()));
         inv.setStockDocId(id);
@@ -103,6 +112,8 @@ public class InvoiceMergeWriter {
                 line.setLots(l.getLots());
                 line.setNote(l.getNote());
                 line.setTaxCode(l.getTaxCode());
+                int i = sourceLines.size();
+                line.setTaxReduced(i < totals.reducedLines().size() && Boolean.TRUE.equals(totals.reducedLines().get(i)));
                 inv.getLines().add(line);
                 sourceLines.add(l.getId());
             }
