@@ -88,6 +88,8 @@ public class InvoiceWriter {
         inv.setStockDocId(stockResult.docId()); // = id hóa đơn; khác khi trừ kho lại sau đối soát (CheckoutAttemptRules)
         inv.setOrderId(req.orderId());
         applyMeta(inv, req);
+        inv.setTaxReduction(totals.taxReduction());
+        inv.applyPrescription(req.prescription());
         if (req.delivery() != null) inv.setSaleMode("DELIVERY");
         lineBuilder.addLines(inv, req.lines(), lineIds, stockResult);
         invoices.saveAndFlush(inv); // Invoice implements Persistable → persist (INSERT), entity stays managed

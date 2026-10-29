@@ -20,7 +20,7 @@ class InvoiceLineInputValidationTest {
 
     private static LineInput line(String code, String name, String unit) {
         return new LineInput(UUID.randomUUID(), UUID.randomUUID(), code, name, unit, BigDecimal.ONE, BigDecimal.TEN,
-                null, null, null);
+                null, null, null, null);
     }
 
     private static Set<String> messages(LineInput in) {

@@ -45,6 +45,7 @@ public class InvoiceLineBuilder {
                     .collect(Collectors.joining(", ")));
             line.setNote(in.note());
             line.setTaxCode(in.taxCode());
+            line.setTaxReduced(inv.getTaxReduction() != null && inv.getTaxReduction().signum() > 0 && InvoiceTaxReduction.eligible(in));
             inv.getLines().add(line);
         }
     }

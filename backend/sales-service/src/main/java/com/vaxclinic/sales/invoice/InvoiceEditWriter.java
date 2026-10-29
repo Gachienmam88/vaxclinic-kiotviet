@@ -69,6 +69,7 @@ public class InvoiceEditWriter {
         // Dòng hàng: xóa cũ (kèm lô), thêm mới
         inv.getLines().clear();
         invoices.flush();
+        inv.setTaxReduction(totals.taxReduction());
         lineBuilder.addLines(inv, req.lines(), lineIds, stockResult);
         inv.setCustomerId(customer == null ? null : customer.getId());
         inv.setCustomerName(customer == null ? "Khách lẻ" : customer.getName());
@@ -87,6 +88,7 @@ public class InvoiceEditWriter {
         inv.setPaymentMethod(paid.signum() > 0 ? (req.paymentMethod() == null ? "CASH" : req.paymentMethod())
                 : hasExtras ? inv.getPaymentMethod() : null);
         inv.applyEInvoiceBuyer(req.einvoiceBuyer());
+        inv.applyPrescription(req.prescription());
         inv.setRevision(expectedRevision + 1);
         inv.setStockDocId(stockDocId);
         invoices.saveAndFlush(inv);

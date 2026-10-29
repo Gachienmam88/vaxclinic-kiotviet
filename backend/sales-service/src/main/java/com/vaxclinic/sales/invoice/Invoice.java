@@ -101,6 +101,21 @@ public class Invoice implements Persistable<UUID> {
     @Column(name = "einvoice_phone")
     private String einvoicePhone;
 
+    /** Giảm thuế GTGT (Nghị quyết 204/2025/QH15) đã trừ trong total. */
+    @Column(name = "tax_reduction", nullable = false)
+    private BigDecimal taxReduction = BigDecimal.ZERO;
+    /** "Bán thuốc theo đơn" + thông tin đơn thuốc. */
+    @Column(nullable = false)
+    private boolean prescription;
+    @Column(name = "prescription_code")
+    private String prescriptionCode;
+    @Column(name = "prescription_doctor")
+    private String prescriptionDoctor;
+    @Column(name = "prescription_facility")
+    private String prescriptionFacility;
+    @Column(name = "prescription_diagnosis")
+    private String prescriptionDiagnosis;
+
     @OneToMany(mappedBy = "invoice", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("lineNo ASC")
     private List<InvoiceLine> lines = new ArrayList<>();
@@ -131,6 +146,21 @@ public class Invoice implements Persistable<UUID> {
         }
         return new InvoiceDtos.EInvoiceBuyer(einvoiceBuyerName, einvoiceCompanyName, einvoiceTaxCode, einvoiceAddress,
                 einvoiceEmail, einvoicePhone);
+    }
+
+    /** Ghi thông tin đơn thuốc (null = không bán theo đơn). */
+    public void applyPrescription(InvoiceDtos.Prescription p) {
+        prescription = p != null;
+        prescriptionCode = p == null ? null : blank(p.code());
+        prescriptionDoctor = p == null ? null : blank(p.doctor());
+        prescriptionFacility = p == null ? null : blank(p.facility());
+        prescriptionDiagnosis = p == null ? null : blank(p.diagnosis());
+    }
+
+    /** null khi không bán theo đơn. */
+    public InvoiceDtos.Prescription prescriptionInfo() {
+        return prescription ? new InvoiceDtos.Prescription(prescriptionCode, prescriptionDoctor, prescriptionFacility,
+                prescriptionDiagnosis) : null;
     }
 
     private static String blank(String v) {

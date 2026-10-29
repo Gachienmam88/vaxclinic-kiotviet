@@ -16,7 +16,38 @@ class InvoiceMathTest {
 
     private static LineInput line(String qty, String price, String discount) {
         return new LineInput(UUID.randomUUID(), UUID.randomUUID(), "SP", "Vắc xin", "Liều", new BigDecimal(qty),
-                new BigDecimal(price), discount == null ? null : new BigDecimal(discount), null, "KCT");
+                new BigDecimal(price), discount == null ? null : new BigDecimal(discount), null, "KCT", null);
+    }
+
+    private static LineInput taxed(String price, String taxCode, boolean reducible) {
+        return new LineInput(UUID.randomUUID(), UUID.randomUUID(), "SP", "Thuốc", "Hộp", BigDecimal.ONE,
+                new BigDecimal(price), null, null, taxCode, reducible);
+    }
+
+    @Test
+    void taxReductionOnlyOnReducibleVat10Lines() {
+        // 110.000 gồm 10% → 108.000 gồm 8% (giảm 2.000); dòng VAT5 / không có cờ giữ nguyên
+        var t = InvoiceMath.totals(List.of(taxed("110000", "VAT10", true), taxed("105000", "VAT5", true),
+                taxed("110000", "VAT10", false)), BigDecimal.ZERO, true);
+        org.assertj.core.api.Assertions.assertThat(t.taxReduction()).isEqualByComparingTo("2000");
+        org.assertj.core.api.Assertions.assertThat(t.total()).isEqualByComparingTo("323000");
+    }
+
+    @Test
+    void taxReductionAfterInvoiceDiscountAndOffWhenNotRequested() {
+        var lines = List.of(taxed("220000", "VAT10", true));
+        org.assertj.core.api.Assertions.assertThat(InvoiceMath.totals(lines, new BigDecimal("110000"), true).taxReduction())
+                .isEqualByComparingTo("2000");
+        org.assertj.core.api.Assertions.assertThat(InvoiceMath.totals(lines, BigDecimal.ZERO, false).taxReduction())
+                .isEqualByComparingTo("0");
+    }
+
+    @Test
+    void taxReductionWindow() {
+        org.assertj.core.api.Assertions.assertThat(InvoiceTaxReduction.inWindow(java.time.Instant.parse("2025-06-30T16:59:59Z"))).isFalse();
+        org.assertj.core.api.Assertions.assertThat(InvoiceTaxReduction.inWindow(java.time.Instant.parse("2025-06-30T17:00:00Z"))).isTrue();
+        org.assertj.core.api.Assertions.assertThat(InvoiceTaxReduction.inWindow(java.time.Instant.parse("2026-12-31T16:59:59Z"))).isTrue();
+        org.assertj.core.api.Assertions.assertThat(InvoiceTaxReduction.inWindow(java.time.Instant.parse("2026-12-31T17:00:00Z"))).isFalse();
     }
 
     @Test

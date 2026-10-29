@@ -22,6 +22,21 @@ class MisaInvoicePayloadTest {
     }
 
     @Test
+    void reducedVat10LineIsInvoicedAt8Percent() {
+        // Nghị quyết 204/2025/QH15: 110,000 gồm 10% → trước thuế 100,000, thuế 8% = 8,000, sau thuế 108,000
+        var reduced = new MisaInvoicePayload.SourceLine("SP2", "Thuốc", "Hộp", BigDecimal.ONE, new BigDecimal("110000"),
+                BigDecimal.ZERO, "VAT10", true);
+        var src = new MisaInvoicePayload.Source("HD2", Instant.now(), "CASH", BigDecimal.ZERO, new BigDecimal("108000"),
+                null, "Khách lẻ", null, null, null, null, null, List.of(reduced));
+        var details = (List<Map<String, Object>>) inv(MisaInvoicePayload.build(src, UUID.randomUUID(), "1C26TAA", "Hóa đơn GTGT", false))
+                .get("OriginalInvoiceDetail");
+        assertThat(details.get(0).get("VATRateName")).isEqualTo("8%");
+        assertThat((BigDecimal) details.get(0).get("AmountWithoutVAT")).isEqualByComparingTo("100000");
+        assertThat((BigDecimal) details.get(0).get("VATAmount")).isEqualByComparingTo("8000");
+        assertThat((BigDecimal) details.get(0).get("AmountAfterTax")).isEqualByComparingTo("108000");
+    }
+
+    @Test
     void hd015313HouseholdBusinessNoVat() {
         // Hóa đơn thật HD015313: Morcvax 120,000 + Typhim Vi 270,000, KCT → tổng 390,000, thuế 0
         var src = new MisaInvoicePayload.Source("HD015313", Instant.parse("2026-10-28T03:51:00Z"), "CASH", BigDecimal.ZERO,

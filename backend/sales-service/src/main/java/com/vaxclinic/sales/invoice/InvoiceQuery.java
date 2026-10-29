@@ -70,7 +70,7 @@ public class InvoiceQuery {
             return new LineResponse(l.getId(), l.getLineNo(), l.getProductId(), l.getUnitId(), l.getProductCode(),
                     l.getProductName(), l.getUnitName(), l.getQuantity(), l.getUnitPrice(), l.getDiscount(), price,
                     InvoiceMath.money(l.getQuantity().multiply(price)), l.getCost(), l.getLots(), l.getNote(),
-                    l.getTaxCode(), returned.getOrDefault(l.getId(), BigDecimal.ZERO));
+                    l.getTaxCode(), returned.getOrDefault(l.getId(), BigDecimal.ZERO), l.isTaxReduced());
         }).toList();
         var payments = queries.payments(id);
         return new InvoiceResponse(inv.getId(), inv.getCode(), inv.getBranchId(), inv.getCustomerId(),
@@ -81,7 +81,7 @@ public class InvoiceQuery {
                 inv.getRevision(), lines, payments, inv.getOrderId(), inv.getOrderId() == null ? null : queries.orderCode(inv.getOrderId()),
                 inv.getPriceBookId(), inv.getPriceBookName(), inv.getSalesChannel(), queries.channelName(inv.getSalesChannel()), shipments.info(id),
                 customer == null ? null : AdminUnitCodes.joinAddress(customer.getAddress(), customer.getWard(), customer.getProvince()),
-                inv.einvoiceBuyer());
+                inv.einvoiceBuyer(), inv.getTaxReduction(), inv.prescriptionInfo());
     }
 
     /** 10 lần bán gần nhất của 1 hàng; có khách thì lấy giá đã bán cho khách đó trước. */

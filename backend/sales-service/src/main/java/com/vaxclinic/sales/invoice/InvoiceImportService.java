@@ -107,9 +107,9 @@ public class InvoiceImportService {
         BigDecimal paid = methods.isEmpty() ? BigDecimal.ZERO : methods.get(0).getValue();
         var extras = methods.stream().skip(1).map(e -> new ExtraPayment(e.getKey(), e.getValue(), null)).toList();
         var lines = p.lines().stream().map(l -> new LineInput(l.product().id(), l.unit().id(), l.unit().code(), l.product().name(),
-                l.unit().unitName(), l.quantity(), l.price(), l.discount(), null, l.product().taxCode())).toList();
+                l.unit().unitName(), l.quantity(), l.price(), l.discount(), null, l.product().taxCode(), null)).toList();
         return new InvoiceRequest(p.id(), branchId, customerId, p.sellerId(), p.sellerName(), p.soldAt(), "QUICK", p.discount(),
                 paid, method, null, p.note(), false, lines, null, p.priceBookId(), p.priceBookName(), p.channel(), null,
-                extras.isEmpty() ? null : extras, null);
+                extras.isEmpty() ? null : extras, null, null, null);
     }
 }

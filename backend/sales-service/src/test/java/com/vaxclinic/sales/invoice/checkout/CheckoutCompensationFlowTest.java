@@ -152,9 +152,9 @@ class CheckoutCompensationFlowTest {
 
     private static InvoiceRequest request() {
         var line = new LineInput(UUID.randomUUID(), UUID.randomUUID(), "SP01", "Vắc xin cúm", "Liều", BigDecimal.ONE,
-                BigDecimal.TEN, null, null, null);
+                BigDecimal.TEN, null, null, null, null);
         return new InvoiceRequest(UUID.randomUUID(), BRANCH, null, null, null, null, "QUICK", null, null, "CASH", null,
-                null, false, List.of(line), null, null, null, null, null, null, null);
+                null, false, List.of(line), null, null, null, null, null, null, null, null, null);
     }
 
     private static ProductStockClient.Request sale(UUID docId) {

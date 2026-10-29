@@ -22,8 +22,12 @@ public class SaleCatalogRepository {
                           BigDecimal price) {
     }
 
-    /** taxCode: mã tỷ lệ thuế (KCT, VAT5...) — lưu lên dòng hóa đơn để phát hành hóa đơn điện tử. */
-    public record SaleProduct(UUID id, String name, boolean lotManaged, BigDecimal stock, String taxCode, List<SaleUnit> units) {
+    /**
+     * taxCode: mã tỷ lệ thuế (KCT, VAT5...) — lưu lên dòng hóa đơn để phát hành hóa đơn điện tử.
+     * taxReduction: hàng được "Áp dụng giảm thuế" (Nghị quyết 204/2025/QH15) — màn bán hàng tính giảm 10% → 8%.
+     */
+    public record SaleProduct(UUID id, String name, boolean lotManaged, BigDecimal stock, String taxCode, List<SaleUnit> units,
+                              boolean taxReduction) {
     }
 
     private final NamedParameterJdbcTemplate jdbc;
@@ -35,7 +39,7 @@ public class SaleCatalogRepository {
     public List<SaleProduct> load(UUID branchId) {
         Map<UUID, SaleProduct> out = new LinkedHashMap<>();
         jdbc.query("""
-                select p.id, p.name, p.lot_managed, coalesce(b.quantity, 0) stock, t.code tax_code,
+                select p.id, p.name, p.lot_managed, coalesce(b.quantity, 0) stock, t.code tax_code, p.tax_reduction,
                        u.id unit_id, u.code, u.barcode, u.unit_name, u.conversion_rate, u.price
                 from products p
                 join product_units u on u.product_id = p.id and u.direct_sale
@@ -47,7 +51,8 @@ public class SaleCatalogRepository {
             SaleProduct p = out.computeIfAbsent(id, k -> {
                 try {
                     return new SaleProduct(id, rs.getString("name"), rs.getBoolean("lot_managed"),
-                            rs.getBigDecimal("stock"), rs.getString("tax_code"), new ArrayList<>());
+                            rs.getBigDecimal("stock"), rs.getString("tax_code"), new ArrayList<>(),
+                            rs.getBoolean("tax_reduction"));
                 } catch (java.sql.SQLException e) {
                     throw new IllegalStateException(e);
                 }

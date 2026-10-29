@@ -26,8 +26,13 @@ public final class MisaInvoicePayload {
                          String buyerAddress, String buyerEmail, String buyerPhone, List<SourceLine> lines) {
     }
 
+    /** taxReduced: dòng giảm thuế 10% → 8% (Nghị quyết 204/2025/QH15) — giá bán gồm 10%, thuế xuất 8%. */
     public record SourceLine(String code, String name, String unit, BigDecimal quantity, BigDecimal unitPrice,
-                             BigDecimal discount, String taxCode) {
+                             BigDecimal discount, String taxCode, boolean taxReduced) {
+        public SourceLine(String code, String name, String unit, BigDecimal quantity, BigDecimal unitPrice, BigDecimal discount,
+                          String taxCode) {
+            this(code, name, unit, quantity, unitPrice, discount, taxCode, false);
+        }
     }
 
     private static final ZoneId VN = ZoneId.of("Asia/Ho_Chi_Minh");
@@ -69,9 +74,14 @@ public final class MisaInvoicePayload {
                     : gross.signum() == 0 ? BigDecimal.ZERO : invDiscount.multiply(lineGross).divide(gross, 0, RoundingMode.HALF_UP);
             allocatedSoFar = allocatedSoFar.add(share);
             BigDecimal amount = lineGross.subtract(share);
-            String rateName = vatRateName(l.taxCode());
+            boolean reduced = l.taxReduced() && "VAT10".equals(l.taxCode());
+            String rateName = reduced ? "8%" : vatRateName(l.taxCode());
             BigDecimal rate = rateOf(rateName);
-            BigDecimal withoutVat = amount.multiply(BigDecimal.valueOf(100)).divide(BigDecimal.valueOf(100).add(rate), 0, RoundingMode.HALF_UP);
+            BigDecimal withoutVat = amount.multiply(BigDecimal.valueOf(100))
+                    .divide(BigDecimal.valueOf(100).add(reduced ? BigDecimal.TEN : rate), 0, RoundingMode.HALF_UP);
+            if (reduced) { // giá gồm 10% → trước thuế giữ nguyên, thuế 8%
+                amount = withoutVat.add(withoutVat.multiply(rate).divide(BigDecimal.valueOf(100), 0, RoundingMode.HALF_UP));
+            }
             BigDecimal vat = amount.subtract(withoutVat);
             BigDecimal lineDiscount = l.quantity().multiply(l.discount()).add(share).setScale(0, RoundingMode.HALF_UP);
             saleTotal = saleTotal.add(l.quantity().multiply(l.unitPrice()).setScale(0, RoundingMode.HALF_UP));

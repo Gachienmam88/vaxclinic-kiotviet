@@ -10,14 +10,15 @@ import java.util.List;
 /**
  * Tiền hóa đơn bán (VNĐ, làm tròn đồng HALF_UP):
  *   thành tiền dòng = làm_tròn(SL × (đơn giá − giảm giá/đv));  tổng tiền hàng = Σ thành tiền dòng
- *   khách cần trả   = tổng tiền hàng − giảm giá hóa đơn (không âm)
+ *   khách cần trả   = tổng tiền hàng − giảm giá hóa đơn (không âm) − giảm thuế (nếu áp dụng)
  */
 public final class InvoiceMath {
 
     private InvoiceMath() {
     }
 
-    public record Totals(BigDecimal subtotal, BigDecimal discount, BigDecimal total) {
+    /** taxReduction: giảm thuế (Nghị quyết 204/2025/QH15) đã trừ trong total. */
+    public record Totals(BigDecimal subtotal, BigDecimal discount, BigDecimal total, BigDecimal taxReduction) {
     }
 
     public static BigDecimal lineAmount(LineInput l) {
@@ -29,9 +30,16 @@ public final class InvoiceMath {
     }
 
     public static Totals totals(List<LineInput> lines, BigDecimal invoiceDiscount) {
+        return totals(lines, invoiceDiscount, false);
+    }
+
+    /** reduceTax: áp dụng giảm thuế cho dòng đủ điều kiện (xem {@link InvoiceTaxReduction}). */
+    public static Totals totals(List<LineInput> lines, BigDecimal invoiceDiscount, boolean reduceTax) {
         BigDecimal subtotal = lines.stream().map(InvoiceMath::lineAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal disc = money(invoiceDiscount == null ? BigDecimal.ZERO : invoiceDiscount).min(subtotal);
-        return new Totals(subtotal, disc, subtotal.subtract(disc));
+        BigDecimal afterDiscount = subtotal.subtract(disc);
+        BigDecimal reduction = reduceTax ? InvoiceTaxReduction.amount(lines, subtotal, afterDiscount) : BigDecimal.ZERO;
+        return new Totals(subtotal, disc, afterDiscount.subtract(reduction), reduction);
     }
 
     public static BigDecimal money(BigDecimal v) {

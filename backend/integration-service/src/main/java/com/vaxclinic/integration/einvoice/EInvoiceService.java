@@ -29,7 +29,7 @@ public class EInvoiceService {
         }
 
         public record Line(int lineNo, String productCode, String productName, String unitName, BigDecimal quantity,
-                           BigDecimal unitPrice, BigDecimal discount, String taxCode) {
+                           BigDecimal unitPrice, BigDecimal discount, String taxCode, boolean taxReduced) {
         }
     }
 
@@ -79,7 +79,8 @@ public class EInvoiceService {
         var source = new MisaInvoicePayload.Source(inv.code(), inv.soldAt(), inv.paymentMethod(), inv.discount(), inv.total(),
                 b.code(), b.fullName(), b.legalName(), b.taxCode(), b.address(), b.email(), b.phone(),
                 inv.lines().stream().map(l -> new MisaInvoicePayload.SourceLine(l.productCode(), l.productName(), l.unitName(),
-                        l.quantity(), l.unitPrice(), l.discount() == null ? BigDecimal.ZERO : l.discount(), l.taxCode())).toList());
+                        l.quantity(), l.unitPrice(), l.discount() == null ? BigDecimal.ZERO : l.discount(), l.taxCode(),
+                        l.taxReduced())).toList());
         var payload = MisaInvoicePayload.build(source, refId, (String) settings.get("inv_series"),
                 (String) settings.get("invoice_name"), Boolean.TRUE.equals(settings.get("send_email")));
         MisaClient.PublishResult r;

@@ -51,4 +51,7 @@ public class InvoiceLine {
     private String note;
     @Column(name = "tax_code")
     private String taxCode;
+    /** Dòng được giảm thuế 10% → 8% (Nghị quyết 204/2025/QH15). */
+    @Column(name = "tax_reduced", nullable = false)
+    private boolean taxReduced;
 }

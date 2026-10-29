@@ -28,7 +28,12 @@ public final class InvoiceDtos {
                             @NotBlank @Size(max = 50, message = "Đơn vị tính tối đa 50 ký tự") String unitName,
                             @NotNull @DecimalMin(value = "0.001", message = "Số lượng phải > 0") BigDecimal quantity,
                             @NotNull @DecimalMin("0") BigDecimal unitPrice, @DecimalMin("0") BigDecimal discount,
-                            @Size(max = 500) String note, @Size(max = 30) String taxCode) {
+                            @Size(max = 500) String note, @Size(max = 30) String taxCode, Boolean taxReducible) {
+    }
+
+    /** "Bán thuốc theo đơn": thông tin đơn thuốc lưu trên hóa đơn (chưa kết nối Hệ thống Đơn thuốc Quốc gia). */
+    public record Prescription(@Size(max = 50) String code, @Size(max = 150) String doctor, @Size(max = 250) String facility,
+                               @Size(max = 500) String diagnosis) {
     }
 
     /**
@@ -46,11 +51,12 @@ public final class InvoiceDtos {
                                  @NotEmpty(message = "Hóa đơn chưa có hàng") @Valid List<LineInput> lines, UUID orderId,
                                  UUID priceBookId, @Size(max = 150) String priceBookName, @Size(max = 30) String salesChannel,
                                  @Valid ShipmentDtos.DeliveryInput delivery,
-                                 @Valid List<ExtraPayment> extraPayments, @Valid EInvoiceBuyer einvoiceBuyer) {
+                                 @Valid List<ExtraPayment> extraPayments, @Valid EInvoiceBuyer einvoiceBuyer,
+                                 Boolean taxReduction, @Valid Prescription prescription) {
         public InvoiceRequest withOrderId(UUID order) {
             return new InvoiceRequest(id, branchId, customerId, sellerId, sellerName, soldAt, saleMode, discount, paidAmount,
                     paymentMethod, bankAccountId, note, offline, lines, order, priceBookId, priceBookName, salesChannel, delivery,
-                    extraPayments, einvoiceBuyer);
+                    extraPayments, einvoiceBuyer, taxReduction, prescription);
         }
     }
 
@@ -78,7 +84,7 @@ public final class InvoiceDtos {
     public record LineResponse(UUID id, int lineNo, UUID productId, UUID unitId, String productCode, String productName,
                                String unitName, BigDecimal quantity, BigDecimal unitPrice, BigDecimal discount,
                                BigDecimal price, BigDecimal amount, BigDecimal cost, String lots, String note,
-                               String taxCode, BigDecimal returnedQuantity) {
+                               String taxCode, BigDecimal returnedQuantity, boolean taxReduced) {
     }
 
     public record TaxCodeChange(@NotNull UUID lineId, @Size(max = 30) String taxCode) {
@@ -98,7 +104,8 @@ public final class InvoiceDtos {
                                   String paymentMethod, String note, boolean offline, int revision,
                                   List<LineResponse> lines, List<PaymentResponse> payments, UUID orderId, String orderCode,
                                   UUID priceBookId, String priceBookName, String salesChannel, String salesChannelName,
-                                  ShipmentDtos.ShipmentInfo shipment, String customerAddress, EInvoiceBuyer einvoiceBuyer) {
+                                  ShipmentDtos.ShipmentInfo shipment, String customerAddress, EInvoiceBuyer einvoiceBuyer,
+                                  BigDecimal taxReduction, Prescription prescription) {
     }
 
     public record InvoiceListItem(UUID id, String code, Instant soldAt, String customerCode, String customerName,

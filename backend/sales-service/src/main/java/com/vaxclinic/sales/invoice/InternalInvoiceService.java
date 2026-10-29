@@ -23,7 +23,7 @@ public class InternalInvoiceService {
     }
 
     public record Line(int lineNo, String productCode, String productName, String unitName, BigDecimal quantity,
-                       BigDecimal unitPrice, BigDecimal discount, String taxCode) {
+                       BigDecimal unitPrice, BigDecimal discount, String taxCode, boolean taxReduced) {
     }
 
     public record EInvoiceSource(UUID id, String code, String status, Instant soldAt, String paymentMethod,
@@ -49,7 +49,7 @@ public class InternalInvoiceService {
                 first(join(c.getInvoiceAddress(), c.getInvoiceWard(), c.getInvoiceProvince()), join(c.getAddress(), c.getWard(), c.getProvince())),
                 first(c.getInvoiceEmail(), c.getEmail()), first(c.getInvoicePhone(), c.getPhone()), c.getIdNumber());
         var lines = inv.getLines().stream().map(l -> new Line(l.getLineNo(), l.getProductCode(), l.getProductName(),
-                l.getUnitName(), l.getQuantity(), l.getUnitPrice(), l.getDiscount(), l.getTaxCode())).toList();
+                l.getUnitName(), l.getQuantity(), l.getUnitPrice(), l.getDiscount(), l.getTaxCode(), l.isTaxReduced())).toList();
         return new EInvoiceSource(inv.getId(), inv.getCode(), inv.getStatus(), inv.getSoldAt(), inv.getPaymentMethod(),
                 inv.getSubtotal(), inv.getDiscount(), inv.getTotal(), buyer, lines);
     }
