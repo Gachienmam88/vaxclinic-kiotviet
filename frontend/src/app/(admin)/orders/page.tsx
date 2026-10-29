@@ -1,100 +1,134 @@
 "use client";
 
 import { Fragment, useEffect, useMemo, useState } from "react";
-import Link from "next/link";
-import { FileOutput, Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Star } from "lucide-react";
+import { toast } from "sonner";
 import { ListEmptyRow } from "@/components/ui/list-empty-state";
 import { DeepLinkRoute, useDeepLinkExpanded, type DeepLink } from "@/components/ui/deep-link-route";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useSalesChannels } from "@/features/delivery/delivery-queries";
+import { useShownColumns } from "@/features/delivery/delivery-list-toolbar";
 import { OrderDetailPanel } from "@/features/orders/order-detail-panel";
-import { OrderFilterSidebar, type OrderFilters } from "@/features/orders/order-filter-sidebar";
+import { DEFAULT_ORDER_FILTERS, OrderFilterSidebar, type OrderFilters } from "@/features/orders/order-filter-sidebar";
+import { DEFAULT_ORDER_COLUMNS, ORDER_COLUMNS, ORDER_MONEY, orderCell } from "@/features/orders/order-list-columns";
+import { OrderListToolbar } from "@/features/orders/order-list-toolbar";
 import { useOrders } from "@/features/orders/order-queries";
-import { ORDER_STATUS_KEY, ORDER_STATUS_TONE } from "@/features/orders/order-types";
-import { LIST_HEAD_ROW, ListSearch, PageTitle, StatusBadge, TOOLBAR_BTN } from "@/features/sales/invoice-list-kit";
-import { downloadCsv, ListPager } from "@/features/sales/invoice-list-pager";
+import { EMPTY_ORDER_SEARCH, OrderSearchPanel, type OrderSearch } from "@/features/orders/order-search-panel";
+import { exportOrderDetail, exportOrderOverview } from "@/features/orders/order-xlsx-export";
+import { LIST_HEAD_ROW, PageTitle } from "@/features/sales/invoice-list-kit";
+import { ListPager } from "@/features/sales/invoice-list-pager";
 import { periodParams } from "@/features/sales/sales-queries";
-import { formatDateTime, formatMoney } from "@/lib/format";
+import { errorMessage } from "@/lib/api-client";
+import { formatMoney } from "@/lib/format";
 import { useT } from "@/lib/i18n";
+import { useCurrentUser } from "@/lib/use-current-user";
 import { cn } from "@/lib/utils";
-import { commonNs } from "@/messages/common";
 import { ordersNs } from "@/messages/orders";
 
-const COLS = 7;
+const FAV_KEY = "orders.favourites";
+const SUM: Partial<Record<string, "sumSubtotal" | "sumTotal" | "sumDeposit">> = { subtotal: "sumSubtotal", total: "sumTotal", deposit: "sumDeposit" };
+
+/** Đánh dấu ☆ (KiotViet): lưu theo trình duyệt người xem. */
+function useFavourites() {
+  const [ids, setIds] = useState<string[]>([]);
+  useEffect(() => { try { setIds(JSON.parse(window.localStorage.getItem(FAV_KEY) ?? "[]")); } catch { /* mặc định rỗng */ } }, []);
+  const toggle = (id: string) => setIds((prev) => {
+    const next = prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id];
+    try { window.localStorage.setItem(FAV_KEY, JSON.stringify(next)); } catch { /* bỏ qua */ }
+    return next;
+  });
+  return { has: (id: string) => ids.includes(id), toggle };
+}
 
 /**
- * Đặt hàng: danh sách đơn kiểu KiotViet (lọc trái, dòng tổng, chi tiết mở dưới dòng). Tạo / sửa đơn ở màn bán hàng.
- * Link sâu: /orders?code=DH000001 (lọc theo mã, mọi thời gian + trạng thái, mở chi tiết) hoặc ?id=<uuid>.
+ * Đặt hàng (KiotViet): tìm theo mã phiếu đặt (+ khung tìm theo hàng / khách), lọc trái, chọn cột, xuất file tổng quan / chi tiết,
+ * dòng tổng, chi tiết mở dưới dòng. Tạo đơn ở màn bán hàng (/sale?newOrder=1). Link sâu ?code=DH000001 hoặc ?id=.
  */
 function OrdersPage({ link }: { link: DeepLink }) {
   const t = useT(ordersNs);
-  const tc = useT(commonNs);
+  const { can } = useCurrentUser();
   const deepLink = !!(link.code || link.id);
-  const [search, setSearch] = useState(link.code ?? "");
-  const [q, setQ] = useState(link.code ?? "");
-  const [filters, setFilters] = useState<OrderFilters>({
-    period: { mode: deepLink ? "all" : "month", from: "", to: "" },
-    statuses: deepLink ? ["DRAFT", "CONFIRMED", "COMPLETED", "CANCELLED"] : ["DRAFT", "CONFIRMED"], createdBy: "",
-  });
+  const [search, setSearch] = useState<OrderSearch>({ ...EMPTY_ORDER_SEARCH, q: link.code ?? "" });
+  const [q, setQ] = useState(search);
+  const [filters, setFilters] = useState<OrderFilters>(deepLink
+    ? { ...DEFAULT_ORDER_FILTERS, period: { mode: "all", from: "", to: "" }, statuses: ["DRAFT", "CONFIRMED", "COMPLETED", "CANCELLED"] }
+    : DEFAULT_ORDER_FILTERS);
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(15);
-  useEffect(() => { const t = setTimeout(() => { setQ(search); setPage(0); }, 300); return () => clearTimeout(t); }, [search]);
+  useEffect(() => { const h = setTimeout(() => { setQ(search); setPage(0); }, 300); return () => clearTimeout(h); }, [search]);
+  const cols = useShownColumns("orders.columns", DEFAULT_ORDER_COLUMNS);
+  const fav = useFavourites();
+  const { data: channels = [] } = useSalesChannels();
+  const channel = (c: string) => channels.find((x) => x.code === c)?.name ?? c;
 
   const params = useMemo(() => {
     const p = periodParams(filters.period, new URLSearchParams({ page: String(page), size: String(size) }));
-    if (q) p.set("q", q);
+    periodParams(filters.delivery, p, "deliveryFrom", "deliveryTo");
+    (["q", "productQ", "customerQ"] as const).forEach((k) => { if (q[k].trim()) p.set(k, q[k].trim()); });
     filters.statuses.forEach((s) => p.append("statuses", s));
+    filters.funds.forEach((f) => p.append("paymentMethods", f));
+    if (filters.channel) p.set("channels", filters.channel);
     if (filters.createdBy) p.set("createdBy", filters.createdBy);
+    if (filters.sellerId) p.set("sellerId", filters.sellerId);
     return p;
   }, [q, filters, page, size]);
   const { data } = useOrders(params);
   const { open: expanded, setOpen: setExpanded, toggle } = useDeepLinkExpanded(data?.items, link, (o) => [o.code]);
+  const shown = ORDER_COLUMNS.filter(cols.shown);
+  const span = shown.length + 2;
 
-  const exportCsv = () => downloadCsv(t("csv.listFile"), (["code", "time", "customerCode", "customer", "subtotal", "discount",
-    "total", "paid", "status", "invoice"] as const).map((k) => t(`cols.${k}`)), (data?.items ?? []).map((o) => [o.code,
-    formatDateTime(o.orderedAt), o.customerCode, o.customerName, o.subtotal, o.discount, o.total, o.deposit, t(ORDER_STATUS_KEY[o.status]),
-    o.invoiceCode]));
+  const exportFile = async (kind: "overview" | "detail") => {
+    const id = toast.loading(t("kv.exporting"));
+    try {
+      const { name, blob } = kind === "overview" ? await exportOrderOverview(t, params, cols.shown, channel) : await exportOrderDetail(t, params, channel);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = name;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      toast.dismiss(id);
+    } catch (e) { toast.error(errorMessage(e), { id }); }
+  };
 
   return (
     <div className="flex gap-2.5">
       <div className="space-y-3">
-        <PageTitle>{t("list.title")}</PageTitle>
+        <PageTitle>{t("kv.title")}</PageTitle>
         <OrderFilterSidebar value={filters} onChange={(f) => { setFilters(f); setPage(0); }} />
       </div>
       <div className="min-w-0 flex-1 space-y-3">
         <div className="flex items-center gap-2">
-          <ListSearch value={search} onChange={setSearch} placeholder={t("list.searchPlaceholder")} />
-          <Button variant="outline" className={cn(TOOLBAR_BTN, "ml-auto")} render={<Link href="/sale" />}
-            title={t("list.newOrderHint")}><Plus className="size-4" /> {t("list.newOrder")}</Button>
-          <Button variant="outline" className={TOOLBAR_BTN} disabled={!data?.items.length} onClick={exportCsv}
-            title={t("list.exportHint")}><FileOutput className="size-4" /> {tc("actions.export")}</Button>
+          <OrderSearchPanel value={search} onChange={setSearch} />
+          <OrderListToolbar canOrder={can("sales.perform")} exportDisabled={!data?.items.length} onExport={exportFile}
+            shown={cols.shown} onToggle={cols.toggle} />
         </div>
         <div className="overflow-x-auto rounded-lg bg-background">
           <Table stickyHeader>
             <TableHeader><TableRow className={LIST_HEAD_ROW}>
-              <TableHead className="pl-4">{t("cols.code")}</TableHead><TableHead>{t("cols.time")}</TableHead><TableHead>{t("cols.customer")}</TableHead>
-              <TableHead className="text-right">{t("cols.subtotal")}</TableHead><TableHead className="text-right">{t("cols.total")}</TableHead>
-              <TableHead className="text-right">{t("cols.paid")}</TableHead><TableHead className="pr-4">{t("cols.status")}</TableHead>
+              <TableHead className="w-9 pl-4" aria-label={t("kv.favourite")}><Star className="size-4" /></TableHead>
+              <TableHead>{t("cols.code")}</TableHead>
+              {shown.map((c) => <TableHead key={c} className={cn(ORDER_MONEY.has(c) && "text-right", c === shown.at(-1) && "pr-4")}>{t(`kv.cols.${c}`)}</TableHead>)}
             </TableRow></TableHeader>
             <TableBody>
               {!!data?.items.length && <TableRow className="font-bold hover:bg-transparent">
-                <TableCell colSpan={3} /><TableCell className="text-right">{formatMoney(data.sumSubtotal ?? 0)}</TableCell>
-                <TableCell className="text-right">{formatMoney(data.sumTotal ?? 0)}</TableCell>
-                <TableCell className="text-right">{formatMoney(data.sumDeposit ?? 0)}</TableCell><TableCell />
+                <TableCell colSpan={2} />
+                {shown.map((c) => <TableCell key={c} className="text-right">{SUM[c] ? formatMoney(data[SUM[c]!] ?? 0) : ""}</TableCell>)}
               </TableRow>}
-              {data && !data.items.length && <ListEmptyRow cols={COLS} what={t("list.emptyWhat")}
-                onWiden={filters.period.mode === "month" ? () => setFilters({ ...filters, period: { ...filters.period, mode: "all" } }) : undefined} />}
+              {data && !data.items.length && <ListEmptyRow cols={span} what={t("kv.emptyWhat")}
+                onWiden={filters.period.mode !== "all" ? () => setFilters({ ...filters, period: { mode: "all", from: "", to: "" } }) : undefined} />}
               {data?.items.map((o) => (
                 <Fragment key={o.id}>
-                  <TableRow className={cn("cursor-pointer", expanded === o.id && "bg-primary-tint hover:bg-primary-tint", o.status === "CANCELLED" && "text-muted-foreground")}
-                    onClick={() => toggle(o.id)}>
-                    <TableCell className="pl-4">{o.code}</TableCell><TableCell>{formatDateTime(o.orderedAt)}</TableCell>
-                    <TableCell className="whitespace-normal">{o.customerName}</TableCell>
-                    <TableCell className="text-right">{formatMoney(o.subtotal)}</TableCell><TableCell className="text-right">{formatMoney(o.total)}</TableCell>
-                    <TableCell className="text-right">{formatMoney(o.deposit)}</TableCell>
-                    <TableCell className="pr-4"><StatusBadge tone={ORDER_STATUS_TONE[o.status]}>{t(ORDER_STATUS_KEY[o.status])}</StatusBadge></TableCell>
+                  <TableRow className={cn("cursor-pointer", expanded === o.id && "bg-primary-tint hover:bg-primary-tint")} onClick={() => toggle(o.id)}>
+                    <TableCell className="pl-4"><button type="button" aria-label={t("kv.favourite")} aria-pressed={fav.has(o.id)}
+                      onClick={(e) => { e.stopPropagation(); fav.toggle(o.id); }}>
+                      <Star className={cn("size-4", fav.has(o.id) ? "fill-amber-400 text-amber-400" : "text-muted-foreground")} /></button></TableCell>
+                    <TableCell>{o.code}</TableCell>
+                    {shown.map((c) => <TableCell key={c} className={cn(ORDER_MONEY.has(c) && "text-right", c === "customer" && "whitespace-normal")}
+                      onClick={c === "customerCode" || c === "invoiceCode" ? (e) => e.stopPropagation() : undefined}>{orderCell(t, o, c, channel)}</TableCell>)}
                   </TableRow>
-                  {expanded === o.id && <TableRow className="hover:bg-transparent"><TableCell colSpan={COLS} className="p-0 whitespace-normal"><OrderDetailPanel id={o.id} onClose={() => setExpanded(null)} /></TableCell></TableRow>}
+                  {expanded === o.id && <TableRow className="hover:bg-transparent"><TableCell colSpan={span} className="p-0 whitespace-normal">
+                    <OrderDetailPanel id={o.id} onClose={() => setExpanded(null)} /></TableCell></TableRow>}
                 </Fragment>))}
             </TableBody>
           </Table>
