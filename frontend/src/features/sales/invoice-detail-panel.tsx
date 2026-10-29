@@ -42,7 +42,7 @@ export function InvoiceDetailPanel({ id, onClose }: { id: string; onClose?: () =
   const [taxDialog, setTaxDialog] = useState(false);
   const [askPayments, setAskPayments] = useState(false); // hóa đơn từ đơn đặt hàng: hỏi hủy phiếu thu cọc
   const { data: einvoices = [] } = useEInvoiceRecords([id]);
-  const published = einvoices[0]?.status === "PUBLISHED";
+  const einvoice = einvoices[0]?.status === "PUBLISHED" ? einvoices[0] : undefined;
   const refresh = () => SALES_KEYS.forEach((k) => qc.invalidateQueries({ queryKey: k }));
 
   const save = useMutation({
@@ -89,7 +89,7 @@ export function InvoiceDetailPanel({ id, onClose }: { id: string; onClose?: () =
             </div>
           </div>
           <InvoiceDetailFooter inv={inv} active={active} canCancel={can("sales.cancel")} cancelling={cancel.isPending} onCancel={() => (inv.orderId && inv.payments.some((p) => p.status === "PAID") ? setAskPayments(true) : cancel.mutate(false))}
-            dirty={!!edit} saving={save.isPending} onSave={() => save.mutate()} published={published} onEditTax={() => setTaxDialog(true)} />
+            dirty={!!edit} saving={save.isPending} onSave={() => save.mutate()} einvoice={einvoice} onEditTax={() => setTaxDialog(true)} />
           {taxDialog && <InvoiceTaxDialog invoice={inv} onClose={() => setTaxDialog(false)} />}
         </TabsContent>
         {shipmentId && <TabsContent value="delivery"><InvoiceDeliveryHistory shipmentId={shipmentId} /></TabsContent>}

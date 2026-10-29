@@ -49,7 +49,7 @@ export function InvoiceEInvoiceCard({ inv, active }: { inv: Invoice; active: boo
               {url && <a href={url} target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-primary" aria-label={t("invoices.einvoice.lookup")}
                 title={t("invoices.einvoice.lookupTitle", { code: rec.transaction_id ?? "" })}><SquareArrowOutUpRight className="size-3.5" /></a>}</span></div>
           <div className={ROW}><span>{t("invoices.einvoice.issuedAt")}</span><span>{issuedAt(rec.inv_date)}</span></div>
-          <div className={ROW}><span>{t("invoices.einvoice.buyer")}</span><span>{[inv.customerName, inv.customerAddress].filter(Boolean).join(" / ")}</span></div>
+          <div className={ROW}><span>{t("invoices.einvoice.buyer")}</span><span>{[inv.customerName, inv.customerAddress, inv.customerPhone].filter(Boolean).join(" / ")}</span></div>
           <div className={ROW}><span>{t("invoices.einvoice.nature")}</span><span>{t("enums.einvoiceNature.ORIGINAL")}</span></div>
           {rec.inv_code && <div className={ROW}><span>{t("invoices.einvoice.taxAuthorityCode")}</span><span>{rec.inv_code}</span></div>}
         </div>))}
