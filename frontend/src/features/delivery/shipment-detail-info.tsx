@@ -35,7 +35,7 @@ export function ShipmentDetailInfo({ d }: { d: ShipmentDetail }) {
   const cell = (label: React.ReactNode, value: React.ReactNode) => (
     <div className="grid min-h-8 grid-cols-[120px_1fr] items-center gap-2"><span className="text-muted-foreground">{label}:</span><span>{value}</span></div>);
   const tip = (label: string, text: string) => (
-    <span className="inline-flex items-center gap-1">{label}<Info className="size-3.5" aria-label={text}><title>{text}</title></Info></span>);
+    <span className="inline-flex items-center gap-1">{label}<span title={text} aria-label={text} className="inline-flex"><Info className="size-3.5" /></span></span>);
   const dims = [d.lengthCm, d.widthCm, d.heightCm].every((x) => x != null) ? `${d.lengthCm} × ${d.widthCm} × ${d.heightCm} cm` : "—";
   const customer = s.customerCode
     ? <Link href={docCodeHref(s.customerCode, "/customers")!} className={DOC_CODE_LINK_CLASS}>{s.customerName}</Link> : s.customerName;
