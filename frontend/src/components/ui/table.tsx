@@ -3,11 +3,12 @@
 import * as React from "react"
 import { cn } from "cn"
 
-function Table({ className, ...props }: React.ComponentProps<"table">) {
+/** stickyHeader: bảng danh sách tự cuộn trong khung cao vừa màn hình, dòng tiêu đề cột đứng yên (xem .kv-list-scroll). */
+function Table({ className, stickyHeader, ...props }: React.ComponentProps<"table"> & { stickyHeader?: boolean }) {
   return (
     <div
       data-slot="table-container"
-      className="relative w-full overflow-x-auto"
+      className={cn("relative w-full overflow-x-auto", stickyHeader && "kv-list-scroll")}
     >
       <table
         data-slot="table"
