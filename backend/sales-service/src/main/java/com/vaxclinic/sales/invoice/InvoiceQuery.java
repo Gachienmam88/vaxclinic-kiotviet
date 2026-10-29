@@ -22,18 +22,19 @@ public class InvoiceQuery {
      * statuses = trạng thái lưu (COMPLETED / CANCELLED); states = trạng thái hiển thị KiotViet (PROCESSING / COMPLETED /
      * FAILED_DELIVERY / CANCELLED); deliveries = DELIVERY / NONE; returnStates = HAS / NONE;
      * einvoiceStatuses = NONE / PUBLISHED / ACCEPTED / FAILED; einvoiceNatures = ORIGINAL / ADJUST / REPLACE.
+     * branches = phạm vi chi nhánh của người xem (BranchScope; null = không giới hạn, chỉ dùng nội bộ).
      */
     public record Filter(String q, List<String> statuses, Instant from, Instant to, UUID createdBy, UUID sellerId,
                          List<String> paymentMethods, UUID customerId, UUID branchId, int page, int size,
                          List<UUID> ids, List<String> states, List<String> deliveries, List<String> returnStates,
                          List<String> einvoiceStatuses, List<String> einvoiceNatures, String customerQ, String productQ,
-                         String noteQ) {
+                         String noteQ, List<UUID> branches) {
 
         /** Bộ lọc cũ (dashboard / tab bán hàng của khách) — không dùng các lọc mới. */
         public Filter(String q, List<String> statuses, Instant from, Instant to, UUID createdBy, UUID sellerId,
                       List<String> paymentMethods, UUID customerId, UUID branchId, int page, int size) {
             this(q, statuses, from, to, createdBy, sellerId, paymentMethods, customerId, branchId, page, size,
-                    null, null, null, null, null, null, null, null, null);
+                    null, null, null, null, null, null, null, null, null, null);
         }
     }
 

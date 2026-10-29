@@ -1,5 +1,6 @@
 package com.vaxclinic.sales.salesreturn;
 
+import com.vaxclinic.common.security.BranchScope;
 import com.vaxclinic.sales.common.Actor;
 import com.vaxclinic.sales.salesreturn.SalesReturnDtos.ReturnRequest;
 import com.vaxclinic.sales.salesreturn.SalesReturnDtos.ReturnResponse;
@@ -37,9 +38,11 @@ public class SalesReturnController {
                                     @RequestParam(required = false) List<String> types,
                                     @RequestParam(required = false) List<String> deliveryStatuses,
                                     @RequestParam(required = false) UUID partnerId,
-                                    @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "15") int size) {
-        return service.list(new SalesReturnQueryRepository.Filter(q, statuses, from, to, invoiceId, types, deliveryStatuses, partnerId),
-                page, size);
+                                    @RequestParam(required = false) UUID branchId,
+                                    @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "15") int size,
+                                    @AuthenticationPrincipal Jwt jwt) {
+        return service.list(new SalesReturnQueryRepository.Filter(q, statuses, from, to, invoiceId, types, deliveryStatuses, partnerId,
+                branchId, BranchScope.check(jwt, branchId)), page, size);
     }
 
     /** "Xuất file" (tổng quan / chi tiết): mọi phiếu khớp bộ lọc + dòng hàng. */
@@ -48,8 +51,10 @@ public class SalesReturnController {
                                                  @RequestParam(required = false) Instant from, @RequestParam(required = false) Instant to,
                                                  @RequestParam(required = false) List<String> types,
                                                  @RequestParam(required = false) List<String> deliveryStatuses,
-                                                 @RequestParam(required = false) UUID partnerId) {
-        return service.export(new SalesReturnQueryRepository.Filter(q, statuses, from, to, null, types, deliveryStatuses, partnerId));
+                                                 @RequestParam(required = false) UUID partnerId,
+                                                 @RequestParam(required = false) UUID branchId, @AuthenticationPrincipal Jwt jwt) {
+        return service.export(new SalesReturnQueryRepository.Filter(q, statuses, from, to, null, types, deliveryStatuses, partnerId,
+                branchId, BranchScope.check(jwt, branchId)));
     }
 
     @GetMapping("/api/sales-returns/{id}")

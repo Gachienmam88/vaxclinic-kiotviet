@@ -1,5 +1,6 @@
 package com.vaxclinic.product.inventory;
 
+import com.vaxclinic.common.security.BranchScope;
 import com.vaxclinic.common.web.PageResponse;
 import com.vaxclinic.product.inventory.InventoryDocDtos.IssueListItem;
 import com.vaxclinic.product.inventory.InventoryDocDtos.IssueRequest;
@@ -48,9 +49,9 @@ public class StockIssueController {
                                             @RequestParam(required = false) UUID createdBy,
                                             @RequestParam(required = false) UUID branchId,
                                             @RequestParam(defaultValue = "0") int page,
-                                            @RequestParam(defaultValue = "15") int size) {
+                                            @RequestParam(defaultValue = "15") int size, @AuthenticationPrincipal Jwt jwt) {
         return service.list(type, new InventoryDocListRepository.Filter(q, statuses, from, to, createdBy, branchId,
-                Math.max(page, 0), Math.min(Math.max(size, 1), 100)));
+                Math.max(page, 0), Math.min(Math.max(size, 1), 100), BranchScope.check(jwt, branchId)));
     }
 
     @GetMapping("/{id}")

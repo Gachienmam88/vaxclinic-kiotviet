@@ -25,7 +25,8 @@ public class OrderQuery {
     public record Filter(String q, List<String> statuses, Instant from, Instant to, UUID createdBy, UUID customerId,
                          UUID branchId, int page, int size, String productQ, String customerQ, Instant deliveryFrom,
                          Instant deliveryTo, UUID sellerId, List<String> channels, List<String> paymentMethods,
-                         List<String> areas) {
+                         List<String> areas, List<UUID> branches) {
+        // branches: phạm vi chi nhánh người xem (BranchScope) — luôn lọc
     }
 
     private final OrderQueryRepository queries;

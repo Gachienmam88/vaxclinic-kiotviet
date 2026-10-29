@@ -18,10 +18,10 @@ public class CustomerDebtReportService {
         this.repo = repo;
     }
 
-    public List<DebtRow> debt(Instant from, Instant to, UUID customerId) {
+    public List<DebtRow> debt(Instant from, Instant to, UUID customerId, java.util.List<UUID> branches) {
         if (!from.isBefore(to)) {
             throw BusinessException.badRequest("REPORT_RANGE_INVALID", "Khoảng thời gian báo cáo không hợp lệ");
         }
-        return repo.debt(from, to, customerId);
+        return repo.debt(from, to, customerId, branches);
     }
 }

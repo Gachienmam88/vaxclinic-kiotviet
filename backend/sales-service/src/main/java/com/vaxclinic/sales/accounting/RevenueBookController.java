@@ -1,5 +1,8 @@
 package com.vaxclinic.sales.accounting;
 
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import com.vaxclinic.common.security.BranchScope;
 import com.vaxclinic.sales.accounting.RevenueBookRepository.DailyExpense;
 import com.vaxclinic.sales.accounting.RevenueBookRepository.DailyRevenue;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -28,14 +31,14 @@ public class RevenueBookController {
     @GetMapping("/api/accounting/revenue/daily")
     @PreAuthorize("hasAuthority('report.view') or hasAuthority('cashbook.manage')")
     public List<DailyRevenue> daily(@RequestParam LocalDate from, @RequestParam LocalDate to,
-                                    @RequestParam(required = false) List<UUID> branchIds) {
-        return service.daily(from, to, branchIds);
+                                    @RequestParam(required = false) List<UUID> branchIds, @AuthenticationPrincipal Jwt jwt) {
+        return service.daily(from, to, BranchScope.resolve(jwt, branchIds)); // rỗng = chi nhánh được xem; ngoài phạm vi → 403
     }
 
     @GetMapping("/api/accounting/revenue/expenses")
     @PreAuthorize("hasAuthority('report.view') or hasAuthority('cashbook.manage')")
     public List<DailyExpense> expenses(@RequestParam LocalDate from, @RequestParam LocalDate to,
-                                       @RequestParam(required = false) List<UUID> branchIds) {
-        return service.expenses(from, to, branchIds);
+                                       @RequestParam(required = false) List<UUID> branchIds, @AuthenticationPrincipal Jwt jwt) {
+        return service.expenses(from, to, BranchScope.resolve(jwt, branchIds));
     }
 }

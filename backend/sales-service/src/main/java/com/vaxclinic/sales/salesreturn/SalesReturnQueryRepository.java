@@ -19,10 +19,11 @@ public class SalesReturnQueryRepository {
 
     /** Bộ lọc danh sách (giá trị trống = bỏ qua). */
     /** types: INVOICE / QUICK / SHIPMENT; deliveryStatuses / partnerId: theo vận đơn bán của phiếu. */
+    /** branchId: 1 chi nhánh chọn (null = bỏ qua); branches: phạm vi chi nhánh người xem (null = không giới hạn, nội bộ). */
     public record Filter(String q, List<String> statuses, Instant from, Instant to, UUID invoiceId, List<String> types,
-                         List<String> deliveryStatuses, UUID partnerId) {
+                         List<String> deliveryStatuses, UUID partnerId, UUID branchId, List<UUID> branches) {
         public Filter(String q, List<String> statuses, Instant from, Instant to, UUID invoiceId) {
-            this(q, statuses, from, to, invoiceId, null, null, null);
+            this(q, statuses, from, to, invoiceId, null, null, null, null, null);
         }
     }
 
@@ -61,6 +62,8 @@ public class SalesReturnQueryRepository {
         if (f.from() != null) { w.append(" and r.returned_at >= :from"); p.addValue("from", Timestamp.from(f.from())); }
         if (f.to() != null) { w.append(" and r.returned_at < :to"); p.addValue("to", Timestamp.from(f.to())); }
         if (f.invoiceId() != null) { w.append(" and r.invoice_id = :invoiceId"); p.addValue("invoiceId", f.invoiceId()); }
+        if (f.branchId() != null) { w.append(" and r.branch_id = :branchId"); p.addValue("branchId", f.branchId()); }
+        if (f.branches() != null) { w.append(" and r.branch_id in (:scopeBranches)"); p.addValue("scopeBranches", f.branches()); }
         var agg = jdbc.queryForMap("select count(*) cnt, coalesce(sum(r.total),0) tot" + w, p);
         p.addValue("limit", limit).addValue("offset", offset);
         var items = jdbc.query(COLS + w + " order by r.returned_at desc limit :limit offset :offset", p, (rs, n) -> item(rs));

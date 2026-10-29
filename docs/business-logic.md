@@ -45,6 +45,7 @@ Viết tắt đường dẫn trích dẫn:
 | `settings.manage` | chạy tay job cảnh báo kho |
 
 - **Lỗi**: `BusinessException` → body `ApiError{code, message}`; `badRequest`=400, `notFound`=404, `conflict`=409 (`CL/error/BusinessException.java:17-27`). Bean validation → 400 `VALIDATION_FAILED` "Dữ liệu không hợp lệ" + `details[field,message]`; JSON sai/UUID sai → 400 `MALFORMED_REQUEST`; thiếu query param → 400 `MISSING_PARAMETER`; thiếu quyền → 403 `FORBIDDEN`; còn lại 500 `INTERNAL_ERROR` (`CL/error/GlobalExceptionHandler.java:23-60`).
+- **Phạm vi chi nhánh khi xem (audit #2)** — `CL/security/BranchScope.java` dùng chung mọi service: danh sách / sổ / báo cáo chỉ trả dữ liệu thuộc claim `branches` (chi nhánh được gán ở Quản lý người dùng; gán đủ mọi chi nhánh = xem toàn cửa hàng). Hỏi đích danh chi nhánh ngoài claim (`branchId` / `branchIds`) → **403 `BRANCH_FORBIDDEN`** "Bạn không được xem dữ liệu của chi nhánh này"; `branchIds` rỗng = mọi chi nhánh được xem; user không có chi nhánh nào → không ra dòng nào. Áp cho: hàng hóa (cột tồn + dự kiến hết hàng chỉ cộng chi nhánh được xem), phiếu nhập, trả hàng nhập, kiểm kho, xuất hủy / nội bộ, sổ S2d, báo cáo kho / NCC (product-service); hóa đơn (+ xuất file, dashboard), trả hàng (+ xuất file, thêm lọc `branchId`), đặt hàng (+ xuất file), `/accounting/revenue/*`, công nợ khách, mọi báo cáo `ReportFilter` (sales-service).
 - **Chi nhánh làm việc**: ghi chứng từ kho/mua hàng phải có `branchId` thuộc claim `branches`, nếu không → 400 `BRANCH_NOT_ALLOWED` "Bạn không làm việc tại chi nhánh này" (`PS/purchase/PurchaseLineSupport.java:34-38`).
 - **Khóa sổ** (Thiết lập → Khóa sổ, lưu ở identity-service): chứng từ có ngày (giờ VN) ≤ ngày khóa của chi nhánh → 400 `BOOK_LOCKED` "Sổ đã khóa đến ngày dd/MM/yyyy: không được tạo, sửa hoặc hủy giao dịch từ ngày này trở về trước" (`CL/settings/ShopSettings.java:58-65`). Thiết lập đọc từ identity `GET /internal/settings`, cache 30 s; `get()` gọi HTTP đồng bộ khi hết hạn, `cached()` không bao giờ chặn (làm mới nền mỗi 10 s); identity lỗi → dùng bản cũ, chưa có → mặc định (`CL/settings/ShopSettingsClient.java:15-64`). Mặc định `allowNegativeStock=false` (`CL/settings/ShopSettings.java:23-26`).
 - **Lịch sử thao tác**: ghi sau commit qua `AuditLogger` → identity `POST /internal/audit-logs`, gửi nền theo lô ≤200, hàng đợi 10.000 (đầy thì bỏ bản cũ nhất); tắt service khi chưa gửi hết thì mất (`CL/audit/HttpAuditLogger.java:13-21,47-53`).
@@ -231,7 +232,7 @@ Nguồn: `PS/product/ProductController.java:37-115`, `PS/internal/InternalProduc
 - **Sổ S2d-HKD** `GET /api/accounting/stock/summary?from=&to=&branchIds=` (report.view hoặc inventory.view):
   - ngày [from, to] giờ VN → `[from 00:00, to+1 00:00)` (`PS/stock/StockBookService.java:28-30`);
   - tồn đầu / nhập (qty>0) / xuất (qty<0) / tồn cuối theo hàng; giá trị = `round(qty × unit_price)` với OPENING / PURCHASE* (giá giao dịch), các loại khác `round(qty × cost)`; `branchIds` rỗng = mọi chi nhánh; bỏ hàng không phát sinh (`PS/stock/StockBookRepository.java:37-71`);
-  - endpoint này **không** giới hạn theo claim `branches` (khác các báo cáo ở 1.15).
+  - giới hạn theo claim `branches` (`BranchScope.resolve`, ngoài phạm vi → 403) (`PS/stock/StockBookController.java`).
 
 ---
 
@@ -722,7 +723,7 @@ Nguồn: `PS/purchase/SupplierController.java:33-107`, `PS/purchase/SupplierGrou
 - `LOT_EXPIRING` / `LOT_EXPIRED`: lô còn tồn của hàng chưa xóa, HSD ≤ hôm nay (VN) + N ngày.
 - `LOW_STOCK`: hàng đang kinh doanh, `min_stock > 0`, tồn < min, chỉ xét các chi nhánh đã từng có dòng `stock_balances`.
 
-**Báo cáo** (report.view; giới hạn theo claim `branches`: `branchIds` rỗng = mọi chi nhánh được phép, id ngoài claim bị loại; khoảng `[from, to)` sai → 400 `REPORT_RANGE_INVALID`) (`PS/report/ProductReportScope.java:20-29`):
+**Báo cáo** (report.view; giới hạn theo claim `branches`: `branchIds` rỗng = mọi chi nhánh được phép, id ngoài claim → 403 `BRANCH_FORBIDDEN` (audit #2); khoảng `[from, to)` sai → 400 `REPORT_RANGE_INVALID`) (`PS/report/ProductReportScope.java:20-29`):
 - `GET /api/reports/inventory/movement-detail`: biến động thẻ kho theo hàng × doc_type, `BEFORE` = tồn trước kỳ; định giá như S2d (`PS/report/InventoryReportRepository.java:33-46`).
 - `GET /api/reports/inventory/damages` và `/damages/monthly`: phiếu xuất hủy COMPLETED theo `issued_at`; giá trị = Σ `round(qty × unit_cost)`; tháng theo giờ VN.
 - `GET /api/reports/suppliers/summary?byProduct=`: giá trị nhập / trả = tổng cộng phiếu (gồm VAT, sau giảm) phân bổ theo tỷ lệ tiền hàng dòng (`PS/report/SupplierReportRepository.java:27-36`).
@@ -750,7 +751,7 @@ Nguồn: `PS/purchase/SupplierController.java:33-107`, `PS/purchase/SupplierGrou
 - ~~Tiền NCC hoàn khi trả hàng nhập không sinh phiếu thu / chứng từ công nợ~~ — đã sửa (audit #9, mục 1.10).
 - ~~Thẻ kho ghi theo thời điểm hoàn thành chứng từ~~ — đã sửa (audit #7, mục 1.5). Còn lại: chứng từ bán/trả từ sales-service vẫn ghi theo thời điểm gọi kho (không theo ngày HĐ nếu HĐ lùi ngày).
 - ~~Giá vốn bình quân dùng tồn 1 chi nhánh / bị ghi đè khi nhập đồng thời~~ — đã sửa (audit #8, mục 1.5).
-- Danh sách hàng hóa / phiếu nhập / trả / kiểm / xuất và sổ S2d không lọc theo chi nhánh của user (báo cáo `report/*` thì có).
+- ~~Danh sách hàng hóa / phiếu nhập / trả / kiểm / xuất và sổ S2d không lọc theo chi nhánh của user~~ — đã sửa (audit #2, mục 1.0).
 - Hủy phiếu tạm (nhập, trả, kiểm, xuất) không kiểm chi nhánh; tồn đầu kỳ khi tạo hàng và lưu tạm không kiểm khóa sổ; cân bằng kiểm kho kiểm khóa sổ theo thời điểm hiện tại.
 - Nhóm hàng không chặn vòng cha–con nhiều cấp; truy vấn đệ quy không có điều kiện dừng.
 - ~~"Dự kiến hết hàng" lọc `doc_type in ('SALE','RETURN')`~~ — đã sửa (audit #6): dùng `SALE`, `SALE_CANCEL`, `SALE_RETURN`, `SALE_RETURN_CANCEL_OUT` (mục 1.1).
@@ -3295,7 +3296,7 @@ Quy ước chung (đọc từ code):
 ### 5.11 Báo cáo – quy tắc chung
 
 - Quyền: mọi `/api/reports/**` yêu cầu `report.view` (controller-level `@PreAuthorize`).
-- Bộ lọc chung `ReportFilter` (`SS/report/ReportFilter.java:19-100`): `from,to` (Instant, `[from,to)`, thiếu hoặc from ≥ to → 400 `REPORT_RANGE_INVALID`); `branchIds` giao với claim `branches` JWT (rỗng = mọi chi nhánh được phép; giao rỗng → không ra dòng nào); `customerId, sellerId (= coalesce(seller_id, created_by) của HĐ), createdBy, methods (CASH/TRANSFER/CARD/EWALLET), saleModes (QUICK/NORMAL/DELIVERY), q (mã/tên hàng ilike), priceBookIds (UUID 0 = Bảng giá chung), channels, deliveryFrom/To` (:30-50,66-96). product-service dùng `ProductReportScope` cùng quy tắc (`PS/report/ProductReportScope.java:20-29`).
+- Bộ lọc chung `ReportFilter` (`SS/report/ReportFilter.java:19-100`): `from,to` (Instant, `[from,to)`, thiếu hoặc from ≥ to → 400 `REPORT_RANGE_INVALID`); `branchIds` ⊆ claim `branches` JWT (rỗng = mọi chi nhánh được phép; có id ngoài claim → 403 `BRANCH_FORBIDDEN`, audit #2); `customerId, sellerId (= coalesce(seller_id, created_by) của HĐ), createdBy, methods (CASH/TRANSFER/CARD/EWALLET), saleModes (QUICK/NORMAL/DELIVERY), q (mã/tên hàng ilike), priceBookIds (UUID 0 = Bảng giá chung), channels, deliveryFrom/To` (:30-50,66-96). product-service dùng `ProductReportScope` cùng quy tắc (`PS/report/ProductReportScope.java:20-29`).
 - **Ngày dùng để lọc** (không dùng created_at):
 
 | Chứng từ | Cột ngày |
@@ -3383,7 +3384,7 @@ Quy ước chung (đọc từ code):
 
 ### 5.17 Báo cáo khách hàng / nhân viên / kênh bán (`/reports/customers|employees|channels`)
 - Dùng chung `PartyReport` (`FE/features/reports/party-report-configs.ts:5-36`): Khách hàng (groupBy CUSTOMER: Bán hàng, Hàng bán theo khách, Công nợ, Lợi nhuận); Nhân viên (SELLER: Bán hàng, Lợi nhuận, Hàng bán theo NV); Kênh bán (CHANNEL, biểu đồ tròn: Bán hàng, Lợi nhuận).
-- Công nợ khách: `GET /api/reports/customers/debt?from&to&customerId` — **toàn cửa hàng** (sổ công nợ không tách chi nhánh); nợ đầu kỳ = Σ amount trước from; ghi nợ = Σ amount > 0 trong kỳ; ghi có = Σ |amount < 0|; cuối = đầu + nợ − có; chỉ khách có đầu kỳ ≠ 0 hoặc phát sinh (`SS/report/CustomerDebtReportController.java:13-31`, `CustomerDebtReportRepository.java:31-48`).
+- Công nợ khách: `GET /api/reports/customers/debt?from&to&customerId&branchIds` — mỗi phát sinh quy về chi nhánh của chứng từ gốc (hóa đơn / phiếu trả / phiếu thu-chi / đơn đặt theo `doc_id`; chiết khấu, điều chỉnh không chứng từ → chi nhánh tạo khách), chỉ tính chi nhánh được xem (audit #2); nợ đầu kỳ = Σ amount trước from; ghi nợ = Σ amount > 0 trong kỳ; ghi có = Σ |amount < 0|; cuối = đầu + nợ − có; chỉ khách có đầu kỳ ≠ 0 hoặc phát sinh (`SS/report/CustomerDebtReportController.java:13-31`, `CustomerDebtReportRepository.java:31-48`).
 
 ### 5.18 Báo cáo nhà cung cấp (`/reports/suppliers`)
 - `GET /api/reports/suppliers/summary?byProduct` và `/debt` (product-service) (`PS/report/SupplierReportController.java:34-45`).
@@ -3414,7 +3415,7 @@ Quy ước chung (đọc từ code):
    - Doanh thu thuần theo kỳ (Hôm nay, Hôm qua, 7 ngày qua, Tháng này, Tháng trước): tổng + cột theo ngày / theo thứ (T2…CN) / theo giờ. Theo giờ dùng `i.total` hóa đơn, **chưa trừ trả hàng**.
    - Top 10: gom thuần theo productId trong kỳ (mặc định Tháng này), bỏ ≤ 0, tên hàng tải `/products/{id}`.
    - Rút gọn tiền trục: ≥1e9 "tỷ", ≥1e6 "tr", ≥1e3 "k" (`dashboard-date-utils.ts:62-68`).
-5. **Giới hạn**: không có bộ lọc chi nhánh; `/accounting/revenue/daily` không giới hạn chi nhánh JWT → doanh thu là toàn cửa hàng trong khi comment ghi "mọi chi nhánh người dùng được xem" (`dashboard-queries.ts:14`); ngày theo giờ máy; Theo giờ khác định nghĩa với các widget khác (không trừ trả).
+5. **Giới hạn**: không có bộ lọc chi nhánh trên màn; `/accounting/revenue/daily` và `/invoices` giới hạn theo chi nhánh JWT (audit #2) nên doanh thu = các chi nhánh người dùng được xem; ngày theo giờ máy; Theo giờ khác định nghĩa với các widget khác (không trừ trả).
 
 ---
 
@@ -3427,7 +3428,7 @@ Quy ước chung (đọc từ code):
 
 ### Câu hỏi chưa giải quyết
 - Dashboard và Sổ doanh thu tính phí trả hàng vào doanh thu thuần, còn Báo cáo bán hàng/tài chính tách phí trả thành cột riêng — có chủ ý không?
-- `/accounting/revenue/*`, `/accounting/stock/summary`, `/reports/customers/debt`, `paymentDiscount` không giới hạn chi nhánh người dùng — có chủ ý không?
+- ~~`/accounting/revenue/*`, `/accounting/stock/summary`, `/reports/customers/debt` không giới hạn chi nhánh~~ — đã sửa (audit #2). `paymentDiscount` (Báo cáo tài chính) vẫn không lọc chi nhánh (sổ nợ khách không có chi nhánh).
 - ~~Phiếu lương/tạm ứng từ HR outbox `accounting=false`~~ — đã sửa (audit #10): hạch toán, vào "Chi phí lương".
 - Mã tính chất hóa đơn đầu vào: XML (`TCHDon` 1=thay thế, 2=điều chỉnh) và cổng (`tchat` 2=điều chỉnh, 3=thay thế) dùng hai bảng mã khác nhau — chưa kiểm chứng với dữ liệu thật.
 

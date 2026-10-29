@@ -1,6 +1,7 @@
 package com.vaxclinic.product.report;
 
 import com.vaxclinic.common.error.BusinessException;
+import com.vaxclinic.common.security.BranchScope;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 
 import java.sql.Timestamp;
@@ -21,10 +22,8 @@ final class ProductReportScope {
         if (from == null || to == null || !from.isBefore(to)) {
             throw BusinessException.badRequest("REPORT_RANGE_INVALID", "Khoảng thời gian báo cáo không hợp lệ");
         }
-        List<UUID> allowed = branchClaim == null ? List.of() : branchClaim.stream().map(UUID::fromString).toList();
-        List<UUID> branches = branchIds == null || branchIds.isEmpty() ? allowed : branchIds.stream().filter(allowed::contains).toList();
+        List<UUID> branches = BranchScope.resolve(branchClaim, branchIds); // ngoài phạm vi → 403 BRANCH_FORBIDDEN
         return new MapSqlParameterSource().addValue("from", Timestamp.from(from)).addValue("to", Timestamp.from(to))
-                // Danh sách rỗng → "in ()" sai cú pháp: thay bằng 1 id giả (không khớp dòng nào)
-                .addValue("branches", branches.isEmpty() ? List.of(new UUID(0, 0)) : branches);
+                .addValue("branches", branches);
     }
 }

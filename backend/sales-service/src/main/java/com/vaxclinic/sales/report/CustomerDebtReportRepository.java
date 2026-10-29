@@ -27,16 +27,24 @@ public class CustomerDebtReportRepository {
         this.jdbc = jdbc;
     }
 
-    /** Khách có nợ đầu kỳ ≠ 0 hoặc có phát sinh trong [from, to); customerId null = mọi khách. */
-    public List<DebtRow> debt(Instant from, Instant to, UUID customerId) {
-        var p = new MapSqlParameterSource("from", Timestamp.from(from)).addValue("to", Timestamp.from(to)).addValue("customerId", customerId);
+    /**
+     * Khách có nợ đầu kỳ ≠ 0 hoặc có phát sinh trong [from, to); customerId null = mọi khách. Chỉ tính phát sinh thuộc
+     * branches: chi nhánh của chứng từ gốc (hóa đơn, phiếu trả, phiếu thu/chi, đơn đặt hàng theo doc_id), chiết khấu / điều
+     * chỉnh nợ không có chứng từ → chi nhánh tạo khách.
+     */
+    public List<DebtRow> debt(Instant from, Instant to, UUID customerId, List<UUID> branches) {
+        var p = new MapSqlParameterSource("from", Timestamp.from(from)).addValue("to", Timestamp.from(to)).addValue("customerId", customerId)
+                .addValue("branches", branches);
         return jdbc.query("""
                 select c.id, c.code, c.name, c.phone,
                   coalesce(sum(d.amount) filter (where d.occurred_at < :from), 0) opening,
                   coalesce(sum(d.amount) filter (where d.occurred_at >= :from and d.amount > 0), 0) debit,
                   coalesce(-sum(d.amount) filter (where d.occurred_at >= :from and d.amount < 0), 0) credit
                 from customer_debt_ledger d join customers c on c.id = d.customer_id
-                where d.occurred_at < :to%s
+                left join invoices i on i.id = d.doc_id left join sales_returns r on r.id = d.doc_id
+                left join cash_vouchers v on v.id = d.doc_id left join customer_orders o on o.id = d.doc_id
+                where d.occurred_at < :to
+                  and coalesce(i.branch_id, r.branch_id, v.branch_id, o.branch_id, c.branch_id) in (:branches)%s
                 group by c.id, c.code, c.name, c.phone
                 having coalesce(sum(d.amount) filter (where d.occurred_at < :from), 0) <> 0
                   or count(*) filter (where d.occurred_at >= :from) > 0

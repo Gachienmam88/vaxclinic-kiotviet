@@ -1,5 +1,6 @@
 package com.vaxclinic.product.purchase;
 
+import com.vaxclinic.common.security.BranchScope;
 import com.vaxclinic.product.purchase.PurchaseDtos.Actor;
 import com.vaxclinic.product.purchase.PurchaseDtos.ReceiptInfoRequest;
 import com.vaxclinic.product.purchase.PurchaseDtos.ReceiptListResponse;
@@ -43,9 +44,10 @@ public class PurchaseController {
 
     private static PurchaseListRepository.Filter filter(String q, List<String> statuses, Instant from, Instant to,
                                                    UUID createdBy, UUID personId, String invoiceNo, UUID supplierId,
-                                                   UUID branchId, int page, int size) {
+                                                   UUID branchId, int page, int size, Jwt jwt) {
+        List<UUID> branches = BranchScope.check(jwt, branchId);
         return new PurchaseListRepository.Filter(q, statuses, from, to, createdBy, personId, invoiceNo, supplierId, branchId,
-                Math.max(page, 0), Math.min(Math.max(size, 1), 100));
+                Math.max(page, 0), Math.min(Math.max(size, 1), 100), branches);
     }
 
     // ===== Phiếu nhập =====
@@ -61,9 +63,9 @@ public class PurchaseController {
                                             @RequestParam(required = false) UUID supplierId,
                                             @RequestParam(required = false) UUID branchId,
                                             @RequestParam(defaultValue = "0") int page,
-                                            @RequestParam(defaultValue = "15") int size) {
+                                            @RequestParam(defaultValue = "15") int size, @AuthenticationPrincipal Jwt jwt) {
         return service.listReceipts(filter(q, statuses, from, to, createdBy, receiverId, inputInvoiceNo, supplierId,
-                branchId, page, size));
+                branchId, page, size, jwt));
     }
 
     @GetMapping("/api/purchase-receipts/{id}")
@@ -113,9 +115,9 @@ public class PurchaseController {
                                           @RequestParam(required = false) UUID supplierId,
                                           @RequestParam(required = false) UUID branchId,
                                           @RequestParam(defaultValue = "0") int page,
-                                          @RequestParam(defaultValue = "15") int size) {
+                                          @RequestParam(defaultValue = "15") int size, @AuthenticationPrincipal Jwt jwt) {
         return service.listReturns(filter(q, statuses, from, to, createdBy, returnerId, null, supplierId, branchId,
-                page, size));
+                page, size, jwt));
     }
 
     @GetMapping("/api/purchase-returns/{id}")

@@ -14,8 +14,10 @@ public record InvoiceListParams(String q, List<String> statuses, Instant from, I
                                 List<String> einvoiceStatuses, List<String> einvoiceNatures, String customerQ,
                                 String productQ, String noteQ) {
 
-    public InvoiceQuery.Filter toFilter(int page, int size) {
+    /** branches: phạm vi chi nhánh người xem (BranchScope). */
+    public InvoiceQuery.Filter toFilter(int page, int size, List<UUID> branches) {
         return new InvoiceQuery.Filter(q, statuses, from, to, createdBy, sellerId, paymentMethods, customerId, branchId,
-                page, size, ids, states, deliveries, returnStates, einvoiceStatuses, einvoiceNatures, customerQ, productQ, noteQ);
+                page, size, ids, states, deliveries, returnStates, einvoiceStatuses, einvoiceNatures, customerQ, productQ, noteQ,
+                branches);
     }
 }

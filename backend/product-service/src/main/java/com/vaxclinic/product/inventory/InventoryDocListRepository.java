@@ -18,8 +18,9 @@ import java.util.UUID;
 @Repository
 public class InventoryDocListRepository {
 
+    /** branches: chi nhánh người dùng được xem (BranchScope) — luôn lọc; branchId: 1 chi nhánh chọn thêm (có thể null). */
     public record Filter(String q, List<String> statuses, Instant from, Instant to, UUID createdBy, UUID branchId,
-                         int page, int size) {
+                         int page, int size, List<UUID> branches) {
     }
 
     private final NamedParameterJdbcTemplate jdbc;
@@ -78,6 +79,8 @@ public class InventoryDocListRepository {
             w.append(" and d.created_by = :createdBy");
             p.addValue("createdBy", f.createdBy());
         }
+        w.append(" and d.branch_id in (:branches)");
+        p.addValue("branches", f.branches());
         if (f.branchId() != null) {
             w.append(" and d.branch_id = :branchId");
             p.addValue("branchId", f.branchId());

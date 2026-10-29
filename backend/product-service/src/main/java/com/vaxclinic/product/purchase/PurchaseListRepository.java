@@ -21,7 +21,7 @@ import java.util.UUID;
 public class PurchaseListRepository {
 
     public record Filter(String q, List<String> statuses, Instant from, Instant to, UUID createdBy, UUID personId,
-                         String inputInvoiceNo, UUID supplierId, UUID branchId, int page, int size) {
+                         String inputInvoiceNo, UUID supplierId, UUID branchId, int page, int size, List<UUID> branches) {
     }
 
     private final NamedParameterJdbcTemplate jdbc;
@@ -98,6 +98,8 @@ public class PurchaseListRepository {
             w.append(" and r.supplier_id = :supplierId");
             p.addValue("supplierId", f.supplierId());
         }
+        w.append(" and r.branch_id in (:branches)"); // chỉ chi nhánh người dùng được xem
+        p.addValue("branches", f.branches());
         if (f.branchId() != null) {
             w.append(" and r.branch_id = :branchId");
             p.addValue("branchId", f.branchId());

@@ -1,5 +1,6 @@
 package com.vaxclinic.product.product;
 
+import com.vaxclinic.common.security.BranchScope;
 import com.vaxclinic.common.web.PageResponse;
 import com.vaxclinic.product.product.ProductDtos.LedgerLine;
 import com.vaxclinic.product.product.ProductDtos.LotResponse;
@@ -56,9 +57,11 @@ public class ProductController {
                                     @RequestParam(required = false) LocalDate expectedOutFrom,
                                     @RequestParam(required = false) LocalDate expectedOutTo,
                                     @RequestParam(defaultValue = "0") int page,
-                                    @RequestParam(defaultValue = "15") int size) {
+                                    @RequestParam(defaultValue = "15") int size, @AuthenticationPrincipal Jwt jwt) {
+        List<UUID> branches = BranchScope.check(jwt, branchId);
         return service.list(new ProductListRepository.Filter(q, categoryIds, taxRateIds, taxReduction, stock, branchId,
-                createdFrom, createdTo, active, expectedOutFrom, expectedOutTo, Math.max(page, 0), Math.min(Math.max(size, 1), 100)));
+                createdFrom, createdTo, active, expectedOutFrom, expectedOutTo, Math.max(page, 0), Math.min(Math.max(size, 1), 100),
+                branches));
     }
 
     /**

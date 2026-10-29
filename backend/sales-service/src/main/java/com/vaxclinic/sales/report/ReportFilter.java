@@ -1,5 +1,6 @@
 package com.vaxclinic.sales.report;
 
+import com.vaxclinic.common.security.BranchScope;
 import com.vaxclinic.common.error.BusinessException;
 import com.vaxclinic.sales.common.Actor;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -31,13 +32,10 @@ public record ReportFilter(Instant from, Instant to, List<UUID> branchIds, UUID 
         if (from == null || to == null || !from.isBefore(to)) {
             throw BusinessException.badRequest("REPORT_RANGE_INVALID", "Khoảng thời gian báo cáo không hợp lệ");
         }
-        List<UUID> allowed = actor.branchIds().stream().map(UUID::fromString).toList();
-        List<UUID> branches = branchIds == null || branchIds.isEmpty() ? allowed
-                : branchIds.stream().filter(allowed::contains).toList();
+        List<UUID> branches = BranchScope.resolve(actor.branchIds(), branchIds); // ngoài phạm vi → 403 BRANCH_FORBIDDEN
         var p = new MapSqlParameterSource()
                 .addValue("from", Timestamp.from(from)).addValue("to", Timestamp.from(to))
-                // Danh sách rỗng → "in ()" sai cú pháp: thay bằng 1 id giả (không khớp dòng nào)
-                .addValue("branches", branches.isEmpty() ? List.of(new UUID(0, 0)) : branches)
+                .addValue("branches", branches) // BranchScope không trả danh sách rỗng
                 .addValue("customerId", customerId).addValue("sellerId", sellerId).addValue("createdBy", createdBy)
                 .addValue("methods", nonEmpty(methods) ? methods : List.of("-"))
                 .addValue("saleModes", nonEmpty(saleModes) ? saleModes : List.of("-"))

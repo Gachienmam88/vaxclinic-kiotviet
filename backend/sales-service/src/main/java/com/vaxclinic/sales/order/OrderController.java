@@ -1,5 +1,6 @@
 package com.vaxclinic.sales.order;
 
+import com.vaxclinic.common.security.BranchScope;
 import com.vaxclinic.sales.common.Actor;
 import com.vaxclinic.sales.invoice.InvoiceDtos.InvoiceRequest;
 import com.vaxclinic.sales.invoice.InvoiceDtos.InvoiceResponse;
@@ -47,10 +48,10 @@ public class OrderController {
                                   @RequestParam(required = false) Instant deliveryFrom, @RequestParam(required = false) Instant deliveryTo,
                                   @RequestParam(required = false) UUID sellerId, @RequestParam(required = false) List<String> channels,
                                   @RequestParam(required = false) List<String> paymentMethods,
-                                  @RequestParam(required = false) List<String> areas) {
+                                  @RequestParam(required = false) List<String> areas, @AuthenticationPrincipal Jwt jwt) {
         return service.list(new OrderQuery.Filter(q, statuses, from, to, createdBy, customerId, branchId,
                 Math.max(page, 0), Math.min(Math.max(size, 1), 100), productQ, customerQ, deliveryFrom, deliveryTo, sellerId,
-                channels, paymentMethods, areas));
+                channels, paymentMethods, areas, BranchScope.check(jwt, branchId)));
     }
 
     /** "Xuất file" (tổng quan / chi tiết): đơn khớp bộ lọc + dòng hàng. */
@@ -64,9 +65,9 @@ public class OrderController {
                                            @RequestParam(required = false) UUID sellerId,
                                            @RequestParam(required = false) List<String> channels,
                                            @RequestParam(required = false) List<String> paymentMethods,
-                                           @RequestParam(required = false) List<String> areas) {
+                                           @RequestParam(required = false) List<String> areas, @AuthenticationPrincipal Jwt jwt) {
         return service.export(new OrderQuery.Filter(q, statuses, from, to, createdBy, null, null, 0, 5000, productQ, customerQ,
-                deliveryFrom, deliveryTo, sellerId, channels, paymentMethods, areas));
+                deliveryFrom, deliveryTo, sellerId, channels, paymentMethods, areas, BranchScope.allowed(jwt)));
     }
 
     /** "Lưu" ở chi tiết đơn (người nhận đặt, ngày đặt, kênh bán, dự kiến giao, trạng thái, ghi chú). */

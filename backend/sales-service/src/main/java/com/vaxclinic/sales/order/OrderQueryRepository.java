@@ -144,6 +144,10 @@ public class OrderQueryRepository {
             w.append(" and o.branch_id = :branchId");
             p.addValue("branchId", f.branchId());
         }
+        if (f.branches() != null) {
+            w.append(" and o.branch_id in (:scopeBranches)");
+            p.addValue("scopeBranches", f.branches());
+        }
         return w.toString();
     }
 

@@ -19,8 +19,8 @@ public class InvoiceExportService {
         this.repository = repository;
     }
 
-    public ExportResponse export(InvoiceListParams params, boolean detail) {
-        var list = query.search(params.toFilter(0, InvoiceExportDtos.MAX_INVOICES));
+    public ExportResponse export(InvoiceListParams params, boolean detail, java.util.List<java.util.UUID> branches) {
+        var list = query.search(params.toFilter(0, InvoiceExportDtos.MAX_INVOICES, branches));
         if (list.total() > InvoiceExportDtos.MAX_INVOICES) {
             throw BusinessException.badRequest("EXPORT_TOO_LARGE", "Có " + list.total() + " hóa đơn, mỗi lần xuất file tối đa "
                     + InvoiceExportDtos.MAX_INVOICES + " hóa đơn — hãy thu hẹp thời gian hoặc bộ lọc");

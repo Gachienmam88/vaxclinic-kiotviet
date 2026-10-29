@@ -1,5 +1,8 @@
 package com.vaxclinic.sales.report;
 
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import com.vaxclinic.common.security.BranchScope;
 import com.vaxclinic.sales.report.CustomerDebtReportRepository.DebtRow;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,7 +16,7 @@ import java.util.UUID;
 /**
  * Báo cáo công nợ khách hàng (Báo cáo khách hàng – Công nợ) từ sổ công nợ: nợ đầu kỳ, ghi nợ (phát sinh tăng: bán hàng,
  * điều chỉnh tăng, hoàn cọc), ghi có (phát sinh giảm: thanh toán, chiết khấu, trả hàng), nợ cuối kỳ. Sổ công nợ theo
- * khách (không tách chi nhánh) nên báo cáo này tính trên toàn cửa hàng. Nghiệp vụ ở {@link CustomerDebtReportService}.
+ * khách; mỗi phát sinh quy về chi nhánh của chứng từ gốc và chỉ tính chi nhánh người xem được làm việc (BranchScope). Nghiệp vụ ở {@link CustomerDebtReportService}.
  */
 @RestController
 @PreAuthorize("hasAuthority('report.view')")
@@ -26,7 +29,8 @@ public class CustomerDebtReportController {
     }
 
     @GetMapping("/api/reports/customers/debt")
-    public List<DebtRow> debt(@RequestParam Instant from, @RequestParam Instant to, @RequestParam(required = false) UUID customerId) {
-        return service.debt(from, to, customerId);
+    public List<DebtRow> debt(@RequestParam Instant from, @RequestParam Instant to, @RequestParam(required = false) UUID customerId,
+                              @RequestParam(required = false) List<UUID> branchIds, @AuthenticationPrincipal Jwt jwt) {
+        return service.debt(from, to, customerId, BranchScope.resolve(jwt, branchIds));
     }
 }

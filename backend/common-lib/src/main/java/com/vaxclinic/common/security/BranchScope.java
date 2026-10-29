@@ -23,7 +23,11 @@ public final class BranchScope {
 
     /** Chi nhánh được xem (không rỗng). */
     public static List<UUID> allowed(Jwt jwt) {
-        List<String> claim = jwt == null ? null : jwt.getClaimAsStringList("branches");
+        return allowed(jwt == null ? null : jwt.getClaimAsStringList("branches"));
+    }
+
+    /** Như {@link #allowed(Jwt)} nhưng từ danh sách claim "branches" đã đọc sẵn (Actor của từng service). */
+    public static List<UUID> allowed(Collection<String> claim) {
         List<UUID> ids = claim == null ? List.of() : claim.stream().map(UUID::fromString).toList();
         return ids.isEmpty() ? List.of(NONE) : ids;
     }
@@ -39,7 +43,12 @@ public final class BranchScope {
 
     /** Nhiều chi nhánh lọc: rỗng = mọi chi nhánh được xem; có chi nhánh ngoài phạm vi → 403; ngược lại đúng danh sách hỏi. */
     public static List<UUID> resolve(Jwt jwt, Collection<UUID> requested) {
-        List<UUID> allowed = allowed(jwt);
+        return resolve(jwt == null ? null : jwt.getClaimAsStringList("branches"), requested);
+    }
+
+    /** Như {@link #resolve(Jwt, Collection)} với claim "branches" đã đọc sẵn. */
+    public static List<UUID> resolve(Collection<String> claim, Collection<UUID> requested) {
+        List<UUID> allowed = allowed(claim);
         if (requested == null || requested.isEmpty()) {
             return allowed;
         }

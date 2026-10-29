@@ -1,5 +1,6 @@
 package com.vaxclinic.sales.invoice;
 
+import com.vaxclinic.common.security.BranchScope;
 import com.vaxclinic.sales.common.Actor;
 import com.vaxclinic.sales.invoice.InvoiceExportDtos.ExportResponse;
 import com.vaxclinic.sales.invoice.InvoiceImportDtos.ImportRequest;
@@ -38,8 +39,9 @@ public class InvoiceToolsController {
     /** Mọi hóa đơn khớp bộ lọc (tối đa 5000); detail = true kèm thanh toán / giao hàng / dòng hàng. */
     @GetMapping("/export")
     @PreAuthorize("hasAuthority('sales.perform') or hasAuthority('report.view')")
-    public ExportResponse export(@ModelAttribute InvoiceListParams params, @RequestParam(defaultValue = "false") boolean detail) {
-        return exports.export(params, detail);
+    public ExportResponse export(@ModelAttribute InvoiceListParams params, @RequestParam(defaultValue = "false") boolean detail,
+                                 @AuthenticationPrincipal Jwt jwt) {
+        return exports.export(params, detail, BranchScope.check(jwt, params.branchId()));
     }
 
     @PostMapping("/import")

@@ -31,7 +31,7 @@ public class ProductListRepository {
 
     public record Filter(String q, List<UUID> categoryIds, List<UUID> taxRateIds, Boolean taxReduction,
                          StockFilter stock, UUID branchId, Instant createdFrom, Instant createdTo, Boolean active,
-                         LocalDate expectedOutFrom, LocalDate expectedOutTo, int page, int size) {
+                         LocalDate expectedOutFrom, LocalDate expectedOutTo, int page, int size, List<UUID> branches) {
     }
 
     /** Ngày hiện tại theo giờ Việt Nam. */
@@ -49,7 +49,8 @@ public class ProductListRepository {
                         from (select -sum(l.quantity) sold from stock_ledger l
                               where l.product_id = p.id and l.doc_type in ('SALE', 'SALE_CANCEL', 'SALE_RETURN', 'SALE_RETURN_CANCEL_OUT')
                                 and l.occurred_at >= now() - interval '30 days'
-                                and (cast(:branchId as uuid) is null or l.branch_id = cast(:branchId as uuid))) v
+                                and (cast(:branchId as uuid) is null or l.branch_id = cast(:branchId as uuid))
+                                and l.branch_id in (:branches)) v
                        ) e on true
             """;
 
@@ -67,9 +68,11 @@ public class ProductListRepository {
         String stockJoin = """
                 left join (select product_id, sum(quantity) qty, sum(reserved) rsv from stock_balances
                            where (cast(:branchId as uuid) is null or branch_id = cast(:branchId as uuid))
+                             and branch_id in (:branches)
                            group by product_id) s on s.product_id = p.id
                 """;
         params.addValue("branchId", f.branchId());
+        params.addValue("branches", f.branches()); // tồn / bán ròng chỉ trong chi nhánh người dùng được xem
 
         var where = new StringBuilder(" where not p.deleted");
         if (f.q() != null && !f.q().isBlank()) {

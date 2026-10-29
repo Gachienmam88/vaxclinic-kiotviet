@@ -16,7 +16,7 @@ class InvoiceFilterSqlTest {
     private static InvoiceQuery.Filter filter(List<String> deliveries, List<String> returns, List<String> einvoice,
                                               List<String> natures, List<String> states) {
         return new InvoiceQuery.Filter(null, null, null, null, null, null, null, null, null, 0, 15,
-                null, states, deliveries, returns, einvoice, natures, null, null, null);
+                null, states, deliveries, returns, einvoice, natures, null, null, null, null);
     }
 
     @Test

@@ -65,6 +65,7 @@ final class InvoiceFilterSql {
         add(w, p, notEmpty(f.paymentMethods()), " and i.payment_method in (:methods)", "methods", f.paymentMethods());
         add(w, p, f.customerId() != null, " and i.customer_id = :customerId", "customerId", f.customerId());
         add(w, p, f.branchId() != null, " and i.branch_id = :branchId", "branchId", f.branchId());
+        add(w, p, f.branches() != null, " and i.branch_id in (:scopeBranches)", "scopeBranches", f.branches());
         // Giao hàng / Không giao hàng: chọn cả hai (hoặc không chọn) = không lọc
         w.append(either(f.deliveries(), "DELIVERY", "NONE", "i.sale_mode = 'DELIVERY'"));
         w.append(either(f.returnStates(), "HAS", "NONE", HAS_RETURN));

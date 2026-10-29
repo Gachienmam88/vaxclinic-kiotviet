@@ -1,5 +1,8 @@
 package com.vaxclinic.product.stock;
 
+import com.vaxclinic.common.security.BranchScope;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import com.vaxclinic.product.stock.StockBookRepository.ProductCategory;
 import com.vaxclinic.product.stock.StockBookRepository.StockBookLine;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -35,7 +38,7 @@ public class StockBookController {
     @GetMapping("/api/accounting/stock/summary")
     @PreAuthorize("hasAuthority('report.view') or hasAuthority('inventory.view')")
     public List<StockBookLine> summary(@RequestParam LocalDate from, @RequestParam LocalDate to,
-                                       @RequestParam(required = false) List<UUID> branchIds) {
-        return service.summary(from, to, branchIds);
+                                       @RequestParam(required = false) List<UUID> branchIds, @AuthenticationPrincipal Jwt jwt) {
+        return service.summary(from, to, BranchScope.resolve(jwt, branchIds)); // rỗng = mọi chi nhánh được xem; ngoài phạm vi → 403
     }
 }

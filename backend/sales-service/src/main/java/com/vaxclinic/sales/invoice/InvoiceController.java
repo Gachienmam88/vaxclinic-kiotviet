@@ -1,5 +1,6 @@
 package com.vaxclinic.sales.invoice;
 
+import com.vaxclinic.common.security.BranchScope;
 import com.vaxclinic.sales.common.Actor;
 import com.vaxclinic.sales.invoice.InvoiceDtos.InfoRequest;
 import com.vaxclinic.sales.invoice.InvoiceDtos.InvoiceListResponse;
@@ -53,10 +54,11 @@ public class InvoiceController {
                                     @RequestParam(required = false) String customerQ,
                                     @RequestParam(required = false) String productQ,
                                     @RequestParam(required = false) String noteQ,
-                                    @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "15") int size) {
+                                    @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "15") int size,
+                                    @AuthenticationPrincipal Jwt jwt) {
         return service.list(new InvoiceQuery.Filter(q, statuses, from, to, createdBy, sellerId, paymentMethods, customerId,
                 branchId, Math.max(page, 0), Math.min(Math.max(size, 1), 100), ids, states, deliveries, returnStates,
-                einvoiceStatuses, einvoiceNatures, customerQ, productQ, noteQ));
+                einvoiceStatuses, einvoiceNatures, customerQ, productQ, noteQ, BranchScope.check(jwt, branchId)));
     }
 
     @GetMapping("/{id}")
