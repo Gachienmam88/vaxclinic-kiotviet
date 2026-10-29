@@ -88,7 +88,30 @@
       "paid": "Customer paid",
       "paymentMethod": "Payment",
       "state": "Status",
-      "einvoice": "E-invoice status"
+      "einvoice": "E-invoice status",
+      "shipmentCode": "Waybill code",
+      "shipmentStatus": "Delivery status",
+      "createdAt": "Created at",
+      "updatedAt": "Updated at",
+      "orderCode": "Order code",
+      "customerEmail": "Email",
+      "customerPhone": "Phone",
+      "customerAddress": "Address",
+      "customerProvince": "Area",
+      "customerWard": "Ward",
+      "customerBirthday": "Date of birth",
+      "branch": "Branch",
+      "sellerTaxCode": "Seller tax code",
+      "createdByName": "Created by",
+      "salesChannelName": "Sales channel",
+      "deliveryPartnerName": "Delivery partner",
+      "note": "Note",
+      "cod": "Remaining to collect (COD)",
+      "partnerFee": "Delivery partner fee",
+      "deliveryTime": "Delivery time",
+      "einvoiceNature": "Invoice nature",
+      "einvoiceNo": "Invoice number",
+      "einvoiceSeries": "Invoice series"
     },
     "table": {
       "showAll": "Show all invoices",
@@ -109,7 +132,11 @@
       "exportDetail": "Export details",
       "columns": "Choose columns",
       "orderSettings": "Order settings",
-      "exportVietnameseNote": "Exported files keep Vietnamese column headers (for accounting/tax use)."
+      "exportVietnameseNote": "Exported files keep Vietnamese column headers (for accounting/tax use).",
+      "import": "Import file",
+      "more": "More actions",
+      "merge": "Merge invoices",
+      "help": "User guide"
     },
     "detail": {
       "tabPayments": "Payment history",
@@ -184,6 +211,58 @@
       "taxRateOf": "Tax rate for {code}",
       "notChosen": "-- Not selected --",
       "saved": "Tax rates saved"
+    },
+    "exportColumns": {
+      "title": "Column options",
+      "hint": "Select at least 1 column to export",
+      "clearAll": "Deselect all",
+      "selectAll": "Select all",
+      "groups": {
+        "invoice": "Invoice",
+        "payment": "Payment",
+        "customer": "Customer",
+        "product": "Products",
+        "delivery": "Delivery",
+        "other": "Other information"
+      }
+    },
+    "jobs": {
+      "title": "Settings, import, export, payment processing",
+      "expand": "Expand",
+      "collapse": "Collapse",
+      "close": "Close",
+      "download": "Click here to download",
+      "running": "Processing…",
+      "overview": "Creating invoice overview file",
+      "detail": "Creating invoice detail file"
+    },
+    "merge": {
+      "title": "Merge invoices",
+      "intro": "You can merge invoices with the same customer name or phone number from the {days} into 1 invoice",
+      "days": "last 7 days",
+      "customerCode": "Customer code",
+      "customerName": "Customer name",
+      "empty": "No invoices from the last 7 days can be merged (same customer, no returns, no delivery, no e-invoice issued)",
+      "emptyOrder": "Invoices from the last 7 days cannot be merged because a related order is not completed",
+      "submit": "Merge {count} invoices",
+      "done": "Merged into invoice {code}"
+    },
+    "import": {
+      "title": "Import invoices from a data file",
+      "template": "(Download template:",
+      "templateLink": "Excel file)",
+      "ruleGroup": "Rows with the same invoice code form 1 invoice; invoice, customer and payment info is only needed on the first row.",
+      "ruleAllOrNothing": "If any row has an error, no invoice is saved.",
+      "ruleLot": "Lot-managed products need an unexpired lot at the branch; invoice codes in the file are kept.",
+      "chooseFile": "Choose data file",
+      "submit": "Import",
+      "badHeader": "Wrong header in column {col}: expected \"{name}\" (use the template)",
+      "emptyFile": "The file has no data rows",
+      "toastDone": "Imported {count} invoices",
+      "created": "Created {count} invoices:",
+      "skipped": "{count} invoices were imported before and skipped.",
+      "nothingSaved": "The file has {count} errors — no invoice was saved. Fix the file and import again.",
+      "lineError": "Row {line}: {message}"
     }
   },
   "refund": {

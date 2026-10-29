@@ -2,8 +2,11 @@
 
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { toast } from "sonner";
-import { exportInvoiceDetails, exportInvoiceSummary } from "@/features/sales/invoice-csv-export";
+import { InvoiceExportColumnDialog } from "@/features/sales/invoice-export-column-dialog";
+import { FileJobsPanel, useFileJobs } from "@/features/sales/invoice-file-jobs-panel";
+import { InvoiceImportDialog } from "@/features/sales/invoice-import-dialog";
+import { InvoiceMergeDialog } from "@/features/sales/invoice-merge-dialog";
+import { exportInvoiceDetail, exportInvoiceOverview } from "@/features/sales/invoice-xlsx-export";
 import { DEEP_LINK_FILTERS, DEFAULT_FILTERS, EMPTY_SEARCH, invoiceListParams, type InvoiceSearch } from "@/features/sales/invoice-filter-model";
 import { InvoiceFilterSidebar, type InvoiceFilters } from "@/features/sales/invoice-filter-sidebar";
 import { PageTitle } from "@/features/sales/invoice-list-kit";
@@ -12,7 +15,6 @@ import { useInvoiceColumns, useInvoiceFavourites } from "@/features/sales/invoic
 import { InvoiceListTable } from "@/features/sales/invoice-list-table";
 import { InvoiceListToolbar } from "@/features/sales/invoice-list-toolbar";
 import { useInvoices } from "@/features/sales/sales-queries";
-import { errorMessage } from "@/lib/api-client";
 import { useT } from "@/lib/i18n";
 import { useCurrentUser } from "@/lib/use-current-user";
 import { salesNs } from "@/messages/sales";
@@ -41,6 +43,9 @@ function InvoicesPage({ code, id, einvoice }: { code: string | null; id: string 
   const [size, setSize] = useState(15);
   // undefined = người dùng chưa mở / đóng dòng nào → mở sẵn hóa đơn của link sâu
   const [expanded, setExpanded] = useState<string | null | undefined>(id ?? undefined);
+  const [dialog, setDialog] = useState<"import" | "exportColumns" | "merge" | null>(null);
+  const jobs = useFileJobs();
+  const branchId = me?.user.branches[0]?.id ?? "";
   useEffect(() => { const timer = setTimeout(() => { setQ(search); setPage(0); }, 300); return () => clearTimeout(timer); }, [search]);
 
   const ids = linkId ? [linkId] : favOnly ? (fav.ids.length ? fav.ids : [NO_ID]) : undefined;
@@ -49,10 +54,10 @@ function InvoicesPage({ code, id, einvoice }: { code: string | null; id: string 
   const open = expanded === undefined ? (data?.items.find((i) => i.code.toUpperCase() === code?.trim().toUpperCase())?.id ?? null) : expanded;
 
   const changeFilters = (f: InvoiceFilters) => { setFilters(f); setPage(0); setLinkId(null); };
+  // Xuất file: mọi hóa đơn khớp bộ lọc + ô tìm kiếm hiện tại (không chỉ trang đang xem), tạo nền → panel góc phải dưới
   const exportFile = (kind: "summary" | "detail") => {
-    const items = data?.items ?? [];
-    if (kind === "summary") exportInvoiceSummary(items);
-    else exportInvoiceDetails(items).catch((e) => toast.error(errorMessage(e)));
+    if (kind === "detail") setDialog("exportColumns");
+    else jobs.run(t("invoices.jobs.overview"), () => exportInvoiceOverview(params, columns.cols));
   };
 
   return (
@@ -63,6 +68,7 @@ function InvoicesPage({ code, id, einvoice }: { code: string | null; id: string 
       </div>
       <div className="min-w-0 flex-1 space-y-3">
         <InvoiceListToolbar search={search} onSearch={(s) => { setSearch(s); setLinkId(null); }} onExport={exportFile}
+          onImport={() => setDialog("import")} onMerge={() => setDialog("merge")}
           exportDisabled={!data?.items.length} shown={columns.shown} onToggleColumn={columns.toggle} />
         <div className="overflow-x-auto rounded-lg bg-background">
           <InvoiceListTable data={data} cols={columns.cols} expanded={open} onExpand={setExpanded} isFav={fav.isFav} onToggleFav={fav.toggle}
@@ -71,6 +77,14 @@ function InvoicesPage({ code, id, einvoice }: { code: string | null; id: string 
         </div>
         <ListPager total={data?.total ?? 0} page={page} size={size} unit={t("invoices.unit")} onPage={setPage} onSize={(s) => { setSize(s); setPage(0); }} />
       </div>
+      {dialog === "import" && <InvoiceImportDialog branchId={branchId} onClose={() => setDialog(null)} />}
+      {dialog === "merge" && <InvoiceMergeDialog branchId={branchId} onClose={() => setDialog(null)}
+        onMerged={(inv) => { setDialog(null); setExpanded(inv.id); }} />}
+      {dialog === "exportColumns" && <InvoiceExportColumnDialog onClose={() => setDialog(null)} onExport={(keys) => {
+        setDialog(null);
+        jobs.run(t("invoices.jobs.detail"), () => exportInvoiceDetail(params, keys));
+      }} />}
+      <FileJobsPanel jobs={jobs.jobs} onClose={jobs.clear} />
     </div>
   );
 }

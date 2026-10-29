@@ -40,7 +40,7 @@ async function lookups(data: ExportResponse, keys: string[]): Promise<ExportLook
     recs.forEach((r) => lk.einv.set(r.invoice_id, r));
   }
   if (need("branch")) (await api<Branch[]>("/branches")).forEach((b) => lk.branches.set(b.id, b.name));
-  if (need("sellerTaxCode")) lk.sellerTaxCode = (await api<{ taxCode: string | null }>("/store-profile").catch(() => null))?.taxCode ?? null;
+  if (need("sellerTaxCode")) lk.sellerTaxCode = (await api<{ store: { taxCode: string | null } | null }>("/settings"))?.store?.taxCode ?? null;
   const productIds = [...new Set(data.lines.map((l) => l.productId))];
   if (need("category", "barcode")) {
     type P = { categoryName: string | null; units: { code: string; barcode: string | null }[] };

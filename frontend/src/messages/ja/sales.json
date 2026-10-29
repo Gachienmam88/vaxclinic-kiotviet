@@ -87,7 +87,30 @@
       "paid": "入金額",
       "paymentMethod": "支払方法",
       "state": "ステータス",
-      "einvoice": "電子請求書の状態"
+      "einvoice": "電子請求書の状態",
+      "shipmentCode": "送り状番号",
+      "shipmentStatus": "配送状況",
+      "createdAt": "作成日時",
+      "updatedAt": "更新日",
+      "orderCode": "注文コード",
+      "customerEmail": "メール",
+      "customerPhone": "電話",
+      "customerAddress": "住所",
+      "customerProvince": "地域",
+      "customerWard": "区・町",
+      "customerBirthday": "生年月日",
+      "branch": "支店",
+      "sellerTaxCode": "売主の税番号",
+      "createdByName": "作成者",
+      "salesChannelName": "販売チャネル",
+      "deliveryPartnerName": "配送業者",
+      "note": "メモ",
+      "cod": "未回収 (COD)",
+      "partnerFee": "配送業者手数料",
+      "deliveryTime": "配送日時",
+      "einvoiceNature": "請求書の種類",
+      "einvoiceNo": "請求書番号",
+      "einvoiceSeries": "請求書記号"
     },
     "table": {
       "showAll": "すべての伝票を表示",
@@ -108,7 +131,11 @@
       "exportDetail": "明細をエクスポート",
       "columns": "表示列を選択",
       "orderSettings": "注文設定",
-      "exportVietnameseNote": "エクスポートファイルの列見出しはベトナム語のままです（会計・税務用）。"
+      "exportVietnameseNote": "エクスポートファイルの列見出しはベトナム語のままです（会計・税務用）。",
+      "import": "ファイル取込",
+      "more": "その他の操作",
+      "merge": "請求書を統合",
+      "help": "利用ガイド"
     },
     "detail": {
       "tabPayments": "入金履歴",
@@ -183,6 +210,58 @@
       "taxRateOf": "{code} の税率",
       "notChosen": "-- 未選択 --",
       "saved": "税率を保存しました"
+    },
+    "exportColumns": {
+      "title": "表示列の選択",
+      "hint": "エクスポートする列を1つ以上選択してください",
+      "clearAll": "すべて選択解除",
+      "selectAll": "すべて選択",
+      "groups": {
+        "invoice": "請求書",
+        "payment": "支払い",
+        "customer": "顧客",
+        "product": "商品",
+        "delivery": "配送",
+        "other": "その他の情報"
+      }
+    },
+    "jobs": {
+      "title": "設定・取込・エクスポート・支払いの処理",
+      "expand": "展開",
+      "collapse": "折りたたむ",
+      "close": "閉じる",
+      "download": "ここをクリックしてダウンロード",
+      "running": "処理中…",
+      "overview": "請求書概要ファイルを作成中",
+      "detail": "請求書明細ファイルを作成中"
+    },
+    "merge": {
+      "title": "請求書の統合",
+      "intro": "{days}の同じ顧客名または電話番号の請求書を1件に統合できます",
+      "days": "過去7日間",
+      "customerCode": "顧客コード",
+      "customerName": "顧客名",
+      "empty": "過去7日間に統合できる請求書はありません（同一顧客・返品なし・配送なし・電子請求書未発行）",
+      "emptyOrder": "関連する注文が完了していないため、過去7日間の請求書は統合できません",
+      "submit": "{count}件を統合",
+      "done": "請求書 {code} に統合しました"
+    },
+    "import": {
+      "title": "データファイルから請求書を取込",
+      "template": "（テンプレートをダウンロード：",
+      "templateLink": "Excel ファイル）",
+      "ruleGroup": "同じ請求書コードの行は1件の請求書です。請求書・顧客・支払い情報は最初の行のみ必要です。",
+      "ruleAllOrNothing": "いずれかの行にエラーがある場合、請求書は保存されません。",
+      "ruleLot": "ロット管理商品は支店にある期限内のロットが必要です。ファイルの請求書コードはそのまま使用されます。",
+      "chooseFile": "データファイルを選択",
+      "submit": "実行",
+      "badHeader": "列 {col} の見出しが正しくありません:「{name}」が必要です（テンプレートを使用）",
+      "emptyFile": "ファイルにデータ行がありません",
+      "toastDone": "{count}件の請求書を取り込みました",
+      "created": "{count}件の請求書を作成:",
+      "skipped": "{count}件は前回取り込み済みのためスキップしました。",
+      "nothingSaved": "ファイルに {count} 件のエラーがあります — 請求書は保存されていません。修正して再度取り込んでください。",
+      "lineError": "{line} 行目: {message}"
     }
   },
   "refund": {

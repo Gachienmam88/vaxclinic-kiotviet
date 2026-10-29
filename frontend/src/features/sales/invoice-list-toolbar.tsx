@@ -2,11 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ChevronDown, Columns3, FileOutput, Plus, Search, Settings, SlidersHorizontal } from "lucide-react";
+import { ChevronDown, CircleHelp, Ellipsis, FileInput, FileOutput, Plus, Search, Settings, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { PickerPopover } from "@/components/ui/picker-popover";
 import { useT } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
@@ -14,9 +12,12 @@ import { commonNs } from "@/messages/common";
 import { salesNs } from "@/messages/sales";
 import { EMPTY_SEARCH, type InvoiceSearch } from "./invoice-filter-model";
 import { FILTER_FIELD, TOOLBAR_BTN } from "./invoice-list-kit";
-import { INVOICE_COLUMNS, type InvoiceColumn } from "./invoice-list-prefs";
+import { InvoiceColumnPicker } from "./invoice-column-picker";
+import type { InvoiceColumn } from "./invoice-list-prefs";
 
 const ICON_BTN = "inline-flex size-[30px] items-center justify-center rounded-md border bg-background text-foreground hover:border-primary hover:text-primary";
+/** "?" — hướng dẫn KiotViet: thêm mới hóa đơn từ màn hình quản lý. */
+const HELP_URL = "https://www.kiotviet.vn/huong-dan-su-dung-kiotviet/retail-ban-hang/ban-hang/#2-them-moi-hoa-don-tu-man-hinh-quan-ly-4-3";
 
 const ADVANCED = [
   ["q", "invoices.toolbar.searchCode"], ["productQ", "invoices.toolbar.searchProduct"], ["customerQ", "invoices.toolbar.searchCustomer"],
@@ -24,11 +25,11 @@ const ADVANCED = [
 ] as const satisfies readonly (readonly [keyof InvoiceSearch, string])[];
 
 /**
- * Toolbar danh sách Hóa đơn như KiotViet: ô "Theo mã hóa đơn" + icon tìm nâng cao, "+ Tạo mới ▾", "Xuất file ▾",
- * chọn cột hiển thị, thiết lập đơn hàng.
+ * Toolbar danh sách Hóa đơn như KiotViet: ô "Theo mã hóa đơn" + icon tìm nâng cao, "+ Tạo mới ▾", "Import file",
+ * "Xuất file ▾", "…" (Gộp đơn), chọn cột hiển thị, thiết lập đơn hàng, hướng dẫn.
  */
-export function InvoiceListToolbar({ search, onSearch, onExport, exportDisabled, shown, onToggleColumn }: {
-  search: InvoiceSearch; onSearch: (s: InvoiceSearch) => void;
+export function InvoiceListToolbar({ search, onSearch, onImport, onExport, onMerge, exportDisabled, shown, onToggleColumn }: {
+  search: InvoiceSearch; onSearch: (s: InvoiceSearch) => void; onImport: () => void; onMerge: () => void;
   onExport: (kind: "summary" | "detail") => void; exportDisabled: boolean;
   shown: (c: InvoiceColumn) => boolean; onToggleColumn: (c: InvoiceColumn, on: boolean) => void;
 }) {
@@ -61,26 +62,30 @@ export function InvoiceListToolbar({ search, onSearch, onExport, exportDisabled,
       <div className="ml-auto flex items-center gap-2">
         <DropdownMenu>
           <DropdownMenuTrigger className={cn(TOOLBAR_BTN, "inline-flex items-center gap-1 border")}><Plus className="size-4" /> {t("invoices.toolbar.create")} <ChevronDown className="size-3.5" /></DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem render={<Link href="/sale" />}>{t("invoices.toolbar.newInvoice")}</DropdownMenuItem>
+          <DropdownMenuContent align="end" className="w-44">
+            <DropdownMenuItem render={<Link href="/sale?new=1" />}>{t("invoices.toolbar.newInvoice")}</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+        <button type="button" onClick={onImport} className={cn(TOOLBAR_BTN, "inline-flex items-center gap-1 border border-border text-foreground")}>
+          <FileInput className="size-4" /> {t("invoices.toolbar.import")}</button>
         <DropdownMenu>
-          <DropdownMenuTrigger disabled={exportDisabled} className={cn(TOOLBAR_BTN, "inline-flex items-center gap-1 border disabled:opacity-50")}>
+          <DropdownMenuTrigger disabled={exportDisabled} className={cn(TOOLBAR_BTN, "inline-flex items-center gap-1 border border-border text-foreground disabled:opacity-50")}>
             <FileOutput className="size-4" /> {tc("actions.export")} <ChevronDown className="size-3.5" /></DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
+          <DropdownMenuContent align="end" className="w-48">
             <DropdownMenuItem onClick={() => onExport("summary")} title={t("invoices.toolbar.exportVietnameseNote")}>{t("invoices.toolbar.exportSummary")}</DropdownMenuItem>
             <DropdownMenuItem onClick={() => onExport("detail")} title={t("invoices.toolbar.exportVietnameseNote")}>{t("invoices.toolbar.exportDetail")}</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
         <DropdownMenu>
-          <DropdownMenuTrigger className={ICON_BTN} aria-label={t("invoices.toolbar.columns")} title={t("invoices.toolbar.columns")}><Columns3 className="size-4" /></DropdownMenuTrigger>
+          <DropdownMenuTrigger className={ICON_BTN} aria-label={t("invoices.toolbar.more")} title={t("invoices.toolbar.more")}><Ellipsis className="size-4" /></DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
-            {INVOICE_COLUMNS.map(([k]) => (
-              <DropdownMenuCheckboxItem key={k} checked={shown(k)} closeOnClick={false} onCheckedChange={(on) => onToggleColumn(k, on)}>{t(`invoices.columns.${k}`)}</DropdownMenuCheckboxItem>))}
+            <DropdownMenuItem onClick={onMerge}>{t("invoices.toolbar.merge")}</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+        <InvoiceColumnPicker shown={shown} onToggle={onToggleColumn} />
         <Link href="/settings/orders" className={ICON_BTN} aria-label={t("invoices.toolbar.orderSettings")} title={t("invoices.toolbar.orderSettings")}><Settings className="size-4" /></Link>
+        <a href={HELP_URL} target="_blank" rel="noopener noreferrer" className={ICON_BTN} aria-label={t("invoices.toolbar.help")} title={t("invoices.toolbar.help")}>
+          <CircleHelp className="size-4" /></a>
       </div>
     </div>
   );

@@ -37,6 +37,7 @@ import { SaleSettingsProvider, useSaleSettings } from "./use-sale-settings";
 import { focusCustomerSearch, toggleFullscreen, useSaleShortcuts } from "./use-sale-shortcuts";
 import { cartTotals, useSaleTabs } from "./use-sale-tabs";
 import { openPicked, useSaleUrlDrafts } from "./use-sale-url-drafts";
+import { useSaleNewTabParam } from "./use-sale-new-tab-param";
 import type { ImportedSheet } from "./sale-import-workbook";
 import type { CatalogProduct } from "./sale-types";
 
@@ -70,6 +71,7 @@ function SaleScreenBody() {
   const lookups = useSaleLookups();
   const lineKeys = useSaleLineKeys(d?.lines ?? [], settings, tabs.setLines);
   useSaleUrlDrafts(me?.user.id, catalog.products, catalog.loadedAt, tabs.open);
+  useSaleNewTabParam(tabs.tabs.length > 0, () => tabs.add());
 
   useEffect(() => {
     const update = () => setOnline(navigator.onLine);

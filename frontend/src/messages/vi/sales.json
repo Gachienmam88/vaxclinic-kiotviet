@@ -87,7 +87,30 @@
       "paid": "Khách đã trả",
       "paymentMethod": "Thanh toán",
       "state": "Trạng thái",
-      "einvoice": "Trạng thái HĐĐT"
+      "einvoice": "Trạng thái HĐĐT",
+      "shipmentCode": "Mã vận đơn",
+      "shipmentStatus": "Trạng thái giao hàng",
+      "createdAt": "Thời gian tạo",
+      "updatedAt": "Ngày cập nhật",
+      "orderCode": "Mã đặt hàng",
+      "customerEmail": "Email",
+      "customerPhone": "Điện thoại",
+      "customerAddress": "Địa chỉ",
+      "customerProvince": "Khu vực",
+      "customerWard": "Phường/Xã",
+      "customerBirthday": "Ngày sinh",
+      "branch": "Chi nhánh",
+      "sellerTaxCode": "Mã số thuế người bán",
+      "createdByName": "Người tạo",
+      "salesChannelName": "Kênh bán",
+      "deliveryPartnerName": "Đối tác giao hàng",
+      "note": "Ghi chú",
+      "cod": "Còn cần thu (COD)",
+      "partnerFee": "Phí trả ĐTGH",
+      "deliveryTime": "Thời gian giao hàng",
+      "einvoiceNature": "Tính chất hóa đơn",
+      "einvoiceNo": "Số hóa đơn",
+      "einvoiceSeries": "Ký hiệu hóa đơn"
     },
     "table": {
       "showAll": "Xem tất cả hóa đơn",
@@ -108,7 +131,11 @@
       "exportDetail": "Xuất file chi tiết",
       "columns": "Chọn cột hiển thị",
       "orderSettings": "Thiết lập đơn hàng",
-      "exportVietnameseNote": "File xuất giữ tiêu đề cột tiếng Việt (dùng cho kế toán/thuế)."
+      "exportVietnameseNote": "File xuất giữ tiêu đề cột tiếng Việt (dùng cho kế toán/thuế).",
+      "import": "Import file",
+      "more": "Thao tác khác",
+      "merge": "Gộp đơn",
+      "help": "Hướng dẫn sử dụng"
     },
     "detail": {
       "tabPayments": "Lịch sử thanh toán",
@@ -183,6 +210,58 @@
       "taxRateOf": "Tỷ lệ thuế {code}",
       "notChosen": "-- Chưa chọn --",
       "saved": "Đã lưu tỷ lệ thuế"
+    },
+    "exportColumns": {
+      "title": "Tùy chọn cột hiển thị",
+      "hint": "Chọn ít nhất 1 cột để xuất file",
+      "clearAll": "Bỏ chọn tất cả",
+      "selectAll": "Chọn tất cả",
+      "groups": {
+        "invoice": "Hóa đơn",
+        "payment": "Thanh toán",
+        "customer": "Khách hàng",
+        "product": "Hàng hóa",
+        "delivery": "Giao hàng",
+        "other": "Thông tin khác"
+      }
+    },
+    "jobs": {
+      "title": "Xử lý thiết lập, import, xuất file, thanh toán",
+      "expand": "Mở rộng",
+      "collapse": "Thu gọn",
+      "close": "Đóng",
+      "download": "Nhấn vào đây để tải xuống",
+      "running": "Đang xử lý…",
+      "overview": "Đang tạo file tổng quan hóa đơn",
+      "detail": "Đang tạo file chi tiết hóa đơn"
+    },
+    "merge": {
+      "title": "Gộp hóa đơn",
+      "intro": "Bạn có thể gộp các hóa đơn có cùng tên khách hàng hoặc số điện thoại trong {days} thành 1 hóa đơn",
+      "days": "7 ngày qua",
+      "customerCode": "Mã khách hàng",
+      "customerName": "Tên khách hàng",
+      "empty": "Không có hóa đơn nào trong 7 ngày qua đủ điều kiện gộp (cùng khách hàng, chưa trả hàng, không giao hàng, chưa phát hành HĐĐT)",
+      "emptyOrder": "Hệ thống không hỗ trợ gộp hóa đơn 7 ngày qua do phiếu đặt hàng liên quan có trạng thái khác hoàn thành",
+      "submit": "Gộp {count} hóa đơn",
+      "done": "Đã gộp thành hóa đơn {code}"
+    },
+    "import": {
+      "title": "Nhập danh sách hóa đơn từ file dữ liệu",
+      "template": "(Tải về file mẫu:",
+      "templateLink": "Excel file)",
+      "ruleGroup": "Các dòng cùng Mã hóa đơn là 1 hóa đơn; thông tin hóa đơn, khách hàng, thanh toán chỉ cần ở dòng đầu tiên.",
+      "ruleAllOrNothing": "File có lỗi ở bất kỳ dòng nào thì không hóa đơn nào được lưu.",
+      "ruleLot": "Hàng quản lý theo lô phải nhập Lô còn hạn sử dụng tại chi nhánh; mã hóa đơn trong file được giữ nguyên.",
+      "chooseFile": "Chọn file dữ liệu",
+      "submit": "Thực hiện",
+      "badHeader": "Sai tiêu đề cột {col}: cần \"{name}\" (dùng file mẫu)",
+      "emptyFile": "File không có dòng dữ liệu nào",
+      "toastDone": "Đã import {count} hóa đơn",
+      "created": "Đã tạo {count} hóa đơn:",
+      "skipped": "{count} hóa đơn đã import ở lần trước, bỏ qua.",
+      "nothingSaved": "File có {count} lỗi — chưa lưu hóa đơn nào. Sửa file rồi import lại.",
+      "lineError": "Dòng {line}: {message}"
     }
   },
   "refund": {

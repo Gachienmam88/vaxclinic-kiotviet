@@ -2,8 +2,7 @@
 
 import { DocCodeLink } from "@/components/ui/doc-code-link";
 import { useEInvoiceRecords, type EInvoiceRecord } from "@/features/integrations/integration-queries";
-import { useBranches } from "@/features/settings/settings-queries";
-import { useStoreProfile } from "@/features/store-profile/store-profile-queries";
+import { useBranches, useShopSettings } from "@/features/settings/settings-queries";
 import { useT, type TFunction } from "@/lib/i18n";
 import { formatDate, formatDateTime, formatMoney } from "@/lib/format";
 import { deliveryNs } from "@/messages/delivery";
@@ -29,10 +28,10 @@ export function useCellContext(items: InvoiceListItem[] | undefined, cols: Invoi
   const ids = cols.some((c) => EINVOICE_COLUMNS.includes(c)) ? (items?.map((i) => i.id) ?? []) : [];
   const { data: records } = useEInvoiceRecords(ids);
   const { data: branchList } = useBranches();
-  const { data: store } = useStoreProfile();
+  const { data: settings } = useShopSettings();
   return {
     t, td, einv: new Map((records ?? []).map((r) => [r.invoice_id, r])),
-    branches: new Map((branchList ?? []).map((b) => [b.id, b.name])), sellerTaxCode: store?.taxCode ?? null,
+    branches: new Map((branchList ?? []).map((b) => [b.id, b.name])), sellerTaxCode: settings?.store?.taxCode ?? null,
   };
 }
 

@@ -38,19 +38,33 @@ export function useInvoiceFavourites(userId: string | undefined) {
   return { ids, isFav: (id: string) => ids.includes(id), toggle };
 }
 
-/** Cột có thể ẩn / hiện (Mã hóa đơn luôn hiện). Nhãn hiển thị: salesNs "invoices.columns.<khóa>". */
+/**
+ * Cột có thể ẩn / hiện (Mã hóa đơn luôn hiện), đúng thứ tự KiotViet. Chỉ gồm cột hệ thống có dữ liệu — bỏ Trạng thái / Ghi chú
+ * CSDL về dược, Mã đối soát, Bác sĩ, VAT, Giảm thuế, Tổng tiền hàng sau thuế, Chiết khấu thanh toán, Tên nhà cung cấp.
+ * Nhãn hiển thị: salesNs "invoices.columns.<khóa>".
+ */
 export const INVOICE_COLUMNS = [
-  ["soldAt", "Thời gian"], ["returnCodes", "Mã trả hàng"], ["customerCode", "Mã KH"], ["customerName", "Khách hàng"],
-  ["sellerName", "Người bán"], ["subtotal", "Tổng tiền hàng"], ["discount", "Giảm giá"], ["total", "Khách cần trả"],
-  ["paid", "Khách đã trả"], ["paymentMethod", "Thanh toán"], ["state", "Trạng thái"], ["einvoice", "Trạng thái HĐĐT"],
+  ["shipmentCode", "Mã vận đơn"], ["shipmentStatus", "Trạng thái giao hàng"], ["soldAt", "Thời gian"], ["createdAt", "Thời gian tạo"],
+  ["updatedAt", "Ngày cập nhật"], ["orderCode", "Mã đặt hàng"], ["returnCodes", "Mã trả hàng"], ["customerCode", "Mã KH"],
+  ["customerName", "Khách hàng"], ["customerEmail", "Email"], ["customerPhone", "Điện thoại"], ["customerAddress", "Địa chỉ"],
+  ["customerProvince", "Khu vực"], ["customerWard", "Phường/Xã"], ["customerBirthday", "Ngày sinh"], ["branch", "Chi nhánh"],
+  ["sellerTaxCode", "Mã số thuế người bán"], ["sellerName", "Người bán"], ["createdByName", "Người tạo"],
+  ["salesChannelName", "Kênh bán"], ["deliveryPartnerName", "Đối tác giao hàng"], ["note", "Ghi chú"], ["subtotal", "Tổng tiền hàng"],
+  ["discount", "Giảm giá"], ["total", "Khách cần trả"], ["paid", "Khách đã trả"], ["cod", "Còn cần thu (COD)"],
+  ["partnerFee", "Phí trả ĐTGH"], ["deliveryTime", "Thời gian giao hàng"], ["state", "Trạng thái"], ["einvoice", "Trạng thái HĐĐT"],
+  ["einvoiceNature", "Tính chất hóa đơn"], ["einvoiceNo", "Số hóa đơn"], ["einvoiceSeries", "Ký hiệu hóa đơn"],
 ] as const;
 
 export type InvoiceColumn = (typeof INVOICE_COLUMNS)[number][0];
 
+/** Cột cần bản ghi HĐĐT (integration-service) của các hóa đơn đang hiển thị. */
+export const EINVOICE_COLUMNS: InvoiceColumn[] = ["einvoice", "einvoiceNature", "einvoiceNo", "einvoiceSeries"];
+
 const DEFAULT_COLUMNS: InvoiceColumn[] = ["soldAt", "returnCodes", "customerCode", "customerName", "subtotal", "discount", "total", "paid", "einvoice"];
 
 export function useInvoiceColumns(userId: string | undefined) {
-  const [cols, setCols] = useUserPref<InvoiceColumn[]>("columns", userId, DEFAULT_COLUMNS);
+  const [saved, setCols] = useUserPref<InvoiceColumn[]>("columns", userId, DEFAULT_COLUMNS);
+  const cols = saved.filter((c) => INVOICE_COLUMNS.some(([k]) => k === c)); // bỏ cột cũ đã ngừng dùng
   const toggle = (c: InvoiceColumn, on: boolean) => setCols(on ? INVOICE_COLUMNS.map(([k]) => k).filter((k) => k === c || cols.includes(k))
     : cols.filter((k) => k !== c));
   return { cols, shown: (c: InvoiceColumn) => cols.includes(c), toggle };
