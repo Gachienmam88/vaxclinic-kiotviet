@@ -92,7 +92,8 @@
     "expired": "expired",
     "nearExpiry": "near expiry",
     "salesVat": "Sales VAT (%)",
-    "barcodeValue": "Barcode: {barcode}"
+    "barcodeValue": "Barcode: {barcode}",
+    "suppliersBox": "Suppliers"
   },
   "ledger": {
     "doc": "Document",
@@ -141,7 +142,8 @@
     "title": "Products",
     "searchAria": "Search products",
     "searchPlaceholder": "By code, name, barcode",
-    "pageInfo": "{total} products — page {page}/{pages}"
+    "pageInfo": "{total} products — page {page}/{pages}",
+    "unitAria": "Choose the unit of {code}"
   },
   "priceBooks": {
     "title": "Price setup",

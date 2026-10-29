@@ -195,7 +195,9 @@
       "return": "Trả hàng",
       "more": "Thêm thao tác",
       "editTax": "Sửa tỷ lệ thuế hàng hóa",
-      "editTaxPublished": "{label} (đã phát hành HĐĐT)"
+      "editTaxPublished": "{label} (đã phát hành HĐĐT)",
+      "viewEInvoice": "Xem hóa đơn điện tử",
+      "einvoiceHowTo": "Cách tra cứu hóa đơn điện tử"
     },
     "einvoice": {
       "title": "Hoá đơn điện tử",
@@ -205,7 +207,12 @@
       "issuedAt": "Ngày phát hành:",
       "buyer": "Người mua:",
       "nature": "Tính chất hóa đơn:",
-      "taxAuthorityCode": "Mã CQT:"
+      "taxAuthorityCode": "Mã CQT:",
+      "howToTitle": "Cách tra cứu hóa đơn điện tử",
+      "howToSite": "Trang tra cứu:",
+      "howToCode": "Mã tra cứu:",
+      "howToSteps": "Mở trang tra cứu, nhập mã tra cứu để xem và tải hóa đơn điện tử. Người mua có thể dùng cùng mã này.",
+      "noLookupCode": "Hóa đơn chưa có mã tra cứu."
     },
     "taxDialog": {
       "title": "Sửa tỉ lệ thuế của hàng hóa",

@@ -195,7 +195,9 @@
       "return": "返品",
       "more": "その他の操作",
       "editTax": "商品の税率を編集",
-      "editTaxPublished": "{label}（電子インボイス発行済み）"
+      "editTaxPublished": "{label}（電子インボイス発行済み）",
+      "viewEInvoice": "電子インボイスを表示",
+      "einvoiceHowTo": "電子インボイスの照会方法"
     },
     "einvoice": {
       "title": "電子インボイス",
@@ -205,7 +207,12 @@
       "issuedAt": "発行日:",
       "buyer": "購入者:",
       "nature": "インボイス区分:",
-      "taxAuthorityCode": "税務当局コード（Mã CQT）:"
+      "taxAuthorityCode": "税務当局コード（Mã CQT）:",
+      "howToTitle": "電子インボイスの照会方法",
+      "howToSite": "照会サイト：",
+      "howToCode": "照会コード：",
+      "howToSteps": "照会サイトを開き、照会コードを入力すると電子インボイスを表示・ダウンロードできます。買い手も同じコードを使用できます。",
+      "noLookupCode": "この請求書にはまだ照会コードがありません。"
     },
     "taxDialog": {
       "title": "商品の税率を編集",

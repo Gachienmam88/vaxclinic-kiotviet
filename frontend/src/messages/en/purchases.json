@@ -126,7 +126,9 @@
     "confirmCancelReturnCompleted": "Cancel {code}? The goods will be put back into stock.",
     "openDoc": "Open",
     "receiptViewTitle": "Goods receipt",
-    "returnViewTitle": "Purchase return"
+    "returnViewTitle": "Purchase return",
+    "priceSetup": "Set prices",
+    "priceSetupLine": "Set prices of {code}"
   },
   "pickers": {
     "searchProduct": "Search products",

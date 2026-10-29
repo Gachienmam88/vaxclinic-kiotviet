@@ -1,6 +1,9 @@
 package com.vaxclinic.product.product;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vaxclinic.common.search.AccentInsensitiveSql;
+import com.vaxclinic.product.product.ProductDtos.ListUnit;
 import com.vaxclinic.product.product.ProductDtos.ProductListItem;
 import com.vaxclinic.product.product.ProductDtos.ProductListResponse;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -51,9 +54,11 @@ public class ProductListRepository {
             """;
 
     private final NamedParameterJdbcTemplate jdbc;
+    private final ObjectMapper mapper;
 
-    public ProductListRepository(NamedParameterJdbcTemplate jdbc) {
+    public ProductListRepository(NamedParameterJdbcTemplate jdbc, ObjectMapper mapper) {
         this.jdbc = jdbc;
+        this.mapper = mapper;
     }
 
     public ProductListResponse search(Filter f) {
@@ -132,17 +137,32 @@ public class ProductListRepository {
                        p.created_at,
                        array(select o.unit_name from product_units o
                              where o.product_id = p.id and not o.is_base order by o.sort_order) other_units,
-                       e.days expected_out_days
+                       e.days expected_out_days,
+                       (select json_agg(json_build_object('code', o.code, 'unitName', o.unit_name,
+                                        'conversionRate', o.conversion_rate, 'price', o.price)
+                                        order by o.is_base desc, o.sort_order)
+                        from product_units o where o.product_id = p.id) units_json
                 """ + from + " order by p.created_at desc limit :limit offset :offset", params,
                 (rs, i) -> new ProductListItem(rs.getObject("id", UUID.class), rs.getString("code"),
                         rs.getString("name"), rs.getString("short_name"), rs.getString("unit_name"),
                         toList(rs.getArray("other_units")), rs.getBigDecimal("price"), rs.getBigDecimal("cost"),
                         rs.getString("tax_name"), rs.getBoolean("tax_reduction"), rs.getBoolean("lot_managed"),
                         rs.getBigDecimal("qty"), rs.getBigDecimal("rsv"), rs.getBoolean("active"),
-                        rs.getTimestamp("created_at").toInstant(), rs.getObject("expected_out_days", Integer.class)));
+                        rs.getTimestamp("created_at").toInstant(), rs.getObject("expected_out_days", Integer.class),
+                        units(rs.getString("units_json"))));
 
         return new ProductListResponse(items, ((Number) totals.get("cnt")).longValue(), f.page(), f.size(),
                 (BigDecimal) totals.get("total_stock"));
+    }
+
+    /** Mọi đơn vị tính của hàng (cơ bản trước) từ json_agg. */
+    private List<ListUnit> units(String json) {
+        if (json == null) return List.of();
+        try {
+            return List.of(mapper.readValue(json, ListUnit[].class));
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("Không đọc được đơn vị tính", e);
+        }
     }
 
     private static List<String> toList(Array array) throws SQLException {

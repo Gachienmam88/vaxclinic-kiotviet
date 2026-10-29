@@ -76,7 +76,7 @@ export function LedgerTab({ productId }: { productId: string }) {
   );
 }
 
-/** Tồn kho theo điểm tiêm (+ theo lô nếu hàng quản lý lô). */
+/** Tồn kho theo điểm tiêm: tồn, khách đặt, dự kiến hết hàng của chi nhánh, trạng thái (+ theo lô nếu hàng quản lý lô). */
 export function StockTab({ product }: { product: ProductDetail }) {
   const branches = useBranchList();
   const { data: lots = [] } = useProductLots(product.id, product.lotManaged);
@@ -88,21 +88,24 @@ export function StockTab({ product }: { product: ProductDetail }) {
         <TableHeader>
           <TableRow className={SUB_TABLE_HEAD_ROW}>
             <TableHead>{tc("fields.branch")}</TableHead><TableHead className="text-right">{t("fields.stock")}</TableHead>
-            <TableHead className="text-right">{t("fields.reserved")}</TableHead><TableHead className="w-48 pl-4">{tc("fields.status")}</TableHead>
+            <TableHead className="text-right">{t("fields.reserved")}</TableHead><TableHead className="pl-4">{t("fields.expectedOut")}</TableHead>
+            <TableHead className="w-48 pl-4">{tc("fields.status")}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           <TableRow className="hover:bg-transparent">
             <TableCell /><TableCell className="text-right">{formatNumber(sum(product.stocks.map((s) => s.quantity)))}</TableCell>
-            <TableCell className="text-right">{formatNumber(sum(product.stocks.map((s) => s.reserved)))}</TableCell><TableCell />
+            <TableCell className="text-right">{formatNumber(sum(product.stocks.map((s) => s.reserved)))}</TableCell><TableCell /><TableCell />
           </TableRow>
           {product.stocks.map((s) => (
             <TableRow key={s.branchId}>
               <TableCell>{branches.name(s.branchId)}</TableCell>
               <TableCell className="text-right">{formatNumber(s.quantity)}</TableCell>
               <TableCell className="text-right">{formatNumber(s.reserved)}</TableCell>
+              <TableCell className="pl-4">{s.expectedOutDays == null ? "---" : t("fields.expectedOutDays", { n: formatNumber(s.expectedOutDays) })}</TableCell>
               <TableCell className="pl-4">
-                <span className="rounded bg-[#eff0f3] px-1.5 py-0.5 text-xs">{product.active ? t("detail.selling") : t("detail.discontinued")}</span>
+                <span className={product.active ? "rounded bg-[#e6f4ea] px-1.5 py-0.5 text-xs text-[#1e7e34]" : "rounded bg-[#fdecec] px-1.5 py-0.5 text-xs text-[#d92d20]"}>
+                  {product.active ? t("detail.selling") : t("detail.discontinued")}</span>
               </TableCell>
             </TableRow>
           ))}

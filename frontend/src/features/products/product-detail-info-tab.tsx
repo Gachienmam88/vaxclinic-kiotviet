@@ -1,6 +1,7 @@
 "use client";
 
 import { ImageIcon } from "lucide-react";
+import { DocCodeLink } from "@/components/ui/doc-code-link";
 import { formatMoney, formatNumber } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { useT } from "@/lib/i18n";
@@ -24,7 +25,7 @@ const Chip = ({ children, className }: { children: React.ReactNode; className?: 
   <span className={cn("rounded bg-[#eff0f3] px-1.5 py-0.5 text-xs font-medium", className)}>{children}</span>
 );
 
-/** Tab "Thông tin": ảnh, tên + đơn vị, nhóm hàng, nhãn đặc tính và lưới 4 cột thông tin. */
+/** Tab "Thông tin": ảnh, tên + đơn vị, nhóm hàng, nhãn đặc tính, lưới 4 cột thông tin và khối "Nhà cung cấp" (NCC đã nhập hàng). */
 export function ProductInfoTab({ p }: { p: ProductDetail }) {
   const base = p.units.find((u) => u.base)!;
   const stock = p.stocks.reduce((s, b) => s + Number(b.quantity), 0);
@@ -62,6 +63,17 @@ export function ProductInfoTab({ p }: { p: ProductDetail }) {
         <DetailField label={t("fields.weight")} value={p.weight ? `${formatNumber(p.weight)} ${p.weightUnit}` : null} />
         <DetailField label={t("fields.einvoiceName")} value={p.einvoiceName} />
         <DetailField label={t("fields.shortName")} value={p.shortName} />
+      </div>
+      <div className="rounded-md border border-[#e5e7eb] bg-[#f7f8fa] px-3 py-2.5 text-[13px]">
+        <div className="mb-1.5 font-bold">{t("detail.suppliersBox")}</div>
+        {p.suppliers.length ? (
+          <p className="flex flex-wrap gap-x-1">
+            {p.suppliers.map((s, i) => (
+              <span key={s.id}><DocCodeLink code={s.name} to={`/purchases/suppliers?code=${encodeURIComponent(s.code)}`} />
+                {i < p.suppliers.length - 1 && ","}</span>
+            ))}
+          </p>
+        ) : <span className="text-muted-foreground">{t("detail.empty")}</span>}
       </div>
     </div>
   );

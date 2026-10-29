@@ -126,7 +126,9 @@
     "confirmCancelReturnCompleted": "{code} を取り消しますか？商品は在庫に戻ります。",
     "openDoc": "開く",
     "receiptViewTitle": "仕入伝票",
-    "returnViewTitle": "仕入返品伝票"
+    "returnViewTitle": "仕入返品伝票",
+    "priceSetup": "価格設定",
+    "priceSetupLine": "{code} の価格設定"
   },
   "pickers": {
     "searchProduct": "商品を検索",

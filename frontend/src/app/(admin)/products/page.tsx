@@ -25,7 +25,8 @@ function ProductsPage({ link }: { link: DeepLink }) {
   const [filters, setFilters] = useState<typeof EMPTY_FILTERS>(link.code ? { ...EMPTY_FILTERS, q: link.code, active: "all" } : EMPTY_FILTERS);
   const [search, setSearch] = useState(link.code ?? "");
   const [page, setPage] = useState(0);
-  const [dialog, setDialog] = useState<{ key: number; product?: ProductDetail } | null>(null);
+  /** product = sửa; copyFrom = Sao chép (form tạo mới điền sẵn từ hàng đó). */
+  const [dialog, setDialog] = useState<{ key: number; product?: ProductDetail; copyFrom?: ProductDetail } | null>(null);
 
   // Gõ tìm kiếm: đợi 300ms rồi mới gọi API.
   useEffect(() => {
@@ -60,7 +61,8 @@ function ProductsPage({ link }: { link: DeepLink }) {
         <div className="min-w-0 flex-1 space-y-2.5">
           <ProductListTable data={data} isLoading={isLoading} expanded={expanded}
             onToggle={toggle}
-            onEdit={(product) => setDialog({ key: Date.now(), product })} />
+            onEdit={(product) => setDialog({ key: Date.now(), product })}
+            onCopy={(copyFrom) => setDialog({ key: Date.now(), copyFrom })} />
           <div className="flex items-center justify-end gap-2 text-[13px]">
             <span className="text-muted-foreground">{t("list.pageInfo", { total: data?.total ?? 0, page: page + 1, pages })}</span>
             <Button size="sm" variant="outline" className="rounded-md" disabled={page === 0} onClick={() => setPage(page - 1)}>{tc("pager.prev")}</Button>
@@ -68,7 +70,7 @@ function ProductsPage({ link }: { link: DeepLink }) {
           </div>
         </div>
       </div>
-      {dialog && <ProductFormDialog key={dialog.key} product={dialog.product} onClose={() => setDialog(null)} />}
+      {dialog && <ProductFormDialog key={dialog.key} product={dialog.product} copyFrom={dialog.copyFrom} onClose={() => setDialog(null)} />}
     </div>
   );
 }

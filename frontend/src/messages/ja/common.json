@@ -30,7 +30,9 @@
     "change": "変更",
     "collapse": "折りたたむ",
     "expand": "展開",
-    "logout": "ログアウト"
+    "logout": "ログアウト",
+    "printLabels": "ラベル印刷",
+    "more": "その他の操作"
   },
   "status": {
     "loading": "読み込み中...",
@@ -130,5 +132,9 @@
   },
   "legal": {
     "vietnameseOnly": "印刷帳票・請求書・法定書類は規定によりすべてベトナム語で作成されます。"
+  },
+  "errors": {
+    "noViewPermission": "この情報を閲覧する権限がありません。",
+    "labelsCapped": "一度に印刷できるラベルは最大 {max} 枚です。"
   }
 }

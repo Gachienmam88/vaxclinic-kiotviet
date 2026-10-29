@@ -20,7 +20,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
-/** Dữ liệu các tab chi tiết hàng hóa: Thông tin, Thẻ kho, Tồn kho, Lô/HSD. */
+/** Dữ liệu các tab chi tiết hàng hóa: Thông tin (+ khối Nhà cung cấp), Thẻ kho, Tồn kho (+ dự kiến hết hàng), Lô/HSD. */
 @Service
 @Transactional(readOnly = true)
 public class ProductDetailQuery {
@@ -32,11 +32,12 @@ public class ProductDetailQuery {
     private final StockBalanceRepository balances;
     private final StockLedgerRepository ledger;
     private final ProductLotRepository lots;
+    private final ProductDetailInsightRepository insights;
 
     public ProductDetailQuery(ProductCommandService commands, CategoryRepository categories,
                               TaxRateRepository taxRates, PositionRepository positions,
                               StockBalanceRepository balances, StockLedgerRepository ledger,
-                              ProductLotRepository lots) {
+                              ProductLotRepository lots, ProductDetailInsightRepository insights) {
         this.commands = commands;
         this.categories = categories;
         this.taxRates = taxRates;
@@ -44,6 +45,7 @@ public class ProductDetailQuery {
         this.balances = balances;
         this.ledger = ledger;
         this.lots = lots;
+        this.insights = insights;
     }
 
     public ProductDetail get(UUID id) {
@@ -53,14 +55,17 @@ public class ProductDetailQuery {
                 : taxRates.findById(p.getTaxRateId()).map(t -> t.getName()).orElse(null);
         String positionName = p.getPositionId() == null ? null
                 : positions.findById(p.getPositionId()).map(x -> x.getName()).orElse(null);
+        var outDays = insights.expectedOutDaysByBranch(id);
         List<BranchStock> stocks = balances.findByIdProductId(id).stream()
-                .map(b -> new BranchStock(b.getId().getBranchId(), b.getQuantity(), b.getReserved()))
+                .map(b -> new BranchStock(b.getId().getBranchId(), b.getQuantity(), b.getReserved(),
+                        outDays.get(b.getId().getBranchId())))
                 .toList();
         return new ProductDetail(p.getId(), p.getName(), p.getShortName(), p.getEinvoiceName(),
                 p.getCategoryId(), categoryName, p.getTaxRateId(), taxName, p.isTaxReduction(), p.isLotManaged(),
                 p.getCost(), p.getMinStock(), p.getMaxStock(), p.getPositionId(), positionName, p.getWeight(),
                 p.getWeightUnit(), p.getDescription(), p.getNote(), p.isLoyaltyPoints(), p.isActive(),
-                p.getCreatedAt(), p.getUnits().stream().map(UnitResponse::of).toList(), stocks);
+                p.getCreatedAt(), p.getUnits().stream().map(UnitResponse::of).toList(), stocks,
+                insights.suppliers(id));
     }
 
     public PageResponse<LedgerLine> ledger(UUID productId, UUID branchId, int page, int size) {

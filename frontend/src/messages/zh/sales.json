@@ -195,7 +195,9 @@
       "return": "退货",
       "more": "更多操作",
       "editTax": "修改商品税率",
-      "editTaxPublished": "{label}（已开具电子发票）"
+      "editTaxPublished": "{label}（已开具电子发票）",
+      "viewEInvoice": "查看电子发票",
+      "einvoiceHowTo": "如何查询电子发票"
     },
     "einvoice": {
       "title": "电子发票",
@@ -205,7 +207,12 @@
       "issuedAt": "开具日期：",
       "buyer": "购买方：",
       "nature": "发票性质：",
-      "taxAuthorityCode": "税务机关代码（Mã CQT）："
+      "taxAuthorityCode": "税务机关代码（Mã CQT）：",
+      "howToTitle": "如何查询电子发票",
+      "howToSite": "查询网站：",
+      "howToCode": "查询码：",
+      "howToSteps": "打开查询网站，输入查询码即可查看并下载电子发票。买方可使用相同的查询码。",
+      "noLookupCode": "该发票尚无查询码。"
     },
     "taxDialog": {
       "title": "修改商品税率",

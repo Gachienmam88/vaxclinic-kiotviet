@@ -30,7 +30,9 @@
     "change": "更改",
     "collapse": "收起",
     "expand": "展开",
-    "logout": "退出登录"
+    "logout": "退出登录",
+    "printLabels": "打印条码标签",
+    "more": "更多操作"
   },
   "status": {
     "loading": "加载中...",
@@ -130,5 +132,9 @@
   },
   "legal": {
     "vietnameseOnly": "根据规定，打印单据、发票及法律文件始终使用越南语。"
+  },
+  "errors": {
+    "noViewPermission": "您无权查看此信息。",
+    "labelsCapped": "每次最多打印 {max} 张标签。"
   }
 }

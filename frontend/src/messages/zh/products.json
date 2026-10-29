@@ -92,7 +92,8 @@
     "expired": "已过期",
     "nearExpiry": "临期",
     "salesVat": "销项增值税（%）",
-    "barcodeValue": "条码：{barcode}"
+    "barcodeValue": "条码：{barcode}",
+    "suppliersBox": "供应商"
   },
   "ledger": {
     "doc": "单据",
@@ -141,7 +142,8 @@
     "title": "商品",
     "searchAria": "搜索商品",
     "searchPlaceholder": "按编码、名称、条码",
-    "pageInfo": "共 {total} 个商品 — 第 {page}/{pages} 页"
+    "pageInfo": "共 {total} 个商品 — 第 {page}/{pages} 页",
+    "unitAria": "选择 {code} 的计量单位"
   },
   "priceBooks": {
     "title": "价格设置",

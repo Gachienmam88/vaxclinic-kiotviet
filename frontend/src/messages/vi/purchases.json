@@ -126,7 +126,9 @@
     "confirmCancelReturnCompleted": "Hủy phiếu {code}? Hàng sẽ được nhập lại kho.",
     "openDoc": "Mở phiếu",
     "receiptViewTitle": "Phiếu nhập hàng",
-    "returnViewTitle": "Phiếu trả hàng nhập"
+    "returnViewTitle": "Phiếu trả hàng nhập",
+    "priceSetup": "Thiết lập giá",
+    "priceSetupLine": "Thiết lập giá {code}"
   },
   "pickers": {
     "searchProduct": "Tìm hàng hóa",

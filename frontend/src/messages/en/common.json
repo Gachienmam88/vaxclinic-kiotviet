@@ -30,7 +30,9 @@
     "change": "Change",
     "collapse": "Collapse",
     "expand": "Expand",
-    "logout": "Log out"
+    "logout": "Log out",
+    "printLabels": "Print labels",
+    "more": "More actions"
   },
   "status": {
     "loading": "Loading...",
@@ -130,5 +132,9 @@
   },
   "legal": {
     "vietnameseOnly": "Printed documents, invoices and legal documents are always in Vietnamese as required by regulations."
+  },
+  "errors": {
+    "noViewPermission": "You do not have permission to view this information.",
+    "labelsCapped": "At most {max} labels are printed at a time."
   }
 }

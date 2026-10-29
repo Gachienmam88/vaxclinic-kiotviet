@@ -69,6 +69,18 @@ export function formFromDetail(p: ProductDetail): ProductForm {
   };
 }
 
+/**
+ * "Sao chép": form tạo mới lấy thông tin + đơn vị tính của hàng gốc nhưng bỏ id, mã hàng, mã vạch (sinh mã mới) và giá vốn
+ * (giá vốn do nhập hàng tính); tồn đầu kỳ theo mặc định của form trống.
+ */
+export function copyFormFromDetail(p: ProductDetail, blank: ProductForm): ProductForm {
+  const f = formFromDetail(p);
+  return {
+    ...f, cost: 0, openingBranchId: blank.openingBranchId, openingQty: 0, openingLots: [],
+    units: f.units.map((u) => ({ ...u, key: newKey(), id: null, code: "", barcode: "" })),
+  };
+}
+
 export function toRequest(f: ProductForm, isCreate: boolean) {
   const opening = !isCreate || !f.openingBranchId ? null : {
     branchId: f.openingBranchId,

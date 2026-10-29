@@ -16,18 +16,19 @@ import { useT } from "@/lib/i18n";
 import { commonNs } from "@/messages/common";
 import { productsNs } from "@/messages/products";
 import { NativeSelect, PriceSection, StockSection } from "./product-form-sections";
-import { emptyProductForm, formFromDetail, toRequest, type ProductForm } from "./product-form-state";
+import { copyFormFromDetail, emptyProductForm, formFromDetail, toRequest, type ProductForm } from "./product-form-state";
 import { PositionWeightSection, UnitsSection } from "./product-form-units-section";
 import { flattenCategoryTree, promptCreateCategory, useCategories } from "./product-queries";
 import { LINE_TABS_LIST, LINE_TABS_TRIGGER } from "./product-tab-styles";
 import type { ProductDetail } from "./product-types";
 
-type Props = { product?: ProductDetail; onClose: () => void };
+/** product = sửa hàng đó; copyFrom = tạo mới điền sẵn từ hàng khác ("Sao chép"). */
+type Props = { product?: ProductDetail; copyFrom?: ProductDetail; onClose: () => void };
 
 const FOOTER_BTN = "h-8 rounded-md px-3 font-semibold";
 
 /** Tạo / sửa hàng hóa. Tab Thông tin gồm các khối: giá, tồn kho, vị trí, đơn vị tính; tab Mô tả. */
-export function ProductFormDialog({ product, onClose }: Props) {
+export function ProductFormDialog({ product, copyFrom, onClose }: Props) {
   const qc = useQueryClient();
   const t = useT(productsNs);
   const tc = useT(commonNs);
@@ -35,7 +36,8 @@ export function ProductFormDialog({ product, onClose }: Props) {
   const { data: me } = useCurrentUser();
   const { data: categories = [] } = useCategories();
   const blank = () => emptyProductForm({ branchId: me?.user.branches[0]?.id });
-  const [form, setForm] = useState<ProductForm>(() => (product ? formFromDetail(product) : blank()));
+  const [form, setForm] = useState<ProductForm>(() =>
+    (product ? formFromDetail(product) : copyFrom ? copyFormFromDetail(copyFrom, blank()) : blank()));
   const set = (patch: Partial<ProductForm>) => setForm((f) => ({ ...f, ...patch }));
   const base = form.units[0];
   const setBase = (patch: object) => set({ units: form.units.map((u, i) => (i === 0 ? { ...u, ...patch } : u)) });

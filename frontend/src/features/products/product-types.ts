@@ -25,7 +25,12 @@ export type ProductListItem = {
   createdAt: string;
   /** Số ngày còn bán được theo tốc độ bán 30 ngày gần nhất; null = chưa bán trong khoảng đó. */
   expectedOutDays: number | null;
+  /** Mọi đơn vị tính (cơ bản trước) cho ô chọn đơn vị trên dòng. */
+  units: ListUnit[];
 };
+
+/** Đơn vị tính trên dòng danh sách; giá vốn / tồn của đơn vị = giá trị cơ bản × / ÷ conversionRate. */
+export type ListUnit = { code: string; unitName: string; conversionRate: number; price: number };
 
 export type ProductListResponse = {
   items: ProductListItem[];
@@ -70,7 +75,10 @@ export type ProductDetail = {
   active: boolean;
   createdAt: string;
   units: ProductUnit[];
-  stocks: { branchId: string; quantity: number; reserved: number }[];
+  /** expectedOutDays: dự kiến hết hàng ở chi nhánh (null = chưa bán ròng trong 30 ngày). */
+  stocks: { branchId: string; quantity: number; reserved: number; expectedOutDays: number | null }[];
+  /** NCC đã nhập hàng này (phiếu nhập hoàn thành), nhập gần nhất trước. */
+  suppliers: { id: string; code: string; name: string }[];
 };
 
 export type LedgerLine = {

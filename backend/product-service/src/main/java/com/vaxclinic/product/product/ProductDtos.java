@@ -67,7 +67,16 @@ public final class ProductDtos {
         }
     }
 
-    public record BranchStock(UUID branchId, BigDecimal quantity, BigDecimal reserved) {
+    /** Tồn theo chi nhánh; expectedOutDays = dự kiến hết hàng ở chi nhánh đó (null khi chưa bán ròng trong 30 ngày). */
+    public record BranchStock(UUID branchId, BigDecimal quantity, BigDecimal reserved, Integer expectedOutDays) {
+    }
+
+    /** NCC đã nhập hàng (khối "Nhà cung cấp" ở chi tiết hàng hóa). */
+    public record ProductSupplier(UUID id, String code, String name) {
+    }
+
+    /** Đơn vị tính trên dòng danh sách (ô chọn đơn vị "· Hộp ▾"): giá vốn / tồn quy đổi ở FE theo conversionRate. */
+    public record ListUnit(String code, String unitName, BigDecimal conversionRate, BigDecimal price) {
     }
 
     public record ProductDetail(UUID id, String name, String shortName, String einvoiceName,
@@ -76,7 +85,7 @@ public final class ProductDtos {
                                 BigDecimal minStock, BigDecimal maxStock, UUID positionId, String positionName,
                                 BigDecimal weight, String weightUnit, String description, String note,
                                 boolean loyaltyPoints, boolean active, Instant createdAt,
-                                List<UnitResponse> units, List<BranchStock> stocks) {
+                                List<UnitResponse> units, List<BranchStock> stocks, List<ProductSupplier> suppliers) {
     }
 
     /**
@@ -87,7 +96,7 @@ public final class ProductDtos {
                                   List<String> otherUnits, BigDecimal price, BigDecimal cost,
                                   String taxRateName, boolean taxReduction, boolean lotManaged,
                                   BigDecimal stock, BigDecimal reserved, boolean active, Instant createdAt,
-                                  Integer expectedOutDays) {
+                                  Integer expectedOutDays, List<ListUnit> units) {
     }
 
     public record ProductListResponse(List<ProductListItem> items, long total, int page, int size,

@@ -30,7 +30,9 @@
     "change": "Thay đổi",
     "collapse": "Thu gọn",
     "expand": "Mở rộng",
-    "logout": "Đăng xuất"
+    "logout": "Đăng xuất",
+    "printLabels": "In tem mã",
+    "more": "Thao tác khác"
   },
   "status": {
     "loading": "Đang tải...",
@@ -130,5 +132,9 @@
   },
   "legal": {
     "vietnameseOnly": "Chứng từ in, hóa đơn và tài liệu pháp lý luôn bằng tiếng Việt theo quy định."
+  },
+  "errors": {
+    "noViewPermission": "Bạn không có quyền xem thông tin này.",
+    "labelsCapped": "Chỉ in tối đa {max} tem mỗi lần."
   }
 }

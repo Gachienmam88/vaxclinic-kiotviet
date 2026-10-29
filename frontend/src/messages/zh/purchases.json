@@ -126,7 +126,9 @@
     "confirmCancelReturnCompleted": "作废单据 {code}？商品将重新入库。",
     "openDoc": "打开单据",
     "receiptViewTitle": "进货单",
-    "returnViewTitle": "进货退货单"
+    "returnViewTitle": "进货退货单",
+    "priceSetup": "设置价格",
+    "priceSetupLine": "设置 {code} 的价格"
   },
   "pickers": {
     "searchProduct": "搜索商品",

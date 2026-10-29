@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment } from "react";
+import { Fragment, useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ListEmptyRow } from "@/components/ui/list-empty-state";
 import { formatDateTime, formatMoney, formatNumber } from "@/lib/format";
@@ -21,12 +21,18 @@ type Props = {
   expanded: string | null;
   onToggle: (id: string) => void;
   onEdit: (p: ProductDetail) => void;
+  onCopy: (p: ProductDetail) => void;
 };
 
-/** Bảng danh sách hàng hóa: dòng tổng tồn ở đầu, bấm dòng để mở panel chi tiết ngay bên dưới. */
-export function ProductListTable({ data, isLoading, expanded, onToggle, onEdit }: Props) {
+/**
+ * Bảng danh sách hàng hóa: dòng tổng tồn ở đầu, bấm dòng để mở panel chi tiết ngay bên dưới.
+ * Hàng nhiều đơn vị tính có ô chọn "· Hộp ▾" (KiotViet): đổi đơn vị thì mã, giá bán theo đơn vị đó; giá vốn = giá vốn cơ bản × quy đổi,
+ * tồn / khách đặt = cơ bản ÷ quy đổi. Dòng tổng luôn theo đơn vị cơ bản.
+ */
+export function ProductListTable({ data, isLoading, expanded, onToggle, onEdit, onCopy }: Props) {
   const t = useT(productsNs);
   const tc = useT(commonNs);
+  const [unitOf, setUnitOf] = useState<Record<string, string>>({});
   return (
     <div className="overflow-x-auto rounded-lg bg-background">
       <Table stickyHeader style={{ minWidth: `calc(100% + ${EXTRA_W})` }}>
@@ -57,27 +63,33 @@ export function ProductListTable({ data, isLoading, expanded, onToggle, onEdit }
           {data && !data.items.length && <ListEmptyRow cols={COLS} what={t("list.emptyWhat")} />}
           {data?.items.map((p) => {
             const open = expanded === p.id;
+            const unit = p.units.find((u) => u.code === unitOf[p.id]) ?? p.units[0];
+            const rate = unit ? Number(unit.conversionRate) : 1;
             return (
               <Fragment key={p.id}>
                 <TableRow onClick={() => onToggle(p.id)} aria-expanded={open}
                   className={cn("cursor-pointer align-top [&>td]:py-3", open && "bg-primary-tint hover:bg-primary-tint",
                     !p.active && "text-muted-foreground")}>
-                  <TableCell className="pl-4">{p.code}</TableCell>
+                  <TableCell className="pl-4">{unit?.code ?? p.code}</TableCell>
                   <TableCell className="max-w-44 min-w-36 whitespace-normal">
                     {p.name}
-                    {p.otherUnits.length > 0
-                      ? <> <span className="text-muted-foreground">- {p.unitName}</span>
-                        <span className="text-primary"> - {p.otherUnits.join(", ")}</span></>
+                    {p.units.length > 1
+                      ? <> <span className="text-muted-foreground">·</span>{" "}
+                        <select aria-label={t("list.unitAria", { code: p.code })} value={unit.code} onClick={(e) => e.stopPropagation()}
+                          onChange={(e) => setUnitOf({ ...unitOf, [p.id]: e.target.value })}
+                          className="cursor-pointer rounded bg-transparent text-primary outline-none hover:underline">
+                          {p.units.map((u) => <option key={u.code} value={u.code}>{u.unitName}</option>)}
+                        </select></>
                       : <span> ({p.unitName})</span>}
                     {p.lotManaged && <span className="ml-1 text-xs text-muted-foreground">· {t("fields.lot")}</span>}
                   </TableCell>
                   <TableCell className="max-w-36 whitespace-normal">{p.shortName}</TableCell>
-                  <TableCell className="text-right">{formatMoney(p.price)}</TableCell>
+                  <TableCell className="text-right">{formatMoney(unit?.price ?? p.price)}</TableCell>
                   <TableCell className="text-right" title={p.taxRateName ?? ""}>{p.taxRateName?.split(" ")[0]}</TableCell>
                   <TableCell>{p.taxReduction ? t("fields.taxReductionYes") : t("fields.taxReductionNo")}</TableCell>
-                  <TableCell className="text-right">{formatNumber(p.cost)}</TableCell>
-                  <TableCell className="text-right">{formatNumber(p.stock)}</TableCell>
-                  <TableCell className="text-right">{formatNumber(p.reserved)}</TableCell>
+                  <TableCell className="text-right">{formatNumber(Number(p.cost) * rate)}</TableCell>
+                  <TableCell className="text-right">{formatNumber(Number(p.stock) / rate)}</TableCell>
+                  <TableCell className="text-right">{formatNumber(Number(p.reserved) / rate)}</TableCell>
                   <TableCell className="pl-6">{formatDateTime(p.createdAt)}</TableCell>
                   <TableCell className="pr-4">
                     {p.expectedOutDays == null ? "---" : t("fields.expectedOutDays", { n: formatNumber(p.expectedOutDays) })}
@@ -88,7 +100,7 @@ export function ProductListTable({ data, isLoading, expanded, onToggle, onEdit }
                     <TableCell colSpan={COLS} className="h-auto p-0 whitespace-normal">
                       {/* Panel rộng đúng khung nhìn và bám trái khi cuộn ngang. */}
                       <div className="sticky left-0" style={{ width: `calc(100% - ${EXTRA_W})` }}>
-                        <ProductDetailPanel productId={p.id} onEdit={onEdit} onClose={() => onToggle(p.id)} />
+                        <ProductDetailPanel productId={p.id} onEdit={onEdit} onCopy={onCopy} onClose={() => onToggle(p.id)} />
                       </div>
                     </TableCell>
                   </TableRow>

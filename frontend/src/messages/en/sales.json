@@ -196,7 +196,9 @@
       "return": "Return",
       "more": "More actions",
       "editTax": "Edit product tax rates",
-      "editTaxPublished": "{label} (e-invoice already issued)"
+      "editTaxPublished": "{label} (e-invoice already issued)",
+      "viewEInvoice": "View e-invoice",
+      "einvoiceHowTo": "How to look up the e-invoice"
     },
     "einvoice": {
       "title": "E-invoice",
@@ -206,7 +208,12 @@
       "issuedAt": "Issue date:",
       "buyer": "Buyer:",
       "nature": "Invoice type:",
-      "taxAuthorityCode": "Tax authority code (Mã CQT):"
+      "taxAuthorityCode": "Tax authority code (Mã CQT):",
+      "howToTitle": "How to look up the e-invoice",
+      "howToSite": "Lookup site:",
+      "howToCode": "Lookup code:",
+      "howToSteps": "Open the lookup site and enter the lookup code to view and download the e-invoice. The buyer can use the same code.",
+      "noLookupCode": "The invoice has no lookup code yet."
     },
     "taxDialog": {
       "title": "Edit product tax rates",

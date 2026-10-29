@@ -92,7 +92,8 @@
     "expired": "hết hạn",
     "nearExpiry": "cận hạn",
     "salesVat": "VAT hàng bán (%)",
-    "barcodeValue": "Mã vạch: {barcode}"
+    "barcodeValue": "Mã vạch: {barcode}",
+    "suppliersBox": "Nhà cung cấp"
   },
   "ledger": {
     "doc": "Chứng từ",
@@ -141,7 +142,8 @@
     "title": "Hàng hóa",
     "searchAria": "Tìm hàng hóa",
     "searchPlaceholder": "Theo mã, tên hàng, mã vạch",
-    "pageInfo": "{total} hàng hóa — trang {page}/{pages}"
+    "pageInfo": "{total} hàng hóa — trang {page}/{pages}",
+    "unitAria": "Chọn đơn vị tính của {code}"
   },
   "priceBooks": {
     "title": "Thiết lập giá",

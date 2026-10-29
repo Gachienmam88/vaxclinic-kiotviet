@@ -92,7 +92,8 @@
     "expired": "期限切れ",
     "nearExpiry": "期限間近",
     "salesVat": "販売VAT（%）",
-    "barcodeValue": "バーコード：{barcode}"
+    "barcodeValue": "バーコード：{barcode}",
+    "suppliersBox": "仕入先"
   },
   "ledger": {
     "doc": "伝票",
@@ -141,7 +142,8 @@
     "title": "商品",
     "searchAria": "商品を検索",
     "searchPlaceholder": "コード・商品名・バーコード",
-    "pageInfo": "商品 {total} 件 — {page}/{pages} ページ"
+    "pageInfo": "商品 {total} 件 — {page}/{pages} ページ",
+    "unitAria": "{code} の単位を選択"
   },
   "priceBooks": {
     "title": "価格設定",
