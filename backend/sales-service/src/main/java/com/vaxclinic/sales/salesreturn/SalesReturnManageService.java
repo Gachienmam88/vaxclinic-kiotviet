@@ -37,6 +37,10 @@ public class SalesReturnManageService {
         return Map.of("items", r.items(), "total", r.total(), "sumTotal", r.sumTotal());
     }
 
+    public SalesReturnDtos.ExportResponse export(SalesReturnQueryRepository.Filter filter) {
+        return query.export(filter);
+    }
+
     public ReturnResponse get(UUID id) {
         var lines = query.lines(id);
         writer.find(id); // 404 nếu không có

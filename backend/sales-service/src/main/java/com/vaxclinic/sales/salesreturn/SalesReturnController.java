@@ -34,8 +34,22 @@ public class SalesReturnController {
     public Map<String, Object> list(@RequestParam(required = false) String q, @RequestParam(required = false) List<String> statuses,
                                     @RequestParam(required = false) Instant from, @RequestParam(required = false) Instant to,
                                     @RequestParam(required = false) UUID invoiceId,
+                                    @RequestParam(required = false) List<String> types,
+                                    @RequestParam(required = false) List<String> deliveryStatuses,
+                                    @RequestParam(required = false) UUID partnerId,
                                     @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "15") int size) {
-        return service.list(new SalesReturnQueryRepository.Filter(q, statuses, from, to, invoiceId), page, size);
+        return service.list(new SalesReturnQueryRepository.Filter(q, statuses, from, to, invoiceId, types, deliveryStatuses, partnerId),
+                page, size);
+    }
+
+    /** "Xuất file" (tổng quan / chi tiết): mọi phiếu khớp bộ lọc + dòng hàng. */
+    @GetMapping("/api/sales-returns/export")
+    public SalesReturnDtos.ExportResponse export(@RequestParam(required = false) String q, @RequestParam(required = false) List<String> statuses,
+                                                 @RequestParam(required = false) Instant from, @RequestParam(required = false) Instant to,
+                                                 @RequestParam(required = false) List<String> types,
+                                                 @RequestParam(required = false) List<String> deliveryStatuses,
+                                                 @RequestParam(required = false) UUID partnerId) {
+        return service.export(new SalesReturnQueryRepository.Filter(q, statuses, from, to, null, types, deliveryStatuses, partnerId));
     }
 
     @GetMapping("/api/sales-returns/{id}")

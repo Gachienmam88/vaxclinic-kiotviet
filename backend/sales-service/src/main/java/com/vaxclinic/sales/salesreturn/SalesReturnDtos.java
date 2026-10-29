@@ -58,7 +58,22 @@ public final class SalesReturnDtos {
                                  BigDecimal refunded, String paymentMethod, String note, List<LineResponse> lines) {
     }
 
+    /**
+     * type: INVOICE (theo hóa đơn) / QUICK (trả nhanh) / SHIPMENT (chuyển hoàn — tạo khi vận đơn Đã chuyển hoàn).
+     * saleShipment*: vận đơn bán của hóa đơn (vận đơn chuyển hoàn nếu có, không thì vận đơn mới nhất chưa hủy).
+     */
     public record ListItem(UUID id, String code, Instant returnedAt, String invoiceCode, String customerName,
-                           BigDecimal subtotal, BigDecimal fee, BigDecimal total, BigDecimal refunded, String status) {
+                           BigDecimal subtotal, BigDecimal fee, BigDecimal total, BigDecimal refunded, String status,
+                           String type, UUID invoiceId, String customerCode, UUID branchId, String sellerName, Instant createdAt,
+                           String createdByName, String salesChannelName, String note, BigDecimal discount,
+                           String saleShipmentCode, String saleShipmentStatus, String partnerName) {
+    }
+
+    /** Dòng hàng cho "File chi tiết". */
+    public record ExportLine(UUID returnId, String productCode, String productName, String unitName, BigDecimal quantity,
+                             BigDecimal unitPrice, BigDecimal amount) {
+    }
+
+    public record ExportResponse(java.util.List<ListItem> items, java.util.List<ExportLine> lines) {
     }
 }
