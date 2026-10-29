@@ -1,109 +1,94 @@
 "use client";
 
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { FileOutput } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { ListEmptyRow } from "@/components/ui/list-empty-state";
-import { DocCodeLink } from "@/components/ui/doc-code-link";
-import { DeepLinkRoute, useDeepLinkExpanded, type DeepLink } from "@/components/ui/deep-link-route";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import {
-  CheckOption, FilterSection, FilterSidebar, LIST_HEAD_ROW, ListSearch, PageTitle, PeriodFilter, StatusBadge, TOOLBAR_BTN,
-} from "@/features/sales/invoice-list-kit";
-import { downloadCsv, ListPager } from "@/features/sales/invoice-list-pager";
-import { periodParams, type Period } from "@/features/sales/sales-queries";
+import { SlidersHorizontal } from "lucide-react";
+import { DeepLinkRoute, type DeepLink } from "@/components/ui/deep-link-route";
+import { useShownColumns } from "@/features/delivery/delivery-list-toolbar";
+import { DEFAULT_RETURN_COLUMNS } from "@/features/returns/return-list-columns";
+import { DEFAULT_RETURN_FILTERS, ReturnFilterSidebar, type ReturnFilters } from "@/features/returns/return-filter-sidebar";
+import { ReturnListTable, type ReturnPage } from "@/features/returns/return-list-table";
+import { ReturnListToolbar } from "@/features/returns/return-list-toolbar";
+import { exportReturnDetail, exportReturnOverview } from "@/features/returns/return-xlsx-export";
+import { FileJobsPanel, useFileJobs } from "@/features/sales/invoice-file-jobs-panel";
+import { ListSearch, PageTitle } from "@/features/sales/invoice-list-kit";
+import { ListPager } from "@/features/sales/invoice-list-pager";
+import { periodParams } from "@/features/sales/sales-queries";
+import { useBranches } from "@/features/settings/settings-queries";
 import { api } from "@/lib/api-client";
-import { formatDateTime, formatMoney } from "@/lib/format";
 import { useT } from "@/lib/i18n";
-import { cn } from "@/lib/utils";
-import { commonNs } from "@/messages/common";
+import { useCurrentUser } from "@/lib/use-current-user";
+import { deliveryNs } from "@/messages/delivery";
 import { salesNs } from "@/messages/sales";
-import { SalesReturnDetailPanel, type SalesReturnItem } from "./sales-return-detail-panel";
 
-const COLS = 9;
-const STATUSES = ["COMPLETED", "CANCELLED"] as const;
+/** ☆ đánh dấu phiếu trả, lưu theo người dùng trên máy này. */
+function useReturnFavourites(userId: string | undefined) {
+  const key = userId ? `kv.returns.favourites.${userId}` : null;
+  const [ids, setIds] = useState<string[]>([]);
+  useEffect(() => { try { if (key) setIds(JSON.parse(localStorage.getItem(key) ?? "[]")); } catch { /* bỏ qua */ } }, [key]);
+  const toggle = (id: string) => {
+    const next = ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id];
+    setIds(next);
+    try { if (key) localStorage.setItem(key, JSON.stringify(next)); } catch { /* bỏ qua */ }
+  };
+  return { isFav: (id: string) => ids.includes(id), toggle };
+}
 
 /**
- * Đơn hàng → Trả hàng: danh sách phiếu khách trả hàng. Tạo phiếu từ nút "Trả hàng" trong chi tiết hóa đơn.
- * Link sâu: /returns?code=TH000001 (lọc theo mã, mọi thời gian, mở chi tiết) hoặc ?id=<uuid>.
+ * Đơn hàng → Trả hàng (KiotViet): tìm "Theo mã phiếu trả", + Trả hàng, Xuất file (tổng quan / chi tiết, chạy nền), chọn cột,
+ * thiết lập, hướng dẫn; lọc loại / trạng thái / giao hàng / đối tác / thời gian. Link sâu ?code=TH000001 mở chi tiết.
  */
 function SalesReturnsPage({ link }: { link: DeepLink }) {
   const t = useT(salesNs);
-  const tc = useT(commonNs);
+  const td = useT(deliveryNs);
+  const { data: me, can } = useCurrentUser();
+  const { data: branches = [] } = useBranches();
+  const deep = !!(link.code || link.id);
   const [search, setSearch] = useState(link.code ?? "");
   const [q, setQ] = useState(link.code ?? "");
-  const [period, setPeriod] = useState<Period>({ mode: link.code || link.id ? "all" : "month", from: "", to: "" });
-  const [statuses, setStatuses] = useState<string[]>([]);
+  const [filters, setFiltersRaw] = useState<ReturnFilters>(deep
+    ? { ...DEFAULT_RETURN_FILTERS, period: { mode: "all", from: "", to: "" }, statuses: [] } : DEFAULT_RETURN_FILTERS);
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(15);
-  useEffect(() => { const timer = setTimeout(() => { setQ(search); setPage(0); }, 300); return () => clearTimeout(timer); }, [search]);
+  const [selected, setSelected] = useState<string[]>([]);
+  const cols = useShownColumns("kv.returns.columns", DEFAULT_RETURN_COLUMNS);
+  const fav = useReturnFavourites(me?.user.id);
+  const jobs = useFileJobs();
+  useEffect(() => { const h = setTimeout(() => { setQ(search); setPage(0); }, 300); return () => clearTimeout(h); }, [search]);
+  const setFilters = (f: ReturnFilters) => { setFiltersRaw(f); setPage(0); setSelected([]); };
   const params = useMemo(() => {
-    const p = periodParams(period, new URLSearchParams({ page: String(page), size: String(size) }));
+    const p = periodParams(filters.period, new URLSearchParams({ page: String(page), size: String(size) }));
     if (q) p.set("q", q);
-    statuses.forEach((s) => p.append("statuses", s));
+    filters.statuses.forEach((s) => p.append("statuses", s));
+    // Chọn đủ 3 loại = không lọc loại; bỏ hết = không có phiếu nào
+    if (filters.types.length < 3) (filters.types.length ? filters.types : ["NONE"]).forEach((s) => p.append("types", s));
+    filters.deliveryStatuses.forEach((s) => p.append("deliveryStatuses", s));
+    if (filters.partnerId) p.set("partnerId", filters.partnerId);
     return p;
-  }, [q, period, statuses, page, size]);
-  const { data } = useQuery({
-    queryKey: ["sales-returns", params.toString()],
-    queryFn: () => api<{ items: SalesReturnItem[]; total: number; sumTotal: number }>(`/sales-returns?${params}`),
-    placeholderData: (prev) => prev,
-  });
-  const { open: expanded, setOpen: setExpanded, toggle: toggleRow } = useDeepLinkExpanded(data?.items, link, (r) => [r.code]);
-  const toggle = (v: string, on: boolean) => { setStatuses(on ? [...statuses, v] : statuses.filter((x) => x !== v)); setPage(0); };
-  // CSV chứng từ tài chính: giữ tiêu đề & giá trị tiếng Việt cho kế toán (mọi ngôn ngữ).
-  const exportCsv = () => downloadCsv("tra-hang", ["Mã trả hàng", "Thời gian", "Mã hóa đơn", "Khách hàng", "Tổng tiền hàng", "Phí trả hàng",
-    "Cần trả khách", "Đã trả khách", "Trạng thái"], (data?.items ?? []).map((r) => [r.code, formatDateTime(r.returnedAt), r.invoiceCode,
-    r.customerName, r.subtotal, r.fee, r.total, r.refunded, r.status === "COMPLETED" ? "Đã trả" : "Đã hủy"]));
+  }, [q, filters, page, size]);
+  const { data } = useQuery({ queryKey: ["sales-returns", params.toString()], queryFn: () => api<ReturnPage>(`/sales-returns?${params}`),
+    placeholderData: (prev) => prev });
+  const branch = (id: string) => branches.find((b) => b.id === id)?.name ?? "";
+  const onExport = (kind: "overview" | "detail") => jobs.run(t("returns.kv.exporting"), () => kind === "overview"
+    ? exportReturnOverview(t, td, params, cols.shown, branch) : exportReturnDetail(t, td, params, branch));
 
   return (
     <div className="flex gap-2.5">
       <div className="space-y-3">
         <PageTitle>{t("returns.title")}</PageTitle>
-        <FilterSidebar>
-          <PeriodFilter allowAll value={period} onChange={(p) => { setPeriod(p); setPage(0); }} />
-          <FilterSection title={t("returns.status")}>
-            {STATUSES.map((v) => <CheckOption key={v} checked={statuses.includes(v)} onChange={(on) => toggle(v, on)}>{t(`enums.returnStatus.${v}`)}</CheckOption>)}
-          </FilterSection>
-        </FilterSidebar>
+        <ReturnFilterSidebar value={filters} onChange={setFilters} />
       </div>
       <div className="min-w-0 flex-1 space-y-3">
         <div className="flex items-center gap-2">
-          <ListSearch value={search} onChange={setSearch} placeholder={t("returns.searchPlaceholder")} />
-          <Button variant="outline" className={cn(TOOLBAR_BTN, "ml-auto")} disabled={!data?.items.length} onClick={exportCsv}
-            title={t("returns.exportTitle")}><FileOutput className="size-4" /> {tc("actions.export")}</Button>
+          <div className="relative"><ListSearch value={search} onChange={setSearch} placeholder={t("returns.kv.search")} />
+            <SlidersHorizontal className="pointer-events-none absolute top-2 right-2.5 size-4 text-muted-foreground" aria-hidden /></div>
+          <ReturnListToolbar canReturn={can("sales.perform")} exportDisabled={!data?.items.length} onExport={onExport} shown={cols.shown} onToggle={cols.toggle} />
         </div>
-        <div className="overflow-x-auto rounded-lg bg-background">
-          <Table stickyHeader>
-            <TableHeader><TableRow className={LIST_HEAD_ROW}>
-              <TableHead className="pl-4">{t("returns.columns.code")}</TableHead><TableHead>{t("returns.columns.time")}</TableHead>
-              <TableHead>{t("returns.columns.invoiceCode")}</TableHead><TableHead>{t("returns.columns.customer")}</TableHead>
-              <TableHead className="text-right">{t("returns.columns.subtotal")}</TableHead><TableHead className="text-right">{t("returns.columns.fee")}</TableHead>
-              <TableHead className="text-right">{t("returns.columns.total")}</TableHead><TableHead className="text-right">{t("returns.columns.refunded")}</TableHead>
-              <TableHead className="pr-4">{t("returns.columns.status")}</TableHead>
-            </TableRow></TableHeader>
-            <TableBody>
-              {!!data?.items.length && <TableRow className="font-bold hover:bg-transparent">
-                <TableCell colSpan={6} /><TableCell className="text-right">{formatMoney(data.sumTotal ?? 0)}</TableCell><TableCell colSpan={2} />
-              </TableRow>}
-              {data && !data.items.length && <ListEmptyRow cols={COLS} what={t("returns.emptyWhat")}
-                onWiden={period.mode === "month" ? () => { setPeriod({ ...period, mode: "all" }); setPage(0); } : undefined} />}
-              {data?.items.map((r) => (
-                <Fragment key={r.id}>
-                  <TableRow className={cn("cursor-pointer", expanded === r.id && "bg-primary-tint hover:bg-primary-tint")} onClick={() => toggleRow(r.id)}>
-                    <TableCell className="pl-4">{r.code}</TableCell><TableCell>{formatDateTime(r.returnedAt)}</TableCell>
-                    <TableCell><DocCodeLink code={r.invoiceCode} /></TableCell><TableCell className="whitespace-normal">{r.customerName}</TableCell>
-                    <TableCell className="text-right">{formatMoney(r.subtotal)}</TableCell><TableCell className="text-right">{formatMoney(r.fee)}</TableCell>
-                    <TableCell className="text-right">{formatMoney(r.total)}</TableCell><TableCell className="text-right">{formatMoney(r.refunded)}</TableCell>
-                    <TableCell className="pr-4"><StatusBadge tone={r.status === "COMPLETED" ? "green" : "red"}>{t(`enums.returnStatus.${r.status}`)}</StatusBadge></TableCell>
-                  </TableRow>
-                  {expanded === r.id && <TableRow className="hover:bg-transparent"><TableCell colSpan={COLS} className="p-0 whitespace-normal"><SalesReturnDetailPanel id={r.id} onClose={() => setExpanded(null)} /></TableCell></TableRow>}
-                </Fragment>))}
-            </TableBody>
-          </Table>
-        </div>
+        <ReturnListTable data={data} shown={cols.shown} link={link} selected={selected} onSelect={setSelected} fav={fav}
+          onWiden={filters.period.mode !== "all" ? () => setFilters({ ...filters, period: { ...filters.period, mode: "all" } }) : undefined} />
         <ListPager total={data?.total ?? 0} page={page} size={size} unit={t("returns.unit")} onPage={setPage} onSize={(s) => { setSize(s); setPage(0); }} />
       </div>
+      <FileJobsPanel jobs={jobs.jobs} onClose={jobs.clear} />
     </div>
   );
 }
