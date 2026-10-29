@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { cookies } from "next/headers";
+import { forwardedForHeader } from "@/lib/server/client-ip";
 import { ACCESS_COOKIE, GATEWAY_URL, refreshTokens } from "@/lib/server/session-cookies";
 
 /**
@@ -9,7 +10,7 @@ import { ACCESS_COOKIE, GATEWAY_URL, refreshTokens } from "@/lib/server/session-
 async function forward(request: NextRequest, path: string[], accessToken?: string) {
   const url = `${GATEWAY_URL}/api/${path.map(encodeURIComponent).join("/")}${request.nextUrl.search}`;
   // Giữ Accept của trình duyệt (VD tải file CSV); mặc định JSON
-  const headers = new Headers({ Accept: request.headers.get("accept") ?? "application/json" });
+  const headers = new Headers({ Accept: request.headers.get("accept") ?? "application/json", ...(await forwardedForHeader()) });
   const contentType = request.headers.get("content-type");
   if (contentType) headers.set("Content-Type", contentType);
   if (accessToken) headers.set("Authorization", `Bearer ${accessToken}`);
@@ -32,7 +33,10 @@ async function handle(request: NextRequest, { params }: { params: Promise<{ path
     }
     return new NextResponse(res.status === 204 ? null : await res.arrayBuffer(), {
       status: res.status,
-      headers: { "Content-Type": res.headers.get("content-type") ?? "application/json" },
+      headers: {
+        "Content-Type": res.headers.get("content-type") ?? "application/json",
+        ...(res.headers.get("retry-after") ? { "Retry-After": res.headers.get("retry-after")! } : {}),
+      },
     });
   } catch {
     return NextResponse.json(

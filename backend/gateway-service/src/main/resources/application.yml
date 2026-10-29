@@ -4,6 +4,12 @@ server:
 app:
   jwt:
     secret: ${JWT_SECRET}
+  # Giới hạn tần suất (RateLimitFilter): số request / phút / khóa. auth = đăng nhập + 2FA (theo IP),
+  # refresh = làm mới / đăng xuất phiên (theo IP), general = còn lại (theo user, chưa đăng nhập theo IP).
+  rate-limit:
+    auth-per-minute: ${RATE_LIMIT_AUTH_PER_MINUTE:20}
+    refresh-per-minute: ${RATE_LIMIT_REFRESH_PER_MINUTE:60}
+    general-per-minute: ${RATE_LIMIT_GENERAL_PER_MINUTE:900}
 
 spring:
   application:

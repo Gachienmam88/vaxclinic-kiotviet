@@ -1,5 +1,6 @@
 import "server-only";
 import { cookies } from "next/headers";
+import { forwardedForHeader } from "./client-ip";
 
 /**
  * JWTs never reach browser JavaScript: they live in httpOnly cookies and the
@@ -47,7 +48,7 @@ export async function refreshTokens(): Promise<TokenPair | null> {
   if (!refreshToken) return null;
   const res = await fetch(`${GATEWAY_URL}/api/auth/refresh`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...(await forwardedForHeader()) },
     body: JSON.stringify({ refreshToken }),
     cache: "no-store",
   });

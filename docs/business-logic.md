@@ -2346,7 +2346,17 @@ Quy ước lỗi chung (mọi service): body `ApiError {code, message, details[]
 - Body lỗi dựng tay cùng shape ApiError (`:94-100`).
 
 **4. Rate limit / security headers**
-- Gateway: **không có** rate limit hay security headers trong code gateway (chỉ 3 file Java). Giới hạn duy nhất ở backend là đếm đăng nhập sai trong identity (mục 4.2). (Security headers phía frontend: xem mục 4.17.)
+- **Rate limit (audit #4)** — `RateLimitFilter` (GlobalFilter, chạy trước `StoreStatusFilter`): token bucket trong RAM (mỗi instance đếm riêng, bucket không dùng 10 phút bị dọn), sức chứa = N lượt, nạp lại đều N lượt/60 giây; vượt → **429 `RATE_LIMITED`** "Bạn thao tác quá nhanh, vui lòng thử lại sau X giây" + header `Retry-After` (`gw/java/com/vaxclinic/gateway/RateLimitFilter.java:24-150`). Cấu hình `app.rate-limit.*` (`gw/resources/application.yml:7-12`):
+
+  | Nhóm | Path | Khóa | Mặc định / phút (biến môi trường) |
+  |---|---|---|---|
+  | AUTH | `POST /api/auth/login`, `/api/auth/2fa/**` | IP | 20 (`RATE_LIMIT_AUTH_PER_MINUTE`) |
+  | REFRESH | `/api/auth/refresh`, `/api/auth/logout` | IP | 60 (`RATE_LIMIT_REFRESH_PER_MINUTE`) |
+  | GENERAL | còn lại | user (JWT `sub`); chưa đăng nhập → IP | 900 (`RATE_LIMIT_GENERAL_PER_MINUTE`) |
+
+  - IP = phần tử **đầu** `X-Forwarded-For` do BFF gắn, **chỉ tin khi** request tới từ loopback / mạng nội bộ (máy BFF); gọi thẳng từ ngoài dùng địa chỉ TCP. BFF lấy IP từ `x-forwarded-for` mà Next nhận được (Next tự điền địa chỉ socket nếu trình duyệt không gửi) (`fe/lib/server/client-ip.ts`), gửi kèm ở đăng nhập / refresh / đăng xuất / proxy `/api/backend/*`; BFF chuyển `Retry-After` về trình duyệt.
+  - Vẫn còn giới hạn đăng nhập sai theo tên đăng nhập ở identity (mục 4.2) — 2 lớp độc lập.
+- Security headers của trình duyệt đặt ở Next.js (mục 4.17); response gateway chỉ tới BFF (BFF chỉ chuyển `Content-Type`, `Retry-After`).
 
 **5. Giới hạn đã biết**
 - Cache trạng thái gian hàng 5 giây → bảo lưu/đổi tên có hiệu lực chậm tối đa ~5 giây tại gateway.
@@ -2853,7 +2863,8 @@ Mọi API `/api/hr/**` cần `hr.manage`, **trừ** `GET /api/hr/clock/me` và `
 - ~~Đăng xuất không thu hồi refresh token ở server~~ — **đã sửa (audit #1)**: `/api/auth/logout` public ở gateway + identity (`gw/java/com/vaxclinic/gateway/GatewaySecurityConfig.java:35`, `backend/identity-service/src/main/resources/application.yml:28`); BFF gửi refresh token trong body (không cần Bearer, chạy được cả khi access token đã hết hạn) (`fe/app/api/session/logout/route.ts:5-14`) → dòng refresh token bị xóa. Xóa (thay vì đánh dấu revoked) để tab cũ gửi lại token không kích hoạt "dùng lại token đã thu hồi → thu hồi mọi phiên".
 - Access JWT không trạng thái: sau đăng xuất access token cũ vẫn hợp lệ tới hết TTL (≤30 phút) nếu ai đó đã chép được; trình duyệt mất cookie nên không dùng tiếp. Chưa có danh sách thu hồi access token (thiết kế chọn).
 - Không có màn tự đổi mật khẩu / quên mật khẩu (không thấy API hay UI).
-- BFF không chuyển tiếp `X-Forwarded-For` → giới hạn đăng nhập sai thực tế theo tên đăng nhập.
+- BFF chuyển IP trình duyệt qua `X-Forwarded-For` cho rate limit của gateway (mục 4.1), nhưng giới hạn đăng nhập sai ở identity vẫn thấy IP máy BFF (gateway nối thêm) → thực tế theo tên đăng nhập.
+- Không có reverse proxy: trình duyệt tự gửi `X-Forwarded-For` giả được (Next giữ nguyên) → né được rate limit theo IP; giới hạn theo tên đăng nhập ở identity vẫn áp. Triển khai sau reverse proxy thì proxy phải ghi đè header này.
 
 ---
 
@@ -2909,7 +2920,11 @@ Menu trái Thiết lập (`fe/features/settings/settings-shell.tsx:20-57`; mục
 - **Ngôn ngữ** (`fe/lib/i18n/locales.ts:7-38`): `vi` (nguồn + mặc định), `en`, `ja`, `zh` (ja/zh gắn "Bản thử nghiệm"); chỉ chữ giao diện đổi — tiền/ngày vẫn định dạng VN (VND, dd/MM/yyyy). Lưu cookie `vx_locale` (1 năm, để server render đúng) + `localStorage.vx_locale`; giá trị lạ → `vi` (`fe/lib/i18n/i18n-provider.tsx:17-43`). en/ja/zh tải lười theo namespace (`fe/lib/i18n/message-store.ts:4`). Namespace JSON: accounting, auth, cashbook, common, customers, dashboard, delivery, errors, hr, inventory, nav, notifications, orders, print, products, purchases, reports, sale, sales, settings, store-profile (`fe/messages/{vi,en,ja,zh}/`). Chọn ngôn ngữ ở màn đăng nhập và menu tài khoản.
 - Lỗi API (`fe/lib/i18n/translate-api-error.ts:1-35`): tiếng Việt → giữ message server; ngôn ngữ khác → `errors.codes.<CODE>` (thay hẳn) hoặc `codesWithDetail.<CODE>` ("bản dịch (message gốc)"), không có → message server; lỗi validation giữ chi tiết tiếng Việt kèm tiền tố đã dịch. Nhãn tính năng/thao tác Lịch sử thao tác dịch qua `fe/lib/i18n/audit-labels.ts`.
 - **Chủ đề màu** (`fe/lib/accent-theme.ts:1-74`): 9 màu (blue `#0070f4` mặc định, slate, green, purple, red, sage, teal, orange, pink); lưu theo từng user ở `localStorage` (`kv-accent:{userId}`, `kv-accent-user`) — backend **không** lưu; chỉ tô khung ứng dụng (biến `--chrome`: thanh menu, nút Bán hàng, avatar, nút THANH TOÁN), `--primary` nội dung giữ xanh; script trong `<head>` áp màu trước khi vẽ (bỏ qua `/login`, `/welcome`).
-- **Security headers**: `next.config.ts` chỉ có redirect `/pos → /sale` (`frontend/next.config.ts:3-10`); không tìm thấy cấu hình CSP / X-Frame-Options / HSTS / rate limit nào trong repo (frontend, gateway).
+- **Security headers (audit #4)** — mọi response Next (`frontend/next.config.ts:3-38`, `headers()` source `/:path*`):
+  - `Content-Security-Policy`: `default-src 'self'`; `script-src 'self' 'unsafe-inline'` (script nội tuyến của Next + script áp màu trong `<head>`; không nonce; dev thêm `'unsafe-eval'`); `style-src 'self' 'unsafe-inline'`; `img-src 'self' data: blob: https:` (logo/VietQR sinh tại chỗ là data URL, ảnh hàng có thể là URL ngoài); `font-src 'self' data:`; `connect-src 'self'`; `frame-src 'self' blob:` + `worker-src 'self' blob:` (iframe in, service worker `/sale`); `object-src 'none'`; `base-uri 'self'`; `form-action 'self'`; `frame-ancestors 'self'`.
+  - `X-Frame-Options: SAMEORIGIN`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`.
+  - `Strict-Transport-Security: max-age=31536000; includeSubDomains` đặt ở middleware, chỉ khi production + `COOKIE_SECURE` khác `false` + request https (hoặc `X-Forwarded-Proto: https`) (`fe/middleware.ts:10-23`); triển khai LAN http không bị ép https. Middleware không chạy cho `/api`, `_next` → HSTS chỉ có trên trang.
+  - In (iframe ẩn cùng nguồn, `about:blank`) và mở tab mới (`window.open`) không bị CSP chặn.
 
 ---
 

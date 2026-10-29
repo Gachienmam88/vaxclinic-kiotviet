@@ -7,8 +7,23 @@ const PUBLIC = ["/welcome", "/login"];
 const RETURN_AFTER_LOGIN = ["/cham-cong"];
 const RETURN_COOKIE = "vx_after_login";
 
-/** Chưa có phiên → về trang giới thiệu; đã đăng nhập mà mở trang công khai → vào thẳng trang chủ. Backend vẫn tự kiểm tra quyền. */
+/**
+ * HSTS chỉ khi cookie phiên đang ở chế độ secure (production, COOKIE_SECURE khác "false") và request đi qua https
+ * (trực tiếp hoặc reverse proxy báo X-Forwarded-Proto) — triển khai LAN http không bị trình duyệt ép https.
+ */
+function withHsts(request: NextRequest, res: NextResponse): NextResponse {
+  const secure = process.env.NODE_ENV === "production" && process.env.COOKIE_SECURE !== "false";
+  const https = request.nextUrl.protocol === "https:" || request.headers.get("x-forwarded-proto") === "https";
+  if (secure && https) res.headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+  return res;
+}
+
 export function middleware(request: NextRequest) {
+  return withHsts(request, route(request));
+}
+
+/** Chưa có phiên → về trang giới thiệu; đã đăng nhập mà mở trang công khai → vào thẳng trang chủ. Backend vẫn tự kiểm tra quyền. */
+function route(request: NextRequest): NextResponse {
   const hasSession = request.cookies.has("vx_refresh");
   const { pathname, search } = request.nextUrl;
   const isPublic = PUBLIC.includes(pathname);

@@ -44,6 +44,6 @@ Trình duyệt ──▶ Next.js 15 (BFF, JWT trong cookie httpOnly, /sale bán 
 
 - `RestClient` nội bộ không đặt timeout (chỉ gateway có).
 - Chưa có đối soát khi kho đã trừ nhưng lưu hóa đơn lỗi và không được gửi lại.
-- Đăng nhập mật khẩu chưa giới hạn số lần sai (2FA thì có).
+- Đăng nhập mật khẩu giới hạn số lần sai theo tên đăng nhập (identity) + rate limit theo IP/user ở gateway (RAM, mỗi instance riêng).
 - Tìm kiếm dùng `ILIKE`, phân biệt dấu ở màn quản trị.
 - Chưa có CI/CD; thư mục dự án chưa là git repo.
