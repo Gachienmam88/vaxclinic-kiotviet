@@ -48,20 +48,16 @@ public class CertificateExpiryAlerts {
     /** Trả số cảnh báo đang đúng (-1 nếu không gửi được tới identity-service). */
     public synchronized int sync() {
         LocalDate today = LocalDate.now(ShopSettings.ZONE);
-        List<Item> items = jdbc.query("""
-                select id, subject_name, serial_number, expires_on from digital_certificates
-                where active and cert_status <> 'REVOKED' and expires_on <= ? order by expires_on""", (rs, i) -> {
-            LocalDate exp = rs.getObject("expires_on", LocalDate.class);
+        List<Item> items = certificates.findActiveExpiringBy(today.plusDays(DAYS)).stream().map(c -> {
+            LocalDate exp = c.expiresOn();
             long left = ChronoUnit.DAYS.between(today, exp);
-            String subject = rs.getString("subject_name");
-            String title = left < 0 ? "Chữ ký số " + subject + " đã hết hạn ngày " + exp.format(DMY)
-                    : "Chữ ký số " + subject + " sắp hết hạn ngày " + exp.format(DMY) + " (còn " + left + " ngày)";
-            String serial = rs.getString("serial_number");
-            String body = (serial == null ? "" : "Số serial " + serial + ". ")
+            String title = left < 0 ? "Chữ ký số " + c.subjectName() + " đã hết hạn ngày " + exp.format(DMY)
+                    : "Chữ ký số " + c.subjectName() + " sắp hết hạn ngày " + exp.format(DMY) + " (còn " + left + " ngày)";
+            String body = (c.serialNumber() == null ? "" : "Số serial " + c.serialNumber() + ". ")
                     + "Gia hạn chứng thư số với nhà cung cấp để không gián đoạn phát hành hóa đơn điện tử.";
-            return new Item(TYPE, "cert_expiring:" + rs.getObject("id", UUID.class), title, body, null,
+            return new Item(TYPE, "cert_expiring:" + c.id(), title, body, null,
                     "/store-profile/certificates", null, "settings.manage");
-        }, today.plusDays(DAYS));
+        }).toList();
         return notifications.sync(List.of(TYPE), items) ? items.size() : -1;
     }
 }
