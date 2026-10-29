@@ -1,11 +1,9 @@
 package com.vaxclinic.product.inventory;
 
-import com.vaxclinic.product.purchase.PurchaseDtos.Actor;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import org.springframework.security.oauth2.jwt.Jwt;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -17,13 +15,6 @@ import java.util.UUID;
 public final class InventoryDocDtos {
 
     private InventoryDocDtos() {
-    }
-
-    /** Người dùng hiện tại lấy từ JWT (giống PurchaseController). */
-    static Actor actor(Jwt jwt) {
-        List<String> branches = jwt.getClaimAsStringList("branches");
-        return new Actor(UUID.fromString(jwt.getSubject()), jwt.getClaimAsString("name"),
-                branches == null ? List.of() : branches);
     }
 
     // ===== Kiểm kho =====

@@ -5,6 +5,7 @@ import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import org.springframework.security.oauth2.jwt.Jwt;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -102,5 +103,11 @@ public final class PurchaseDtos {
 
     /** Người dùng hiện tại lấy từ JWT. */
     public record Actor(UUID id, String name, List<String> branchIds) {
+
+        /** sub, name, claim "branches" (thiếu claim → danh sách rỗng). */
+        public static Actor of(Jwt jwt) {
+            List<String> branches = jwt.getClaimAsStringList("branches");
+            return new Actor(UUID.fromString(jwt.getSubject()), jwt.getClaimAsString("name"), branches == null ? List.of() : branches);
+        }
     }
 }

@@ -30,10 +30,10 @@ public class SupplierCommandService {
     }
 
     private final SupplierRepository suppliers;
-    private final SupplierGroupController groups;
+    private final SupplierGroupService groups;
     private final JdbcTemplate jdbc;
 
-    public SupplierCommandService(SupplierRepository suppliers, SupplierGroupController groups, JdbcTemplate jdbc) {
+    public SupplierCommandService(SupplierRepository suppliers, SupplierGroupService groups, JdbcTemplate jdbc) {
         this.suppliers = suppliers;
         this.groups = groups;
         this.jdbc = jdbc;
