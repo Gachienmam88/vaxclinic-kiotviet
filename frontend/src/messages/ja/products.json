@@ -26,7 +26,9 @@
     "conversionRate": "換算値",
     "lot": "ロット",
     "expiry": "使用期限",
-    "reserved": "顧客予約"
+    "reserved": "顧客予約",
+    "expectedOut": "在庫切れ予測",
+    "expectedOutDays": "{n} 日"
   },
   "form": {
     "priceSection": "原価・販売価格",

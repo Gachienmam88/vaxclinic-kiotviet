@@ -3,7 +3,7 @@
 import { Fragment } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ListEmptyRow } from "@/components/ui/list-empty-state";
-import { formatMoney, formatNumber } from "@/lib/format";
+import { formatDateTime, formatMoney, formatNumber } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { useT } from "@/lib/i18n";
 import { commonNs } from "@/messages/common";
@@ -11,7 +11,9 @@ import { productsNs } from "@/messages/products";
 import { ProductDetailPanel } from "./product-detail-panel";
 import type { ProductDetail, ProductListResponse } from "./product-types";
 
-const COLS = 8;
+const COLS = 11;
+/** Tổng bề rộng 3 cột sau Tồn kho (Khách đặt, Thời gian tạo, Dự kiến hết hàng): nằm ngoài khung, cuộn ngang mới thấy. */
+const EXTRA_W = "400px";
 
 type Props = {
   data: ProductListResponse | undefined;
@@ -27,7 +29,7 @@ export function ProductListTable({ data, isLoading, expanded, onToggle, onEdit }
   const tc = useT(commonNs);
   return (
     <div className="overflow-x-auto rounded-lg bg-background">
-      <Table>
+      <Table style={{ minWidth: `calc(100% + ${EXTRA_W})` }}>
         <TableHeader>
           <TableRow className="bg-primary-tint hover:bg-primary-tint">
             <TableHead className="w-28 pl-4">{t("fields.code")}</TableHead>
@@ -37,13 +39,17 @@ export function ProductListTable({ data, isLoading, expanded, onToggle, onEdit }
             <TableHead className="text-right">{t("detail.salesVat")}</TableHead>
             <TableHead>{t("fields.taxReduction")}</TableHead>
             <TableHead className="text-right">{t("fields.cost")}</TableHead>
-            <TableHead className="pr-4 text-right">{t("fields.stock")}</TableHead>
+            <TableHead className="text-right">{t("fields.stock")}</TableHead>
+            <TableHead className="w-[110px] text-right">{t("fields.reserved")}</TableHead>
+            <TableHead className="w-[150px] pl-6">{t("filter.createdTime")}</TableHead>
+            <TableHead className="w-[140px] pr-4">{t("fields.expectedOut")}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {!!data?.items.length && <TableRow className="hover:bg-transparent">
-            <TableCell colSpan={COLS - 1} />
-            <TableCell className="pr-4 text-right font-bold">{formatNumber(data.totalStock ?? 0)}</TableCell>
+            <TableCell colSpan={7} />
+            <TableCell className="text-right font-bold">{formatNumber(data.totalStock ?? 0)}</TableCell>
+            <TableCell colSpan={3} />
           </TableRow>}
           {isLoading && (
             <TableRow><TableCell colSpan={COLS} className="py-8 text-center text-muted-foreground">{tc("status.loading")}</TableCell></TableRow>
@@ -70,12 +76,20 @@ export function ProductListTable({ data, isLoading, expanded, onToggle, onEdit }
                   <TableCell className="text-right" title={p.taxRateName ?? ""}>{p.taxRateName?.split(" ")[0]}</TableCell>
                   <TableCell>{p.taxReduction ? t("fields.taxReductionYes") : t("fields.taxReductionNo")}</TableCell>
                   <TableCell className="text-right">{formatNumber(p.cost)}</TableCell>
-                  <TableCell className="pr-4 text-right">{formatNumber(p.stock)}</TableCell>
+                  <TableCell className="text-right">{formatNumber(p.stock)}</TableCell>
+                  <TableCell className="text-right">{formatNumber(p.reserved)}</TableCell>
+                  <TableCell className="pl-6">{formatDateTime(p.createdAt)}</TableCell>
+                  <TableCell className="pr-4">
+                    {p.expectedOutDays == null ? "---" : t("fields.expectedOutDays", { n: formatNumber(p.expectedOutDays) })}
+                  </TableCell>
                 </TableRow>
                 {open && (
                   <TableRow className="hover:bg-transparent">
                     <TableCell colSpan={COLS} className="h-auto p-0 whitespace-normal">
-                      <ProductDetailPanel productId={p.id} onEdit={onEdit} onClose={() => onToggle(p.id)} />
+                      {/* Panel rộng đúng khung nhìn và bám trái khi cuộn ngang. */}
+                      <div className="sticky left-0" style={{ width: `calc(100% - ${EXTRA_W})` }}>
+                        <ProductDetailPanel productId={p.id} onEdit={onEdit} onClose={() => onToggle(p.id)} />
+                      </div>
                     </TableCell>
                   </TableRow>
                 )}

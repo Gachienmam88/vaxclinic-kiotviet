@@ -26,7 +26,9 @@
     "conversionRate": "Giá trị quy đổi",
     "lot": "Lô",
     "expiry": "Hạn sử dụng",
-    "reserved": "Khách đặt"
+    "reserved": "Khách đặt",
+    "expectedOut": "Dự kiến hết hàng",
+    "expectedOutDays": "{n} ngày"
   },
   "form": {
     "priceSection": "Giá vốn, giá bán",

@@ -26,7 +26,9 @@
     "conversionRate": "Conversion rate",
     "lot": "Lot",
     "expiry": "Expiry date",
-    "reserved": "Reserved"
+    "reserved": "Reserved",
+    "expectedOut": "Expected out of stock",
+    "expectedOutDays": "{n} days"
   },
   "form": {
     "priceSection": "Cost & sale price",

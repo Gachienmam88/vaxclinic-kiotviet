@@ -26,7 +26,9 @@
     "conversionRate": "换算值",
     "lot": "批次",
     "expiry": "有效期",
-    "reserved": "客户预订"
+    "reserved": "客户预订",
+    "expectedOut": "预计缺货",
+    "expectedOutDays": "{n} 天"
   },
   "form": {
     "priceSection": "成本价、售价",
