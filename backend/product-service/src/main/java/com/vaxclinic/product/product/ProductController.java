@@ -1,14 +1,13 @@
 package com.vaxclinic.product.product;
 
-import com.vaxclinic.common.audit.AuditLogger;
 import com.vaxclinic.common.web.PageResponse;
-import com.vaxclinic.product.pricebook.SalePriceBookQuery;
 import com.vaxclinic.product.product.ProductDtos.LedgerLine;
 import com.vaxclinic.product.product.ProductDtos.LotResponse;
 import com.vaxclinic.product.product.ProductDtos.ProductDetail;
 import com.vaxclinic.product.product.ProductDtos.ProductListResponse;
 import com.vaxclinic.product.product.ProductDtos.ProductRequest;
 import com.vaxclinic.product.product.ProductListQuery.StockFilter;
+import com.vaxclinic.product.purchase.PurchaseDtos.Actor;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -31,33 +30,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+/** Hàng hóa: xem cần catalog.view, thêm / sửa / ngừng kinh doanh / xóa cần catalog.manage. Nghiệp vụ ở {@link ProductManageService}. */
 @RestController
 @RequestMapping("/api/products")
 @PreAuthorize("hasAuthority('catalog.view')")
 public class ProductController {
 
-    private final ProductCommandService commands;
-    private final ProductListQuery listQuery;
-    private final ProductDetailQuery detailQuery;
-    private final SaleCatalogQuery saleCatalog;
-    private final SalePriceBookQuery salePriceBooks;
-    private final AuditLogger audit;
+    private final ProductManageService service;
 
-    public ProductController(ProductCommandService commands, ProductListQuery listQuery,
-                             ProductDetailQuery detailQuery, SaleCatalogQuery saleCatalog, SalePriceBookQuery salePriceBooks,
-                             AuditLogger audit) {
-        this.commands = commands;
-        this.listQuery = listQuery;
-        this.detailQuery = detailQuery;
-        this.saleCatalog = saleCatalog;
-        this.salePriceBooks = salePriceBooks;
-        this.audit = audit;
-    }
-
-    /** Ghi lịch sử thao tác hàng hóa. */
-    private void log(Jwt jwt, String action, ProductDetail p, String detail) {
-        audit.record(UUID.fromString(jwt.getSubject()), jwt.getClaimAsString("name"), null, "Hàng hóa", action,
-                p.units().isEmpty() ? null : p.units().get(0).code(), detail);
+    public ProductController(ProductManageService service) {
+        this.service = service;
     }
 
     @GetMapping
@@ -72,12 +54,8 @@ public class ProductController {
                                     @RequestParam(required = false) Boolean active,
                                     @RequestParam(defaultValue = "0") int page,
                                     @RequestParam(defaultValue = "15") int size) {
-        return listQuery.search(new ProductListQuery.Filter(q, categoryIds, taxRateIds, taxReduction, stock, branchId,
+        return service.list(new ProductListQuery.Filter(q, categoryIds, taxRateIds, taxReduction, stock, branchId,
                 createdFrom, createdTo, active, Math.max(page, 0), Math.min(Math.max(size, 1), 100)));
-    }
-
-    /** Danh mục + bảng giá đang áp dụng tại điểm tiêm (withPriceBooks=true). */
-    public record SaleCatalogResponse(List<SaleCatalogQuery.SaleProduct> products, List<SalePriceBookQuery.SalePriceBook> priceBooks) {
     }
 
     /**
@@ -86,64 +64,50 @@ public class ProductController {
      */
     @GetMapping("/sale-catalog")
     public Object saleCatalog(@RequestParam UUID branchId, @RequestParam(defaultValue = "false") boolean withPriceBooks) {
-        List<SaleCatalogQuery.SaleProduct> products = saleCatalog.load(branchId);
-        return withPriceBooks ? new SaleCatalogResponse(products, salePriceBooks.load(branchId)) : products;
+        return service.saleCatalog(branchId, withPriceBooks);
     }
 
     @GetMapping("/{id}")
     public ProductDetail get(@PathVariable UUID id) {
-        return detailQuery.get(id);
+        return service.get(id);
     }
 
     @GetMapping("/{id}/ledger")
     public PageResponse<LedgerLine> ledger(@PathVariable UUID id, @RequestParam(required = false) UUID branchId,
                                            @RequestParam(defaultValue = "0") int page,
                                            @RequestParam(defaultValue = "20") int size) {
-        return detailQuery.ledger(id, branchId, page, size);
+        return service.ledger(id, branchId, page, size);
     }
 
     @GetMapping("/{id}/lots")
     public List<LotResponse> lots(@PathVariable UUID id) {
-        return detailQuery.lots(id);
+        return service.lots(id);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAuthority('catalog.manage')")
     public ProductDetail create(@Valid @RequestBody ProductRequest req, @AuthenticationPrincipal Jwt jwt) {
-        List<String> branches = jwt.getClaimAsStringList("branches");
-        UUID id = commands.create(req, UUID.fromString(jwt.getSubject()), branches == null ? List.of() : branches);
-        ProductDetail p = detailQuery.get(id);
-        log(jwt, "Tạo", p, "Tạo hàng hóa " + p.name());
-        return p;
+        return service.create(req, Actor.of(jwt));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('catalog.manage')")
     public ProductDetail update(@PathVariable UUID id, @Valid @RequestBody ProductRequest req, @AuthenticationPrincipal Jwt jwt) {
-        commands.update(id, req);
-        ProductDetail p = detailQuery.get(id);
-        log(jwt, "Sửa", p, "Cập nhật hàng hóa " + p.name());
-        return p;
+        return service.update(id, req, Actor.of(jwt));
     }
 
     /** Ngừng kinh doanh / cho phép kinh doanh. Body: {"active": false} */
     @PatchMapping("/{id}/active")
     @PreAuthorize("hasAuthority('catalog.manage')")
     public ProductDetail setActive(@PathVariable UUID id, @RequestBody Map<String, Boolean> body, @AuthenticationPrincipal Jwt jwt) {
-        boolean active = Boolean.TRUE.equals(body.get("active"));
-        commands.setActive(id, active);
-        ProductDetail p = detailQuery.get(id);
-        log(jwt, active ? "Kinh doanh" : "Ngừng kinh doanh", p, (active ? "Cho phép kinh doanh " : "Ngừng kinh doanh ") + p.name());
-        return p;
+        return service.setActive(id, Boolean.TRUE.equals(body.get("active")), Actor.of(jwt));
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasAuthority('catalog.manage')")
     public void delete(@PathVariable UUID id, @AuthenticationPrincipal Jwt jwt) {
-        ProductDetail p = detailQuery.get(id);
-        commands.delete(id);
-        log(jwt, "Xóa", p, "Xóa hàng hóa " + p.name());
+        service.delete(id, Actor.of(jwt));
     }
 }
