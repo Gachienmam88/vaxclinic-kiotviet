@@ -13,7 +13,7 @@ import java.util.UUID;
 
 /**
  * Dữ liệu hóa đơn cho integration-service phát hành hóa đơn điện tử.
- * Người mua lấy theo "Thông tin xuất hóa đơn" của khách, thiếu thì dùng thông tin chung.
+ * Người mua: "Thông tin xuất HĐĐT" nhập trên hóa đơn (từng trường), thiếu thì theo "Thông tin xuất hóa đơn" của khách, rồi thông tin chung.
  */
 @Service
 public class InternalInvoiceService {
@@ -44,15 +44,29 @@ public class InternalInvoiceService {
         Invoice inv = invoices.findById(id)
                 .orElseThrow(() -> BusinessException.notFound("INVOICE_NOT_FOUND", "Không tìm thấy hóa đơn"));
         Customer c = inv.getCustomerId() == null ? null : customers.findById(inv.getCustomerId()).orElse(null);
-        Buyer buyer = c == null ? new Buyer(null, "Khách lẻ", null, null, null, null, null, null)
+        Buyer profile = c == null ? new Buyer(null, "Khách lẻ", null, null, null, null, null, null)
                 : new Buyer(c.getCode(), c.getBuyerName() != null ? c.getBuyerName() : c.getName(),
                 "COMPANY".equals(c.getCustomerType()) ? c.getCompanyName() : null, c.getTaxCode(),
                 first(join(c.getInvoiceAddress(), c.getInvoiceWard(), c.getInvoiceProvince()), join(c.getAddress(), c.getWard(), c.getProvince())),
                 first(c.getInvoiceEmail(), c.getEmail()), first(c.getInvoicePhone(), c.getPhone()), c.getIdNumber());
+        Buyer buyer = withInvoiceBuyer(profile, inv.einvoiceBuyer());
         var lines = inv.getLines().stream().map(l -> new Line(l.getLineNo(), l.getProductCode(), l.getProductName(),
                 l.getUnitName(), l.getQuantity(), l.getUnitPrice(), l.getDiscount(), l.getTaxCode(), l.isTaxReduced())).toList();
         return new EInvoiceSource(inv.getId(), inv.getCode(), inv.getStatus(), inv.getSoldAt(), inv.getPaymentMethod(),
                 inv.getSubtotal(), inv.getDiscount(), inv.getTotal(), buyer, lines, inv.getTaxReduction(), inv.getTaxReductionMethod());
+    }
+
+    /**
+     * "Thông tin xuất HĐĐT" nhập trên hóa đơn ưu tiên TỪNG trường (tên người mua, tên đơn vị, MST, địa chỉ, email, SĐT);
+     * trường bỏ trống lấy theo hồ sơ khách hàng (khách lẻ: "Khách lẻ"). Mã khách và CCCD luôn theo hồ sơ.
+     */
+    static Buyer withInvoiceBuyer(Buyer profile, InvoiceDtos.EInvoiceBuyer b) {
+        if (b == null) {
+            return profile;
+        }
+        return new Buyer(profile.code(), first(b.buyerName(), profile.fullName()), first(b.companyName(), profile.legalName()),
+                first(b.taxCode(), profile.taxCode()), first(b.address(), profile.address()), first(b.email(), profile.email()),
+                first(b.phone(), profile.phone()), profile.idNumber());
     }
 
     private static String join(String... parts) {

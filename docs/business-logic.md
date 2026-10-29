@@ -958,7 +958,7 @@ Tiền VNĐ lưu `NUMERIC(18,0)`; đơn giá/giảm giá dòng `NUMERIC(18,2)`; 
 - Các trường: buyerName ≤ 200, companyName ≤ 250, taxCode ≤ 20, address ≤ 500, email ≤ 150 (phải hợp lệ), phone ≤ 20 (`InvoiceDtos.java:82-86`).
 - Tất cả trống → null; khi đó lấy theo hồ sơ khách (`Invoice.java:135-152`).
 - Dialog tự điền từ hồ sơ khách nếu có mạng (`sale-einvoice-dialog.tsx:52-55`).
-- Lưu ý: endpoint `/internal/invoices/{id}` cho integration-service hiện lấy người mua từ hồ sơ khách (`buyerName`/`name`, `companyName` khi `COMPANY`, MST, địa chỉ/email/SĐT xuất HĐ, fallback thông tin chung; khách lẻ = "Khách lẻ"). Endpoint này KHÔNG đọc `einvoice_*` của HĐ (`S/invoice/InternalInvoiceService.java:43-56`).
+- Phát hành HĐĐT (audit #13): endpoint `/internal/invoices/{id}` cho integration-service lấy người mua theo `einvoice_*` nhập trên HĐ **từng trường** (tên người mua, tên đơn vị, MST, địa chỉ, email, SĐT; chuỗi trống = không nhập); trường không nhập lấy theo hồ sơ khách (`buyerName`/`name`, `companyName` khi `COMPANY`, MST, địa chỉ/email/SĐT xuất HĐ, rồi thông tin chung; khách lẻ = "Khách lẻ"). Mã khách, CCCD luôn theo hồ sơ (`S/invoice/InternalInvoiceService.java` `withInvoiceBuyer`).
 
 **Thanh toán (Khách thanh toán)**
 - Phương thức: `CASH|TRANSFER|CARD|EWALLET` (`InvoiceDtos.java:58`).
@@ -3067,7 +3067,7 @@ Quy ước chung (đọc từ code):
    - **Luồng phát hành** (`EInvoiceService.java:63-102`):
      1. Đã có record `PUBLISHED` → trả luôn record, không gọi MISA (idempotent) (:64-67).
      2. Đọc thiết lập + giải mã mật khẩu (:68-69).
-     3. Gọi sales-service `GET /internal/invoices/{id}` (JWT dịch vụ) (:70-71). Dữ liệu người mua: "Thông tin xuất hóa đơn" của khách, thiếu thì thông tin chung; không có khách → "Khách lẻ"; `legalName` = tên công ty chỉ khi `customerType = COMPANY` (`SS/invoice/InternalInvoiceService.java:43-56`).
+     3. Gọi sales-service `GET /internal/invoices/{id}` (JWT dịch vụ) (:70-71). Dữ liệu người mua (audit #13): "Thông tin xuất HĐĐT" nhập trên hóa đơn từng trường → "Thông tin xuất hóa đơn" của khách → thông tin chung; không có khách → "Khách lẻ"; `legalName` = tên đơn vị trên HĐ, không có thì tên công ty khi `customerType = COMPANY` (`SS/invoice/InternalInvoiceService.java` `withInvoiceBuyer`).
      4. Hóa đơn phải `COMPLETED`, khác → 400 `INVOICE_NOT_PUBLISHABLE` (:72-74).
      5. **Chặn phát hành tự động**: `taxReductionMethod = DIRECT` và `taxReduction > 0` → 400 `EINVOICE_DIRECT_TAX_REDUCTION_UNSUPPORTED` ("vui lòng lập trên phần mềm HĐĐT") (:75-80).
      6. RefID: lần đầu `UUID.randomUUID()` và insert record `FAILED` trước khi gọi MISA; thử lại dùng lại `ref_id` cũ → MISA chống trùng (:81-84, `EInvoiceRepository.java:73-76`).
