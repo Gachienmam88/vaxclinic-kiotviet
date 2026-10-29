@@ -57,7 +57,7 @@ public class InvoiceSaleLookupRepository {
         var w = new StringBuilder(" from invoices i left join customers c on c.id = i.customer_id where i.status = 'COMPLETED'");
         if (like(p, "code", f.code())) w.append(" and i.code ilike :code");
         if (like(p, "shipmentCode", f.shipmentCode())) {
-            w.append(" and exists (select 1 from shipments s where s.invoice_id = i.id and s.code ilike :shipmentCode)");
+            w.append(" and exists (select 1 from shipments s where s.invoice_id = i.id and (s.code ilike :shipmentCode or s.waybill_code ilike :shipmentCode))");
         }
         if (like(p, "lot", f.lot())) {
             w.append(" and exists (select 1 from invoice_lines l join invoice_line_lots x on x.line_id = l.id"
