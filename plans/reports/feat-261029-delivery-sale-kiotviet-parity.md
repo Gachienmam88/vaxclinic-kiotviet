@@ -36,3 +36,37 @@ Date: 2026-10-29 · Branch: feature/phase-01-foundation
 ## Unresolved questions
 - Should delivery invoices always auto-print after payment, or follow the "Tự động in" setting?
 - Loại dịch vụ list: only Giao thường / Giao nhanh — confirm KiotViet's full list.
+
+---
+
+## Follow-up 1 (2026-10-29): user requests
+- Delivery invoices now follow the "Tự động in" setting (still printed with the delivery template).
+- Service type `SAME_DAY` "Giao trong ngày" (`V18__shipment_service_type_same_day.sql`); default package 10×10×10 cm; address placeholder "Địa chỉ chi tiết (Số nhà, ngõ, đường)".
+
+## Follow-up 2 (2026-10-30): 4 remaining sale-screen features
+1. **Bán thuốc theo đơn** — checkbox under customer (normal + delivery modes, hidden for order/return tabs). Fields: mã đơn thuốc, bác sĩ kê đơn, cơ sở khám, chẩn đoán; plain note "Chưa kết nối Hệ thống Đơn thuốc Quốc gia". Stored on invoice (`V19`: `prescription`, `prescription_code/doctor/facility/diagnosis`), returned as `prescription`, shown in invoice detail (`invoice-prescription-info.tsx`), print fields `Thong_Tin_Don_Thuoc`, `Ma_Don_Thuoc`, `Bac_Si_Ke_Don`, `Co_So_Kham`, `Chan_Doan` (default INVOICE template prints the summary). Normal sale; stock deducted as usual; edit can remove it.
+2. **Giảm thuế (NQ 204/2025/QH15, 01/07/2025–31/12/2026)** — toggle + ⓘ tooltip under Giảm giá, amount blue; hidden outside window and on order/return tabs.
+   - Rule: only lines with product `taxReduction` flag AND tax code VAT10 → 8%; price is VAT-inclusive, reduction = net line amount × 2/110 (110,000 → 108,000, −2,000); invoice discount allocated proportionally first.
+   - Server authoritative (`InvoiceTaxReduction`, `InvoiceMath.totals(..., reduceTax)`): window checked on sold date (VN). Stored `invoices.tax_reduction`, `invoice_lines.tax_reduced`; `total` = subtotal − discount − reduction, so existing detail "Giảm thuế" row shows it. Print field `Giam_Thue` (+ row in default INVOICE template).
+   - E-invoice: internal source line carries `taxReduced`; MISA payload invoices those lines at 8% (pre-tax from 10%-inclusive price, VAT 8%). Unit tests added (sales `InvoiceMathTest`, integration `MisaInvoicePayloadTest`).
+   - Sale catalog (product-service `SaleCatalogRepository`) now returns `taxReduction` per product; cart lines carry it; request line sends `taxReducible` (client flag, server still requires VAT10 + toggle + window).
+   - **Direct method (phương pháp trực tiếp) branch NOT implemented**: store tax settings (Thiết lập → Thuế & Kế toán) model household-business sector % rates but have no explicit tax-method (khấu trừ / trực tiếp) field, so per instruction only the 10% → 8% rule is applied.
+3. **Branch select** at top of the payment / delivery middle column: only the user's assigned branches, remembered per user on the device. Switching reloads the branch catalog (stock, price books); cart lines stay; existing price-book check drops a no-longer-applicable book and reprices non-edited lines.
+4. **Editable "Hóa đơn giao hàng" template** — identity-service `PrintTemplateService.TYPES` + `DELIVERY_INVOICE`; frontend `PRINT_DEFS.DELIVERY_INVOICE` (default = previous delivery template, receiver/shipment/COD + tax/prescription fields, sample data); sale printer uses saved template or default. Old `delivery-invoice-print-template.ts` merged into print module.
+
+### Builds / restarts
+- Built sales-service, product-service, integration-service, identity-service (one Maven run, tests pass) and restarted. Frontend `tsc` clean, eslint clean, `next build` OK (includes 0fbd699 sticky headers and 73d0d9e employees fix), :3010 restarted.
+
+### e2e (all pass, own rows cleaned)
+- `e2e_delivery.py` 50/50 (new `e2e_sale_tax_rx.py`: TX1 catalog flag, TX2 reduction 2,000 + ineligible line unchanged, TX3 after discount / off, RX1 prescription stored + stock deducted, RX2 removed on edit, BR1 per-branch catalog stock, PT1 DELIVERY_INVOICE template save/restore).
+- `e2e_sales.py` 22/22, `e2e_sale_backend.py` 57/57, `e2e_invoice_tools.py` 27/27.
+
+### Browser checks (Playwright, after final restart)
+- Invoices + products lists: header row stays fixed while the table scrolls vertically.
+- Products: horizontal scroll works (scrollWidth 1378 > 978), expanded detail panel stays sticky-left (left unchanged at scrollLeft 300).
+- /employees: filter column fully visible (aside right 242px < table left 253px).
+- Sale screen: branch picker (long names truncated), prescription fields, Giảm thuế toggle render; no page errors.
+
+### Unresolved questions
+- Need an explicit store tax-method setting (khấu trừ / trực tiếp) before the direct-method reduction (rate × 80%) can be implemented.
+- Order (đặt hàng) tabs do not support Giảm thuế / đơn thuốc; invoice created from an order can enable them on the invoice tab.
