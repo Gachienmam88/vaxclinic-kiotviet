@@ -11,7 +11,7 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * Mẫu in đã sửa, lưu trong app_settings với khóa "print:{TYPE}" (qua {@link SettingsStore}). Loại chưa sửa → không có
+ * Mẫu in đã sửa, lưu trong app_settings với khóa "print:{TYPE}" (qua {@link SettingsRepository}). Loại chưa sửa → không có
  * trong kết quả, trình duyệt dùng mẫu mặc định. Mỗi lần sửa / đặt lại ghi Lịch sử thao tác tính năng "Mẫu in".
  */
 @Service
@@ -21,10 +21,10 @@ public class PrintTemplateService {
             "PURCHASE_RECEIPT", "PURCHASE_RETURN");
     private static final String FEATURE = "Mẫu in";
 
-    private final SettingsStore store;
+    private final SettingsRepository store;
     private final AuditLogger audit;
 
-    public PrintTemplateService(SettingsStore store, AuditLogger audit) {
+    public PrintTemplateService(SettingsRepository store, AuditLogger audit) {
         this.store = store;
         this.audit = audit;
     }

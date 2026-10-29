@@ -2,7 +2,7 @@ package com.vaxclinic.identity.notification;
 
 import com.vaxclinic.common.web.PageResponse;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -10,8 +10,8 @@ import java.util.List;
 import java.util.UUID;
 
 /** Đọc hộp thư theo người xem (chi nhánh + quyền) và trạng thái đã đọc của từng người. */
-@Component
-public class NotificationReader {
+@Repository
+public class NotificationQueryRepository {
 
     /** read: người xem đã đọc; branchName null = mọi chi nhánh. */
     public record NotificationItem(long id, String category, String type, String title, String body, String docCode,
@@ -32,7 +32,7 @@ public class NotificationReader {
 
     private final JdbcTemplate jdbc;
 
-    public NotificationReader(JdbcTemplate jdbc) {
+    public NotificationQueryRepository(JdbcTemplate jdbc) {
         this.jdbc = jdbc;
     }
 

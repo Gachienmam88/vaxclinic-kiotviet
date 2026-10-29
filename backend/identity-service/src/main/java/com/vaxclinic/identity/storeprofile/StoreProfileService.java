@@ -5,7 +5,7 @@ import com.vaxclinic.common.web.PageResponse;
 import com.vaxclinic.identity.auth.twofactor.TwoFactorService;
 import com.vaxclinic.identity.branch.BranchRepository;
 import com.vaxclinic.identity.settings.SettingsController.StoreInfo;
-import com.vaxclinic.identity.settings.SettingsStore;
+import com.vaxclinic.identity.settings.SettingsRepository;
 import com.vaxclinic.identity.settings.StoreAccessController;
 import com.vaxclinic.identity.storeprofile.StoreProfileHistoryRepository.HistoryItem;
 import com.vaxclinic.identity.storeprofile.StoreProfileModels.OwnerProfile;
@@ -39,7 +39,7 @@ public class StoreProfileService {
     static final String INDUSTRY = "Tiêm chủng";
     private static final Set<String> OWNER_PURPOSES = Set.of("RENAME", "TRANSFER", "PAUSE");
 
-    private final SettingsStore store;
+    private final SettingsRepository store;
     private final StoreStatusService status;
     private final StoreProfileAccess access;
     private final StoreActionVerifier verifier;
@@ -49,7 +49,7 @@ public class StoreProfileService {
     private final TwoFactorService twoFactor;
     private final AuditLogger audit;
 
-    public StoreProfileService(SettingsStore store, StoreStatusService status, StoreProfileAccess access, StoreActionVerifier verifier,
+    public StoreProfileService(SettingsRepository store, StoreStatusService status, StoreProfileAccess access, StoreActionVerifier verifier,
                                AppUserRepository users, BranchRepository branches, StoreProfileHistoryRepository history,
                                TwoFactorService twoFactor, AuditLogger audit) {
         this.store = store;

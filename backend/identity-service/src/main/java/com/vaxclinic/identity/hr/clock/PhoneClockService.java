@@ -3,10 +3,9 @@ package com.vaxclinic.identity.hr.clock;
 import com.vaxclinic.common.error.BusinessException;
 import com.vaxclinic.common.settings.ShopSettings;
 import com.vaxclinic.identity.hr.attendance.AttendanceWriter;
-import com.vaxclinic.identity.hr.attendance.AttendanceWriter.Existing;
+import com.vaxclinic.identity.hr.attendance.AttendanceRepository.Existing;
 import com.vaxclinic.identity.hr.attendance.AttendanceWriter.Slot;
 import com.vaxclinic.identity.hr.settings.HrSettings.Timekeeping;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,11 +28,11 @@ public class PhoneClockService {
 
     private static final DateTimeFormatter HM = DateTimeFormatter.ofPattern("HH:mm").withZone(ShopSettings.ZONE);
 
-    private final JdbcTemplate jdbc;
+    private final ClockRepository repo;
     private final AttendanceWriter writer;
 
-    public PhoneClockService(JdbcTemplate jdbc, AttendanceWriter writer) {
-        this.jdbc = jdbc;
+    public PhoneClockService(ClockRepository repo, AttendanceWriter writer) {
+        this.repo = repo;
         this.writer = writer;
     }
 
@@ -55,11 +54,7 @@ public class PhoneClockService {
     @Transactional
     public Result checkOut(UUID emp, Instant now, UUID branchId, Timekeeping tk) {
         LocalDate today = now.atZone(ShopSettings.ZONE).toLocalDate();
-        var open = jdbc.query("""
-                select a.shift_id, a.work_date from hr_attendance a where a.employee_id = ? and a.check_in is not null
-                  and a.check_out is null and a.absence is null and not a.approved and a.work_date between ? and ? and a.check_in < ?
-                order by a.check_in desc limit 1""", (rs, i) -> new Object[]{rs.getObject(1, UUID.class), rs.getObject(2, LocalDate.class)},
-                emp, today.minusDays(1), today, java.sql.Timestamp.from(now));
+        var open = repo.latestOpenShift(emp, today, now);
         if (open.isEmpty()) {
             Slot slot = writer.pick(emp, now, tk.allowUnscheduled());
             if (slot == null) {
@@ -71,8 +66,8 @@ public class PhoneClockService {
             return new Result(slot.shift().id(), slot.shift().name(), slot.date(),
                     "Đã ra " + slot.shift().name() + " lúc " + HM.format(now) + " (chưa có giờ vào ca)");
         }
-        UUID shiftId = (UUID) open.get(0)[0];
-        LocalDate date = (LocalDate) open.get(0)[1];
+        UUID shiftId = open.get(0).shiftId();
+        LocalDate date = open.get(0).date();
         List<Slot> day = writer.scheduledSlots(emp, date, date);
         Slot current = day.stream().filter(s -> s.shift().id().equals(shiftId)).findFirst().orElse(null);
         if (current != null && tk.singleInOutMultiShift()) {
@@ -90,7 +85,7 @@ public class PhoneClockService {
         UUID target = current == null ? shiftId : current.shift().id();
         Existing ex = writer.find(emp, target, date);
         writer.upsert(emp, target, date, ex.in(), now, null, null, false, "PHONE", branchId);
-        String name = jdbc.queryForObject("select name from hr_shifts where id = ?", String.class, target);
+        String name = repo.shiftName(target);
         return new Result(target, name, date, "Đã ra " + name + " lúc " + HM.format(now));
     }
 

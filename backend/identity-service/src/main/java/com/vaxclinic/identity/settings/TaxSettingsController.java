@@ -75,10 +75,10 @@ public class TaxSettingsController {
 
     static final TaxSettings DEFAULT = new TaxSettings(true, DEFAULT_SECTORS, "SAN_XUAT", Map.of(), "HKD_KCT_15", List.of());
 
-    private final SettingsStore store;
+    private final SettingsRepository store;
     private final AuditLogger audit;
 
-    public TaxSettingsController(SettingsStore store, AuditLogger audit) {
+    public TaxSettingsController(SettingsRepository store, AuditLogger audit) {
         this.store = store;
         this.audit = audit;
     }

@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * API công khai /api/auth/store-status: gateway (StoreStatusFilter) đọc định kỳ để chặn API (423) khi bảo lưu và từ chối
  * JWT cũ sau khi đổi tên gian hàng; màn hình đọc để hiện thông báo bảo lưu. Không lộ dữ liệu nào khác.
- * Luồng: StoreStatusController → StoreStatusService → SettingsStore (app_settings).
+ * Luồng: StoreStatusController → StoreStatusService → SettingsRepository (app_settings).
  */
 @RestController
 public class StoreStatusController {

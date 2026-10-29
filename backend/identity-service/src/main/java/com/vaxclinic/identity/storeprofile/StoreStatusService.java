@@ -1,7 +1,7 @@
 package com.vaxclinic.identity.storeprofile;
 
 import com.vaxclinic.common.settings.ShopSettings;
-import com.vaxclinic.identity.settings.SettingsStore;
+import com.vaxclinic.identity.settings.SettingsRepository;
 import com.vaxclinic.identity.storeprofile.StoreProfileModels.SessionCutoff;
 import com.vaxclinic.identity.storeprofile.StoreProfileModels.StorePause;
 import com.vaxclinic.identity.storeprofile.StoreProfileModels.StoreStatus;
@@ -11,7 +11,7 @@ import java.time.LocalDate;
 
 /**
  * Trạng thái gian hàng: đang bảo lưu hay không + mốc vô hiệu phiên. Tính theo ngày hiện tại nên tự mở lại đúng ngày
- * reopenOn mà không cần job. Dữ liệu ở app_settings (SettingsStore) khóa "store_pause" và "session_cutoff".
+ * reopenOn mà không cần job. Dữ liệu ở app_settings (SettingsRepository) khóa "store_pause" và "session_cutoff".
  */
 @Service
 public class StoreStatusService {
@@ -19,9 +19,9 @@ public class StoreStatusService {
     static final String PAUSE_KEY = "store_pause";
     static final String CUTOFF_KEY = "session_cutoff";
 
-    private final SettingsStore store;
+    private final SettingsRepository store;
 
-    public StoreStatusService(SettingsStore store) {
+    public StoreStatusService(SettingsRepository store) {
         this.store = store;
     }
 

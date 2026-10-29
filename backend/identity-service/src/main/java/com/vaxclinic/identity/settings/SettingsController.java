@@ -61,10 +61,10 @@ public class SettingsController {
                               ShopSettings.BookLock lock, String accessCode) {
     }
 
-    private final SettingsStore store;
+    private final SettingsRepository store;
     private final AuditLogger audit;
 
-    public SettingsController(SettingsStore store, AuditLogger audit) {
+    public SettingsController(SettingsRepository store, AuditLogger audit) {
         this.store = store;
         this.audit = audit;
     }

@@ -2,7 +2,7 @@ package com.vaxclinic.identity.hr.schedule;
 
 import com.vaxclinic.identity.hr.payroll.PayRates;
 import com.vaxclinic.identity.hr.settings.HrSettingsService;
-import org.springframework.jdbc.core.JdbcTemplate;
+import com.vaxclinic.identity.hr.schedule.ScheduleRepository.SalariedEmployee;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -22,17 +22,14 @@ import java.util.stream.Collectors;
 @Component
 public class ExpectedSalaryCalculator {
 
-    private final JdbcTemplate jdbc;
+    private final ScheduleRepository schedules;
     private final HrSettingsService settings;
     private final ShiftRepository shiftRepo;
 
-    public ExpectedSalaryCalculator(JdbcTemplate jdbc, HrSettingsService settings, ShiftRepository shiftRepo) {
-        this.jdbc = jdbc;
+    public ExpectedSalaryCalculator(ScheduleRepository schedules, HrSettingsService settings, ShiftRepository shiftRepo) {
+        this.schedules = schedules;
         this.settings = settings;
         this.shiftRepo = shiftRepo;
-    }
-
-    private record Emp(UUID id, String type, BigDecimal amount, UUID branch) {
     }
 
     public Map<UUID, BigDecimal> expected(LocalDate from, LocalDate to) {
@@ -40,19 +37,18 @@ public class ExpectedSalaryCalculator {
         int startDay = settings.payroll().startDay();
         var holidays = settings.holidays();
         Map<UUID, Shift> shifts = shiftRepo.findAll().stream().collect(Collectors.toMap(Shift::id, Function.identity()));
-        var emps = jdbc.query("select id, salary_type, salary_amount, main_branch_id from hr_employees where status = 'WORKING' and salary_type is not null",
-                (rs, i) -> new Emp(rs.getObject(1, UUID.class), rs.getString(2), rs.getBigDecimal(3), rs.getObject(4, UUID.class)));
+        var emps = schedules.salariedWorkingEmployees();
         Map<UUID, BigDecimal> out = new HashMap<>();
         Map<UUID, Map<LocalDate, Integer>> minutesByDay = new HashMap<>();
         Map<UUID, List<Object[]>> slots = new HashMap<>();
-        jdbc.query("select employee_id, shift_id, work_date from hr_schedules where work_date between ? and ?", rs -> {
-            UUID emp = rs.getObject(1, UUID.class);
-            Shift sh = shifts.get(rs.getObject(2, UUID.class));
-            LocalDate d = rs.getObject(3, LocalDate.class);
+        for (var row : schedules.shiftsBetween(from, to)) {
+            UUID emp = row.employeeId();
+            Shift sh = shifts.get(row.shiftId());
+            LocalDate d = row.workDate();
             minutesByDay.computeIfAbsent(emp, k -> new HashMap<>()).merge(d, sh == null ? 0 : sh.minutes(), Integer::sum);
             slots.computeIfAbsent(emp, k -> new java.util.ArrayList<>()).add(new Object[]{sh, d});
-        }, from, to);
-        for (Emp e : emps) {
+        }
+        for (SalariedEmployee e : emps) {
             List<Integer> workdays = e.branch() == null ? HrSettingsService.ALL_DAYS : settings.workdaysOf(e.branch());
             BigDecimal sum = BigDecimal.ZERO;
             if ("FIXED".equals(e.type())) {

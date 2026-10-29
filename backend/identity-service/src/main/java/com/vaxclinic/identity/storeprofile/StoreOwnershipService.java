@@ -4,7 +4,7 @@ import com.vaxclinic.common.error.BusinessException;
 import com.vaxclinic.common.settings.ShopSettings;
 import com.vaxclinic.identity.auth.RefreshTokenRepository;
 import com.vaxclinic.identity.settings.SettingsController.StoreInfo;
-import com.vaxclinic.identity.settings.SettingsStore;
+import com.vaxclinic.identity.settings.SettingsRepository;
 import com.vaxclinic.identity.storeprofile.StoreProfileModels.PauseRequest;
 import com.vaxclinic.identity.storeprofile.StoreProfileModels.ProfileView;
 import com.vaxclinic.identity.storeprofile.StoreProfileModels.RenameRequest;
@@ -43,12 +43,12 @@ public class StoreOwnershipService {
     private final StoreProfileService profile;
     private final StoreProfileAccess access;
     private final StoreActionVerifier verifier;
-    private final SettingsStore store;
+    private final SettingsRepository store;
     private final AppUserRepository users;
     private final RefreshTokenRepository refreshTokens;
 
     public StoreOwnershipService(StoreProfileService profile, StoreProfileAccess access, StoreActionVerifier verifier,
-                                 SettingsStore store, AppUserRepository users, RefreshTokenRepository refreshTokens) {
+                                 SettingsRepository store, AppUserRepository users, RefreshTokenRepository refreshTokens) {
         this.profile = profile;
         this.access = access;
         this.verifier = verifier;

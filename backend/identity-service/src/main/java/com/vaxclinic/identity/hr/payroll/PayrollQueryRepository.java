@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vaxclinic.common.error.BusinessException;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.sql.ResultSet;
@@ -17,8 +17,8 @@ import java.util.List;
 import java.util.UUID;
 
 /** Tra cứu bảng lương (danh sách có dòng tổng, chi tiết phiếu lương + lịch sử thanh toán). */
-@Component
-public class PayrollQuery {
+@Repository
+public class PayrollQueryRepository {
 
     /** remaining = Còn cần trả. */
     public record Payroll(UUID id, String code, String name, String payCycle, LocalDate periodStart, LocalDate periodEnd, UUID branchId,
@@ -45,7 +45,7 @@ public class PayrollQuery {
     private final JdbcTemplate jdbc;
     private final ObjectMapper json;
 
-    public PayrollQuery(JdbcTemplate jdbc, ObjectMapper json) {
+    public PayrollQueryRepository(JdbcTemplate jdbc, ObjectMapper json) {
         this.jdbc = jdbc;
         this.json = json;
     }

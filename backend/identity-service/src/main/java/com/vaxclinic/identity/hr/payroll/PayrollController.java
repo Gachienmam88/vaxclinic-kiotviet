@@ -48,13 +48,13 @@ public class PayrollController {
                              Instant paidAt) {
     }
 
-    private final PayrollQuery query;
+    private final PayrollQueryRepository query;
     private final PayrollService service;
     private final PayrollPaymentService payments;
     private final HrSettingsService settings;
     private final AuditLogger audit;
 
-    public PayrollController(PayrollQuery query, PayrollService service, PayrollPaymentService payments, HrSettingsService settings,
+    public PayrollController(PayrollQueryRepository query, PayrollService service, PayrollPaymentService payments, HrSettingsService settings,
                              AuditLogger audit) {
         this.query = query;
         this.service = service;
@@ -64,19 +64,19 @@ public class PayrollController {
     }
 
     @GetMapping
-    public PayrollQuery.Page list(@RequestParam(required = false) List<String> statuses, @RequestParam(defaultValue = "") String q,
+    public PayrollQueryRepository.Page list(@RequestParam(required = false) List<String> statuses, @RequestParam(defaultValue = "") String q,
                                   @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "15") int size) {
         return query.search(statuses, q, page, size);
     }
 
     @GetMapping("/{id}")
-    public PayrollQuery.Detail get(@PathVariable UUID id) {
+    public PayrollQueryRepository.Detail get(@PathVariable UUID id) {
         return query.detail(id);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public PayrollQuery.Detail create(@Valid @RequestBody CreateRequest req, @AuthenticationPrincipal Jwt jwt) {
+    public PayrollQueryRepository.Detail create(@Valid @RequestBody CreateRequest req, @AuthenticationPrincipal Jwt jwt) {
         var period = PayRates.periodOf(LocalDate.now(ShopSettings.ZONE), settings.payroll().startDay());
         LocalDate start = req.periodStart() == null ? period.start() : req.periodStart();
         LocalDate end = req.periodEnd() == null ? (req.periodStart() == null ? period.end() : start.plusMonths(1).minusDays(1)) : req.periodEnd();
@@ -89,32 +89,32 @@ public class PayrollController {
     }
 
     @PostMapping("/{id}/recalculate")
-    public PayrollQuery.Detail recalculate(@PathVariable UUID id, @AuthenticationPrincipal Jwt jwt) {
+    public PayrollQueryRepository.Detail recalculate(@PathVariable UUID id, @AuthenticationPrincipal Jwt jwt) {
         service.recalculate(id);
         return logged(jwt, id, "Tính lại", "Tính lại bảng lương");
     }
 
     @PostMapping("/{id}/lock")
-    public PayrollQuery.Detail lock(@PathVariable UUID id, @AuthenticationPrincipal Jwt jwt) {
+    public PayrollQueryRepository.Detail lock(@PathVariable UUID id, @AuthenticationPrincipal Jwt jwt) {
         service.lock(id);
         return logged(jwt, id, "Chốt lương", "Chốt bảng lương");
     }
 
     @PostMapping("/{id}/cancel")
-    public PayrollQuery.Detail cancel(@PathVariable UUID id, @AuthenticationPrincipal Jwt jwt) {
+    public PayrollQueryRepository.Detail cancel(@PathVariable UUID id, @AuthenticationPrincipal Jwt jwt) {
         service.cancel(id);
         return logged(jwt, id, "Hủy", "Hủy bảng lương");
     }
 
     @PutMapping("/{id}/payslips/{slipId}")
-    public PayrollQuery.Detail bonus(@PathVariable UUID id, @PathVariable UUID slipId, @Valid @RequestBody BonusRequest req,
+    public PayrollQueryRepository.Detail bonus(@PathVariable UUID id, @PathVariable UUID slipId, @Valid @RequestBody BonusRequest req,
                                      @AuthenticationPrincipal Jwt jwt) {
         service.setBonus(id, slipId, req.bonus());
         return logged(jwt, id, "Sửa", "Cập nhật thưởng " + HrActor.money(req.bonus()));
     }
 
     @PostMapping("/{id}/payments")
-    public PayrollQuery.Detail pay(@PathVariable UUID id, @Valid @RequestBody PayRequest req, @AuthenticationPrincipal Jwt jwt) {
+    public PayrollQueryRepository.Detail pay(@PathVariable UUID id, @Valid @RequestBody PayRequest req, @AuthenticationPrincipal Jwt jwt) {
         HrActor actor = HrActor.of(jwt);
         List<String> codes = payments.pay(id, req.items(), req.method() == null ? "CASH" : req.method(),
                 req.paidAt() == null ? Instant.now() : req.paidAt(), actor);
@@ -128,7 +128,7 @@ public class PayrollController {
         return Map.of("code", code);
     }
 
-    private PayrollQuery.Detail logged(Jwt jwt, UUID id, String action, String detail) {
+    private PayrollQueryRepository.Detail logged(Jwt jwt, UUID id, String action, String detail) {
         var d = query.detail(id);
         HrActor.of(jwt).audit(audit, "Bảng lương", action, d.payroll().code(), detail + " " + d.payroll().code() + ", tổng lương "
                 + HrActor.money(d.payroll().total()));

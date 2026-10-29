@@ -1,16 +1,13 @@
 package com.vaxclinic.identity.hr.settings;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vaxclinic.identity.hr.settings.HrSettings.BranchWorkdays;
 import com.vaxclinic.identity.hr.settings.HrSettings.Holiday;
 import com.vaxclinic.identity.hr.settings.HrSettings.Mobile;
 import com.vaxclinic.identity.hr.settings.HrSettings.Payroll;
 import com.vaxclinic.identity.hr.settings.HrSettings.Template;
 import com.vaxclinic.identity.hr.settings.HrSettings.Timekeeping;
-import com.vaxclinic.identity.settings.SettingsStore;
-import org.springframework.jdbc.core.JdbcTemplate;
+import com.vaxclinic.identity.settings.SettingsRepository;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -24,14 +21,10 @@ public class HrSettingsService {
 
     public static final List<Integer> ALL_DAYS = List.of(1, 2, 3, 4, 5, 6, 7);
 
-    private final SettingsStore store;
-    private final JdbcTemplate jdbc;
-    private final ObjectMapper json;
+    private final SettingsRepository store;
 
-    public HrSettingsService(SettingsStore store, JdbcTemplate jdbc, ObjectMapper json) {
+    public HrSettingsService(SettingsRepository store) {
         this.store = store;
-        this.jdbc = jdbc;
-        this.json = json;
     }
 
     public Timekeeping timekeeping() {
@@ -78,15 +71,7 @@ public class HrSettingsService {
     }
 
     private <T> List<T> readList(String key, TypeReference<List<T>> type) {
-        return jdbc.query("select value::text from app_settings where key = ?", rs -> {
-            if (!rs.next()) {
-                return List.<T>of();
-            }
-            try {
-                return json.readValue(rs.getString(1), type);
-            } catch (JsonProcessingException e) {
-                throw new IllegalStateException("Invalid setting " + key, e);
-            }
-        }, key);
+        List<T> list = store.read(key, type);
+        return list == null ? List.of() : list;
     }
 }

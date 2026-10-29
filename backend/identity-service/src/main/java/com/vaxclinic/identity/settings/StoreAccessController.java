@@ -18,9 +18,9 @@ public class StoreAccessController {
 
     static final String FALLBACK_CODE = "vaxclinic";
 
-    private final SettingsStore store;
+    private final SettingsRepository store;
 
-    public StoreAccessController(SettingsStore store) {
+    public StoreAccessController(SettingsRepository store) {
         this.store = store;
     }
 

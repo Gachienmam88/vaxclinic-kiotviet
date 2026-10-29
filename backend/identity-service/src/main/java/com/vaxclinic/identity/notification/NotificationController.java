@@ -4,9 +4,9 @@ import com.vaxclinic.common.notification.NotificationClient.Item;
 import com.vaxclinic.common.notification.NotificationClient.Settings;
 import com.vaxclinic.common.notification.NotificationClient.SyncRequest;
 import com.vaxclinic.common.web.PageResponse;
-import com.vaxclinic.identity.notification.NotificationReader.NotificationItem;
-import com.vaxclinic.identity.notification.NotificationReader.UnreadCount;
-import com.vaxclinic.identity.settings.SettingsStore;
+import com.vaxclinic.identity.notification.NotificationQueryRepository.NotificationItem;
+import com.vaxclinic.identity.notification.NotificationQueryRepository.UnreadCount;
+import com.vaxclinic.identity.settings.SettingsRepository;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -35,11 +35,11 @@ public class NotificationController {
     public record SettingsRequest(@Min(1) @Max(365) int expiryAlertDays) {
     }
 
-    private final NotificationReader reader;
+    private final NotificationQueryRepository reader;
     private final NotificationWriter writer;
-    private final SettingsStore store;
+    private final SettingsRepository store;
 
-    public NotificationController(NotificationReader reader, NotificationWriter writer, SettingsStore store) {
+    public NotificationController(NotificationQueryRepository reader, NotificationWriter writer, SettingsRepository store) {
         this.reader = reader;
         this.writer = writer;
         this.store = store;

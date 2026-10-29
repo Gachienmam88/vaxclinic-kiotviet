@@ -4,10 +4,9 @@ import com.vaxclinic.common.error.BusinessException;
 import com.vaxclinic.common.settings.ShopSettings;
 import com.vaxclinic.identity.hr.schedule.Shift;
 import com.vaxclinic.identity.hr.schedule.ShiftRepository;
-import org.springframework.jdbc.core.JdbcTemplate;
+import com.vaxclinic.identity.hr.attendance.AttendanceRepository.Existing;
 import org.springframework.stereotype.Component;
 
-import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -36,22 +35,20 @@ public class AttendanceWriter {
 
     private static final Duration WINDOW = Duration.ofHours(4);
 
-    private final JdbcTemplate jdbc;
+    private final AttendanceRepository repo;
     private final ShiftRepository shiftRepo;
 
-    public AttendanceWriter(JdbcTemplate jdbc, ShiftRepository shiftRepo) {
-        this.jdbc = jdbc;
+    public AttendanceWriter(AttendanceRepository repo, ShiftRepository shiftRepo) {
+        this.repo = repo;
         this.shiftRepo = shiftRepo;
     }
 
     public List<Slot> scheduledSlots(UUID employeeId, LocalDate from, LocalDate to) {
         var shifts = shiftRepo.findAll();
-        return jdbc.query("select shift_id, work_date from hr_schedules where employee_id = ? and work_date between ? and ?", (rs, i) -> {
-            UUID sid = rs.getObject(1, UUID.class);
-            Shift sh = shifts.stream().filter(s -> s.id().equals(sid)).findFirst().orElseThrow();
-            LocalDate d = rs.getObject(2, LocalDate.class);
-            return slot(sh, d);
-        }, employeeId, from, to).stream().sorted(Comparator.comparing(Slot::start)).toList();
+        return repo.scheduledShifts(employeeId, from, to).stream().map(r -> {
+            Shift sh = shifts.stream().filter(s -> s.id().equals(r.shiftId())).findFirst().orElseThrow();
+            return slot(sh, r.date());
+        }).sorted(Comparator.comparing(Slot::start)).toList();
     }
 
     public static Slot slot(Shift sh, LocalDate d) {
@@ -78,13 +75,8 @@ public class AttendanceWriter {
         return !at.isBefore(s.start().minus(WINDOW)) && !at.isAfter(s.end().plus(WINDOW));
     }
 
-    public record Existing(UUID id, Instant in, Instant out, String absence, boolean approved) {
-    }
-
     public Existing find(UUID employeeId, UUID shiftId, LocalDate date) {
-        return jdbc.query("select id, check_in, check_out, absence, approved from hr_attendance where employee_id = ? and shift_id = ? and work_date = ?",
-                rs -> rs.next() ? new Existing(rs.getObject(1, UUID.class), ts(rs.getTimestamp(2)), ts(rs.getTimestamp(3)),
-                        rs.getString(4), rs.getBoolean(5)) : null, employeeId, shiftId, date);
+        return repo.find(employeeId, shiftId, date);
     }
 
     /** Ghi đè toàn bộ giá trị ô (sửa tay). */
@@ -96,15 +88,10 @@ public class AttendanceWriter {
         Existing ex = find(employeeId, shiftId, date);
         if (ex == null) {
             UUID id = UUID.randomUUID();
-            jdbc.update("""
-                    insert into hr_attendance(id, employee_id, shift_id, work_date, check_in, check_out, absence, approved, source, branch_id, note)
-                    values (?,?,?,?,?,?,?,?,?,?,?)""", id, employeeId, shiftId, date, t(in), t(out), absence, approved, source, branchId, note);
+            repo.insert(id, employeeId, shiftId, date, in, out, absence, approved, source, branchId, note);
             return id;
         }
-        jdbc.update("""
-                update hr_attendance set check_in = ?, check_out = ?, absence = ?, approved = ?, source = ?,
-                  branch_id = coalesce(?, branch_id), note = ?, updated_at = now() where id = ?""",
-                t(in), t(out), absence, approved, source, branchId, note, ex.id());
+        repo.update(ex.id(), in, out, absence, approved, source, branchId, note);
         return ex.id();
     }
 
@@ -129,13 +116,5 @@ public class AttendanceWriter {
 
     private static Instant max(Instant a, Instant b) {
         return a == null ? b : b == null ? a : a.isAfter(b) ? a : b;
-    }
-
-    static Timestamp t(Instant i) {
-        return i == null ? null : Timestamp.from(i);
-    }
-
-    static Instant ts(Timestamp t) {
-        return t == null ? null : t.toInstant();
     }
 }

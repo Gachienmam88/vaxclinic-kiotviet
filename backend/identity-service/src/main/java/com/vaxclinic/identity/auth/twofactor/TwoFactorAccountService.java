@@ -5,7 +5,7 @@ import com.vaxclinic.common.error.BusinessException;
 import com.vaxclinic.identity.auth.twofactor.TwoFactorService.Setup;
 import com.vaxclinic.identity.auth.twofactor.TwoFactorService.Status;
 import com.vaxclinic.identity.settings.SettingsController.StoreInfo;
-import com.vaxclinic.identity.settings.SettingsStore;
+import com.vaxclinic.identity.settings.SettingsRepository;
 import com.vaxclinic.identity.user.AppUser;
 import com.vaxclinic.identity.user.AppUserRepository;
 import org.springframework.stereotype.Service;
@@ -24,10 +24,10 @@ public class TwoFactorAccountService {
 
     private final TwoFactorService twoFactor;
     private final AppUserRepository users;
-    private final SettingsStore settings;
+    private final SettingsRepository settings;
     private final AuditLogger audit;
 
-    public TwoFactorAccountService(TwoFactorService twoFactor, AppUserRepository users, SettingsStore settings, AuditLogger audit) {
+    public TwoFactorAccountService(TwoFactorService twoFactor, AppUserRepository users, SettingsRepository settings, AuditLogger audit) {
         this.twoFactor = twoFactor;
         this.users = users;
         this.settings = settings;
