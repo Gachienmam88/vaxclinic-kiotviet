@@ -5,7 +5,6 @@ import com.vaxclinic.common.error.BusinessException;
 import com.vaxclinic.common.security.ServiceTokenProvider;
 import com.vaxclinic.integration.common.SecretCipher;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
@@ -34,15 +33,15 @@ public class EInvoiceService {
         }
     }
 
-    private final JdbcTemplate jdbc;
+    private final EInvoiceRepository repo;
     private final SecretCipher cipher;
     private final MisaClient misa;
     private final RestClient sales;
     private final ServiceTokenProvider tokens;
 
-    public EInvoiceService(InternalRestClientFactory httpFactory, JdbcTemplate jdbc, SecretCipher cipher, MisaClient misa,
+    public EInvoiceService(InternalRestClientFactory httpFactory, EInvoiceRepository repo, SecretCipher cipher, MisaClient misa,
                            @Value("${app.sales-url}") String salesUrl, @Value("${app.jwt.secret}") String secret) {
-        this.jdbc = jdbc;
+        this.repo = repo;
         this.cipher = cipher;
         this.misa = misa;
         this.sales = httpFactory.create(salesUrl);
@@ -50,8 +49,8 @@ public class EInvoiceService {
     }
 
     public MisaClient.Account account() {
-        var rows = jdbc.queryForList("select * from einvoice_settings where id = 1");
-        Map<String, Object> s = rows.isEmpty() ? Map.of() : rows.get(0);
+        Map<String, Object> row = repo.findSettings();
+        Map<String, Object> s = row == null ? Map.of() : row;
         if (s.get("app_id") == null || s.get("password_enc") == null || s.get("inv_series") == null) {
             throw BusinessException.badRequest("EINVOICE_NOT_CONFIGURED",
                     "Chưa thiết lập kết nối MISA meInvoice (Thiết lập → Hóa đơn điện tử)");
@@ -61,12 +60,12 @@ public class EInvoiceService {
     }
 
     public Map<String, Object> publish(UUID invoiceId) {
-        var existing = jdbc.queryForList("select * from einvoice_records where invoice_id = ?", invoiceId);
+        var existing = repo.findRecords(invoiceId);
         if (!existing.isEmpty() && "PUBLISHED".equals(existing.get(0).get("status"))) {
             return existing.get(0);
         }
         MisaClient.Account account = account(); // trước: báo "chưa thiết lập" rõ ràng khi chưa có dòng cấu hình
-        var settings = jdbc.queryForMap("select * from einvoice_settings where id = 1");
+        var settings = repo.getSettings();
         SalesInvoice inv = sales.get().uri("/internal/invoices/{id}", invoiceId)
                 .header("Authorization", "Bearer " + tokens.token()).retrieve().body(SalesInvoice.class);
         if (inv == null || !"COMPLETED".equals(inv.status())) {
@@ -74,8 +73,7 @@ public class EInvoiceService {
         }
         UUID refId = existing.isEmpty() ? UUID.randomUUID() : (UUID) existing.get(0).get("ref_id");
         if (existing.isEmpty()) {
-            jdbc.update("insert into einvoice_records(invoice_id, invoice_code, status, ref_id) values (?,?, 'FAILED', ?)",
-                    invoiceId, inv.code(), refId);
+            repo.insertRecord(invoiceId, inv.code(), refId);
         }
         var b = inv.buyer();
         var source = new MisaInvoicePayload.Source(inv.code(), inv.soldAt(), inv.paymentMethod(), inv.discount(), inv.total(),
@@ -90,11 +88,8 @@ public class EInvoiceService {
         } catch (BusinessException e) {
             r = new MisaClient.PublishResult(false, null, null, null, null, null, e.getMessage());
         }
-        jdbc.update("""
-                update einvoice_records set status = ?, transaction_id = ?, inv_series = ?, inv_no = ?, inv_code = ?, inv_date = ?,
-                    error = ?, attempts = attempts + 1, updated_at = now() where invoice_id = ?""",
-                r.ok() ? "PUBLISHED" : "FAILED", r.transactionId(), r.invSeries(), r.invNo(), r.invCode(), r.invDate(),
-                r.error(), invoiceId);
-        return jdbc.queryForMap("select * from einvoice_records where invoice_id = ?", invoiceId);
+        repo.updateResult(invoiceId, r.ok() ? "PUBLISHED" : "FAILED", r.transactionId(), r.invSeries(), r.invNo(), r.invCode(),
+                r.invDate(), r.error());
+        return repo.getRecord(invoiceId);
     }
 }

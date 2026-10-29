@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-/** Đọc / gắn phiếu nhập cho hóa đơn đầu vào (input_invoices). Chỉ truy cập DB; ghi upsert ở {@link InputInvoiceStore}. */
+/** Đọc / gắn phiếu nhập cho hóa đơn đầu vào (input_invoices). Chỉ truy cập DB; ghi upsert ở {@link InputInvoiceWriteRepository}. */
 @Repository
 public class InputInvoiceRepository {
 

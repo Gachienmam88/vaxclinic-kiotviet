@@ -8,8 +8,8 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Thiết lập MISA (einvoice_settings, 1 dòng id = 1) và tra cứu kết quả phát hành (einvoice_records) cho API.
- * Chỉ truy cập DB; mật khẩu lưu dạng đã mã hóa (password_enc). Ghi kết quả phát hành nằm ở {@link EInvoiceService}.
+ * Thiết lập MISA (einvoice_settings, 1 dòng id = 1) và kết quả phát hành (einvoice_records): tra cứu cho API, ghi khi phát hành
+ * ({@link EInvoiceService}). Chỉ truy cập DB; mật khẩu lưu dạng đã mã hóa (password_enc).
  */
 @Repository
 public class EInvoiceRepository {
@@ -53,6 +53,35 @@ public class EInvoiceRepository {
         return jdbc.query("select invoice_id, case when status = 'PUBLISHED' and coalesce(inv_code, '') <> '' then 'ACCEPTED'"
                 + " else status end st from einvoice_records", (rs, n) -> Map.of("invoiceId", rs.getObject(1, UUID.class).toString(),
                 "status", rs.getString(2)));
+    }
+
+    /** Dòng thiết lập (mọi cột); lỗi nếu chưa lưu. */
+    public Map<String, Object> getSettings() {
+        return jdbc.queryForMap("select * from einvoice_settings where id = 1");
+    }
+
+    /** Bản ghi phát hành (mọi cột) của hóa đơn; rỗng = chưa phát hành lần nào. */
+    public List<Map<String, Object>> findRecords(UUID invoiceId) {
+        return jdbc.queryForList("select * from einvoice_records where invoice_id = ?", invoiceId);
+    }
+
+    public Map<String, Object> getRecord(UUID invoiceId) {
+        return jdbc.queryForMap("select * from einvoice_records where invoice_id = ?", invoiceId);
+    }
+
+    /** Tạo bản ghi FAILED trước khi gọi MISA (giữ RefID cho lần thử lại). */
+    public void insertRecord(UUID invoiceId, String invoiceCode, UUID refId) {
+        jdbc.update("insert into einvoice_records(invoice_id, invoice_code, status, ref_id) values (?,?, 'FAILED', ?)",
+                invoiceId, invoiceCode, refId);
+    }
+
+    /** Ghi kết quả gọi MISA, tăng số lần thử. */
+    public void updateResult(UUID invoiceId, String status, String transactionId, String invSeries, String invNo, String invCode,
+                             String invDate, String error) {
+        jdbc.update("""
+                update einvoice_records set status = ?, transaction_id = ?, inv_series = ?, inv_no = ?, inv_code = ?, inv_date = ?,
+                    error = ?, attempts = attempts + 1, updated_at = now() where invoice_id = ?""",
+                status, transactionId, invSeries, invNo, invCode, invDate, error, invoiceId);
     }
 
     public boolean isPublished(UUID invoiceId) {

@@ -24,10 +24,10 @@ public class TaxConnectionService {
     private final TaxConnectionRepository connections;
     private final SecretCipher cipher;
     private final GdtPortalClient portal;
-    private final InputInvoiceStore store;
+    private final InputInvoiceWriteRepository store;
 
     public TaxConnectionService(TaxConnectionRepository connections, SecretCipher cipher, GdtPortalClient portal,
-                                InputInvoiceStore store) {
+                                InputInvoiceWriteRepository store) {
         this.connections = connections;
         this.cipher = cipher;
         this.portal = portal;
@@ -81,7 +81,7 @@ public class TaxConnectionService {
             var invoices = portal.purchaseInvoices(token, req.from(), req.to());
             for (var s : invoices) {
                 boolean sco = s.path("khhdon").asText("").length() > 3 && s.path("khhdon").asText().charAt(3) == 'M';
-                var parsed = InputInvoiceStore.fromPortal(s, portal.detail(token, s, sco));
+                var parsed = InputInvoiceWriteRepository.fromPortal(s, portal.detail(token, s, sco));
                 if (store.upsert(parsed, (String) c.get("tax_code"), "PORTAL")) {
                     added++;
                 }

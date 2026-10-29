@@ -3,7 +3,7 @@ package com.vaxclinic.integration.inputinvoice;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.sql.Date;
@@ -12,15 +12,15 @@ import java.util.UUID;
 
 /**
  * Ghi hóa đơn đầu vào: upsert theo (MST bán, mẫu số, ký hiệu, số) → đồng bộ lại / nhập lại file không tạo trùng,
- * và không làm mất liên kết "đã lập phiếu nhập".
+ * và không làm mất liên kết "đã lập phiếu nhập". Chỉ truy cập DB (+ chuyển dòng JSON cổng thuế về dạng hóa đơn XML).
  */
-@Component
-public class InputInvoiceStore {
+@Repository
+public class InputInvoiceWriteRepository {
 
     private final JdbcTemplate jdbc;
     private final ObjectMapper json;
 
-    public InputInvoiceStore(JdbcTemplate jdbc, ObjectMapper json) {
+    public InputInvoiceWriteRepository(JdbcTemplate jdbc, ObjectMapper json) {
         this.jdbc = jdbc;
         this.json = json;
     }

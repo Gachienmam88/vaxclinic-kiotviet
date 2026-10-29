@@ -19,9 +19,9 @@ import java.util.UUID;
 public class InputInvoiceService {
 
     private final InputInvoiceRepository invoices;
-    private final InputInvoiceStore store;
+    private final InputInvoiceWriteRepository store;
 
-    public InputInvoiceService(InputInvoiceRepository invoices, InputInvoiceStore store) {
+    public InputInvoiceService(InputInvoiceRepository invoices, InputInvoiceWriteRepository store) {
         this.invoices = invoices;
         this.store = store;
     }
