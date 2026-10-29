@@ -93,17 +93,28 @@ public class ProductListRepository {
 
         var totals = jdbc.queryForMap("select count(*) cnt, coalesce(sum(s.qty), 0) total_stock" + from, params);
         params.addValue("limit", f.size()).addValue("offset", (long) f.page() * f.size());
+        // Dự kiến hết hàng = tồn / (số bán ròng 30 ngày gần nhất ÷ số ngày). Hàng tạo chưa đủ 30 ngày thì chia theo
+        // số ngày từ lúc tạo (tối thiểu 1) để không đánh giá thấp tốc độ bán.
         List<ProductListItem> items = jdbc.query("""
                 select p.id, u.code, p.name, p.short_name, u.unit_name, u.price, p.cost, t.name tax_name,
                        p.tax_reduction, p.lot_managed, coalesce(s.qty, 0) qty, coalesce(s.rsv, 0) rsv, p.active,
+                       p.created_at,
                        array(select o.unit_name from product_units o
-                             where o.product_id = p.id and not o.is_base order by o.sort_order) other_units
+                             where o.product_id = p.id and not o.is_base order by o.sort_order) other_units,
+                       (select case when sold > 0 then floor(greatest(coalesce(s.qty, 0), 0) * least(30,
+                                   greatest(1, ceil(extract(epoch from now() - p.created_at) / 86400))) / sold)::int end
+                        from (select -sum(l.quantity) sold from stock_ledger l
+                              where l.product_id = p.id and l.doc_type in ('SALE', 'RETURN')
+                                and l.occurred_at >= now() - interval '30 days'
+                                and (cast(:branchId as uuid) is null or l.branch_id = cast(:branchId as uuid))) v
+                       ) expected_out_days
                 """ + from + " order by p.created_at desc limit :limit offset :offset", params,
                 (rs, i) -> new ProductListItem(rs.getObject("id", UUID.class), rs.getString("code"),
                         rs.getString("name"), rs.getString("short_name"), rs.getString("unit_name"),
                         toList(rs.getArray("other_units")), rs.getBigDecimal("price"), rs.getBigDecimal("cost"),
                         rs.getString("tax_name"), rs.getBoolean("tax_reduction"), rs.getBoolean("lot_managed"),
-                        rs.getBigDecimal("qty"), rs.getBigDecimal("rsv"), rs.getBoolean("active")));
+                        rs.getBigDecimal("qty"), rs.getBigDecimal("rsv"), rs.getBoolean("active"),
+                        rs.getTimestamp("created_at").toInstant(), rs.getObject("expected_out_days", Integer.class)));
 
         return new ProductListResponse(items, ((Number) totals.get("cnt")).longValue(), f.page(), f.size(),
                 (BigDecimal) totals.get("total_stock"));
