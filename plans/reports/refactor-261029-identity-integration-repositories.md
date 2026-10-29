@@ -45,4 +45,4 @@ integration:
 (some new files were captured earlier by the auto-commit hook as `auto: update ...`). Not pushed.
 
 ## Open questions
-- None blocking. `PayrollCalculator.java` appears to contain mojibake-like bytes (pre-existing, untouched) — worth a look.
+- None blocking.
