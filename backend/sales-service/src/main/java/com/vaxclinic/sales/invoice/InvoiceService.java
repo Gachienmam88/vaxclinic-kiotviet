@@ -166,8 +166,9 @@ public class InvoiceService {
     }
 
     /** Sửa người bán / thời gian / kênh bán / ghi chú. Thiết lập "Không cho phép thay đổi thời gian giao dịch" chặn đổi thời gian. */
-    public void updateInfo(UUID id, InvoiceDtos.InfoRequest req) {
+    public void updateInfo(UUID id, InvoiceDtos.InfoRequest req, Actor actor) {
         Invoice inv = find(id);
+        actor.checkBranch(inv.getBranchId());
         rules.checkNotLocked(inv.getBranchId(), inv.getSoldAt());
         if (req.soldAt() != null && !req.soldAt().equals(inv.getSoldAt())) {
             if (rules.settings().sales().lockTransactionTime()) {
@@ -177,6 +178,21 @@ public class InvoiceService {
         }
         String channel = req.salesChannel() == null ? null : channels.resolve(req.salesChannel(), inv.getSalesChannel());
         writer.updateInfo(id, req, channel);
+    }
+
+    /**
+     * Sửa tỷ lệ thuế từng dòng (popup "Thuế" ở chi tiết hóa đơn): như sửa hóa đơn — hóa đơn còn hiệu lực, đúng chi nhánh, ngoài kỳ
+     * khóa sổ, chưa phát hành HĐĐT (khi bật chặn sửa HĐ đã phát hành).
+     */
+    public void updateTaxCodes(UUID id, List<InvoiceDtos.TaxCodeChange> changes, Actor actor) {
+        Invoice inv = find(id);
+        if (!"COMPLETED".equals(inv.getStatus())) {
+            throw BusinessException.badRequest("INVOICE_NOT_EDITABLE", "Hóa đơn đã hủy, không sửa được");
+        }
+        actor.checkBranch(inv.getBranchId());
+        rules.checkNotLocked(inv.getBranchId(), inv.getSoldAt());
+        rules.checkEInvoiceNotPublished(id, "sửa thuế");
+        writer.updateTaxCodes(id, changes);
     }
 
     /** Kho từ chối (4xx: thiếu tồn...) → chắc chắn chưa trừ gì → FAILED; lỗi mạng / timeout → giữ PENDING cho đối soát. */

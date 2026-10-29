@@ -1191,7 +1191,8 @@ Thực hiện sửa:
 - Audit "Sửa" (`InvoiceManageService.java:56-63`).
 - Client: sửa phải có mạng; không có chia nhiều phương thức (`use-sale-invoice-submit.ts:51-62`).
 
-**Sửa thông tin** (`PATCH /info`, `InvoiceService.java:163-174`, `InvoiceWriter.java:187-201`)
+**Sửa thông tin** (`PATCH /info`, `InvoiceService.java:168-180`, `InvoiceWriter.java:187-201`)
+- `checkBranch` (chi nhánh của HĐ phải thuộc claim, audit #3) → `BRANCH_NOT_ALLOWED`.
 - Áp cho HĐ ở bất kỳ trạng thái nào; server không kiểm tra `status`. Client chỉ cho sửa khi `COMPLETED` (`invoice-detail-panel.tsx`).
 - Khóa sổ xét theo `sold_at` cũ.
 - Đổi `soldAt`:
@@ -1201,9 +1202,9 @@ Thực hiện sửa:
 - `note` luôn bị ghi đè: gửi null sẽ xóa ghi chú (`InvoiceWriter.java:200`).
 - Không kiểm tra chi nhánh của người thao tác (không gọi `checkBranch`).
 
-**Sửa mã thuế** (`PATCH /tax-codes`, `InvoiceWriter.java` `updateTaxCodes`)
+**Sửa mã thuế** (`PATCH /tax-codes`, `InvoiceService.updateTaxCodes` → `InvoiceWriter.updateTaxCodes`)
+- Kiểm tra như sửa HĐ (audit #3): HĐ không `COMPLETED` → 400 `INVOICE_NOT_EDITABLE`; `checkBranch` → `BRANCH_NOT_ALLOWED`; khóa sổ theo `sold_at` → `BOOK_LOCKED`; đã phát hành HĐĐT (khi bật "chặn sửa HĐ đã phát hành") → chặn như sửa / hủy (`SalesRules.checkEInvoiceNotPublished`).
 - Dòng không thuộc HĐ → `LINE_NOT_FOUND`.
-- Server không kiểm tra trạng thái HĐ, đã phát hành HĐĐT hay khóa sổ.
 - Client vô hiệu hóa mục này khi HĐĐT đã `PUBLISHED` (`invoice-detail-footer.tsx:44`).
 
 **Hủy HĐ** (`InvoiceService.cancel` `:150-160`, guard `InvoiceChangeGuard.java:99-113`, writer `InvoiceWriter.java:145-176`)
@@ -1625,7 +1626,7 @@ Gateway không route `/internal/**`.
 ### 2.12 Điểm chưa có / giới hạn thấy trong code
 
 - `GET /api/invoices`, `GET /api/sales-returns`, `GET /api/orders` không giới hạn theo chi nhánh của user ở server; chỉ lọc khi client gửi `branchId`. Danh sách HĐ ở client không gửi `branchId`.
-- `PATCH /api/invoices/{id}/info` và `/tax-codes` không gọi `checkBranch`; `/tax-codes` không kiểm tra trạng thái, khóa sổ, HĐĐT.
+- ~~`PATCH /info` và `/tax-codes` không gọi `checkBranch`; `/tax-codes` không kiểm tra trạng thái, khóa sổ, HĐĐT~~ — đã sửa (audit #3).
 - `/internal/invoices/{id}` (dữ liệu phát hành HĐĐT) không dùng `einvoice_*` nhập trên HĐ (§2.2).
 - Gộp đơn không chuyển giảm thuế / cờ `tax_reduced` / đơn thuốc / HĐĐT buyer sang HĐ gộp (§2.6).
 - Tính chất HĐĐT: chỉ phát hành HĐ gốc; lọc `ADJUST` / `REPLACE` luôn rỗng (`InvoiceFilterSql.java:74-81`).
@@ -1848,8 +1849,8 @@ Quy tắc dùng chung:
 | Method | Path | Quyền |
 |---|---|---|
 | GET | `/api/cashbook` | `cashbook.manage` OR `report.view`; `fund` mặc định CASH; `size` 1..100 |
-| GET | `/api/cashbook/categories` | không có `@PreAuthorize` riêng |
-| GET | `/api/cashbook/{id}` | không có `@PreAuthorize` riêng; trả `{voucher, allocations}` |
+| GET | `/api/cashbook/categories` | `cashbook.manage` hoặc `report.view` (audit #3) |
+| GET | `/api/cashbook/{id}` | `cashbook.manage`, `report.view` hoặc `sales.perform` (in phiếu thu nợ ở quầy) (audit #3); trả `{voucher, allocations}` |
 | POST | `/api/cashbook` | `cashbook.manage` (201) |
 | POST | `/api/cashbook/{id}/cancel` | `cashbook.manage` |
 | POST | `/internal/cashflows` | `internal` (outbox product-service) |
@@ -1939,11 +1940,11 @@ Quy tắc dùng chung:
 
 | Method | Path | Quyền |
 |---|---|---|
-| GET | `/api/bank-accounts?kind=BANK\|EWALLET\|ALL` (mặc định BANK) | không riêng |
+| GET | `/api/bank-accounts?kind=BANK\|EWALLET\|ALL` (mặc định BANK) | `cashbook.manage`, `sales.perform`, `inventory.manage` hoặc `report.view` (audit #3) |
 | POST | `/api/bank-accounts` | `cashbook.manage` |
 | PUT | `/api/bank-accounts/{id}` | `cashbook.manage` |
 | POST | `/api/bank-accounts/{id}/deactivate` | `cashbook.manage` |
-| GET | `/api/bank-accounts/{id}/vietqr?amount=&info=` | không riêng |
+| GET | `/api/bank-accounts/{id}/vietqr?amount=&info=` | như danh sách tài khoản (audit #3) |
 
 **2. Dữ liệu**
 - Bảng `bank_accounts(id, bank_name, bank_bin ≤10, account_no, account_name, active, kind BANK|EWALLET mặc định BANK, note ≤300)` (`MIG/V1__init_sales_schema.sql:98-105`, `MIG/V5__ewallet_accounts.sql`).

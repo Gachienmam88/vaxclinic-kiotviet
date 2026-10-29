@@ -28,6 +28,10 @@ import java.util.UUID;
 @RestController
 public class CashbookController {
 
+    /** Đọc tài khoản ngân hàng / ví + mã VietQR: Sổ quỹ, bán hàng (QR, chuyển khoản), trả NCC, xem báo cáo. */
+    private static final String BANK_READERS = "hasAuthority('cashbook.manage') or hasAuthority('sales.perform')"
+            + " or hasAuthority('inventory.manage') or hasAuthority('report.view')";
+
     private final CashbookManageService cashbook;
     private final BankAccountService banks;
 
@@ -55,11 +59,14 @@ public class CashbookController {
     }
 
     @GetMapping("/api/cashbook/categories")
+    @PreAuthorize("hasAuthority('cashbook.manage') or hasAuthority('report.view')")
     public List<String> categories() {
         return cashbook.categories();
     }
 
+    /** Chi tiết phiếu: Sổ quỹ + in phiếu thu nợ khách (thu ngân thu nợ có sales.perform). */
     @GetMapping("/api/cashbook/{id}")
+    @PreAuthorize("hasAuthority('cashbook.manage') or hasAuthority('report.view') or hasAuthority('sales.perform')")
     public Map<String, Object> get(@PathVariable UUID id) {
         return cashbook.get(id);
     }
@@ -79,6 +86,7 @@ public class CashbookController {
 
     /** Mặc định chỉ trả tài khoản ngân hàng (ô chọn tài khoản tạo QR); kind=EWALLET → ví điện tử; kind=ALL → tất cả. */
     @GetMapping("/api/bank-accounts")
+    @PreAuthorize(BANK_READERS)
     public List<BankAccount> bankAccounts(@RequestParam(defaultValue = "BANK") String kind) {
         return banks.list(kind);
     }
@@ -98,6 +106,7 @@ public class CashbookController {
 
     /** Nội dung mã VietQR cho tài khoản (frontend vẽ thành ảnh QR). */
     @GetMapping("/api/bank-accounts/{id}/vietqr")
+    @PreAuthorize(BANK_READERS)
     public Map<String, String> vietQr(@PathVariable UUID id, @RequestParam(defaultValue = "0") long amount,
                                       @RequestParam(required = false) String info) {
         return banks.vietQr(id, amount, info);

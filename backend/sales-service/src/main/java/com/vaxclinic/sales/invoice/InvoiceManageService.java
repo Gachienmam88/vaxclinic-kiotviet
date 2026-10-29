@@ -22,18 +22,16 @@ public class InvoiceManageService {
     private static final String FEATURE = "Hóa đơn";
 
     private final InvoiceService service;
-    private final InvoiceWriter writer;
     private final InvoiceQuery query;
     private final AuditLogger audit;
     private final ShipmentInitialStatus initialStatus;
     private final TaxReductionPlanner taxPlanner;
 
-    public InvoiceManageService(InvoiceService service, InvoiceWriter writer, InvoiceQuery query, AuditLogger audit,
+    public InvoiceManageService(InvoiceService service, InvoiceQuery query, AuditLogger audit,
                                 ShipmentInitialStatus initialStatus, TaxReductionPlanner taxPlanner) {
         this.taxPlanner = taxPlanner;
         this.initialStatus = initialStatus;
         this.service = service;
-        this.writer = writer;
         this.query = query;
         this.audit = audit;
     }
@@ -63,7 +61,7 @@ public class InvoiceManageService {
     }
 
     public InvoiceResponse updateTaxCodes(UUID id, List<InvoiceDtos.TaxCodeChange> changes, Actor actor) {
-        writer.updateTaxCodes(id, changes);
+        service.updateTaxCodes(id, changes, actor);
         InvoiceResponse r = query.detail(id);
         actor.audit(audit, r.branchId(), FEATURE, "Sửa thuế", r.code(),
                 "Sửa tỷ lệ thuế " + changes.size() + " dòng hàng của hóa đơn " + r.code());
@@ -81,7 +79,7 @@ public class InvoiceManageService {
     }
 
     public InvoiceResponse updateInfo(UUID id, InfoRequest req, Actor actor) {
-        service.updateInfo(id, req);
+        service.updateInfo(id, req, actor);
         InvoiceResponse r = query.detail(id);
         actor.audit(audit, r.branchId(), FEATURE, "Sửa", r.code(), "Cập nhật thông tin hóa đơn " + r.code()
                 + ": người bán " + r.sellerName() + ", thời gian " + r.soldAt() + ", kênh bán " + r.salesChannelName() + (r.note() == null ? "" : ", ghi chú " + r.note()));
