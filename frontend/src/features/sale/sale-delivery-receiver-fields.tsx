@@ -7,6 +7,7 @@ import { fromDeliveryAddress, toDeliveryAddress } from "@/features/delivery/deli
 import type { ReceiverStats } from "@/features/delivery/delivery-types";
 import { api } from "@/lib/api-client";
 import { useT } from "@/lib/i18n";
+import { cn } from "@/lib/utils";
 import { saleNs } from "@/messages/sale";
 import { lineField, type DeliverySet } from "./sale-delivery-draft";
 import type { DeliveryDraft, SaleCustomer } from "./sale-types";
@@ -50,9 +51,9 @@ export function SaleDeliveryReceiverFields({ id, v, set, customer }: {
     <div className="relative">
       <div className="flex items-center gap-2.5">
         <MapPin className="size-[18px] shrink-0 fill-[#16a34a] text-white" aria-hidden />
-        <input className={`${lineField} flex-1`} aria-label={t("delivery.receiverName")} placeholder={t("delivery.receiverName")}
+        <input className={cn(lineField, "flex-1")} aria-label={t("delivery.receiverName")} placeholder={t("delivery.receiverName")}
           value={v.receiverName} onChange={(e) => set({ receiverName: e.target.value })} />
-        <input className={`${lineField} w-[96px] shrink-0`} aria-label={t("delivery.receiverPhone")} placeholder={t("delivery.receiverPhone")}
+        <input className={cn(lineField, "w-[96px] shrink-0")} aria-label={t("delivery.receiverPhone")} placeholder={t("delivery.receiverPhone")}
           inputMode="tel" value={v.receiverPhone} onChange={(e) => set({ receiverPhone: e.target.value })} />
         {stats?.rate != null && (
           <span className="shrink-0 rounded bg-[#fff1e0] px-1.5 py-0.5 text-[11px] font-semibold text-[#f97316]"

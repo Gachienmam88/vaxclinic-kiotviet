@@ -21,7 +21,7 @@ const SELECT = `${lineField} cursor-pointer`;
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex min-h-10 items-center gap-3">
-      <span className="w-[120px] shrink-0">{label}</span>
+      <span className="w-[132px] shrink-0 whitespace-nowrap">{label}</span>
       <div className="flex min-w-0 flex-1 items-center gap-2">{children}</div>
     </div>
   );
