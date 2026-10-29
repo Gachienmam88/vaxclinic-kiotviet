@@ -155,7 +155,8 @@ public class StockIssueService {
             BigDecimal baseQty = line.getQuantity().multiply(line.getConversionRate());
             BigDecimal baseCost = line.getUnitCost().divide(line.getConversionRate(), 4, RoundingMode.HALF_UP);
             stock.apply(p, new Movement(d.getBranchId(), reverse ? baseQty : baseQty.negate(), line.getLotNumber(), null,
-                    reverse ? d.getType().cancel : d.getType().out, d.getId(), d.getCode(), baseCost, null, actor.id()));
+                    reverse ? d.getType().cancel : d.getType().out, d.getId(), d.getCode(), baseCost, null, actor.id(),
+                    d.getIssuedAt())); // thẻ kho theo ngày xuất (lùi ngày được); hủy cũng ghi cùng ngày để triệt tiêu
         }
     }
 }

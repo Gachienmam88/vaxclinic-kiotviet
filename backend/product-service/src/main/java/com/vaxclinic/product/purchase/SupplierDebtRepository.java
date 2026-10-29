@@ -48,6 +48,14 @@ public class SupplierDebtRepository {
                 r.getCreatedByName(), "Thanh toán phiếu nhập " + r.getCode(), r.getId(), r.getId());
     }
 
+    /** Phiếu chi PC{mã PN} tạo lúc hoàn thành phiếu nhập (cash_source_id = receipt_id = id phiếu nhập) đổi ngày theo phiếu nhập. */
+    public void redateReceiptPayment(UUID receiptId, Instant at) {
+        jdbc.update("""
+                update supplier_debt_docs set occurred_at = ?
+                where receipt_id = ? and cash_source_id = ? and kind = 'PAYMENT' and status = 'ACTIVE'""",
+                Timestamp.from(at), receiptId, receiptId);
+    }
+
     /** select * ... for update; rỗng nếu không có. */
     public List<Map<String, Object>> lockDoc(UUID docId) {
         return jdbc.queryForList("select * from supplier_debt_docs where id = ? for update", docId);

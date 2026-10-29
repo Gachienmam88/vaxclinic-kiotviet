@@ -66,8 +66,8 @@ public class ProductDetailQuery {
     public PageResponse<LedgerLine> ledger(UUID productId, UUID branchId, int page, int size) {
         var pageable = PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 100));
         var result = branchId == null
-                ? ledger.findByProductIdOrderByOccurredAtDesc(productId, pageable)
-                : ledger.findByProductIdAndBranchIdOrderByOccurredAtDesc(productId, branchId, pageable);
+                ? ledger.findByProductIdOrderByOccurredAtDescSeqDesc(productId, pageable)
+                : ledger.findByProductIdAndBranchIdOrderByOccurredAtDescSeqDesc(productId, branchId, pageable);
         return PageResponse.from(result, e -> new LedgerLine(e.getId(), e.getDocType().name(), e.getDocCode(),
                 e.getOccurredAt(), e.getBranchId(), e.getLotNumber(), e.getUnitPrice(), e.getCost(),
                 e.getQuantity(), e.getBalanceAfter(), e.getPartnerName()));

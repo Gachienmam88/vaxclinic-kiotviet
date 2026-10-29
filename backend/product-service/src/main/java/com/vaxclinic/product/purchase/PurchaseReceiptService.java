@@ -91,12 +91,19 @@ public class PurchaseReceiptService {
                 support.checkNotLocked(r.getBranchId(), req.receivedAt());
             }
         }
+        boolean redated = req.receivedAt() != null && !req.receivedAt().equals(r.getReceivedAt());
         if (req.receivedAt() != null) {
             r.setReceivedAt(req.receivedAt());
         }
         if (req.receiverId() != null) {
             r.setReceiverId(req.receiverId());
             r.setReceiverName(req.receiverName());
+        }
+        if (redated && r.getStatus() == DocStatus.COMPLETED) {
+            // Thẻ kho + phiếu chi PC{mã PN} (công nợ NCC và Sổ quỹ) đi theo ngày nhập mới
+            stock.redate(r.getId(), r.getReceivedAt());
+            debts.receiptRedated(r);
+            cashflows.receiptRedated(r);
         }
         r.setInputInvoiceNo(PurchaseLineSupport.blankToNull(req.inputInvoiceNo()));
         r.setNote(req.note());
@@ -120,7 +127,8 @@ public class PurchaseReceiptService {
                 Product p = support.product(cache, line.getProductId());
                 BigDecimal baseQty = line.getQuantity().multiply(line.getConversionRate());
                 stock.apply(p, new Movement(r.getBranchId(), baseQty.negate(), line.getLotNumber(), null,
-                        DocType.PURCHASE_CANCEL, r.getId(), r.getCode(), lineCost(r, line), supplierName(r), actor.id()));
+                        DocType.PURCHASE_CANCEL, r.getId(), r.getCode(), lineCost(r, line), supplierName(r), actor.id(),
+                        r.getReceivedAt())); // cùng ngày phiếu nhập → phiếu hủy triệt tiêu đúng ngày đó trên thẻ kho / S2d
             }
             debts.receiptCancelled(r); // phiếu chi lúc nhập hủy theo; phân bổ khác thành "chưa phân bổ"
             cashflows.receiptCancelled(r);
@@ -197,7 +205,8 @@ public class PurchaseReceiptService {
             Product p = support.product(cache, line.getProductId());
             BigDecimal baseQty = line.getQuantity().multiply(line.getConversionRate());
             stock.apply(p, new Movement(r.getBranchId(), baseQty, line.getLotNumber(), line.getExpiryDate(),
-                    DocType.PURCHASE, r.getId(), r.getCode(), lineCost(r, line), supplierName(r), r.getReceiverId()));
+                    DocType.PURCHASE, r.getId(), r.getCode(), lineCost(r, line), supplierName(r), r.getReceiverId(),
+                    r.getReceivedAt()));
         }
         r.setStatus(DocStatus.COMPLETED);
         r.setCompletedAt(Instant.now());

@@ -12,7 +12,11 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
 
-/** 1 dòng thẻ kho — bất biến, không sửa/xóa. Sai thì ghi bút toán điều chỉnh. */
+/**
+ * 1 dòng thẻ kho — không xóa; sai thì ghi bút toán điều chỉnh. occurred_at = ngày của chứng từ (phiếu nhập / trả / xuất
+ * lùi ngày thì dòng nằm đúng ngày đó, đổi ngày phiếu nhập thì dòng đổi theo); balance_after là giá trị dẫn xuất, được tính
+ * lại cho các dòng sau khi chèn / dời dòng về quá khứ (StockMovementService). Thứ tự: (occurred_at, seq).
+ */
 @Entity
 @Table(name = "stock_ledger")
 @Getter
@@ -75,4 +79,8 @@ public class StockLedgerEntry {
 
     @Column(name = "created_by")
     private UUID createdBy;
+
+    /** Thứ tự ghi (DB sinh), phân định các dòng cùng occurred_at. */
+    @Column(name = "seq", insertable = false, updatable = false)
+    private Long seq;
 }

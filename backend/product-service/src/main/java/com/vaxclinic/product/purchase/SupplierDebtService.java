@@ -131,6 +131,12 @@ public class SupplierDebtService {
         repo.insertAllocation(id, r.getId(), r.getPaidAmount());
     }
 
+    /** Đổi ngày nhập của phiếu đã hoàn thành → phiếu chi PC{mã PN} (tạo lúc nhập) đổi ngày theo. */
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.MANDATORY)
+    public void receiptRedated(PurchaseReceipt r) {
+        repo.redateReceiptPayment(r.getId(), r.getReceivedAt());
+    }
+
     /**
      * Hủy phiếu nhập: phiếu chi lúc nhập hàng bị hủy theo; tiền của phiếu chi khác đã phân bổ vào phiếu này trở thành
      * "chưa phân bổ" (vẫn giảm nợ NCC). Cập nhật paid_amount qua entity vì phiếu nhập đang được JPA quản lý.

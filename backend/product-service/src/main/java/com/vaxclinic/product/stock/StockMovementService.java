@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
 
@@ -21,10 +22,19 @@ import java.util.UUID;
 @Service
 public class StockMovementService {
 
-    /** One stock change in base units. quantity > 0 = in, < 0 = out. */
+    /**
+     * One stock change in base units. quantity > 0 = in, < 0 = out. occurredAt = ngày của chứng từ (null = bây giờ);
+     * lùi ngày thì thẻ kho / sổ S2d ghi đúng ngày đó và tồn sau giao dịch của các dòng sau được tính lại.
+     */
     public record Movement(UUID branchId, BigDecimal quantity, String lotNumber, LocalDate expiryDate,
                            DocType docType, UUID docId, String docCode, BigDecimal unitPrice,
-                           String partnerName, UUID userId) {
+                           String partnerName, UUID userId, Instant occurredAt) {
+
+        /** Chứng từ ghi theo thời điểm hiện tại (bán hàng, kiểm kho, tồn đầu). */
+        public Movement(UUID branchId, BigDecimal quantity, String lotNumber, LocalDate expiryDate, DocType docType,
+                        UUID docId, String docCode, BigDecimal unitPrice, String partnerName, UUID userId) {
+            this(branchId, quantity, lotNumber, expiryDate, docType, docId, docCode, unitPrice, partnerName, userId, null);
+        }
     }
 
     private final StockBalanceRepository balances;
@@ -96,7 +106,30 @@ public class StockMovementService {
         line.setBalanceAfter(after);
         line.setPartnerName(m.partnerName());
         line.setCreatedBy(m.userId());
+        Instant at = m.occurredAt() == null ? Instant.now() : m.occurredAt();
+        line.setOccurredAt(at);
+        boolean backdated = ledger.hasRowsAfter(product.getId(), m.branchId(), at);
         ledger.save(line);
+        if (backdated) {
+            ledger.flush(); // dòng mới + tồn chi nhánh xuống DB trước khi tính lại bằng SQL
+            ledger.recomputeBalances(product.getId(), m.branchId());
+        }
+    }
+
+    /**
+     * Đổi ngày chứng từ đã ghi kho (VD sửa "Thời gian" phiếu nhập đã hoàn thành): dời mọi dòng thẻ kho của chứng từ sang
+     * thời điểm mới rồi tính lại tồn sau giao dịch của từng (hàng, chi nhánh) liên quan.
+     */
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void redate(UUID docId, Instant occurredAt) {
+        var rows = ledger.findByDocId(docId);
+        if (rows.isEmpty()) {
+            return;
+        }
+        rows.forEach(r -> r.setOccurredAt(occurredAt));
+        ledger.flush();
+        rows.stream().map(r -> java.util.List.of(r.getProductId(), r.getBranchId())).distinct()
+                .forEach(k -> ledger.recomputeBalances(k.get(0), k.get(1)));
     }
 
     private void applyLot(Product product, Movement m) {

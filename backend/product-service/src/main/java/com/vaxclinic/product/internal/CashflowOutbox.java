@@ -81,6 +81,13 @@ public class CashflowOutbox {
         }
     }
 
+    /** Đổi ngày nhập phiếu đã hoàn thành → phiếu chi PC{mã PN} ở Sổ quỹ đổi ngày (Sổ quỹ bỏ qua nếu không có phiếu). */
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void receiptRedated(PurchaseReceipt r) {
+        supplierPaymentUpdated(r.getId(), r.getReceivedAt(), r.getReceiverId() == null ? r.getCreatedBy() : r.getReceiverId(),
+                r.getReceiverName() == null ? r.getCreatedByName() : r.getReceiverName(), "Thanh toán phiếu nhập " + r.getCode());
+    }
+
     /** Phiếu chi trả nợ NCC (màn Nhà cung cấp) → phiếu chi Sổ quỹ, sourceType PURCHASE + sourceId = id phiếu công nợ. */
     @Transactional(propagation = Propagation.MANDATORY)
     public void supplierPayment(SupplierPaymentVoucher v, Supplier s) {

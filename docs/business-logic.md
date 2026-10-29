@@ -196,7 +196,7 @@ Nguồn: `PS/product/ProductController.java:37-115`, `PS/internal/InternalProduc
 
 - **Dữ liệu**:
   - `stock_balances(product_id, branch_id)` PK, `quantity`, `reserved` (`MIG/V1__init_product_schema.sql:74-80`);
-  - `stock_ledger`: bất biến (không sửa/xóa, sai thì ghi bút toán khác), gồm `doc_type`, `doc_id`, `doc_code`, `occurred_at` mặc định `now()`, `quantity` (+nhập/−xuất, đơn vị cơ bản), `unit_price` (giá giao dịch), `cost` (giá vốn **sau** giao dịch), `balance_after` (tồn chi nhánh sau giao dịch), `partner_name`, `created_by` (`MIG/V1__init_product_schema.sql:95-111`, `PS/stock/StockLedgerEntry.java:15`).
+  - `stock_ledger`: không xóa, sai thì ghi bút toán khác; `occurred_at` = ngày chứng từ (đổi theo khi sửa ngày phiếu nhập), `balance_after` là giá trị dẫn xuất được tính lại khi chèn/dời dòng về quá khứ; `seq` BIGSERIAL = thứ tự ghi, phân định dòng cùng thời điểm (`MIG/V10__stock_ledger_seq.sql`). Cột: `doc_type`, `doc_id`, `doc_code`, `occurred_at`, `quantity` (+nhập/−xuất, đơn vị cơ bản), `unit_price` (giá giao dịch), `cost` (giá vốn **sau** giao dịch), `balance_after` (tồn chi nhánh sau giao dịch), `partner_name`, `created_by` (`MIG/V1__init_product_schema.sql:95-111`, `PS/stock/StockLedgerEntry.java:15`).
 - **Điểm duy nhất thay đổi tồn**: `StockMovementService.apply`, bắt buộc chạy trong transaction có sẵn (`Propagation.MANDATORY`). Thứ tự: khóa `stock_balances` FOR UPDATE (chưa có thì tạo) → kiểm âm → cập nhật lô → tính lại giá vốn → ghi thẻ kho. Bỏ qua movement có SL = 0 (`PS/stock/StockMovementService.java:16-100`).
 - **doc_type và dấu** (`PS/stock/StockLedgerEntry.java:24-34`):
 
@@ -223,7 +223,11 @@ Nguồn: `PS/product/ProductController.java:37-115`, `PS/internal/InternalProduc
   - `tồn_trước`/`tồn_sau` là tồn **của chi nhánh đang ghi**, còn `products.cost` là **một giá chung cho mọi chi nhánh**.
 - Thẻ kho: `unit_price` = đơn giá movement, nếu NULL thì = giá vốn hiện tại; `cost` = giá vốn sau giao dịch (`PS/stock/StockMovementService.java:94-95`).
 - **Khóa đồng thời**: `stock_balances` và `product_lots` dùng `PESSIMISTIC_WRITE` (`PS/stock/StockBalanceRepository.java:12-15`). Entity `Product` không có `@Version` (grep không thấy `@Version` trong service), nên `products.cost` có thể bị ghi đè khi 2 chi nhánh nhập cùng 1 hàng đồng thời (chỉ khóa theo hàng × chi nhánh).
-- **Thời điểm thẻ kho** = lúc ghi movement (`occurred_at` mặc định `now()`; `Movement` không mang thời gian chứng từ) (`PS/stock/StockLedgerEntry.java:58-59`). Vì vậy ngày nhập (`received_at`) hay ngày xuất hủy (`issued_at`) chọn lùi ngày **không** làm lùi thẻ kho / sổ S2d.
+- **Thời điểm thẻ kho = ngày chứng từ (audit #7)**: `Movement.occurredAt` (null = bây giờ) (`PS/stock/StockMovementService.java:24-40`):
+  - phiếu nhập + hủy phiếu nhập → `received_at`; trả hàng nhập + hủy → `returned_at`; xuất hủy / xuất nội bộ + hủy → `issued_at`; tồn đầu, kiểm kho, chứng từ bán từ sales-service → thời điểm ghi. Hủy ghi **cùng ngày** chứng từ gốc nên triệt tiêu đúng ngày đó trên thẻ kho / S2d (khóa sổ theo ngày chứng từ đã chặn hủy trong kỳ khóa).
+  - Dòng lùi ngày (đã có dòng sau thời điểm đó): ghi xong flush rồi tính lại `balance_after` cho mọi dòng của (hàng, chi nhánh) theo thứ tự `(occurred_at, seq)`: tồn sau dòng = tồn hiện tại − Σ SL các dòng sau nó (`PS/stock/StockLedgerRepository.java:23-40`, `PS/stock/StockMovementService.java:108-117`). Thẻ kho sắp `occurred_at desc, seq desc`.
+  - `redate(docId, at)`: dời mọi dòng của chứng từ sang ngày mới + tính lại tồn sau giao dịch (`PS/stock/StockMovementService.java:119-134`).
+  - `cost` của dòng lùi ngày là giá vốn tại lúc ghi (không tính lại giá vốn lịch sử); kiểm âm kho theo tồn hiện tại, không theo tồn tại ngày lùi.
 - **Sổ S2d-HKD** `GET /api/accounting/stock/summary?from=&to=&branchIds=` (report.view hoặc inventory.view):
   - ngày [from, to] giờ VN → `[from 00:00, to+1 00:00)` (`PS/stock/StockBookService.java:28-30`);
   - tồn đầu / nhập (qty>0) / xuất (qty<0) / tồn cuối theo hàng; giá trị = `round(qty × unit_price)` với OPENING / PURCHASE* (giá giao dịch), các loại khác `round(qty × cost)`; `branchIds` rỗng = mọi chi nhánh; bỏ hàng không phát sinh (`PS/stock/StockBookRepository.java:37-71`);
@@ -455,7 +459,7 @@ Nguồn: `PS/purchase/PurchaseController.java:35-102`.
   - phiếu hủy → 400 `RECEIPT_CANCELLED`;
   - phiếu COMPLETED kiểm khóa sổ cả ngày cũ lẫn ngày mới;
   - đổi được `received_at`, người nhập, số HĐ đầu vào, ghi chú;
-  - **không** đồng bộ sang thẻ kho, phiếu `PC…` trong sổ công nợ, hay Sổ quỹ (không thấy code).
+  - phiếu COMPLETED đổi `received_at` (audit #7) → dời thẻ kho của phiếu (`stock.redate`), đổi ngày chứng từ `PC{mã PN}` trong sổ công nợ NCC (`SupplierDebtRepository.redateReceiptPayment`) và gửi outbox `UPDATE` (ngày, người chi, ghi chú) cho phiếu chi Sổ quỹ `source_type=PURCHASE, source_id=id phiếu` (`PS/purchase/PurchaseReceiptService.java:82-111`, `PS/internal/CashflowOutbox.java:84-90`).
 - **Hủy** (`PS/purchase/PurchaseReceiptService.java:106-131`):
   - đã hủy → trả về im lặng (idempotent);
   - DRAFT → hủy luôn (không kiểm chi nhánh / khóa sổ);
@@ -740,7 +744,7 @@ Nguồn: `PS/purchase/SupplierController.java:33-107`, `PS/purchase/SupplierGrou
 - Chuyển hàng giữa chi nhánh: chỉ có enum `TRANSFER_OUT/IN` và danh sách loại được phép âm, không có API (`PS/stock/StockLedgerEntry.java:26`).
 - Cột "Khách đặt" (`reserved`) không được service nào trong product-service ghi.
 - Tiền NCC hoàn khi trả hàng nhập (`refund_amount`) không sinh phiếu thu Sổ quỹ, không sinh chứng từ công nợ riêng.
-- Thẻ kho ghi theo thời điểm hoàn thành chứng từ, không theo ngày chứng từ; sửa `received_at` không đồng bộ thẻ kho / `PC…` / Sổ quỹ.
+- ~~Thẻ kho ghi theo thời điểm hoàn thành chứng từ~~ — đã sửa (audit #7, mục 1.5). Còn lại: chứng từ bán/trả từ sales-service vẫn ghi theo thời điểm gọi kho (không theo ngày HĐ nếu HĐ lùi ngày).
 - Giá vốn là 1 giá cho mọi chi nhánh nhưng công thức bình quân dùng tồn của 1 chi nhánh.
 - Danh sách hàng hóa / phiếu nhập / trả / kiểm / xuất và sổ S2d không lọc theo chi nhánh của user (báo cáo `report/*` thì có).
 - Hủy phiếu tạm (nhập, trả, kiểm, xuất) không kiểm chi nhánh; tồn đầu kỳ khi tạo hàng và lưu tạm không kiểm khóa sổ; cân bằng kiểm kho kiểm khóa sổ theo thời điểm hiện tại.

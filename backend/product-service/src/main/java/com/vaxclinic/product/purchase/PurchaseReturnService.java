@@ -180,7 +180,7 @@ public class PurchaseReturnService {
                     totals, r.getVatRate());
             stock.apply(p, new Movement(r.getBranchId(), reverse ? baseQty : baseQty.negate(), line.getLotNumber(), null,
                     reverse ? DocType.PURCHASE_RETURN_CANCEL : DocType.PURCHASE_RETURN, r.getId(), r.getCode(), cost,
-                    s == null ? null : s.getName(), actor.id()));
+                    s == null ? null : s.getName(), actor.id(), r.getReturnedAt())); // thẻ kho theo ngày trả (lùi ngày được)
         }
     }
 }
