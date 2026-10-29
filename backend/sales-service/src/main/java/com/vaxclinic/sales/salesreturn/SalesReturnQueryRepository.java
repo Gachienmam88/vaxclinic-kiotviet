@@ -26,7 +26,7 @@ public class SalesReturnQueryRepository {
         }
     }
 
-    private static final String TABLES = """
+    private static final String TABLES = " " + """
              from sales_returns r left join invoices i on i.id = r.invoice_id
              left join customers c on c.id = r.customer_id
              left join lateral (select sh.code, sh.status, sh.partner_id, (sh.return_id = r.id) is_return from shipments sh
