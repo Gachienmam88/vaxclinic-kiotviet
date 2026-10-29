@@ -72,6 +72,12 @@ export type InvoiceListItem = {
   status: "COMPLETED" | "CANCELLED"; paymentMethod: string | null;
   /** Trạng thái hiển thị kiểu KiotViet (theo vận đơn), loại bán, mã phiếu trả hàng ("TH0001, TH0002"). */
   state: InvoiceState; saleMode: string; returnCodes: string | null;
+  createdAt: string; updatedAt: string; orderCode: string | null; customerEmail: string | null; customerPhone: string | null;
+  customerAddress: string | null; customerProvince: string | null; customerWard: string | null; customerBirthday: string | null;
+  branchId: string; createdByName: string | null; salesChannelName: string | null; note: string | null; priceBookName: string | null;
+  /** Vận đơn còn hiệu lực mới nhất (null = không giao hàng); cod = còn cần thu; partnerFee = phí trả ĐTGH. */
+  shipmentId: string | null; shipmentCode: string | null; shipmentStatus: string | null; deliveryPartnerName: string | null;
+  cod: number | null; partnerFee: number | null; deliveryTime: string | null;
 };
 
 export type InvoiceState = "PROCESSING" | "COMPLETED" | "FAILED_DELIVERY" | "CANCELLED";
