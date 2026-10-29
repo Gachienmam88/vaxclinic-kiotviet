@@ -101,6 +101,9 @@ public class InvoiceMergeService {
         var originals = rows.stream().map(r -> invoices.findWithLines(r.id()).orElseThrow())
                 .sorted(Comparator.comparing(Invoice::getSoldAt).thenComparing(Invoice::getCode)).toList();
         for (Invoice inv : originals) {
+            if (!"COMPLETED".equals(inv.getStatus())) {
+                throw BusinessException.badRequest("MERGE_NOT_ALLOWED", "Hóa đơn " + inv.getCode() + " đã hủy hoặc đã được gộp");
+            }
             if (!inv.getBranchId().equals(req.branchId())) {
                 throw BusinessException.badRequest("MERGE_DIFFERENT_BRANCH", "Hóa đơn " + inv.getCode() + " thuộc chi nhánh khác");
             }
