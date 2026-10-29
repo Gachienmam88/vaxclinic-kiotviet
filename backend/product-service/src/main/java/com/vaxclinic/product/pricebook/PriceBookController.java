@@ -1,6 +1,5 @@
 package com.vaxclinic.product.pricebook;
 
-import com.vaxclinic.common.audit.AuditLogger;
 import com.vaxclinic.common.web.PageResponse;
 import com.vaxclinic.product.pricebook.PriceBookDtos.CountResponse;
 import com.vaxclinic.product.pricebook.PriceBookDtos.FormulaRequest;
@@ -11,6 +10,7 @@ import com.vaxclinic.product.pricebook.PriceBookDtos.PriceBookRequest;
 import com.vaxclinic.product.pricebook.PriceBookDtos.PriceBookResponse;
 import com.vaxclinic.product.pricebook.PriceBookDtos.PriceRow;
 import com.vaxclinic.product.pricebook.PriceBookDtos.RowFilter;
+import com.vaxclinic.product.purchase.PurchaseDtos.Actor;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -30,34 +30,24 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.UUID;
 
-/** Hàng hóa → Thiết lập giá. Xem: catalog.view; sửa bảng giá / giá: catalog.manage (như sửa hàng hóa). */
+/**
+ * Hàng hóa → Thiết lập giá. Xem: catalog.view; sửa bảng giá / giá: catalog.manage (như sửa hàng hóa).
+ * Nghiệp vụ ở {@link PriceBookManageService}.
+ */
 @RestController
 @RequestMapping("/api/price-books")
 @PreAuthorize("hasAuthority('catalog.view')")
 public class PriceBookController {
 
-    private static final String FEATURE = "Thiết lập giá";
+    private final PriceBookManageService service;
 
-    private final PriceBookService books;
-    private final PriceBookItemService items;
-    private final PriceBookRowQuery rows;
-    private final AuditLogger audit;
-
-    public PriceBookController(PriceBookService books, PriceBookItemService items, PriceBookRowQuery rows,
-                               AuditLogger audit) {
-        this.books = books;
-        this.items = items;
-        this.rows = rows;
-        this.audit = audit;
-    }
-
-    private void log(Jwt jwt, String action, String bookName, String detail) {
-        audit.record(UUID.fromString(jwt.getSubject()), jwt.getClaimAsString("name"), null, FEATURE, action, bookName, detail);
+    public PriceBookController(PriceBookManageService service) {
+        this.service = service;
     }
 
     @GetMapping
     public List<PriceBookResponse> list() {
-        return books.list();
+        return service.list();
     }
 
     /** Ma trận giá: dòng = đơn vị tính theo bộ lọc, cột = các bảng giá bookIds. */
@@ -70,13 +60,13 @@ public class PriceBookController {
                                          @RequestParam(defaultValue = "false") boolean inBookOnly,
                                          @RequestParam(defaultValue = "0") int page,
                                          @RequestParam(defaultValue = "15") int size) {
-        return rows.rows(bookIds, new RowFilter(q, categoryIds, stock, branchId, inBookOnly),
+        return service.matrix(bookIds, new RowFilter(q, categoryIds, stock, branchId, inBookOnly),
                 Math.max(page, 0), Math.min(Math.max(size, 1), 100));
     }
 
     @GetMapping("/{id}")
     public PriceBookResponse get(@PathVariable UUID id) {
-        return books.get(id);
+        return service.get(id);
     }
 
     /** Giá của 1 bảng giá; mặc định chỉ hàng đã có trong bảng. */
@@ -88,67 +78,48 @@ public class PriceBookController {
                                         @RequestParam(defaultValue = "true") boolean inBookOnly,
                                         @RequestParam(defaultValue = "0") int page,
                                         @RequestParam(defaultValue = "15") int size) {
-        books.get(id);
-        return matrix(List.of(id), q, categoryIds, stock, branchId, inBookOnly, page, size);
+        return service.items(id, new RowFilter(q, categoryIds, stock, branchId, inBookOnly),
+                Math.max(page, 0), Math.min(Math.max(size, 1), 100));
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAuthority('catalog.manage')")
     public PriceBookResponse create(@Valid @RequestBody PriceBookRequest req, @AuthenticationPrincipal Jwt jwt) {
-        PriceBookResponse b = books.get(books.create(req, UUID.fromString(jwt.getSubject()), jwt.getClaimAsString("name")));
-        log(jwt, "Tạo", b.name(), "Tạo bảng giá " + b.name());
-        return b;
+        return service.create(req, Actor.of(jwt));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('catalog.manage')")
     public PriceBookResponse update(@PathVariable UUID id, @Valid @RequestBody PriceBookRequest req,
                                     @AuthenticationPrincipal Jwt jwt) {
-        books.update(id, req);
-        PriceBookResponse b = books.get(id);
-        log(jwt, "Sửa", b.name(), "Cập nhật bảng giá " + b.name());
-        return b;
+        return service.update(id, req, Actor.of(jwt));
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasAuthority('catalog.manage')")
     public void delete(@PathVariable UUID id, @AuthenticationPrincipal Jwt jwt) {
-        PriceBookResponse b = books.get(id);
-        books.delete(id);
-        log(jwt, "Xóa", b.name(), "Xóa bảng giá " + b.name());
+        service.delete(id, Actor.of(jwt));
     }
 
     @PutMapping("/{id}/items")
     @PreAuthorize("hasAuthority('catalog.manage')")
     public CountResponse upsert(@PathVariable UUID id, @Valid @RequestBody ItemsRequest req, @AuthenticationPrincipal Jwt jwt) {
-        int n = items.upsert(id, req.items());
-        String name = books.get(id).name();
-        log(jwt, "Sửa giá", name, "Cập nhật " + n + " giá trong bảng giá " + name);
-        return new CountResponse(n);
+        return service.upsert(id, req, Actor.of(jwt));
     }
 
     @PostMapping("/{id}/items/apply-formula")
     @PreAuthorize("hasAuthority('catalog.manage')")
     public CountResponse applyFormula(@PathVariable UUID id, @Valid @RequestBody FormulaRequest req,
                                       @AuthenticationPrincipal Jwt jwt) {
-        int n = items.applyFormula(id, req);
-        String name = books.get(id).name();
-        log(jwt, "Áp dụng công thức", name, "Áp dụng công thức " + req.base() + (req.op() == PriceBookDtos.Op.PLUS ? " + " : " - ")
-                + req.value().stripTrailingZeros().toPlainString() + (req.percent() ? "%" : "") + " cho " + n
-                + " hàng trong bảng giá " + name);
-        return new CountResponse(n);
+        return service.applyFormula(id, req, Actor.of(jwt));
     }
 
     @PostMapping("/{id}/items/import")
     @PreAuthorize("hasAuthority('catalog.manage')")
     public ImportResult importItems(@PathVariable UUID id, @Valid @RequestBody ImportRequest req,
                                     @AuthenticationPrincipal Jwt jwt) {
-        ImportResult r = items.importRows(id, req.rows());
-        String name = books.get(id).name();
-        log(jwt, "Nhập file", name, "Nhập file giá: " + r.updated() + " dòng thành công, " + r.errors().size()
-                + " dòng lỗi, bảng giá " + name);
-        return r;
+        return service.importItems(id, req, Actor.of(jwt));
     }
 }
