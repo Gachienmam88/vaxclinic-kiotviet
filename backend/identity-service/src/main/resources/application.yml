@@ -25,7 +25,7 @@ app:
     access-ttl-minutes: 30
     refresh-ttl-days: 7
   security:
-    public-paths: /api/auth/login,/api/auth/refresh,/api/auth/store,/api/auth/store-status
+    public-paths: /api/auth/login,/api/auth/refresh,/api/auth/logout,/api/auth/store,/api/auth/store-status
   # Sổ quỹ (sales-service) nhận phiếu chi lương / tạm ứng qua outbox; doanh thu người bán để tính hoa hồng
   sales-url: ${SALES_URL:http://localhost:8086}
   hr:

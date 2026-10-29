@@ -15,7 +15,7 @@ import java.nio.charset.StandardCharsets;
 
 /**
  * First line of defence: rejects requests without a valid JWT before they reach any service.
- * Login/refresh are public. Services re-verify the token themselves (common-lib).
+ * Login/refresh/logout are public (logout is authorised by the refresh token in the body). Services re-verify the token themselves (common-lib).
  */
 @Configuration
 @EnableWebFluxSecurity
@@ -32,7 +32,7 @@ public class GatewaySecurityConfig {
         return http.csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .authorizeExchange(ex -> ex
                         // Webhook SePay: SePay gọi từ ngoài, xác thực bằng API key ở integration-service
-                        .pathMatchers("/actuator/health/**", "/api/auth/login", "/api/auth/refresh", "/api/auth/store", "/api/auth/store-status", "/api/payments/sepay/webhook").permitAll()
+                        .pathMatchers("/actuator/health/**", "/api/auth/login", "/api/auth/refresh", "/api/auth/logout", "/api/auth/store", "/api/auth/store-status", "/api/payments/sepay/webhook").permitAll()
                         .anyExchange().authenticated())
                 .oauth2ResourceServer(rs -> rs.jwt(jwt -> { }))
                 .build();

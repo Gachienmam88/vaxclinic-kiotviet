@@ -98,9 +98,19 @@ public class AuthService {
                 twoFactorOn, user.isOwner());
     }
 
+    /**
+     * Public endpoint (gateway + identity public-paths): the refresh token itself is the credential, so logout
+     * works even after the access token expired. Unknown / already revoked token → no-op (204).
+     * The live token row is deleted (not flagged revoked): a stale tab re-sending it later gets a plain 401
+     * instead of tripping the rotation-reuse alarm that revokes every session of the user. Rotated (revoked)
+     * rows are kept so real reuse is still detected.
+     * Access JWTs are stateless and stay valid until expiry (≤ access TTL); the BFF drops its cookie.
+     */
     @Transactional
     public void logout(String rawRefreshToken) {
-        refreshTokens.findByTokenHash(TokenService.sha256(rawRefreshToken)).ifPresent(t -> t.setRevoked(true));
+        refreshTokens.findByTokenHash(TokenService.sha256(rawRefreshToken))
+                .filter(t -> !t.isRevoked())
+                .ifPresent(refreshTokens::delete);
     }
 
     private TokenPair issue(AppUser user) {

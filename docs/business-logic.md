@@ -2355,8 +2355,8 @@ Quy ước lỗi chung (mọi service): body `ApiError {code, message, details[]
 
 **2. Xác thực tại gateway** (`gw/java/com/vaxclinic/gateway/GatewaySecurityConfig.java:24-38`)
 - Kiểm JWT HS256 bằng `JWT_SECRET`; CSRF tắt.
-- Public (không cần JWT): `/actuator/health/**`, `/api/auth/login`, `/api/auth/refresh`, `/api/auth/store`, `/api/auth/store-status`, `/api/payments/sepay/webhook` (webhook SePay — xác thực bằng API key ở integration-service). Mọi path khác cần JWT.
-- Mỗi service tự kiểm lại JWT (common `JwtResourceServerAutoConfiguration`): stateless, `perms` claim → authorities, `@PreAuthorize("hasAuthority('...')")`; public paths của identity: `app.security.public-paths` = login, refresh, store, store-status (`common/security/JwtResourceServerAutoConfiguration.java:41-67`, `backend/identity-service/src/main/resources/application.yml:27-28`).
+- Public (không cần JWT): `/actuator/health/**`, `/api/auth/login`, `/api/auth/refresh`, `/api/auth/logout`, `/api/auth/store`, `/api/auth/store-status`, `/api/payments/sepay/webhook` (webhook SePay — xác thực bằng API key ở integration-service). Mọi path khác cần JWT.
+- Mỗi service tự kiểm lại JWT (common `JwtResourceServerAutoConfiguration`): stateless, `perms` claim → authorities, `@PreAuthorize("hasAuthority('...')")`; public paths của identity: `app.security.public-paths` = login, refresh, logout, store, store-status (`common/security/JwtResourceServerAutoConfiguration.java:41-67`, `backend/identity-service/src/main/resources/application.yml:27-28`).
 
 **3. Quy tắc `StoreStatusFilter`** (GlobalFilter, `HIGHEST_PRECEDENCE`) (`gw/java/com/vaxclinic/gateway/StoreStatusFilter.java:22-100`)
 - Đọc `GET {IDENTITY_URL}/api/auth/store-status` → `{paused, reopenOn, pauseUsed, sessionsNotBefore}`; cache **5 giây**, timeout 2 giây; identity lỗi → dùng bản đọc gần nhất, chưa có → coi như đang mở (`:36-37, :76-92`).
@@ -2383,7 +2383,7 @@ Quy ước lỗi chung (mọi service): body `ApiError {code, message, details[]
 | GET | `/api/auth/store-status` | public | Trạng thái bảo lưu/mốc phiên (`id/storeprofile/StoreStatusController.java:21-24`) |
 | POST | `/api/auth/login` `{username,password,code?}` | public | → `TokenPair{accessToken, refreshToken, expiresIn}` (`id/auth/AuthController.java:45-48`) |
 | POST | `/api/auth/refresh` `{refreshToken}` | public | xoay vòng refresh token (`:50-53`) |
-| POST | `/api/auth/logout` `{refreshToken}` | JWT | 204, thu hồi refresh token (`:55-59`) |
+| POST | `/api/auth/logout` `{refreshToken}` | public (refresh token là thẩm quyền) | 204; xóa dòng refresh token còn sống → refresh lại bằng token đó 401; token lạ/đã thu hồi → vẫn 204 (`:55-59`, `id/auth/AuthService.java:102-114`) |
 | GET | `/api/auth/me` | JWT | `{user, permissions[], twoFactorEnabled, storeOwner}` — FE dựng menu từ đây (`:38-64`) |
 | GET | `/api/auth/2fa` | JWT | `{enabled, pending, recoveryCodesLeft}` (`id/auth/twofactor/TwoFactorController.java:37-40`) |
 | POST | `/api/auth/2fa/setup` | JWT | `{secret (Base32), otpauthUrl}` (`:42-45`) |
@@ -2869,7 +2869,8 @@ Mọi API `/api/hr/**` cần `hr.manage`, **trừ** `GET /api/hr/clock/me` và `
 - Tài khoản (menu avatar): Xác thực 2 lớp (dialog bật/tắt/tạo lại mã), "Hồ sơ cửa hàng" chỉ hiện cho chủ GH hoặc `settings.manage`, chủ đề màu, ngôn ngữ, đăng xuất (`fe/components/layout/account-menu-dropdown.tsx:29-71`).
 
 **Giới hạn**
-- **Đăng xuất không thu hồi được refresh token ở server**: BFF gọi `POST /api/auth/logout` **không kèm Bearer** (`fe/app/api/session/logout/route.ts:5-14`), trong khi gateway và identity đều không để `/api/auth/logout` public (`gw/java/com/vaxclinic/gateway/GatewaySecurityConfig.java:35`, `backend/identity-service/src/main/resources/application.yml:28`) → gateway trả 401, lỗi bị nuốt; chỉ cookie bị xóa, refresh token còn hiệu lực tới hết hạn.
+- ~~Đăng xuất không thu hồi refresh token ở server~~ — **đã sửa (audit #1)**: `/api/auth/logout` public ở gateway + identity (`gw/java/com/vaxclinic/gateway/GatewaySecurityConfig.java:35`, `backend/identity-service/src/main/resources/application.yml:28`); BFF gửi refresh token trong body (không cần Bearer, chạy được cả khi access token đã hết hạn) (`fe/app/api/session/logout/route.ts:5-14`) → dòng refresh token bị xóa. Xóa (thay vì đánh dấu revoked) để tab cũ gửi lại token không kích hoạt "dùng lại token đã thu hồi → thu hồi mọi phiên".
+- Access JWT không trạng thái: sau đăng xuất access token cũ vẫn hợp lệ tới hết TTL (≤30 phút) nếu ai đó đã chép được; trình duyệt mất cookie nên không dùng tiếp. Chưa có danh sách thu hồi access token (thiết kế chọn).
 - Không có màn tự đổi mật khẩu / quên mật khẩu (không thấy API hay UI).
 - BFF không chuyển tiếp `X-Forwarded-For` → giới hạn đăng nhập sai thực tế theo tên đăng nhập.
 
@@ -2952,7 +2953,7 @@ Menu trái Thiết lập (`fe/features/settings/settings-shell.tsx:20-57`; mục
 
 ### Câu hỏi chưa rõ
 
-1. Logout BFF không gửi Bearer → refresh token không bị thu hồi phía server (mục 4.14). Có chủ ý (chỉ xóa cookie) hay là lỗi cần thêm `/api/auth/logout` vào public paths?
+1. ~~Logout BFF không thu hồi refresh token~~ — đã sửa: `/api/auth/logout` public, xem mục 4.14.
 2. `reception.perform`, `screening.perform`, `injection.perform` không có endpoint nào kiểm — giữ lại cho quy trình tiêm tương lai hay bỏ?
 3. Vai trò hệ thống ngoài ADMIN không được seed quyền mặc định trong migration (comment `Permissions.java:7` nói "seeded by migrations") — có migration ở nơi khác không, hay vai trò mặc định đang rỗng quyền?
 4. Cấu hình HĐĐT / chứng thư số (`/api/store-profile/einvoice|certificates`) thuộc integration-service — cách mã hóa bí mật cần xem ở phần tài liệu integration.
