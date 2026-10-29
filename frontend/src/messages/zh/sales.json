@@ -328,6 +328,64 @@
       "refunded": "已退金额",
       "cancel": "作废",
       "confirmCancel": "作废退货单 {code}？商品将重新出库。"
+    },
+    "kv": {
+      "search": "按退货单号",
+      "newReturn": "退货",
+      "export": "导出文件",
+      "exportOverview": "概览文件",
+      "exportDetail": "明细文件",
+      "exporting": "正在生成文件...",
+      "settings": "订单设置",
+      "help": "使用指南",
+      "columnsTitle": "选择显示列",
+      "favourite": "标记",
+      "emptyWhat": "交易",
+      "type": "退货类型",
+      "types": {
+        "INVOICE": "按发票",
+        "QUICK": "快速退货",
+        "SHIPMENT": "配送退回"
+      },
+      "status": "状态",
+      "statuses": {
+        "COMPLETED": "已退",
+        "CANCELLED": "已取消"
+      },
+      "deliveryStatus": "配送状态",
+      "pickStatus": "选择状态",
+      "partner": "配送合作方",
+      "pickPartner": "选择配送合作方",
+      "fileOverview": "TuiHuo",
+      "fileDetail": "TuiHuoMingxi",
+      "cols": {
+        "code": "退货单号",
+        "invoiceCode": "销售单号",
+        "saleShipmentCode": "销售运单号",
+        "seller": "销售员",
+        "returnedAt": "时间",
+        "createdAt": "创建时间",
+        "customerCode": "客户编码",
+        "customer": "客户",
+        "branch": "分店",
+        "createdBy": "创建人",
+        "channel": "销售渠道",
+        "note": "备注",
+        "subtotal": "商品总额",
+        "discount": "折扣",
+        "afterDiscount": "折后合计",
+        "fee": "退货费",
+        "total": "应退客户",
+        "refunded": "已退客户",
+        "status": "状态",
+        "deliveryStatus": "配送状态",
+        "productCode": "商品编码",
+        "productName": "商品名称",
+        "unit": "单位",
+        "quantity": "数量",
+        "price": "退货价",
+        "amount": "金额"
+      }
     }
   }
 }

@@ -329,6 +329,64 @@
       "refunded": "Refunded",
       "cancel": "Cancel",
       "confirmCancel": "Cancel return {code}? Items will be taken out of stock again."
+    },
+    "kv": {
+      "search": "By return code",
+      "newReturn": "Return",
+      "export": "Export file",
+      "exportOverview": "Overview file",
+      "exportDetail": "Detail file",
+      "exporting": "Creating file...",
+      "settings": "Order settings",
+      "help": "User guide",
+      "columnsTitle": "Choose columns",
+      "favourite": "Mark",
+      "emptyWhat": "transactions",
+      "type": "Return type",
+      "types": {
+        "INVOICE": "By invoice",
+        "QUICK": "Quick return",
+        "SHIPMENT": "Delivery return"
+      },
+      "status": "Status",
+      "statuses": {
+        "COMPLETED": "Returned",
+        "CANCELLED": "Cancelled"
+      },
+      "deliveryStatus": "Delivery status",
+      "pickStatus": "Select status",
+      "partner": "Delivery partner",
+      "pickPartner": "Select delivery partner",
+      "fileOverview": "Returns",
+      "fileDetail": "ReturnDetails",
+      "cols": {
+        "code": "Return code",
+        "invoiceCode": "Invoice code",
+        "saleShipmentCode": "Sale shipment code",
+        "seller": "Seller",
+        "returnedAt": "Time",
+        "createdAt": "Created time",
+        "customerCode": "Customer code",
+        "customer": "Customer",
+        "branch": "Branch",
+        "createdBy": "Created by",
+        "channel": "Sales channel",
+        "note": "Note",
+        "subtotal": "Subtotal",
+        "discount": "Discount",
+        "afterDiscount": "Total after discount",
+        "fee": "Return fee",
+        "total": "Due to customer",
+        "refunded": "Paid to customer",
+        "status": "Status",
+        "deliveryStatus": "Delivery status",
+        "productCode": "Product code",
+        "productName": "Product name",
+        "unit": "Unit",
+        "quantity": "Quantity",
+        "price": "Return price",
+        "amount": "Amount"
+      }
     }
   }
 }

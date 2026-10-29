@@ -38,7 +38,7 @@ import { focusCustomerSearch, toggleFullscreen, useSaleShortcuts } from "./use-s
 import { useSaleBranch } from "./use-sale-branch";
 import { useSaleTaxPreview } from "./use-sale-tax-preview";
 import { cartTotals, useSaleTabs } from "./use-sale-tabs";
-import { openPicked, useSaleUrlDrafts } from "./use-sale-url-drafts";
+import { openPicked, useSaleUrlDialog, useSaleUrlDrafts } from "./use-sale-url-drafts";
 import { useSaleNewTabParam } from "./use-sale-new-tab-param";
 import type { ImportedSheet } from "./sale-import-workbook";
 import type { CatalogProduct } from "./sale-types";
@@ -75,6 +75,7 @@ function SaleScreenBody() {
   useSaleTaxPreview(tabs, branchId); // "Giảm thuế": số server tính theo phương pháp tính thuế
   const lineKeys = useSaleLineKeys(d?.lines ?? [], settings, tabs.setLines);
   useSaleUrlDrafts(me?.user.id, catalog.products, catalog.loadedAt, tabs.open);
+  useSaleUrlDialog(() => setDialog("RETURN"));
   useSaleNewTabParam(tabs.tabs.length > 0, () => tabs.add());
 
   useEffect(() => {

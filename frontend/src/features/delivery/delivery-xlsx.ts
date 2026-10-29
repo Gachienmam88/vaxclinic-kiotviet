@@ -12,8 +12,8 @@ export function xlsxName(base: string, d = new Date()) {
     + `${pad(d.getSeconds())}-${pad(d.getMilliseconds(), 3)}.xlsx`;
 }
 
-/** money[i] = true → cột i là tiền. */
-export async function downloadXlsx(base: string, header: string[], rows: Cell[][], money: boolean[]) {
+/** Dựng file (cho hàng đợi "Xuất file" chạy nền): money[i] = true → cột i là tiền. */
+export async function buildXlsx(base: string, header: string[], rows: Cell[][], money: boolean[]): Promise<{ name: string; blob: Blob }> {
   const XLSX = await import("xlsx");
   const ws = XLSX.utils.aoa_to_sheet([header, ...rows.map((r) => r.map(safe))]);
   const range = XLSX.utils.decode_range(ws["!ref"] ?? "A1");
@@ -28,9 +28,14 @@ export async function downloadXlsx(base: string, header: string[], rows: Cell[][
   });
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, base.slice(0, 31));
-  const name = xlsxName(base);
-  const url = URL.createObjectURL(new Blob([XLSX.write(wb, { type: "array", bookType: "xlsx" })],
-    { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
+  return { name: xlsxName(base), blob: new Blob([XLSX.write(wb, { type: "array", bookType: "xlsx" })],
+    { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }) };
+}
+
+/** Dựng và tải ngay file .xlsx. */
+export async function downloadXlsx(base: string, header: string[], rows: Cell[][], money: boolean[]) {
+  const { name, blob } = await buildXlsx(base, header, rows, money);
+  const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
   a.download = name;

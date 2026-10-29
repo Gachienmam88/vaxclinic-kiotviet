@@ -328,6 +328,64 @@
       "refunded": "Đã trả khách",
       "cancel": "Hủy",
       "confirmCancel": "Hủy phiếu {code}? Hàng sẽ bị xuất lại khỏi kho."
+    },
+    "kv": {
+      "search": "Theo mã phiếu trả",
+      "newReturn": "Trả hàng",
+      "export": "Xuất file",
+      "exportOverview": "File tổng quan",
+      "exportDetail": "File chi tiết",
+      "exporting": "Đang tạo file...",
+      "settings": "Thiết lập đơn hàng",
+      "help": "Hướng dẫn sử dụng",
+      "columnsTitle": "Chọn cột hiển thị",
+      "favourite": "Đánh dấu",
+      "emptyWhat": "giao dịch",
+      "type": "Loại trả hàng",
+      "types": {
+        "INVOICE": "Theo hóa đơn",
+        "QUICK": "Trả nhanh",
+        "SHIPMENT": "Chuyển hoàn"
+      },
+      "status": "Trạng thái",
+      "statuses": {
+        "COMPLETED": "Đã trả",
+        "CANCELLED": "Đã hủy"
+      },
+      "deliveryStatus": "Trạng thái giao hàng",
+      "pickStatus": "Chọn trạng thái",
+      "partner": "Đối tác giao hàng",
+      "pickPartner": "Chọn đối tác giao hàng",
+      "fileOverview": "DanhSachTraHang",
+      "fileDetail": "DanhSachChiTietTraHang",
+      "cols": {
+        "code": "Mã trả hàng",
+        "invoiceCode": "Mã hóa đơn",
+        "saleShipmentCode": "Mã vận đơn bán",
+        "seller": "Người bán",
+        "returnedAt": "Thời gian",
+        "createdAt": "Thời gian tạo",
+        "customerCode": "Mã KH",
+        "customer": "Khách hàng",
+        "branch": "Chi nhánh",
+        "createdBy": "Người tạo",
+        "channel": "Kênh bán",
+        "note": "Ghi chú",
+        "subtotal": "Tổng tiền hàng",
+        "discount": "Giảm giá",
+        "afterDiscount": "Tổng sau giảm giá",
+        "fee": "Phí trả hàng",
+        "total": "Cần trả khách",
+        "refunded": "Đã trả khách",
+        "status": "Trạng thái",
+        "deliveryStatus": "Trạng thái giao hàng",
+        "productCode": "Mã hàng",
+        "productName": "Tên hàng",
+        "unit": "ĐVT",
+        "quantity": "Số lượng",
+        "price": "Giá trả",
+        "amount": "Thành tiền"
+      }
     }
   }
 }

@@ -328,6 +328,64 @@
       "refunded": "返金済み額",
       "cancel": "取消",
       "confirmCancel": "返品 {code} を取り消しますか？商品は再度在庫から出庫されます。"
+    },
+    "kv": {
+      "search": "返品番号で検索",
+      "newReturn": "返品",
+      "export": "ファイル出力",
+      "exportOverview": "概要ファイル",
+      "exportDetail": "明細ファイル",
+      "exporting": "ファイル作成中...",
+      "settings": "注文設定",
+      "help": "ご利用ガイド",
+      "columnsTitle": "表示列を選択",
+      "favourite": "マーク",
+      "emptyWhat": "取引",
+      "type": "返品種別",
+      "types": {
+        "INVOICE": "請求書から",
+        "QUICK": "クイック返品",
+        "SHIPMENT": "配送返送"
+      },
+      "status": "状態",
+      "statuses": {
+        "COMPLETED": "返品済み",
+        "CANCELLED": "キャンセル"
+      },
+      "deliveryStatus": "配送状況",
+      "pickStatus": "状態を選択",
+      "partner": "配送パートナー",
+      "pickPartner": "配送パートナーを選択",
+      "fileOverview": "Henpin",
+      "fileDetail": "HenpinMeisai",
+      "cols": {
+        "code": "返品番号",
+        "invoiceCode": "請求書番号",
+        "saleShipmentCode": "販売送り状番号",
+        "seller": "販売担当",
+        "returnedAt": "日時",
+        "createdAt": "作成日時",
+        "customerCode": "顧客コード",
+        "customer": "顧客",
+        "branch": "支店",
+        "createdBy": "作成者",
+        "channel": "販売チャネル",
+        "note": "メモ",
+        "subtotal": "商品合計",
+        "discount": "割引",
+        "afterDiscount": "割引後合計",
+        "fee": "返品手数料",
+        "total": "顧客への返金額",
+        "refunded": "返金済み",
+        "status": "状態",
+        "deliveryStatus": "配送状況",
+        "productCode": "商品コード",
+        "productName": "商品名",
+        "unit": "単位",
+        "quantity": "数量",
+        "price": "返品価格",
+        "amount": "金額"
+      }
     }
   }
 }
