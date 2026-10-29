@@ -26,9 +26,11 @@ public class InvoiceManageService {
     private final InvoiceQuery query;
     private final AuditLogger audit;
     private final ShipmentInitialStatus initialStatus;
+    private final TaxReductionPlanner taxPlanner;
 
     public InvoiceManageService(InvoiceService service, InvoiceWriter writer, InvoiceQuery query, AuditLogger audit,
-                                ShipmentInitialStatus initialStatus) {
+                                ShipmentInitialStatus initialStatus, TaxReductionPlanner taxPlanner) {
+        this.taxPlanner = taxPlanner;
         this.initialStatus = initialStatus;
         this.service = service;
         this.writer = writer;
@@ -66,6 +68,12 @@ public class InvoiceManageService {
         actor.audit(audit, r.branchId(), FEATURE, "Sửa thuế", r.code(),
                 "Sửa tỷ lệ thuế " + changes.size() + " dòng hàng của hóa đơn " + r.code());
         return r;
+    }
+
+    /** Xem trước giảm thuế (server tra hàng + thiết lập thuế như khi lưu). */
+    public InvoiceDtos.TaxReductionPreview previewTaxReduction(InvoiceDtos.TaxReductionPreviewRequest req) {
+        var totals = InvoiceMath.totals(req.lines(), req.discount(), taxPlanner.plan(req.lines(), true, req.soldAt()));
+        return new InvoiceDtos.TaxReductionPreview(totals.taxReduction(), totals.taxMethod(), totals.reducedLines());
     }
 
     public List<InvoiceDtos.RecentPrice> recentPrices(UUID productId, UUID customerId) {

@@ -27,7 +27,8 @@ public class InternalInvoiceService {
     }
 
     public record EInvoiceSource(UUID id, String code, String status, Instant soldAt, String paymentMethod,
-                                 BigDecimal subtotal, BigDecimal discount, BigDecimal total, Buyer buyer, List<Line> lines) {
+                                 BigDecimal subtotal, BigDecimal discount, BigDecimal total, Buyer buyer, List<Line> lines,
+                                 BigDecimal taxReduction, String taxReductionMethod) {
     }
 
     private final InvoiceRepository invoices;
@@ -51,7 +52,7 @@ public class InternalInvoiceService {
         var lines = inv.getLines().stream().map(l -> new Line(l.getLineNo(), l.getProductCode(), l.getProductName(),
                 l.getUnitName(), l.getQuantity(), l.getUnitPrice(), l.getDiscount(), l.getTaxCode(), l.isTaxReduced())).toList();
         return new EInvoiceSource(inv.getId(), inv.getCode(), inv.getStatus(), inv.getSoldAt(), inv.getPaymentMethod(),
-                inv.getSubtotal(), inv.getDiscount(), inv.getTotal(), buyer, lines);
+                inv.getSubtotal(), inv.getDiscount(), inv.getTotal(), buyer, lines, inv.getTaxReduction(), inv.getTaxReductionMethod());
     }
 
     private static String join(String... parts) {

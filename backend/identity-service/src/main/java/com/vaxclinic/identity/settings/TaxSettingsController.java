@@ -59,10 +59,17 @@ public class TaxSettingsController {
      * sectors: danh sách ngành nghề; defaultSector: ngành của hàng thuộc nhóm chưa gắn ngành;
      * categorySectors: id nhóm hàng → mã ngành (nhóm con chưa gắn thì theo nhóm cha);
      * defaultTaxCode: thuế suất cho dòng hàng chưa có mã thuế (quyết định có chịu GTGT hay không).
+     * vatMethod: phương pháp tính thuế GTGT — DEDUCTION (khấu trừ, mặc định) / DIRECT (trực tiếp trên doanh thu, theo tỷ lệ %
+     * của ngành nghề). Quyết định cách "Giảm thuế" (Nghị quyết 204/2025/QH15) ở màn bán hàng.
      */
     public record TaxSettings(boolean vatEnabled, @Valid List<Sector> sectors, String defaultSector,
                               Map<UUID, String> categorySectors, @Size(max = 30) String defaultTaxCode,
-                              @Valid List<TaxProfile> profiles) {
+                              @Valid List<TaxProfile> profiles, @Pattern(regexp = "DEDUCTION|DIRECT") String vatMethod) {
+
+        /** Bản lưu cũ chưa có phương pháp → khấu trừ. */
+        public String vatMethodOrDefault() {
+            return vatMethod == null ? "DEDUCTION" : vatMethod;
+        }
     }
 
     /** 5 nhóm ngành theo quy định thuế hộ kinh doanh 2026 (tỷ lệ % trên doanh thu) — sửa / thêm được. */
@@ -73,7 +80,7 @@ public class TaxSettingsController {
             new Sector("CHO_THUE", "Cho thuê tài sản, đại lý, nội dung số", new BigDecimal("5"), new BigDecimal("5")),
             new Sector("KHAC", "Hoạt động kinh doanh khác", new BigDecimal("2"), new BigDecimal("1")));
 
-    static final TaxSettings DEFAULT = new TaxSettings(true, DEFAULT_SECTORS, "SAN_XUAT", Map.of(), "HKD_KCT_15", List.of());
+    static final TaxSettings DEFAULT = new TaxSettings(true, DEFAULT_SECTORS, "SAN_XUAT", Map.of(), "HKD_KCT_15", List.of(), "DEDUCTION");
 
     private final SettingsRepository store;
     private final AuditLogger audit;
@@ -89,10 +96,19 @@ public class TaxSettingsController {
         if (t == null) {
             return DEFAULT;
         }
-        // Bản lưu cũ (1 ngành chung) chưa có danh sách ngành → dùng danh sách mặc định
+        // Bản lưu cũ (1 ngành chung) chưa có danh sách ngành → dùng danh sách mặc định; chưa có phương pháp → khấu trừ
         return t.sectors() == null || t.sectors().isEmpty()
-                ? new TaxSettings(t.vatEnabled(), DEFAULT_SECTORS, DEFAULT.defaultSector(), Map.of(), t.defaultTaxCode(), t.profiles())
-                : t;
+                ? new TaxSettings(t.vatEnabled(), DEFAULT_SECTORS, DEFAULT.defaultSector(), Map.of(), t.defaultTaxCode(), t.profiles(),
+                t.vatMethodOrDefault())
+                : new TaxSettings(t.vatEnabled(), t.sectors(), t.defaultSector(), t.categorySectors() == null ? Map.of() : t.categorySectors(),
+                t.defaultTaxCode(), t.profiles(), t.vatMethodOrDefault());
+    }
+
+    /** Cho sales-service tính "Giảm thuế" (phương pháp, ngành nghề, nhóm hàng → ngành). Gateway không route /internal/**. */
+    @GetMapping("/internal/settings/tax")
+    @PreAuthorize("hasAuthority('internal')")
+    public TaxSettings internal() {
+        return get();
     }
 
     @PutMapping("/api/settings/tax")
@@ -135,7 +151,8 @@ public class TaxSettingsController {
                 }
             }
         }
-        var saved = new TaxSettings(req.vatEnabled(), sectors, req.defaultSector(), categorySectors, req.defaultTaxCode(), profiles);
+        var saved = new TaxSettings(req.vatEnabled(), sectors, req.defaultSector(), categorySectors, req.defaultTaxCode(), profiles,
+                req.vatMethodOrDefault());
         store.write("tax", saved, UUID.fromString(jwt.getSubject()));
         audit.record(UUID.fromString(jwt.getSubject()), jwt.getClaimAsString("name"), null, "Thuế & Kế toán", "Sửa", null,
                 "Thiết lập thuế: " + sectors.stream().map(s -> s.name() + " (GTGT " + s.vatRate() + "%, TNCN " + s.pitRate() + "%)").toList()

@@ -24,22 +24,40 @@ class InvoiceMathTest {
                 new BigDecimal(price), null, null, taxCode, reducible);
     }
 
-    @Test
-    void taxReductionOnlyOnReducibleVat10Lines() {
-        // 110.000 gồm 10% → 108.000 gồm 8% (giảm 2.000); dòng VAT5 / không có cờ giữ nguyên
-        var t = InvoiceMath.totals(List.of(taxed("110000", "VAT10", true), taxed("105000", "VAT5", true),
-                taxed("110000", "VAT10", false)), BigDecimal.ZERO, true);
-        org.assertj.core.api.Assertions.assertThat(t.taxReduction()).isEqualByComparingTo("2000");
-        org.assertj.core.api.Assertions.assertThat(t.total()).isEqualByComparingTo("323000");
+    private static InvoiceTaxReduction.Plan deduction(Boolean... eligible) {
+        return new InvoiceTaxReduction.Plan("DEDUCTION", List.of(eligible), java.util.Collections.nCopies(eligible.length, null));
     }
 
     @Test
-    void taxReductionAfterInvoiceDiscountAndOffWhenNotRequested() {
+    void deductionReducesOnlyPlannedLines() {
+        // 110.000 gồm 10% → 108.000 gồm 8% (giảm 2.000); dòng không được kế hoạch giảm giữ nguyên
+        var t = InvoiceMath.totals(List.of(taxed("110000", "VAT10", true), taxed("105000", "VAT5", true),
+                taxed("110000", "VAT10", true)), BigDecimal.ZERO, deduction(true, false, false));
+        org.assertj.core.api.Assertions.assertThat(t.taxReduction()).isEqualByComparingTo("2000");
+        org.assertj.core.api.Assertions.assertThat(t.total()).isEqualByComparingTo("323000");
+        org.assertj.core.api.Assertions.assertThat(t.reducedLines()).containsExactly(true, false, false);
+        org.assertj.core.api.Assertions.assertThat(t.taxMethod()).isEqualTo("DEDUCTION");
+    }
+
+    @Test
+    void deductionAfterInvoiceDiscountAndNonePlan() {
         var lines = List.of(taxed("220000", "VAT10", true));
-        org.assertj.core.api.Assertions.assertThat(InvoiceMath.totals(lines, new BigDecimal("110000"), true).taxReduction())
+        org.assertj.core.api.Assertions.assertThat(InvoiceMath.totals(lines, new BigDecimal("110000"), deduction(true)).taxReduction())
                 .isEqualByComparingTo("2000");
-        org.assertj.core.api.Assertions.assertThat(InvoiceMath.totals(lines, BigDecimal.ZERO, false).taxReduction())
-                .isEqualByComparingTo("0");
+        var none = InvoiceMath.totals(lines, BigDecimal.ZERO);
+        org.assertj.core.api.Assertions.assertThat(none.taxReduction()).isEqualByComparingTo("0");
+        org.assertj.core.api.Assertions.assertThat(none.taxMethod()).isNull();
+    }
+
+    @Test
+    void directMethodIsTwentyPercentOfSectorRate() {
+        // 1.000.000 doanh thu, ngành 1% → giảm 1.000.000 × 1% × 20% = 2.000; dòng không đủ điều kiện không giảm
+        var plan = new InvoiceTaxReduction.Plan("DIRECT", List.of(true, false), java.util.Arrays.asList(BigDecimal.ONE, null));
+        var t = InvoiceMath.totals(List.of(taxed("1000000", "HKD_KCT_15", false), taxed("500000", "HKD_KCT_15", false)),
+                BigDecimal.ZERO, plan);
+        org.assertj.core.api.Assertions.assertThat(t.taxReduction()).isEqualByComparingTo("2000");
+        org.assertj.core.api.Assertions.assertThat(t.total()).isEqualByComparingTo("1498000");
+        org.assertj.core.api.Assertions.assertThat(t.taxMethod()).isEqualTo("DIRECT");
     }
 
     @Test

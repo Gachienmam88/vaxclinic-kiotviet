@@ -70,7 +70,8 @@ public class InvoiceEditWriter {
         inv.getLines().clear();
         invoices.flush();
         inv.setTaxReduction(totals.taxReduction());
-        lineBuilder.addLines(inv, req.lines(), lineIds, stockResult);
+        inv.setTaxReductionMethod(totals.taxMethod());
+        lineBuilder.addLines(inv, req.lines(), lineIds, stockResult, totals.reducedLines());
         inv.setCustomerId(customer == null ? null : customer.getId());
         inv.setCustomerName(customer == null ? "Khách lẻ" : customer.getName());
         if (req.sellerId() != null) {

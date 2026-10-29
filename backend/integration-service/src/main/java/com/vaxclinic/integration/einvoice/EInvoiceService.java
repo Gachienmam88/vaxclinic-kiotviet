@@ -23,7 +23,8 @@ import java.util.UUID;
 public class EInvoiceService {
 
     public record SalesInvoice(UUID id, String code, String status, Instant soldAt, String paymentMethod,
-                               BigDecimal subtotal, BigDecimal discount, BigDecimal total, Buyer buyer, List<Line> lines) {
+                               BigDecimal subtotal, BigDecimal discount, BigDecimal total, Buyer buyer, List<Line> lines,
+                               BigDecimal taxReduction, String taxReductionMethod) {
         public record Buyer(String code, String fullName, String legalName, String taxCode, String address, String email,
                             String phone, String idNumber) {
         }
@@ -70,6 +71,12 @@ public class EInvoiceService {
                 .header("Authorization", "Bearer " + tokens.token()).retrieve().body(SalesInvoice.class);
         if (inv == null || !"COMPLETED".equals(inv.status())) {
             throw BusinessException.badRequest("INVOICE_NOT_PUBLISHABLE", "Chỉ phát hành được hóa đơn đã hoàn thành");
+        }
+        // Giảm thuế theo phương pháp trực tiếp (20% tỷ lệ % ngành): chưa xác minh được cách khai trên HĐĐT MISA (trường riêng /
+        // dòng ghi chú) → không phát hành dữ liệu sai lệch tổng tiền, báo rõ để xuất tay.
+        if ("DIRECT".equals(inv.taxReductionMethod()) && inv.taxReduction() != null && inv.taxReduction().signum() > 0) {
+            throw BusinessException.badRequest("EINVOICE_DIRECT_TAX_REDUCTION_UNSUPPORTED",
+                    "Hóa đơn giảm thuế theo phương pháp trực tiếp chưa hỗ trợ phát hành HĐĐT tự động — vui lòng lập trên phần mềm HĐĐT");
         }
         UUID refId = existing.isEmpty() ? UUID.randomUUID() : (UUID) existing.get(0).get("ref_id");
         if (existing.isEmpty()) {

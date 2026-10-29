@@ -104,6 +104,9 @@ public class Invoice implements Persistable<UUID> {
     /** Giảm thuế GTGT (Nghị quyết 204/2025/QH15) đã trừ trong total. */
     @Column(name = "tax_reduction", nullable = false)
     private BigDecimal taxReduction = BigDecimal.ZERO;
+    /** Phương pháp tính giảm thuế: DEDUCTION (10% → 8%) / DIRECT (20% tỷ lệ % ngành); null = không giảm. */
+    @Column(name = "tax_reduction_method")
+    private String taxReductionMethod;
     /** "Bán thuốc theo đơn" + thông tin đơn thuốc. */
     @Column(nullable = false)
     private boolean prescription;

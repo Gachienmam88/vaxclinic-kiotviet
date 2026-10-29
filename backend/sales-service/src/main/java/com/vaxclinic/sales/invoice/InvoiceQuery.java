@@ -81,7 +81,8 @@ public class InvoiceQuery {
                 inv.getRevision(), lines, payments, inv.getOrderId(), inv.getOrderId() == null ? null : queries.orderCode(inv.getOrderId()),
                 inv.getPriceBookId(), inv.getPriceBookName(), inv.getSalesChannel(), queries.channelName(inv.getSalesChannel()), shipments.info(id),
                 customer == null ? null : AdminUnitCodes.joinAddress(customer.getAddress(), customer.getWard(), customer.getProvince()),
-                inv.einvoiceBuyer(), inv.getTaxReduction(), inv.prescriptionInfo());
+                inv.einvoiceBuyer(), inv.getTaxReduction(), inv.prescriptionInfo(),
+                inv.getTaxReductionMethod());
     }
 
     /** 10 lần bán gần nhất của 1 hàng; có khách thì lấy giá đã bán cho khách đó trước. */

@@ -17,8 +17,12 @@ public final class InvoiceMath {
     private InvoiceMath() {
     }
 
-    /** taxReduction: giảm thuế (Nghị quyết 204/2025/QH15) đã trừ trong total. */
-    public record Totals(BigDecimal subtotal, BigDecimal discount, BigDecimal total, BigDecimal taxReduction) {
+    /**
+     * taxReduction: giảm thuế (Nghị quyết 204/2025/QH15) đã trừ trong total; taxMethod: DEDUCTION / DIRECT (null = không giảm);
+     * reducedLines[i]: dòng i được giảm.
+     */
+    public record Totals(BigDecimal subtotal, BigDecimal discount, BigDecimal total, BigDecimal taxReduction, String taxMethod,
+                         List<Boolean> reducedLines) {
     }
 
     public static BigDecimal lineAmount(LineInput l) {
@@ -30,16 +34,18 @@ public final class InvoiceMath {
     }
 
     public static Totals totals(List<LineInput> lines, BigDecimal invoiceDiscount) {
-        return totals(lines, invoiceDiscount, false);
+        return totals(lines, invoiceDiscount, InvoiceTaxReduction.Plan.none(lines.size()));
     }
 
-    /** reduceTax: áp dụng giảm thuế cho dòng đủ điều kiện (xem {@link InvoiceTaxReduction}). */
-    public static Totals totals(List<LineInput> lines, BigDecimal invoiceDiscount, boolean reduceTax) {
+    /** plan: dòng được giảm thuế do server xác định ({@link TaxReductionPlanner}). */
+    public static Totals totals(List<LineInput> lines, BigDecimal invoiceDiscount, InvoiceTaxReduction.Plan plan) {
         BigDecimal subtotal = lines.stream().map(InvoiceMath::lineAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal disc = money(invoiceDiscount == null ? BigDecimal.ZERO : invoiceDiscount).min(subtotal);
         BigDecimal afterDiscount = subtotal.subtract(disc);
-        BigDecimal reduction = reduceTax ? InvoiceTaxReduction.amount(lines, subtotal, afterDiscount) : BigDecimal.ZERO;
-        return new Totals(subtotal, disc, afterDiscount.subtract(reduction), reduction);
+        BigDecimal reduction = InvoiceTaxReduction.amount(lines, plan, subtotal, afterDiscount);
+        boolean reduced = reduction.signum() > 0;
+        return new Totals(subtotal, disc, afterDiscount.subtract(reduction), reduction, reduced ? plan.method() : null,
+                reduced ? plan.eligible() : InvoiceTaxReduction.Plan.none(lines.size()).eligible());
     }
 
     public static BigDecimal money(BigDecimal v) {

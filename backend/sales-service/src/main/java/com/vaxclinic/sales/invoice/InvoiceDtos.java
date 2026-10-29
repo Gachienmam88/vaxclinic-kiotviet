@@ -29,6 +29,15 @@ public final class InvoiceDtos {
                             @NotNull @DecimalMin(value = "0.001", message = "Số lượng phải > 0") BigDecimal quantity,
                             @NotNull @DecimalMin("0") BigDecimal unitPrice, @DecimalMin("0") BigDecimal discount,
                             @Size(max = 500) String note, @Size(max = 30) String taxCode, Boolean taxReducible) {
+        // taxReducible: chỉ để tương thích bản máy bán hàng cũ — server KHÔNG dùng, tự tra hàng (TaxReductionPlanner)
+    }
+
+    /** Xem trước "Giảm thuế" ở màn bán hàng: server tính như khi lưu hóa đơn (soldAt null = bây giờ). */
+    public record TaxReductionPreviewRequest(@NotEmpty @Valid List<LineInput> lines, @DecimalMin("0") BigDecimal discount, Instant soldAt) {
+    }
+
+    /** method: DEDUCTION / DIRECT (null = không giảm); reducedLines[i]: dòng i được giảm. */
+    public record TaxReductionPreview(BigDecimal taxReduction, String method, List<Boolean> reducedLines) {
     }
 
     /** "Bán thuốc theo đơn": thông tin đơn thuốc lưu trên hóa đơn (chưa kết nối Hệ thống Đơn thuốc Quốc gia). */
@@ -105,7 +114,7 @@ public final class InvoiceDtos {
                                   List<LineResponse> lines, List<PaymentResponse> payments, UUID orderId, String orderCode,
                                   UUID priceBookId, String priceBookName, String salesChannel, String salesChannelName,
                                   ShipmentDtos.ShipmentInfo shipment, String customerAddress, EInvoiceBuyer einvoiceBuyer,
-                                  BigDecimal taxReduction, Prescription prescription) {
+                                  BigDecimal taxReduction, Prescription prescription, String taxReductionMethod) {
     }
 
     public record InvoiceListItem(UUID id, String code, Instant soldAt, String customerCode, String customerName,

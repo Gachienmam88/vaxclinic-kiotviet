@@ -88,6 +88,13 @@ public class InvoiceController {
     }
 
     /** "Xem giá bán gần nhất" của 1 hàng (ưu tiên cho đúng khách nếu có). */
+    /** Xem trước "Giảm thuế" (Nghị quyết 204/2025/QH15) cho giỏ hàng đang soạn. */
+    @PostMapping("/tax-reduction-preview")
+    @PreAuthorize("hasAuthority('sales.perform')")
+    public InvoiceDtos.TaxReductionPreview taxReductionPreview(@Valid @RequestBody InvoiceDtos.TaxReductionPreviewRequest req) {
+        return service.previewTaxReduction(req);
+    }
+
     @GetMapping("/recent-prices")
     public List<InvoiceDtos.RecentPrice> recentPrices(@RequestParam UUID productId, @RequestParam(required = false) UUID customerId) {
         return service.recentPrices(productId, customerId);

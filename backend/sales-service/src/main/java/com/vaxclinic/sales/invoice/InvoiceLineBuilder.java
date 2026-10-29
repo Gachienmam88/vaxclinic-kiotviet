@@ -22,7 +22,9 @@ public class InvoiceLineBuilder {
         this.lineLots = lineLots;
     }
 
-    public void addLines(Invoice inv, List<LineInput> inputs, List<UUID> lineIds, ProductStockClient.Result stockResult) {
+    /** reduced[i]: dòng i được giảm thuế (server xác định — InvoiceMath.Totals.reducedLines). */
+    public void addLines(Invoice inv, List<LineInput> inputs, List<UUID> lineIds, ProductStockClient.Result stockResult,
+                         List<Boolean> reduced) {
         var byLine = stockResult.lines().stream().collect(Collectors.toMap(ProductStockClient.LineResult::lineId, r -> r));
         for (int i = 0; i < inputs.size(); i++) {
             var in = inputs.get(i);
@@ -45,7 +47,7 @@ public class InvoiceLineBuilder {
                     .collect(Collectors.joining(", ")));
             line.setNote(in.note());
             line.setTaxCode(in.taxCode());
-            line.setTaxReduced(inv.getTaxReduction() != null && inv.getTaxReduction().signum() > 0 && InvoiceTaxReduction.eligible(in));
+            line.setTaxReduced(i < reduced.size() && Boolean.TRUE.equals(reduced.get(i)));
             inv.getLines().add(line);
         }
     }

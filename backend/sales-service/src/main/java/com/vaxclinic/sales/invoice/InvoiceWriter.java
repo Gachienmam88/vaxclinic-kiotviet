@@ -89,9 +89,10 @@ public class InvoiceWriter {
         inv.setOrderId(req.orderId());
         applyMeta(inv, req);
         inv.setTaxReduction(totals.taxReduction());
+        inv.setTaxReductionMethod(totals.taxMethod());
         inv.applyPrescription(req.prescription());
         if (req.delivery() != null) inv.setSaleMode("DELIVERY");
-        lineBuilder.addLines(inv, req.lines(), lineIds, stockResult);
+        lineBuilder.addLines(inv, req.lines(), lineIds, stockResult, totals.reducedLines());
         invoices.saveAndFlush(inv); // Invoice implements Persistable → persist (INSERT), entity stays managed
         lineBuilder.saveLots(stockResult);
 

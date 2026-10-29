@@ -39,12 +39,14 @@ public class InvoiceService {
     private final SalesChannels channels;
     private final CheckoutAttemptService checkouts;
     private final InvoiceChangeGuard guard;
+    private final TaxReductionPlanner taxPlanner;
 
     public InvoiceService(InvoiceRepository invoices, CustomerRepository customers, InvoiceWriter writer,
                           InvoiceEditWriter editWriter, ProductStockClient stock, SalesRules rules,
                           com.vaxclinic.common.audit.AuditLogger audit, OrderDepositLedger orderDeposits,
                           ShipmentInvoiceHooks shipments, SalesChannels channels, CheckoutAttemptService checkouts,
-                          InvoiceChangeGuard guard) {
+                          InvoiceChangeGuard guard, TaxReductionPlanner taxPlanner) {
+        this.taxPlanner = taxPlanner;
         this.checkouts = checkouts;
         this.orderDeposits = orderDeposits;
         this.shipments = shipments;
@@ -77,7 +79,7 @@ public class InvoiceService {
         shipments.validate(req.saleMode(), req.delivery());
         channels.resolve(req.salesChannel(), null);
         Customer customer = customerOf(req.customerId());
-        var totals = InvoiceMath.totals(req.lines(), req.discount(), reduceTax(req, req.soldAt()));
+        var totals = InvoiceMath.totals(req.lines(), req.discount(), taxPlanner.plan(req.lines(), Boolean.TRUE.equals(req.taxReduction()), req.soldAt()));
         BigDecimal paid = paidOf(req, totals);
         BigDecimal due = totals.total(); // còn phải trả sau tiền cọc
         if (req.orderId() != null) { // từ đơn đặt hàng: tiền cọc trừ trước, khách chỉ trả phần còn lại
@@ -128,7 +130,7 @@ public class InvoiceService {
         Invoice inv = find(id);
         guard.checkEditable(inv, expectedRevision, req, actor);
         Customer customer = customerOf(req.customerId());
-        var totals = InvoiceMath.totals(req.lines(), req.discount(), reduceTax(req, inv.getSoldAt()));
+        var totals = InvoiceMath.totals(req.lines(), req.discount(), taxPlanner.plan(req.lines(), Boolean.TRUE.equals(req.taxReduction()), inv.getSoldAt()));
         BigDecimal paid = guard.autoReceiptAmount(inv, req, customer, totals, paidOf(req, totals));
         int revision = expectedRevision + 1;
         UUID docId = UUID.nameUUIDFromBytes((id + ":" + revision).getBytes(StandardCharsets.UTF_8));
@@ -184,11 +186,6 @@ public class InvoiceService {
     private Customer customerOf(UUID customerId) {
         return customerId == null ? null : customers.findById(customerId)
                 .orElseThrow(() -> BusinessException.badRequest("CUSTOMER_NOT_FOUND", "Khách hàng không tồn tại"));
-    }
-
-    /** Bật "Giảm thuế" và ngày bán trong thời gian áp dụng Nghị quyết 204/2025/QH15. */
-    private static boolean reduceTax(InvoiceRequest req, Instant soldAt) {
-        return Boolean.TRUE.equals(req.taxReduction()) && InvoiceTaxReduction.inWindow(soldAt);
     }
 
     private static BigDecimal paidOf(InvoiceRequest req, InvoiceMath.Totals totals) {
