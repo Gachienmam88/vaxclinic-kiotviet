@@ -767,7 +767,7 @@ Quy ước trích dẫn (viết tắt đường dẫn):
 - `F/` = `frontend/src/`
 - `CL/` = `backend/common-lib/src/main/java/com/vaxclinic/common/`
 
-Tiền VNĐ lưu `NUMERIC(18,0)`; đơn giá/giảm giá dòng `NUMERIC(18,2)`; SL `NUMERIC(18,3)`; giá vốn `NUMERIC(18,4)` (`M/V1__init_sales_schema.sql`). Ghi chú: code đặt hàng + hủy hóa đơn đang bị agent khác sửa trong lúc đọc (xem §2.9). Tài liệu này mô tả code tại thời điểm đọc.
+Tiền VNĐ lưu `NUMERIC(18,0)`; đơn giá/giảm giá dòng `NUMERIC(18,2)`; SL `NUMERIC(18,3)`; giá vốn `NUMERIC(18,4)` (`M/V1__init_sales_schema.sql`).
 
 ---
 
@@ -1453,125 +1453,106 @@ Thực hiện sửa:
 
 ---
 
-### 2.9 Đặt hàng — route `/orders` (đang được cập nhật)
-
-> Đang được cập nhật: agent khác đang sửa tính năng này trong lúc đọc. Các file backend `order/*` vừa đổi (≈01:25), chữ ký `cancel`/`detach` của HĐ vừa đổi trong lúc đọc. Một số endpoint mới ở backend chưa được frontend gọi. Nội dung dưới đây là trạng thái code tại thời điểm đọc.
+### 2.9 Đặt hàng — route `/orders`
 
 **API** (`S/order/OrderController.java`; mức class `sales.perform` hoặc `report.view`)
 
 | Method + path | Quyền | Việc |
 |---|---|---|
 | `GET /api/orders` | class | lọc `q, statuses, from, to, createdBy, customerId, branchId, productQ, customerQ, deliveryFrom/To, sellerId, channels, paymentMethods`; size 1–100 |
-| `GET /api/orders/export` | class | tối đa 5000 đơn + dòng (chưa thấy frontend gọi) |
+| `GET /api/orders/export` | class | xuất file danh sách (tối đa 5000 đơn + dòng); FE gọi ở nút Xuất file (`F/features/orders/order-xlsx-export.ts:17`) |
 | `GET /api/orders/{id}` | class | chi tiết + phiếu cọc / hoàn cọc + "đã giao" |
 | `POST /api/orders` | `sales.perform` | tạo (Phiếu tạm) |
-| `PUT /api/orders/{id}` | `sales.perform` | sửa từ POS |
-| `PATCH /api/orders/{id}/info` | `sales.perform` | sửa nhanh ở chi tiết (chưa thấy frontend gọi) |
+| `PUT /api/orders/{id}` | `sales.perform` | sửa từ POS (tab đặt hàng) |
+| `PATCH /api/orders/{id}/info` | `sales.perform` | "Lưu" ở chi tiết đơn (`F/features/orders/order-detail-panel.tsx:62`) |
 | `POST /api/orders/{id}/confirm` | `sales.perform` | xác nhận |
-| `POST /api/orders/{id}/finish` | `sales.perform` | "Kết thúc" (chưa thấy frontend gọi) |
+| `POST /api/orders/{id}/finish` | `sales.perform` | "Kết thúc" (`F/features/orders/order-finish-dialog.tsx:18`) |
 | `POST /api/orders/{id}/cancel?refundMethod=&bankAccountId=` | `sales.cancel` | hủy |
-| `POST /api/orders/{id}/invoice` | `sales.perform` | tạo HĐ từ đơn; POS hiện dùng `POST /api/invoices` kèm `orderId` |
+| `POST /api/orders/{id}/invoice` | `sales.perform` | tạo HĐ từ đơn qua API; POS dùng `POST /api/invoices` kèm `orderId` (`F/features/sale/sale-invoice-body.ts:18`) |
 | `GET /api/orders/sale-search` | `sales.perform` | "Xử lý đặt hàng": chỉ `DRAFT`/`CONFIRMED`; mặc định 10, tối đa 50 (`OrderSaleSearchService.java:19`) |
 | `GET /api/reports/orders/products`, `GET /api/reports/orders/transactions` | `report.view` | báo cáo đặt hàng |
 
 **Trạng thái** (`S/order/CustomerOrder.java:21-101`)
 - `DRAFT` (Phiếu tạm) → `CONFIRMED` (Đã xác nhận) → `COMPLETED` (đã tạo HĐ / Kết thúc) | `CANCELLED`.
-- "Mở" = `DRAFT` hoặc `CONFIRMED`; chỉ đơn mở mới sửa / xác nhận / hủy / kết thúc / tạo HĐ được.
-- Đơn không mở → `ORDER_NOT_OPEN`:
-  - Đơn `COMPLETED`: "…đã tạo hóa đơn — hủy hóa đơn trước nếu cần sửa / hủy đơn".
-  - Đơn đã hủy: "…đã hủy".
-- Hủy HĐ tạo từ đơn → đơn mở lại `CONFIRMED`.
-- `PATCH /info` đặt được `DRAFT` hoặc `CONFIRMED` khi đơn đang mở (`OrderService.java:165-167`).
+- "Mở" = `DRAFT` hoặc `CONFIRMED`; chỉ đơn mở mới sửa / xác nhận / hủy / kết thúc / tạo HĐ được (`S/order/OrderService.java:171-181`).
+- Đơn không mở → `ORDER_NOT_OPEN`: `COMPLETED` → "Đơn … đã tạo hóa đơn — hủy hóa đơn trước nếu cần sửa / hủy đơn"; đã hủy → "Đơn … đã hủy".
 
 **Dữ liệu**
-- `customer_orders`:
-  - `customer_id` NOT NULL: đặt hàng bắt buộc có khách ("Đặt hàng phải chọn khách hàng").
-  - `deposit` = Σ cọc còn hiệu lực − đã hoàn.
-  - Cột khác: `invoice_id`, `invoicing_id`/`invoicing_at` (giữ chỗ), `price_book_*`, `sales_channel`, `expected_delivery_at` (`M/V7`, `M/V8`, `M/V9`).
+- `customer_orders`: `customer_id` NOT NULL — đặt hàng bắt buộc có khách (POS báo "Đặt hàng phải chọn khách hàng" và đưa con trỏ vào ô tìm khách, `F/features/sale/use-sale-order-submit.ts:26-30`); `deposit` = Σ cọc còn hiệu lực − đã hoàn; `invoice_id`, `invoicing_id`/`invoicing_at` (giữ chỗ), `price_book_*`, `sales_channel`, `expected_delivery_at` (`M/V7`, `M/V8`, `M/V9`).
 - Dòng có `tax_code`; validate dòng giống HĐ.
-- Đặt hàng KHÔNG trừ kho (`M/V7:2`).
+- **Đặt hàng không bao giờ đụng kho** (`M/V7:2`): tạo/sửa/xác nhận/kết thúc/hủy đơn không gọi product-service; chỉ HĐ tạo từ đơn mới trừ kho.
 
-**Tạo** (`OrderService.create` `:47-73`)
-- Id đã có → trả đơn cũ.
+**Tạo** (`OrderService.create` `S/order/OrderService.java:47-73`)
+- Id đã có → trả đơn cũ (idempotent, offline queue gửi lại).
 - `checkBranch`; khóa sổ theo `now`; kênh; khách.
-- Tổng = `InvoiceMath.totals`, không có giảm thuế.
+- Tổng = `InvoiceMath.totals`, không có giảm thuế / dòng VAT riêng.
 - `ordered_at = now`. Người bán mặc định = người thao tác; kênh mặc định `DIRECT`.
-- `paidNow = min(round(paidAmount), total − deposit)` → `receive`.
+- `paidNow = min(round(paidAmount), total − deposit)`; chỉ khi `paidNow > 0` mới tạo phiếu thu `TT{DH}` (`:68-71`).
 
 **Sửa** (`:75-99`)
 - Đơn phải mở; khóa sổ theo `ordered_at`.
-- Có cọc mà đổi khách → `ORDER_HAS_DEPOSIT`.
-- Tổng mới < cọc → `ORDER_TOTAL_BELOW_DEPOSIT`.
-- Thay toàn bộ dòng; khoản trả thêm → `receive`.
-- Client: sửa phải có mạng; đơn mới offline thì xếp hàng.
+- Có cọc mà đổi khách → `ORDER_HAS_DEPOSIT`. Tổng mới < cọc → `ORDER_TOTAL_BELOW_DEPOSIT`.
+- Thay toàn bộ dòng; khoản trả thêm (> 0) → phiếu cọc mới `TT{DH}-n`.
+- Client: sửa phải có mạng; đơn mới offline thì xếp hàng (`F/features/sale/use-sale-order-submit.ts:18-51`).
 
-**Xác nhận**: đơn mở + khóa sổ theo `ordered_at` → `CONFIRMED`.
+**Xác nhận** (`:101-107`): đơn mở + khóa sổ theo `ordered_at` → `CONFIRMED`.
 
-**Thu cọc** (`OrderDepositLedger.receive` `:49-60`)
+**Thu cọc** (`OrderDepositLedger.receive` `S/order/OrderDepositLedger.java:49-61`)
 - Phiếu thu `TT{DH}[-n]`: `RECEIPT`, "Thu Tiền khách trả", quỹ theo phương thức, `accounting=false`, `affects_debt=true`, `source_type=ORDER`, không phân bổ.
-- Sổ nợ `PAYMENT −amount` ("Đặt cọc đơn …") → nợ khách có thể âm.
-- `deposit += amount`.
+- Sổ nợ `PAYMENT −amount` ("Đặt cọc đơn …") → nợ khách có thể âm. `deposit += amount`.
 
-**Tạo HĐ từ đơn** (POS `?orderInvoice=` → tab SALE `fromOrder` → `POST /api/invoices` với `orderId`)
-- Trước khi trừ kho `depositForInvoice` (`OrderDepositLedger.java:97-110`, `OrderDepositRepository.java:27-34`):
-  - Đơn phải mở, cùng khách (`ORDER_CUSTOMER_MISMATCH`), cùng chi nhánh (`ORDER_BRANCH_MISMATCH`).
-  - Giữ chỗ: `UPDATE … SET invoicing_id=?` nếu chưa có ai giữ, hoặc cùng HĐ, hoặc chỗ giữ cũ hơn 2 phút. Máy khác đang giữ → 409 `ORDER_BUSY` "Đơn … đang được lập hóa đơn ở máy khác".
+**TẠO HÓA ĐƠN** (POS tab đơn `DHxxx`, hoặc `/sale?orderInvoice=` từ chi tiết đơn)
+- Ở tab đơn đã lưu: **lưu đơn trước** (`PUT /orders/{id}`; số "Khách thanh toán" nhập ở tab đơn thành phiếu cọc thêm), rồi thay tab bằng tab hóa đơn gắn đơn (`F/features/sale/use-sale-order-submit.ts:54-73`, `F/features/sale/sale-open-order.ts:9-35`). Đơn `COMPLETED`/`CANCELLED` không mở được để lập HĐ.
+- THANH TOÁN → `POST /api/invoices` với `orderId`: HĐ bán thường, **trừ kho FEFO** như bán lẻ.
+- Trước khi trừ kho `depositForInvoice` (`S/order/OrderDepositLedger.java:101-111`, `OrderDepositRepository.java:27-34`): đơn phải mở, cùng khách (`ORDER_CUSTOMER_MISMATCH`), cùng chi nhánh (`ORDER_BRANCH_MISMATCH`); giữ chỗ `invoicing_id` (chưa ai giữ / cùng HĐ / chỗ giữ cũ hơn 2 phút), máy khác đang giữ → 409 `ORDER_BUSY`. Lập HĐ lỗi → bỏ giữ chỗ (`releaseClaim`).
 - Khách chỉ trả phần `total − min(deposit, total)`.
-- Trong transaction lưu HĐ, `attach` (`:117-132`):
-  - Kiểm tra lại các điều kiện.
-  - Phân bổ phần còn lại của từng phiếu cọc (cũ trước) vào HĐ, tối đa phần HĐ còn nợ → `invoices.paid` tăng.
-  - Đơn `COMPLETED`, `invoice_id` = HĐ.
+- Trong transaction lưu HĐ, `attach` (`:118-134`): kiểm lại điều kiện; phân bổ phần còn lại của từng phiếu cọc (cũ trước) vào HĐ, tối đa phần HĐ còn nợ → `invoices.paid` tăng; đơn `COMPLETED`, `invoice_id` = HĐ. Lịch sử thanh toán của HĐ hiện phiếu `TT{DH}` kèm nhãn "(Chuyển tạm ứng)" (`F/features/sales/invoice-detail-sections.tsx:71`).
+- Phần khách chưa trả chỉ vào công nợ **lúc tạo HĐ** (sổ nợ `SALE` của HĐ); bản thân đơn không ghi nợ ngoài phiếu cọc.
 - Cọc lớn hơn tổng HĐ → phần dư nằm ở phiếu cọc chưa phân bổ (nợ khách vẫn âm).
-- Client: tạo HĐ từ đơn bắt buộc có mạng.
 - "Đã giao" từng dòng = min(SL đặt, Σ SL cùng hàng + đơn vị trên HĐ còn hiệu lực) (`OrderQuery.java:53-59`).
 
-**Hủy đơn** (`OrderService.cancel` `:109-131`, `OrderManageService.java:89-100`)
-- `refundMethod` hợp lệ: `CASH|TRANSFER|CARD|EWALLET|CREDIT|CANCEL_VOUCHERS`, ngược lại `REFUND_METHOD_INVALID`. null → xử lý như hoàn tiền mặt (quỹ `CASH`).
-- Đơn có `invoice_id` → `ORDER_HAS_INVOICE` "Phiếu đặt hàng đã có hóa đơn, không thể hủy".
+**Hủy đơn** (`OrderService.cancel` `S/order/OrderService.java:109-132`, `OrderManageService.java:85-100`)
+- `refundMethod` hợp lệ: `CASH|TRANSFER|CARD|EWALLET|CREDIT|CANCEL_VOUCHERS`, ngược lại `REFUND_METHOD_INVALID`; null → hoàn tiền mặt.
+- Đơn có `invoice_id` → `ORDER_HAS_INVOICE` "Phiếu đặt hàng đã có hóa đơn, không thể hủy" (kiểm trước điều kiện "mở").
 - Đơn phải mở; khóa sổ theo `now`.
-- Cách xử lý cọc:
 
-  | refundMethod | Xử lý |
+  | refundMethod | Xử lý (`S/order/OrderDepositLedger.java:62-95`) |
   |---|---|
-  | `CANCEL_VOUCHERS` | hủy mọi phiếu cọc `PAID`; sổ nợ `PAYMENT_CANCEL +amount` từng phiếu; `deposit` giảm tương ứng |
-  | `CREDIT` | giữ cọc: phiếu thu giữ nguyên, nợ khách vẫn âm, đơn giữ số `deposit` |
-  | `CASH`/`TRANSFER`/`CARD`/`EWALLET` | nếu `deposit > 0`: phiếu chi `PC{DH}` = toàn bộ cọc, "Chi Tiền trả khách", `bank_account_id` chỉ cho `TRANSFER`/`CARD`; sổ nợ `REFUND +deposit`; `deposit = 0` |
+  | `CANCEL_VOUCHERS` | hủy mọi phiếu cọc `PAID`; sổ nợ `PAYMENT_CANCEL +amount` từng phiếu; `deposit` giảm tương ứng; **không** tạo phiếu hoàn |
+  | `CREDIT` | giữ cọc làm tiền khách trả trước: phiếu thu giữ nguyên, nợ khách vẫn âm, đơn giữ số `deposit` |
+  | `CASH`/`TRANSFER`/`CARD`/`EWALLET` | nếu `deposit > 0`: phiếu chi `PC{DH}` = toàn bộ cọc, "Chi Tiền trả khách", `bank_account_id` chỉ cho `TRANSFER`/`CARD`; sổ nợ `REFUND +deposit`; `deposit = 0` — **chỉ qua API**, UI không dùng |
 
-  Nguồn: `OrderDepositLedger.java:62-95`.
 - Đơn → `CANCELLED`, `cancelled_at = now`. Audit ghi rõ cách xử lý cọc.
-- Client (`F/features/orders/order-cancel-dialog.tsx`, `F/features/sales/refund-method-fields.tsx`): chỉ có `CASH` (mặc định), `TRANSFER` (chọn tài khoản), `CREDIT`. Chưa có `CANCEL_VOUCHERS`.
+- UI (`F/features/orders/order-cancel-dialog.tsx:17-50`): xác nhận hủy; đơn có cọc hỏi tiếp "Bạn có muốn hủy đặt cọc liên quan?": **Đồng ý = `CANCEL_VOUCHERS`**, **Bỏ qua = `CREDIT`**.
 
-**Kết thúc** (`finish` `:133-140`): đơn mở + khóa sổ theo `now` → `COMPLETED`, không tạo HĐ, phiếu cọc giữ nguyên.
+**Kết thúc** (`finish` `:134-141`): đơn mở + khóa sổ theo `now` → `COMPLETED`, không tạo HĐ, không đổi kho, phiếu cọc giữ `PAID` (vẫn là tiền khách đã trả). Sau đó không lập HĐ được nữa (đơn không mở).
 
-**Sửa thông tin** (`updateInfo` `:142-169`)
-- Đơn không được `CANCELLED`; `checkBranch`; khóa sổ theo `ordered_at` cũ, và theo ngày mới nếu đổi.
-- Sửa được: người nhận đặt (`sellerId`), kênh. `expected_delivery_at` và `note` luôn bị ghi đè.
-- Đổi trạng thái chỉ khi đơn đang mở.
-- Áp dụng được cả đơn `COMPLETED` cho các trường thông tin.
+**Sửa thông tin** (`updateInfo` `:143-169`)
+- `checkBranch`; đơn `CANCELLED` → `ORDER_NOT_OPEN` (đơn đã hủy chỉ xem).
+- Khóa sổ kiểm theo `ordered_at` cũ, và theo ngày mới nếu đổi ngày đặt.
+- Sửa được: người nhận đặt (`sellerId`), ngày đặt, kênh; `expected_delivery_at` và `note` luôn ghi đè.
+- Trạng thái chỉ đổi `DRAFT`↔`CONFIRMED` khi đơn đang mở; đơn `COMPLETED` vẫn sửa được các trường thông tin.
 
-**Hủy HĐ có đơn** (`InvoiceWriter.java:154-156` → `OrderDepositLedger.detach` `:134-147`)
-- Gỡ phân bổ cọc khỏi HĐ, `paid` HĐ giảm tương ứng.
-- Đơn về `CONFIRMED`, bỏ `invoice_id`/`invoicing_id`.
-- `cancelPayments=true` → `cancelReceipts` trên đơn.
+**Hủy HĐ tạo từ đơn** (`S/invoice/InvoiceWriter.java:145-156` → `OrderDepositLedger.detach` `:136-148`)
+- Gỡ phân bổ cọc khỏi HĐ, `paid` HĐ giảm tương ứng; đơn mở lại `CONFIRMED`, bỏ `invoice_id`/`invoicing_id`.
+- `cancelPayments=true` (hộp "Hủy thanh toán — Bạn có muốn hủy những phiếu thanh toán liên quan?" → Xác nhận) → hủy luôn phiếu cọc của đơn (`PAYMENT_CANCEL`, nợ khách tăng lại); `false` (Bỏ qua) → phiếu cọc giữ nguyên, lại là cọc của đơn (`F/features/orders/invoice-cancel-payments-dialog.tsx:9-14`).
 - Kiểm tra hủy HĐ trừ phần cọc đã phân bổ khỏi điều kiện "phiếu thu nợ" (`InvoiceChangeGuard.java:106`).
 
+**In**: mẫu `ORDER` "HÓA ĐƠN ĐẶT HÀNG" kèm mã VietQR số còn phải trả (`F/features/print/print-template-defaults.ts:89`, `F/features/orders/order-detail-panel.tsx:71`).
+
 **Danh sách / chi tiết** (`F/app/(admin)/orders/page.tsx`, `F/features/orders/*`)
-- Lọc client: trạng thái (mặc định `DRAFT` + `CONFIRMED`), thời gian (mặc định tháng này), người tạo, ô tìm kiếm (debounce 300 ms). Link sâu `?code=` / `?id=` = toàn thời gian, mọi trạng thái.
-- Sắp xếp `ordered_at desc`. Tổng Σ subtotal / total / deposit.
-- Tìm `q`/`customerQ` dùng ilike, không bỏ dấu.
-- Lọc `paymentMethods` theo quỹ phiếu cọc: `CASH`/`BANK`/`EWALLET`.
-- Xuất CSV trang đang xem: mã, thời gian, mã KH, khách, tổng hàng, giảm giá, tổng, đã trả, trạng thái, mã HĐ.
-- Chi tiết, khi đơn mở:
-  - Tạo hóa đơn (`/sale?orderInvoice=`), Chỉnh sửa (`/sale?order=`): cần `sales.perform`.
-  - Xác nhận: đơn `DRAFT`.
-  - Hủy: cần `sales.cancel`.
-  - Đơn đã hủy nhưng còn `deposit > 0` → hiển thị "giữ cọc làm công nợ".
+- Lọc: trạng thái (mặc định `DRAFT` + `CONFIRMED`), thời gian (mặc định tháng này), người tạo, ô tìm kiếm (debounce 300 ms). Link sâu `?code=` / `?id=` = toàn thời gian, mọi trạng thái.
+- Sắp xếp `ordered_at desc`. Tổng Σ subtotal / total / deposit. Tìm `q`/`customerQ` dùng ilike, không bỏ dấu. Lọc `paymentMethods` theo quỹ phiếu cọc: `CASH`/`BANK`/`EWALLET`.
+- Xuất file: `GET /orders/export` theo bộ lọc hiện tại.
+- Chi tiết, đơn mở: Tạo hóa đơn (`/sale?orderInvoice=`), Chỉnh sửa (`/sale?order=`), Kết thúc, Lưu (PATCH info) — cần `sales.perform`; Xác nhận khi `DRAFT`; Hủy cần `sales.cancel`. Đơn đã hủy còn `deposit > 0` → hiển thị "giữ cọc làm công nợ".
+
+**Chưa làm**: Gộp đơn đặt hàng; lọc theo đối tác giao hàng / khu vực; trạng thái "Đang giao hàng"; dòng thuế VAT trên đơn đặt hàng.
 
 ---
 
 ### 2.10 In (mẫu hóa đơn / trả hàng)
 
-- Có 7 loại mẫu in A5: `INVOICE`, `DELIVERY_INVOICE`, `SALES_RETURN`, `CASH_RECEIPT`, `CASH_PAYMENT`, `PURCHASE_RECEIPT`, `PURCHASE_RETURN` (`F/features/print/print-template-defaults.ts:4`). Chưa có mẫu in đơn đặt hàng.
+- Có 8 loại mẫu in A5: `INVOICE`, `DELIVERY_INVOICE`, `SALES_RETURN`, `CASH_RECEIPT`, `CASH_PAYMENT`, `PURCHASE_RECEIPT`, `PURCHASE_RETURN`, `ORDER` ("HÓA ĐƠN ĐẶT HÀNG" kèm VietQR) (`F/features/print/print-template-defaults.ts:4`, identity `PrintTemplateService.java:21`).
 - Cửa hàng có thể sửa mẫu; loại chưa sửa dùng mẫu mặc định (`print-data.ts:14-15`).
 - Trường `{Ten_Truong}` được escape HTML; khối `{#Dong_Hang}…{/Dong_Hang}` lặp theo từng dòng; `{Logo}` chèn ảnh logo.
 - Mẫu đã sửa được sanitize: bỏ script, iframe, `on*`, `javascript:` (`print-render.ts:1-38`).
@@ -1628,7 +1609,7 @@ Gateway không route `/internal/**`.
 - Đơn thuốc chưa kết nối Hệ thống Đơn thuốc Quốc gia (`M/V19:1`).
 - Hạn mức công nợ khách chỉ cảnh báo ở POS, server không chặn.
 - Thanh toán nhiều phương thức chỉ có khi tạo HĐ mới; sửa HĐ giữ nguyên các phiếu thêm (`InvoiceExtraPayments.java:18-22`).
-- Đặt hàng (đang được cập nhật): backend đã có `finish`, `PATCH info`, `export`, `CANCEL_VOUCHERS`, `cancelPayments` của hủy HĐ, nhưng chưa thấy frontend gọi. Không có mẫu in đơn đặt hàng. Danh sách đơn chỉ xuất CSV trang hiện tại.
+- Đặt hàng: chưa có Gộp đơn, lọc đối tác giao hàng / khu vực, trạng thái "Đang giao hàng", dòng VAT trên đơn (§2.9). Hoàn cọc bằng phiếu chi `PC{DH}` chỉ gọi được qua API.
 - Tìm kiếm phiếu trả và đơn đặt hàng dùng `ilike`, không bỏ dấu (khác với HĐ).
 - Mã HĐ có thể nhảy cóc khi thanh toán lỗi sau bước cấp mã (`InvoiceService.java:102`).
 - Ô tìm "Theo mã hóa đơn" của HĐ: ☆ yêu thích và cấu hình cột chỉ lưu trên máy, chưa đồng bộ giữa các máy (`invoice-list-prefs.ts:5-8`).
@@ -2907,7 +2888,7 @@ Menu trái Thiết lập (`fe/features/settings/settings-shell.tsx:20-57`; mục
 ### 4.16 Frontend: mẫu in (placeholder, sanitizeHtml)
 
 - Màn `/settings/print-templates` (`fe/app/(admin)/settings/print-templates/page.tsx`), editor xem trước khổ A5 + "In thử" (`fe/features/print/print-template-editor.tsx:12-65`); dùng khi in hóa đơn bán hàng (`fe/features/sale/use-sale-invoice-printer.ts:6-39`), nút in chung (`fe/features/print/print-button.tsx:9-20`).
-- 7 loại = backend; nhóm: Đơn hàng (Hóa đơn, Hóa đơn giao hàng, Trả hàng), Sổ quỹ (Phiếu thu, Phiếu chi), Hàng hóa (Nhập hàng, Trả hàng nhập) (`fe/features/print/print-template-defaults.ts:4, 87-205`).
+- 8 loại = backend; nhóm: Đơn hàng (Hóa đơn, Hóa đơn giao hàng, Trả hàng, Đặt hàng `ORDER`), Sổ quỹ (Phiếu thu, Phiếu chi), Hàng hóa (Nhập hàng, Trả hàng nhập) (`fe/features/print/print-template-defaults.ts:4, 87-205`).
 - Cú pháp (`fe/features/print/print-render.ts:1-22`): `{Ten_Truong}` → giá trị đã escape HTML; khối lặp `{#Dong_Hang}...{/Dong_Hang}` theo dòng hàng; `{Logo}` → `<img>` (max 60×140px); trường không có giữ nguyên chữ.
 - Trường chung (`print-template-defaults.ts:12-20`): `Logo, Ten_Cua_Hang, Dia_Chi_Cua_Hang, Dien_Thoai_Cua_Hang, MST_Cua_Hang, Ten_Chi_Nhanh, Ngay, Thang, Nam, Nguoi_Tao`. Dòng hàng: `STT, Ma_Hang, Ten_Hang, Don_Vi, So_Luong, Don_Gia, Thanh_Tien, So_Lo` (+ `Chiet_Khau` ở Hóa đơn, `Han_Dung` ở Nhập hàng).
 - Theo loại:
