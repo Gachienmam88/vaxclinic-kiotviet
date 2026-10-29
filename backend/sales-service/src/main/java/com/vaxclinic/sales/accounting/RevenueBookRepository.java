@@ -18,9 +18,13 @@ import java.util.UUID;
 @Repository
 public class RevenueBookRepository {
 
-    /** Theo ngày × mặt hàng × mã thuế (mặt hàng → nhóm hàng → ngành nghề, tính thuế theo ngành). cogs: giá vốn (đã trừ hàng trả lại). */
+    /**
+     * Theo ngày × mặt hàng × mã thuế (mặt hàng → nhóm hàng → ngành nghề, tính thuế theo ngành). cogs: giá vốn (đã trừ hàng trả lại).
+     * returns = giá trị hàng trả (tiền hàng trả − giảm giá phiếu trả, phân bổ theo dòng); returnFee = phí trả hàng khách chịu
+     * (phân bổ theo dòng) — KHÔNG nằm trong doanh thu thuần (sales − returns), là dòng "Thu khác / Phí trả hàng" riêng.
+     */
     public record DailyRevenue(LocalDate date, UUID productId, String taxCode, BigDecimal sales, BigDecimal returns, BigDecimal cogs,
-                               int invoiceCount) {
+                               int invoiceCount, BigDecimal returnFee) {
     }
 
     /** Chi phí khác: phiếu chi hạch toán kết quả kinh doanh, KHÔNG gồm trả nhà cung cấp (đã nằm trong giá vốn). */
@@ -33,7 +37,7 @@ public class RevenueBookRepository {
         this.jdbc = jdbc;
     }
 
-    /** Hóa đơn hoàn thành − hàng khách trả; phí trả hàng khách chịu tính vào doanh thu. branchIds rỗng = mọi chi nhánh. */
+    /** Hóa đơn hoàn thành − hàng khách trả; phí trả hàng tách cột returnFee (KiotViet). branchIds rỗng = mọi chi nhánh. */
     public List<DailyRevenue> daily(LocalDate from, LocalDate to, List<UUID> branchIds) {
         return jdbc.query("""
                 with inv as (
@@ -48,25 +52,28 @@ public class RevenueBookRepository {
                     sum(round(l.quantity * l.cost)) cogs
                   from inv join invoice_lines l on l.invoice_id = inv.id group by 1, 2, 3
                 ), ret as (
-                  select r.id, (r.returned_at at time zone 'Asia/Ho_Chi_Minh')::date d, r.total, r.subtotal
+                  select r.id, (r.returned_at at time zone 'Asia/Ho_Chi_Minh')::date d, r.subtotal, r.discount, r.fee
                   from sales_returns r
                   where r.status = 'COMPLETED' and r.returned_at >= :from and r.returned_at < :to
                     and (:allBranches or r.branch_id in (:branches))
                 ), back as (
                   select ret.d, rl.product_id, coalesce(il.tax_code, '') tax_code,
                     sum(case when ret.subtotal = 0 then 0
-                             else round(ret.total * rl.quantity * rl.unit_price / ret.subtotal) end) amount,
+                             else round((ret.subtotal - ret.discount) * rl.quantity * rl.unit_price / ret.subtotal) end) amount,
+                    sum(case when ret.subtotal = 0 then 0 else round(ret.fee * rl.quantity * rl.unit_price / ret.subtotal) end) fee,
                     sum(round(rl.quantity * coalesce(il.cost, rl.cost, 0))) cogs
                   from ret join sales_return_lines rl on rl.return_id = ret.id
                   left join invoice_lines il on il.id = rl.invoice_line_id group by 1, 2, 3
                 )
                 select coalesce(s.d, b.d) d, coalesce(s.product_id, b.product_id) product_id, coalesce(s.tax_code, b.tax_code) tax_code,
                   coalesce(s.amount, 0) sales,
-                  coalesce(b.amount, 0) returns, coalesce(s.cogs, 0) - coalesce(b.cogs, 0) cogs, coalesce(s.n, 0) n
+                  coalesce(b.amount, 0) returns, coalesce(s.cogs, 0) - coalesce(b.cogs, 0) cogs, coalesce(s.n, 0) n,
+                  coalesce(b.fee, 0) fee
                 from sale s full join back b on b.d = s.d and b.product_id = s.product_id and b.tax_code = s.tax_code
                 order by 1, 2, 3""", params(from, to, branchIds),
                 (rs, i) -> new DailyRevenue(rs.getObject("d", LocalDate.class), rs.getObject("product_id", UUID.class), rs.getString("tax_code"),
-                        rs.getBigDecimal("sales"), rs.getBigDecimal("returns"), rs.getBigDecimal("cogs"), rs.getInt("n")));
+                        rs.getBigDecimal("sales"), rs.getBigDecimal("returns"), rs.getBigDecimal("cogs"), rs.getInt("n"),
+                        rs.getBigDecimal("fee")));
     }
 
     public List<DailyExpense> expenses(LocalDate from, LocalDate to, List<UUID> branchIds) {

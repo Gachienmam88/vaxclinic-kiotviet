@@ -7,7 +7,7 @@ import { useT } from "@/lib/i18n";
 import { commonNs } from "@/messages/common";
 import { accountingNs } from "@/messages/accounting";
 import { periodLabel } from "./accounting-labels";
-import { downloadCsv, exemptOf, netOf, type DailyRevenue, type Period, type TaxConfig } from "./tax-calc";
+import { downloadCsv, exemptOf, taxRevenueOf, type DailyRevenue, type Period, type TaxConfig } from "./tax-calc";
 
 /**
  * Sổ doanh thu bán hàng hóa, dịch vụ (S1a-HKD / S2a-HKD): mỗi ngày × ngành nghề 1 dòng, tách doanh thu chịu / không chịu GTGT.
@@ -25,7 +25,7 @@ export function RevenueBookTab({ rows, period, cfg, formCode, storeName, taxCode
     const sector = cfg.sectorOf(r.productId);
     const key = `${r.date}|${sector}`;
     const d = days.get(key) ?? { date: r.date, sector, vat: 0, exempt: 0 };
-    if (exemptOf(r, cfg)) d.exempt += netOf(r); else d.vat += netOf(r);
+    if (exemptOf(r, cfg)) d.exempt += taxRevenueOf(r); else d.vat += taxRevenueOf(r);
     days.set(key, d);
   });
   const list = [...days.entries()].sort(([a], [b]) => a.localeCompare(b));

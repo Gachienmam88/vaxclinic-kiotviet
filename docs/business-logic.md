@@ -3269,7 +3269,10 @@ Quy ước chung (đọc từ code):
 - Khoảng ngày `[from 00:00, to+1 00:00)` giờ VN; `branchIds` rỗng = **mọi chi nhánh** (`SS/accounting/RevenueBookRepository.java:83-91`).
 - Dòng = ngày (giờ VN) × productId × taxCode (rỗng → '') (`RevenueBookRepository.java:37-70`):
   - `sales` = Σ round(`i.total` × SL × (đơn giá − giảm/đv) / `i.subtotal`) của hóa đơn `COMPLETED` theo `sold_at` (phân bổ giảm giá HĐ + giảm thuế theo tỷ lệ tiền hàng) (:46-47).
-  - `returns` = Σ round(`r.total` × SL trả × đơn giá trả / `r.subtotal`) phiếu trả `COMPLETED` theo `returned_at`; `r.total = subtotal − discount − fee` (`SS/salesreturn/SalesReturnService.java:95-96`) → **phí trả hàng khách chịu nằm lại trong doanh thu** (:36).
+  - `returns` = giá trị hàng trả = Σ round((`r.subtotal − r.discount`) × SL trả × đơn giá trả / `r.subtotal`) phiếu trả `COMPLETED` theo `returned_at` (audit #11).
+  - `returnFee` = Σ round(`r.fee` × SL trả × đơn giá trả / `r.subtotal`) — phí trả hàng khách chịu, cột riêng.
+  - **Quy tắc thống nhất (theo KiotViet, audit #11)**: Doanh thu thuần = tiền hàng − giảm giá − giá trị hàng trả = `sales − returns`; phí trả hàng **không** thuộc doanh thu thuần mà là dòng "Thu khác / Phí trả hàng" riêng — như Báo cáo bán hàng (cột `fee`), Báo cáo tài chính (`returnFee` trong Thu nhập khác), Báo cáo cuối ngày, Dashboard (doanh thu thuần = `sales − returns`), doanh thu người bán tính hoa hồng (`SS/accounting/SellerRevenueRepository.java`, giá trị trả = `subtotal − discount`).
+  - Tab Sổ doanh thu S1a và Tờ khai (FE `tax-calc.ts` `taxRevenueOf`) ghi doanh thu chịu thuế = doanh thu thuần + phí trả hàng (khoản thu dịch vụ của cửa hàng) → số thuế không đổi so với trước.
   - `cogs` = Σ round(SL × giá vốn dòng bán) − Σ round(SL trả × giá vốn dòng gốc, thiếu thì giá vốn trên dòng trả).
   - `invoiceCount` = số hóa đơn distinct.
   - Mã thuế phiếu trả lấy theo dòng hóa đơn gốc (`il.tax_code`).
@@ -3442,7 +3445,7 @@ Quy ước chung (đọc từ code):
 ---
 
 ### Câu hỏi chưa giải quyết
-- Dashboard và Sổ doanh thu tính phí trả hàng vào doanh thu thuần, còn Báo cáo bán hàng/tài chính tách phí trả thành cột riêng — có chủ ý không?
+- ~~Dashboard và Sổ doanh thu tính phí trả hàng vào doanh thu thuần~~ — đã thống nhất (audit #11): phí trả hàng tách riêng mọi nơi; sổ S1a / tờ khai cộng phí trả hàng vào doanh thu chịu thuế.
 - ~~`/accounting/revenue/*`, `/accounting/stock/summary`, `/reports/customers/debt` không giới hạn chi nhánh~~ — đã sửa (audit #2). `paymentDiscount` (Báo cáo tài chính) vẫn không lọc chi nhánh (sổ nợ khách không có chi nhánh).
 - ~~Phiếu lương/tạm ứng từ HR outbox `accounting=false`~~ — đã sửa (audit #10): hạch toán, vào "Chi phí lương".
 - Mã tính chất hóa đơn đầu vào: XML (`TCHDon` 1=thay thế, 2=điều chỉnh) và cổng (`tchat` 2=điều chỉnh, 3=thay thế) dùng hai bảng mã khác nhau — chưa kiểm chứng với dữ liệu thật.

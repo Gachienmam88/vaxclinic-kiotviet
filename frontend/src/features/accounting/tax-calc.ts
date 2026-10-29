@@ -16,7 +16,9 @@ export const PROFIT_RATE: Record<number, number> = { 1: 0, 2: 15, 3: 17, 4: 20 }
 export const isVatExempt = (code: string) => code === "KCT" || code === "KKKNT" || code.startsWith("HKD_KCT");
 
 export type Sector = { code: string; name: string; vatRate: number; pitRate: number };
-export type DailyRevenue = { date: string; productId: string; taxCode: string; sales: number; returns: number; cogs: number; invoiceCount: number };
+/** returns = giá trị hàng trả (đã trừ giảm giá phiếu trả); returnFee = phí trả hàng khách chịu (không thuộc doanh thu thuần). */
+export type DailyRevenue = { date: string; productId: string; taxCode: string; sales: number; returns: number; cogs: number; invoiceCount: number;
+  returnFee: number };
 export type DailyExpense = { date: string; category: string; amount: number };
 /** sectorOf: mặt hàng → mã ngành (đã xét nhóm hàng, nhóm cha, ngành mặc định). */
 export type TaxConfig = { vatEnabled: boolean; sectors: Sector[]; sectorOf: (productId: string) => string; defaultTaxCode: string | null };
@@ -54,19 +56,21 @@ export function sectorResolver(categoryOf: Map<string, string | null>, parentOf:
   };
 }
 
-/** Doanh thu thuần 1 dòng số liệu, mã thuế trống → mã mặc định trong thiết lập. */
+/** Doanh thu thuần 1 dòng số liệu (KiotViet: tiền hàng − giảm giá − giá trị hàng trả; không gồm phí trả hàng). */
 export const netOf = (r: DailyRevenue) => Number(r.sales) - Number(r.returns);
+/** Doanh thu tính thuế / ghi sổ S1a: doanh thu thuần + phí trả hàng khách chịu (khoản thu dịch vụ của cửa hàng). */
+export const taxRevenueOf = (r: DailyRevenue) => netOf(r) + Number(r.returnFee ?? 0);
 export const exemptOf = (r: DailyRevenue, cfg: TaxConfig) => isVatExempt(r.taxCode || cfg.defaultTaxCode || "");
 
 /** Tính thuế từng kỳ; rows/expenses phải gồm cả năm (từ 01/01) để tính lũy kế TNCN đúng. */
 export function computeTax(rows: DailyRevenue[], expenseRows: DailyExpense[], periods: Period[], cfg: TaxConfig,
                            profile: ProfileConfig): PeriodTax[] {
   const yearStart = periods[0]?.from.slice(0, 4) + "-01-01";
-  const sumUntil = (date: string) => rows.filter((r) => r.date >= yearStart && r.date < date).reduce((s, r) => s + netOf(r), 0);
+  const sumUntil = (date: string) => rows.filter((r) => r.date >= yearStart && r.date < date).reduce((s, r) => s + taxRevenueOf(r), 0);
   const taxable = profile.revenueGroup > 1;
   return periods.map((p) => {
     const inP = rows.filter((r) => r.date >= p.from && r.date <= p.to);
-    const revenue = inP.reduce((s, r) => s + netOf(r), 0);
+    const revenue = inP.reduce((s, r) => s + taxRevenueOf(r), 0);
     const cogs = inP.reduce((s, r) => s + Number(r.cogs), 0);
     const expenses = expenseRows.filter((e) => e.date >= p.from && e.date <= p.to).reduce((s, e) => s + Number(e.amount), 0);
     const before = sumUntil(p.from);
@@ -75,8 +79,8 @@ export function computeTax(rows: DailyRevenue[], expenseRows: DailyExpense[], pe
     const excess = Math.max(0, cumulative - THRESHOLD) - Math.max(0, before - THRESHOLD);
     const bySector = cfg.sectors.map((sector) => {
       const own = inP.filter((r) => cfg.sectorOf(r.productId) === sector.code);
-      const sRevenue = own.reduce((s, r) => s + netOf(r), 0);
-      const exempt = own.filter((r) => exemptOf(r, cfg)).reduce((s, r) => s + netOf(r), 0);
+      const sRevenue = own.reduce((s, r) => s + taxRevenueOf(r), 0);
+      const exempt = own.filter((r) => exemptOf(r, cfg)).reduce((s, r) => s + taxRevenueOf(r), 0);
       const vat = taxable && cfg.vatEnabled ? Math.round((sRevenue - exempt) * Number(sector.vatRate) / 100) : 0;
       const pitBase = taxable && profile.pitMethod === "REVENUE" && revenue > 0 ? Math.round(excess * sRevenue / revenue) : 0;
       const pit = Math.round(pitBase * Number(sector.pitRate) / 100);
