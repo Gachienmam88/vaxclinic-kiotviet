@@ -1,32 +1,54 @@
 "use client";
 
+import Link from "next/link";
+import { useSalesChannels } from "@/features/delivery/delivery-queries";
 import { useUserLookup } from "@/features/purchases/purchase-queries";
 import { CheckOption, FILTER_FIELD, FilterSection, FilterSidebar, PeriodFilter } from "@/features/sales/invoice-list-kit";
 import type { Period } from "@/features/sales/sales-queries";
 import { useT } from "@/lib/i18n";
 import { ordersNs } from "@/messages/orders";
-import { ORDER_STATUS_KEY, ORDER_STATUS_OPTIONS } from "./order-types";
+import { OrderStatusChips } from "./order-status-chips";
+import type { OrderStatus } from "./order-types";
 
-export type OrderFilters = { period: Period; statuses: string[]; createdBy: string };
+/**
+ * Bộ lọc Đặt hàng (KiotViet): Thời gian, Trạng thái (thẻ, mặc định trừ Đã hủy), Thời gian giao hàng (dự kiến), Phương thức
+ * thanh toán (quỹ của phiếu cọc), Người tạo, Người nhận đặt, Kênh bán (+ Tạo mới ở Thiết lập → Đơn hàng). Đơn đặt hàng chưa có
+ * vận đơn / địa chỉ giao nên không có Đối tác giao hàng, Khu vực giao hàng; không có trạng thái "Đang giao hàng".
+ */
+export type OrderFilters = {
+  period: Period; statuses: OrderStatus[]; delivery: Period; funds: string[]; createdBy: string; sellerId: string; channel: string;
+};
+export const DEFAULT_ORDER_FILTERS: OrderFilters = { period: { mode: "month", from: "", to: "" }, statuses: ["DRAFT", "CONFIRMED", "COMPLETED"],
+  delivery: { mode: "all", from: "", to: "" }, funds: [], createdBy: "", sellerId: "", channel: "" };
+const FUNDS = ["CASH", "BANK", "EWALLET"] as const;
 
-const toggle = (list: string[], v: string, on: boolean) => (on ? [...list, v] : list.filter((x) => x !== v));
-
-/** Sidebar lọc trang Đặt hàng: Trạng thái, Thời gian, Người tạo (theo KiotViet). */
 export function OrderFilterSidebar({ value, onChange }: { value: OrderFilters; onChange: (f: OrderFilters) => void }) {
   const t = useT(ordersNs);
   const { data: users = [] } = useUserLookup();
+  const { data: channels = [] } = useSalesChannels();
   const set = (p: Partial<OrderFilters>) => onChange({ ...value, ...p });
+  const userSelect = (key: "createdBy" | "sellerId", label: string) => (
+    <FilterSection title={label}>
+      <select className={FILTER_FIELD} aria-label={label} value={value[key]} onChange={(e) => set({ [key]: e.target.value })}>
+        <option value="">{t("kv.pickUser")}</option>{users.map((u) => <option key={u.id} value={u.id}>{u.fullName}</option>)}</select>
+    </FilterSection>);
   return (
     <FilterSidebar>
-      <FilterSection title={t("filter.status")}>
-        {ORDER_STATUS_OPTIONS.map(([v]) => (
-          <CheckOption key={v} checked={value.statuses.includes(v)} onChange={(on) => set({ statuses: toggle(value.statuses, v, on) })}>{t(ORDER_STATUS_KEY[v])}</CheckOption>))}
+      <PeriodFilter value={value.period} onChange={(period) => set({ period })} />
+      <FilterSection title={t("kv.status")}><OrderStatusChips value={value.statuses} onChange={(statuses) => set({ statuses })} /></FilterSection>
+      <PeriodFilter title={t("kv.deliveryTime")} allowAll value={value.delivery} onChange={(delivery) => set({ delivery })} />
+      <FilterSection title={t("kv.payment")}>
+        {FUNDS.map((f) => <CheckOption key={f} checked={value.funds.includes(f)}
+          onChange={(on) => set({ funds: on ? [...value.funds, f] : value.funds.filter((x) => x !== f) })}>{t(`kv.funds.${f}`)}</CheckOption>)}
       </FilterSection>
-      <PeriodFilter value={value.period} onChange={(period) => set({ period })} allowAll />
-      <FilterSection title={t("filter.createdBy")}>
-        <select className={FILTER_FIELD} aria-label={t("filter.createdBy")} value={value.createdBy} onChange={(e) => set({ createdBy: e.target.value })}>
-          <option value="">{t("filter.pickCreator")}</option>{users.map((u) => <option key={u.id} value={u.id}>{u.fullName}</option>)}</select>
-      </FilterSection>
+      {userSelect("createdBy", t("kv.createdBy"))}
+      {userSelect("sellerId", t("kv.seller"))}
+      <section className="space-y-2">
+        <div className="flex items-center justify-between"><span className="text-[13px] font-semibold">{t("kv.channel")}</span>
+          <Link href="/settings/orders" className="text-[13px] text-[#2171bc] hover:text-[#1a9dcc]">{t("kv.newChannel")}</Link></div>
+        <select className={FILTER_FIELD} aria-label={t("kv.channel")} value={value.channel} onChange={(e) => set({ channel: e.target.value })}>
+          <option value="">{t("kv.pickChannel")}</option>{channels.map((c) => <option key={c.code} value={c.code}>{c.name}</option>)}</select>
+      </section>
     </FilterSidebar>
   );
 }
