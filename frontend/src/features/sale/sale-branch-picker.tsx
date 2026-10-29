@@ -12,10 +12,10 @@ export function SaleBranchPicker({ branch }: { branch: SaleBranch }) {
   const [open, setOpen] = useState(false);
   const many = branch.options.length > 1;
   return (
-    <div className="relative min-w-0">
+    <div className="relative min-w-0 shrink-0">
       <button type="button" aria-haspopup="listbox" aria-expanded={open} aria-label={t("branch.label")} title={branch.name}
-        disabled={!many} onClick={() => setOpen(!open)} className="flex max-w-[150px] items-center gap-1 text-[13px] font-medium disabled:cursor-default">
-        <span className="truncate">{branch.name || t("branch.label")}</span>
+        disabled={!many} onClick={() => setOpen(!open)} className="flex max-w-[140px] items-center gap-1 overflow-hidden text-[13px] font-medium disabled:cursor-default">
+        <span className="min-w-0 truncate">{branch.name || t("branch.label")}</span>
         {many && <ChevronDown className="size-4 shrink-0 text-[#4b5563]" />}
       </button>
       {open && (
