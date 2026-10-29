@@ -34,11 +34,26 @@ public class ShipmentRepository {
         jdbc.update("""
                 insert into shipments(id, code, invoice_id, branch_id, partner_id, receiver_name, receiver_phone, receiver_address,
                     area, weight_gram, shipping_fee, fee_payer, cod_amount, note, status, created_by, created_by_name,
-                    province_code, ward_code)
-                values (?,?,?,?,?,?,?,?,?,?,?,?,?,?, 'PENDING', ?,?,?,?)""", id, code, invoiceId, branchId, d.partnerId(),
-                d.receiverName().trim(), d.receiverPhone().trim(), d.receiverAddress().trim(), Actor.blankToNull(d.area()),
-                d.weightGram(), shippingFee, feePayer, cod, Actor.blankToNull(d.note()), createdBy, createdByName,
-                AdminUnitCodes.clean(d.provinceCode()), AdminUnitCodes.clean(d.wardCode()));
+                    province_code, ward_code, service_type, waybill_code, expected_delivery_at, package_count, length_cm,
+                    width_cm, height_cm, cod_enabled)
+                values (?,?,?,?,?,?,?,?,?,?,?,?,?,?, 'PENDING', ?,?,?,?,?,?,?,?,?,?,?,?)""", id, code, invoiceId, branchId,
+                d.partnerId(), d.receiverName().trim(), d.receiverPhone().trim(), d.receiverAddress().trim(),
+                Actor.blankToNull(d.area()), d.weightGram(), shippingFee, feePayer, cod, Actor.blankToNull(d.note()), createdBy,
+                createdByName, AdminUnitCodes.clean(d.provinceCode()), AdminUnitCodes.clean(d.wardCode()), serviceType(d),
+                Actor.blankToNull(d.waybillCode()), ts(d.expectedDeliveryAt()), packageCount(d), d.lengthCm(), d.widthCm(),
+                d.heightCm(), d.collectsCod());
+    }
+
+    static String serviceType(DeliveryInput d) {
+        return d.serviceType() == null ? "STANDARD" : d.serviceType();
+    }
+
+    static int packageCount(DeliveryInput d) {
+        return d.packageCount() == null ? 1 : d.packageCount();
+    }
+
+    static Timestamp ts(Instant at) {
+        return at == null ? null : Timestamp.from(at);
     }
 
     /** Toàn bộ cột vận đơn (rỗng = không có). */

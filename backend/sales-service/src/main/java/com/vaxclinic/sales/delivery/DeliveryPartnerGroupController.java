@@ -19,7 +19,7 @@ import java.util.List;
 
 /** Nhóm đối tác giao hàng (ô "Nhóm đối tác" ở form Thêm / Sửa đối tác). Nghiệp vụ ở {@link DeliveryPartnerGroupService}. */
 @RestController
-@RequestMapping("/api/delivery-partner-groups")
+@RequestMapping("/api/delivery-partners/groups") // dưới /api/delivery-partners: gateway đã định tuyến sẵn
 @PreAuthorize("hasAuthority('sales.perform') or hasAuthority('report.view')")
 public class DeliveryPartnerGroupController {
 

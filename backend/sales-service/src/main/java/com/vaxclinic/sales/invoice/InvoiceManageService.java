@@ -2,6 +2,7 @@ package com.vaxclinic.sales.invoice;
 
 import com.vaxclinic.common.audit.AuditLogger;
 import com.vaxclinic.sales.common.Actor;
+import com.vaxclinic.sales.delivery.ShipmentInitialStatus;
 import com.vaxclinic.sales.invoice.InvoiceDtos.InfoRequest;
 import com.vaxclinic.sales.invoice.InvoiceDtos.InvoiceListResponse;
 import com.vaxclinic.sales.invoice.InvoiceDtos.InvoiceRequest;
@@ -24,8 +25,11 @@ public class InvoiceManageService {
     private final InvoiceWriter writer;
     private final InvoiceQuery query;
     private final AuditLogger audit;
+    private final ShipmentInitialStatus initialStatus;
 
-    public InvoiceManageService(InvoiceService service, InvoiceWriter writer, InvoiceQuery query, AuditLogger audit) {
+    public InvoiceManageService(InvoiceService service, InvoiceWriter writer, InvoiceQuery query, AuditLogger audit,
+                                ShipmentInitialStatus initialStatus) {
+        this.initialStatus = initialStatus;
         this.service = service;
         this.writer = writer;
         this.query = query;
@@ -42,11 +46,15 @@ public class InvoiceManageService {
 
     /** Gửi lại cùng id (offline / retry) trả về hóa đơn đã tạo, không tạo trùng. Lịch sử "Tạo" ghi trong InvoiceService. */
     public InvoiceResponse create(InvoiceRequest req, Actor actor) {
-        return query.detail(service.create(req, actor));
+        UUID id = service.create(req, actor);
+        initialStatus.apply(id, req.delivery(), actor); // "Trạng thái giao hàng" chọn ở màn bán hàng (sau khi hóa đơn đã lưu)
+        return query.detail(id);
     }
 
     public InvoiceResponse update(UUID id, int revision, InvoiceRequest req, Actor actor) {
-        InvoiceResponse r = query.detail(service.update(id, revision, req, actor));
+        service.update(id, revision, req, actor);
+        initialStatus.apply(id, req.delivery(), actor);
+        InvoiceResponse r = query.detail(id);
         actor.audit(audit, r.branchId(), FEATURE, "Sửa", r.code(), "Cập nhật hóa đơn " + r.code() + ", khách "
                 + r.customerName() + ", tổng " + Actor.money(r.total()) + ", đã trả " + Actor.money(r.paid()));
         return r;

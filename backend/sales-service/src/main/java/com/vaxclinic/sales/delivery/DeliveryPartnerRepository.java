@@ -30,13 +30,15 @@ public class DeliveryPartnerRepository {
             (select count(*) from shipments s where s.partner_id = p.id and s.status <> 'CANCELLED') cnt,
             (select coalesce(sum(s.shipping_fee), 0) from shipments s where s.partner_id = p.id and s.status <> 'CANCELLED') fee,
             (select coalesce(sum(s.cod_amount), 0) from shipments s where s.partner_id = p.id
-                and s.status not in ('CANCELLED', 'RETURNING', 'RETURNED')) cod""";
+                and s.status not in ('CANCELLED', 'RETURNING', 'RETURNED')) cod,
+            (select g.name from delivery_partner_groups g where g.id = p.group_id) group_name""";
 
     private static final RowMapper<PartnerRow> ROW = (rs, n) -> new PartnerRow(rs.getObject("id", UUID.class),
             rs.getString("code"), rs.getString("name"), rs.getString("phone"), rs.getString("email"), rs.getString("address"),
             rs.getString("note"), rs.getString("partner_type"), rs.getBoolean("active"), rs.getLong("cnt"),
             rs.getBigDecimal("fee"), rs.getBigDecimal("cod"), rs.getBigDecimal("debt"), rs.getTimestamp("created_at").toInstant(),
-            rs.getString("province"), rs.getString("ward"), rs.getString("province_code"), rs.getString("ward_code"));
+            rs.getString("province"), rs.getString("ward"), rs.getString("province_code"), rs.getString("ward_code"),
+            rs.getString("partner_kind"), rs.getObject("group_id", UUID.class), rs.getString("group_name"));
 
     private final NamedParameterJdbcTemplate jdbc;
 
@@ -118,11 +120,11 @@ public class DeliveryPartnerRepository {
     public void insert(UUID id, String code, PartnerRequest r, String type, UUID createdBy) {
         jdbc.getJdbcTemplate().update("""
                 insert into delivery_partners(id, code, name, phone, email, address, note, partner_type, active, created_by,
-                    province, ward, province_code, ward_code)
-                values (?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", id, code, r.name().trim(), Actor.blankToNull(r.phone()),
+                    province, ward, province_code, ward_code, partner_kind, group_id)
+                values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", id, code, r.name().trim(), Actor.blankToNull(r.phone()),
                 Actor.blankToNull(r.email()), Actor.blankToNull(r.address()), Actor.blankToNull(r.note()), type,
                 r.active() == null || r.active(), createdBy, Actor.blankToNull(r.province()), Actor.blankToNull(r.ward()),
-                AdminUnitCodes.clean(r.provinceCode()), AdminUnitCodes.clean(r.wardCode()));
+                AdminUnitCodes.clean(r.provinceCode()), AdminUnitCodes.clean(r.wardCode()), kind(r), r.groupId());
     }
 
     /** Mã hiện tại của đối tác (null = không có). */
@@ -135,10 +137,16 @@ public class DeliveryPartnerRepository {
     public void update(UUID id, String code, PartnerRequest r, String type) {
         jdbc.getJdbcTemplate().update("""
                 update delivery_partners set code = ?, name = ?, phone = ?, email = ?, address = ?, note = ?, partner_type = ?,
-                    active = ?, province = ?, ward = ?, province_code = ?, ward_code = ? where id = ?""", code, r.name().trim(),
+                    active = ?, province = ?, ward = ?, province_code = ?, ward_code = ?, partner_kind = ?, group_id = ?
+                where id = ?""", code, r.name().trim(),
                 Actor.blankToNull(r.phone()), Actor.blankToNull(r.email()), Actor.blankToNull(r.address()),
                 Actor.blankToNull(r.note()), type, r.active() == null || r.active(), Actor.blankToNull(r.province()),
-                Actor.blankToNull(r.ward()), AdminUnitCodes.clean(r.provinceCode()), AdminUnitCodes.clean(r.wardCode()), id);
+                Actor.blankToNull(r.ward()), AdminUnitCodes.clean(r.provinceCode()), AdminUnitCodes.clean(r.wardCode()), kind(r),
+                r.groupId(), id);
+    }
+
+    private static String kind(PartnerRequest r) {
+        return r.partnerKind() == null ? "PERSONAL" : r.partnerKind();
     }
 
     /** Khóa dòng đối tác trước khi xóa (code, debt; rỗng = không có). */

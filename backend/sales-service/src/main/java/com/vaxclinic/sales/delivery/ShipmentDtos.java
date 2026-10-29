@@ -31,14 +31,34 @@ public final class ShipmentDtos {
                                 @Size(max = 150) String area, @Min(0) Integer weightGram,
                                 @DecimalMin("0") BigDecimal shippingFee,
                                 @Pattern(regexp = "SHOP|CUSTOMER") String feePayer, @Size(max = 1000) String note,
-                                @Pattern(regexp = AdminUnitCodes.PROVINCE, message = AdminUnitCodes.PROVINCE_MSG) String provinceCode, @Pattern(regexp = AdminUnitCodes.WARD, message = AdminUnitCodes.WARD_MSG) String wardCode) {
+                                @Pattern(regexp = AdminUnitCodes.PROVINCE, message = AdminUnitCodes.PROVINCE_MSG) String provinceCode, @Pattern(regexp = AdminUnitCodes.WARD, message = AdminUnitCodes.WARD_MSG) String wardCode,
+                                @Pattern(regexp = SERVICE_TYPES) String serviceType, @Size(max = 50) String waybillCode,
+                                Instant expectedDeliveryAt, @Min(1) Integer packageCount, @Min(0) Integer lengthCm,
+                                @Min(0) Integer widthCm, @Min(0) Integer heightCm, Boolean codEnabled,
+                                @Pattern(regexp = INITIAL_STATUSES, message = "Trạng thái giao hàng ban đầu không hợp lệ") String status) {
+
+        /** Thu hộ (COD) bật — mặc định bật; tắt thì phần khách chưa trả ghi công nợ khách. */
+        public boolean collectsCod() {
+            return !Boolean.FALSE.equals(codEnabled);
+        }
     }
+
+    /** Loại dịch vụ tự giao: Giao thường / Giao nhanh. */
+    public static final String SERVICE_TYPES = "STANDARD|EXPRESS";
+    /** Trạng thái chọn được khi tạo đơn ("Trạng thái giao hàng" ở màn bán hàng). */
+    public static final String INITIAL_STATUSES = "PENDING|PICKING|DELIVERING|DELIVERED";
 
     /** Tóm tắt vận đơn hiện trên chi tiết hóa đơn và để màn bán hàng mở lại khi sửa hóa đơn. */
     public record ShipmentInfo(UUID id, String code, String status, UUID partnerId, String partnerName, String receiverName,
                                String receiverPhone, String receiverAddress, String area, Integer weightGram,
                                BigDecimal shippingFee, String feePayer, BigDecimal codAmount, String note, Instant deliveredAt,
-                               String returnCode, String provinceCode, String wardCode) {
+                               String returnCode, String provinceCode, String wardCode, String serviceType, String waybillCode,
+                               Instant expectedDeliveryAt, int packageCount, Integer lengthCm, Integer widthCm, Integer heightCm,
+                               boolean codEnabled, Instant createdAt) {
+    }
+
+    /** Tỷ lệ giao thành công theo SĐT người nhận: delivered / finished (Giao thành công + Đã chuyển hoàn). */
+    public record ReceiverStats(long finished, long delivered, Integer rate) {
     }
 
     public record StatusLog(String fromStatus, String toStatus, String note, String changedByName, Instant changedAt) {

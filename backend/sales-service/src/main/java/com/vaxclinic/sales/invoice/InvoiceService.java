@@ -85,7 +85,8 @@ public class InvoiceService {
                     + Actor.money(extras) + ") vượt quá số khách cần trả " + Actor.money(due));
         }
         paid = paid.min(due.subtract(extras));
-        if (customer == null && paid.add(extras).compareTo(totals.total()) < 0 && req.delivery() == null) { // giao hàng: phần còn lại = thu hộ
+        if (customer == null && paid.add(extras).compareTo(totals.total()) < 0
+                && (req.delivery() == null || !req.delivery().collectsCod())) { // giao hàng có thu hộ: phần còn lại = thu hộ
             throw BusinessException.badRequest("WALK_IN_DEBT", "Khách lẻ phải thanh toán đủ — chọn khách hàng để ghi nợ");
         }
         // Mã HĐ lấy trước để ghi vào thẻ kho; nếu bước sau lỗi, mã bị bỏ qua (dãy số có thể nhảy cóc).

@@ -32,9 +32,11 @@ public class ShipmentManageService {
     private final ShipmentEditService edit;
     private final ShipmentCreateService creator;
     private final AuditLogger audit;
+    private final ShipmentInvoiceHooks hooks;
 
     public ShipmentManageService(ShipmentQueryRepository query, ShipmentStatusService status, ShipmentEditService edit,
-                                 ShipmentCreateService creator, AuditLogger audit) {
+                                 ShipmentCreateService creator, AuditLogger audit, ShipmentInvoiceHooks hooks) {
+        this.hooks = hooks;
         this.query = query;
         this.status = status;
         this.edit = edit;
@@ -66,6 +68,11 @@ public class ShipmentManageService {
         actor.audit(audit, d.item().branchId(), "Vận đơn", "Sửa", code, "Cập nhật thông tin giao vận đơn " + code
                 + ": người nhận " + d.item().receiverName() + ", phí " + Actor.money(d.item().shippingFee()));
         return d;
+    }
+
+    /** Tỷ lệ giao thành công theo SĐT người nhận (badge % ở màn bán hàng). */
+    public ShipmentDtos.ReceiverStats receiverStats(String phone) {
+        return hooks.receiverStats(phone == null ? "" : phone);
     }
 
     /** Cập nhật trạng thái hàng loạt; trả kết quả từng vận đơn. */

@@ -59,7 +59,7 @@ public class ShipmentInvoiceHooks {
         }
         UUID id = UUID.randomUUID();
         String code = "VD%06d".formatted(shipments.nextCodeNumber());
-        shipments.insert(id, code, inv.getId(), inv.getBranchId(), d, money(d.shippingFee()), feePayer(d), cod(inv), actor.id(),
+        shipments.insert(id, code, inv.getId(), inv.getBranchId(), d, money(d.shippingFee()), feePayer(d), cod(inv, d), actor.id(),
                 actor.name());
         log(id, null, ShipmentStatus.PENDING, "Tạo vận đơn từ hóa đơn " + inv.getCode(), actor);
         return id;
@@ -89,7 +89,7 @@ public class ShipmentInvoiceHooks {
             byInvoice.updateCod(inv.getId(), cod(inv));
             return;
         }
-        byInvoice.updateDelivery(inv.getId(), d, money(d.shippingFee()), feePayer(d), cod(inv));
+        byInvoice.updateDelivery(inv.getId(), d, money(d.shippingFee()), feePayer(d), cod(inv, d));
     }
 
     /** Trong transaction hủy hóa đơn: vận đơn đang hoạt động chưa lấy hàng → Đã hủy (ghi lịch sử). */
@@ -126,6 +126,16 @@ public class ShipmentInvoiceHooks {
 
     private static BigDecimal cod(Invoice inv) {
         return inv.getTotal().subtract(inv.getPaid()).max(BigDecimal.ZERO);
+    }
+
+    /** Tắt thu hộ → 0 (phần khách chưa trả là công nợ khách). */
+    private static BigDecimal cod(Invoice inv, DeliveryInput d) {
+        return d.collectsCod() ? cod(inv) : BigDecimal.ZERO;
+    }
+
+    /** Tỷ lệ giao thành công theo SĐT người nhận (màn bán hàng hiện cạnh SĐT). */
+    public ShipmentDtos.ReceiverStats receiverStats(String phone) {
+        return byInvoice.receiverStats(phone);
     }
 
     private static String feePayer(DeliveryInput d) {

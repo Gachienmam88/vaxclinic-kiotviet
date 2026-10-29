@@ -36,7 +36,8 @@ public class ShipmentEditService {
                     + ": chỉ sửa được khi Chờ xử lý / Đang lấy hàng");
         }
         hooks.validate("DELIVERY", new DeliveryInput(r.partnerId(), r.receiverName(), r.receiverPhone(), r.receiverAddress(),
-                r.area(), r.weightGram(), r.shippingFee(), r.feePayer(), r.note(), r.provinceCode(), r.wardCode()));
+                r.area(), r.weightGram(), r.shippingFee(), r.feePayer(), r.note(), r.provinceCode(), r.wardCode(),
+                null, null, null, null, null, null, null, null, null));
         shipments.updateDelivery(id, r, ShipmentInvoiceHooks.money(r.shippingFee()), r.feePayer() == null ? "SHOP" : r.feePayer());
         return (String) s.get("code");
     }

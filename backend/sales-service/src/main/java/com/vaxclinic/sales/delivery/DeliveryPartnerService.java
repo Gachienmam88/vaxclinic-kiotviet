@@ -14,13 +14,16 @@ import java.util.UUID;
 public class DeliveryPartnerService {
 
     private final DeliveryPartnerRepository partners;
+    private final DeliveryPartnerGroupRepository groups;
 
-    public DeliveryPartnerService(DeliveryPartnerRepository partners) {
+    public DeliveryPartnerService(DeliveryPartnerRepository partners, DeliveryPartnerGroupRepository groups) {
         this.partners = partners;
+        this.groups = groups;
     }
 
     @Transactional
     public UUID create(PartnerRequest r, Actor actor) {
+        checkGroup(r);
         UUID id = UUID.randomUUID();
         String code = Actor.blankToNull(r.code()) != null ? r.code().trim().toUpperCase()
                 : "DT%06d".formatted(partners.nextCodeNumber());
@@ -34,6 +37,7 @@ public class DeliveryPartnerService {
 
     @Transactional
     public void update(UUID id, PartnerRequest r) {
+        checkGroup(r);
         String code = partners.codeOf(id);
         if (code == null) {
             throw notFound();
@@ -60,6 +64,12 @@ public class DeliveryPartnerService {
         }
         partners.delete(id);
         return (String) rows.get(0).get("code");
+    }
+
+    private void checkGroup(PartnerRequest r) {
+        if (r.groupId() != null && !groups.exists(r.groupId())) {
+            throw BusinessException.badRequest("PARTNER_GROUP_NOT_FOUND", "Nhóm đối tác không tồn tại");
+        }
     }
 
     private static String type(PartnerRequest r) {

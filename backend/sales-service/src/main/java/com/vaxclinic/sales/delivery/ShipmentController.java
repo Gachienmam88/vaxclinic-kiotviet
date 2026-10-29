@@ -62,6 +62,12 @@ public class ShipmentController {
                 reconciled, page, size), Actor.of(jwt));
     }
 
+    /** Tỷ lệ giao thành công của người nhận (theo SĐT) trên các vận đơn đã kết thúc. */
+    @GetMapping("/receiver-stats")
+    public ShipmentDtos.ReceiverStats receiverStats(@RequestParam String phone) {
+        return service.receiverStats(phone);
+    }
+
     @GetMapping("/{id}")
     public ShipmentDetail get(@PathVariable UUID id, @AuthenticationPrincipal Jwt jwt) {
         return service.get(id, Actor.of(jwt));

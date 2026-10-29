@@ -8,6 +8,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -36,8 +38,9 @@ public class ShipmentInvoiceRepository {
 
     /** Chỉ cập nhật thu hộ của vận đơn đang hoạt động. */
     public void updateCod(UUID invoiceId, BigDecimal cod) {
-        jdbc.update("update shipments set cod_amount = ?, updated_at = now() where invoice_id = ? and status <> 'CANCELLED'",
-                cod, invoiceId);
+        jdbc.update("""
+                update shipments set cod_amount = case when cod_enabled then ? else 0 end, updated_at = now()
+                where invoice_id = ? and status <> 'CANCELLED'""", cod, invoiceId);
     }
 
     /** Cập nhật thông tin giao + thu hộ của vận đơn đang hoạt động; shippingFee / feePayer / cod đã tính sẵn. */
@@ -45,11 +48,14 @@ public class ShipmentInvoiceRepository {
         jdbc.update("""
                 update shipments set partner_id = ?, receiver_name = ?, receiver_phone = ?, receiver_address = ?, area = ?,
                     weight_gram = ?, shipping_fee = ?, fee_payer = ?, cod_amount = ?, note = ?, province_code = ?, ward_code = ?,
-                    updated_at = now()
+                    service_type = ?, waybill_code = ?, expected_delivery_at = ?, package_count = ?, length_cm = ?, width_cm = ?,
+                    height_cm = ?, cod_enabled = ?, updated_at = now()
                 where invoice_id = ? and status <> 'CANCELLED'""", d.partnerId(), d.receiverName().trim(), d.receiverPhone().trim(),
                 d.receiverAddress().trim(), Actor.blankToNull(d.area()), d.weightGram(), shippingFee, feePayer,
                 cod, Actor.blankToNull(d.note()), AdminUnitCodes.clean(d.provinceCode()),
-                AdminUnitCodes.clean(d.wardCode()), invoiceId);
+                AdminUnitCodes.clean(d.wardCode()), ShipmentRepository.serviceType(d), Actor.blankToNull(d.waybillCode()),
+                ShipmentRepository.ts(d.expectedDeliveryAt()), ShipmentRepository.packageCount(d), d.lengthCm(), d.widthCm(),
+                d.heightCm(), d.collectsCod(), invoiceId);
     }
 
     /** Vận đơn đang hoạt động của hóa đơn; không có thì vận đơn đã hủy gần nhất (null = hóa đơn chưa có vận đơn). */
@@ -64,7 +70,28 @@ public class ShipmentInvoiceRepository {
                 (Integer) rs.getObject("weight_gram"), rs.getBigDecimal("shipping_fee"), rs.getString("fee_payer"),
                 rs.getBigDecimal("cod_amount"), rs.getString("note"),
                 rs.getTimestamp("delivered_at") == null ? null : rs.getTimestamp("delivered_at").toInstant(),
-                rs.getString("return_code"), rs.getString("province_code"), rs.getString("ward_code")) : null, invoiceId);
+                rs.getString("return_code"), rs.getString("province_code"), rs.getString("ward_code"),
+                rs.getString("service_type"), rs.getString("waybill_code"), instant(rs.getTimestamp("expected_delivery_at")),
+                rs.getInt("package_count"), (Integer) rs.getObject("length_cm"), (Integer) rs.getObject("width_cm"),
+                (Integer) rs.getObject("height_cm"), rs.getBoolean("cod_enabled"), instant(rs.getTimestamp("created_at")))
+                : null, invoiceId);
+    }
+
+    /** Tỷ lệ giao thành công theo SĐT người nhận (vận đơn đã kết thúc: Giao thành công / Đã chuyển hoàn). */
+    public ShipmentDtos.ReceiverStats receiverStats(String phone) {
+        return jdbc.queryForObject("""
+                select count(*) filter (where status in ('DELIVERED', 'RETURNED')) finished,
+                       count(*) filter (where status = 'DELIVERED') delivered
+                from shipments where receiver_phone = ?""", (rs, n) -> {
+            long finished = rs.getLong("finished");
+            long delivered = rs.getLong("delivered");
+            return new ShipmentDtos.ReceiverStats(finished, delivered,
+                    finished == 0 ? null : (int) Math.round(delivered * 100.0 / finished));
+        }, phone.trim());
+    }
+
+    private static Instant instant(Timestamp t) {
+        return t == null ? null : t.toInstant();
     }
 
     /** Khách của hóa đơn (null = khách lẻ / không có hóa đơn). */

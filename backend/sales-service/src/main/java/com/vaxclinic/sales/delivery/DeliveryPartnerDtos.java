@@ -30,14 +30,22 @@ public final class DeliveryPartnerDtos {
                                  @Pattern(regexp = "MANUAL") String partnerType, Boolean active,
                                  @Size(max = 100) String province, @Size(max = 100) String ward,
                                  @Pattern(regexp = AdminUnitCodes.PROVINCE, message = AdminUnitCodes.PROVINCE_MSG) String provinceCode,
-                                 @Pattern(regexp = AdminUnitCodes.WARD, message = AdminUnitCodes.WARD_MSG) String wardCode) {
+                                 @Pattern(regexp = AdminUnitCodes.WARD, message = AdminUnitCodes.WARD_MSG) String wardCode,
+                                 @Pattern(regexp = "PERSONAL|COMPANY") String partnerKind, UUID groupId) {
+    }
+
+    /** Nhóm đối tác giao hàng. */
+    public record GroupRequest(@NotBlank(message = "Chưa nhập tên nhóm") @Size(max = 100) String name) {
+    }
+
+    public record GroupRow(UUID id, String name, long partnerCount) {
     }
 
     /** Dòng danh sách: tổng đơn (trừ đã hủy), phí giao hàng, cần thu hộ (đơn chưa chuyển hoàn), nợ hiện tại. */
     public record PartnerRow(UUID id, String code, String name, String phone, String email, String address, String note,
                              String partnerType, boolean active, long shipmentCount, BigDecimal totalFee, BigDecimal totalCod,
                              BigDecimal debt, Instant createdAt, String province, String ward, String provinceCode,
-                             String wardCode) {
+                             String wardCode, String partnerKind, UUID groupId, String groupName) {
     }
 
     public record PartnerListResponse(List<PartnerRow> items, long total, int page, int size, BigDecimal sumFee,

@@ -70,7 +70,7 @@ public class InvoiceChangeGuard {
     public BigDecimal autoReceiptAmount(Invoice inv, InvoiceRequest req, Customer customer, InvoiceMath.Totals totals,
                                         BigDecimal paid) {
         UUID id = inv.getId();
-        boolean delivery = req.delivery() != null || "DELIVERY".equals(inv.getSaleMode());
+        boolean delivery = req.delivery() != null ? req.delivery().collectsCod() : "DELIVERY".equals(inv.getSaleMode());
         if (customer == null && paid.compareTo(totals.total()) < 0 && !delivery) {
             throw BusinessException.badRequest("WALK_IN_DEBT", "Khách lẻ phải thanh toán đủ — chọn khách hàng để ghi nợ");
         }
