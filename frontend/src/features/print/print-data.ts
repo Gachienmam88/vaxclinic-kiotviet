@@ -3,6 +3,8 @@
 import { useQuery } from "@tanstack/react-query";
 import type { StoreInfo } from "@/features/settings/settings-queries";
 import type { PurchaseReturn, Receipt } from "@/features/purchases/purchase-types";
+import { orderPrintData } from "@/features/orders/order-print";
+import type { Order } from "@/features/orders/order-types";
 import type { Invoice } from "@/features/sales/sales-types";
 import { FUND_LABEL, methodLabel } from "@/features/sales/sales-types";
 import { api } from "@/lib/api-client";
@@ -142,6 +144,10 @@ export function sampleData(type: PrintType): PrintData {
       return receiptData({ code: "PN000034", receivedAt: new Date().toISOString(), supplierName: "Công ty CP Vắc xin Việt Nam", inputInvoiceNo: "712",
         createdByName: "Thủ kho", subtotal: 20000000, discount: 0, vatAmount: 1000000, total: 21000000, paidAmount: 21000000, note: "",
         lines: sampleLines.map((l) => ({ ...l, lotNumber: l.lots, expiryDate: "2027-06-30" })) } as unknown as Receipt);
+    case "ORDER":
+      return orderPrintData({ code: "DH000012", orderedAt: new Date().toISOString(), customerName: "Nguyễn Văn An", customerCode: "KH000001",
+        customerPhone: "0987654321", sellerName: "Thu ngân", createdByName: "Thu ngân", subtotal: 2695000, discount: 0, total: 2695000,
+        deposit: 500000, note: "", lines: sampleLines.map((l, i) => ({ ...l, id: String(i), discount: 0 })) } as unknown as Order);
     case "PURCHASE_RETURN":
       return purchaseReturnData({ code: "THN000003", receiptCode: "PN000034", returnedAt: new Date().toISOString(), supplierName: "Công ty CP Vắc xin Việt Nam",
         createdByName: "Thủ kho", subtotal: 665000, discount: 0, vatAmount: 33250, total: 698250, refundAmount: 698250, note: "",

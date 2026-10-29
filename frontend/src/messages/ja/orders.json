@@ -1,5 +1,10 @@
 {
-  "status": { "DRAFT": "仮伝票", "CONFIRMED": "確定済み", "COMPLETED": "完了", "CANCELLED": "キャンセル済み" },
+  "status": {
+    "DRAFT": "仮伝票",
+    "CONFIRMED": "確定済み",
+    "COMPLETED": "完了",
+    "CANCELLED": "キャンセル済み"
+  },
   "list": {
     "title": "受注",
     "searchPlaceholder": "受注コード、顧客名・コード・電話番号",
@@ -28,8 +33,15 @@
     "price": "販売価格",
     "amount": "金額"
   },
-  "csv": { "listFile": "orders", "detailFile": "order-{code}" },
-  "filter": { "status": "ステータス", "createdBy": "作成者", "pickCreator": "作成者を選択" },
+  "csv": {
+    "listFile": "orders",
+    "detailFile": "order-{code}"
+  },
+  "filter": {
+    "status": "ステータス",
+    "createdBy": "作成者",
+    "pickCreator": "作成者を選択"
+  },
   "detail": {
     "tabInfo": "情報",
     "tabPayments": "支払履歴",
@@ -73,5 +85,122 @@
     "done": "受注をキャンセルしました",
     "doneCredit": "受注をキャンセルし、{amount} を前受金として保持しました",
     "doneRefund": "受注をキャンセルし、{amount} を返金しました（出金伝票 {voucher}）"
+  },
+  "kv": {
+    "title": "受注",
+    "search": "受注番号で検索",
+    "searchProduct": "商品コード・名称で検索",
+    "searchCustomer": "顧客コード・名前・電話番号で検索",
+    "doSearch": "検索",
+    "clear": "クリア",
+    "newOrder": "受注",
+    "export": "ファイル出力",
+    "exportOverview": "概要ファイル",
+    "exportDetail": "明細ファイル",
+    "exporting": "ファイル作成中...",
+    "settings": "注文設定",
+    "help": "ご利用ガイド",
+    "favourite": "マーク",
+    "emptyWhat": "取引",
+    "fileOverview": "Juchu",
+    "fileDetail": "JuchuMeisai",
+    "time": "日時",
+    "status": "状態",
+    "pickStatus": "状態を選択",
+    "more": "他 {n} 件",
+    "deliveryTime": "配送日時",
+    "payment": "支払方法",
+    "funds": {
+      "CASH": "現金",
+      "BANK": "振込 / カード",
+      "EWALLET": "電子ウォレット"
+    },
+    "createdBy": "作成者",
+    "seller": "受付担当",
+    "pickUser": "担当者を選択",
+    "channel": "販売チャネル",
+    "pickChannel": "チャネルを選択",
+    "newChannel": "新規作成",
+    "cols": {
+      "orderedAt": "日時",
+      "customerCode": "顧客コード",
+      "customer": "顧客",
+      "phone": "電話番号",
+      "seller": "受付担当",
+      "createdBy": "作成者",
+      "channel": "販売チャネル",
+      "expectedDeliveryAt": "配送予定",
+      "invoiceCode": "請求書番号",
+      "subtotal": "商品合計",
+      "discount": "割引",
+      "total": "請求額",
+      "deposit": "支払済み",
+      "status": "状態"
+    },
+    "detail": {
+      "createdBy": "作成者",
+      "seller": "受付担当",
+      "orderedAt": "受注日",
+      "channel": "販売チャネル",
+      "priceBook": "価格表",
+      "defaultPriceBook": "標準価格表",
+      "expected": "配送予定",
+      "status": "状態",
+      "invoice": "請求書番号",
+      "tabInvoices": "請求書履歴",
+      "notePh": "メモ...",
+      "save": "保存",
+      "saved": "受注を保存しました",
+      "copy": "コピー",
+      "process": "受注を処理",
+      "finish": "完了",
+      "print": "印刷",
+      "cancel": "キャンセル",
+      "openCustomer": "顧客を開く",
+      "vat": "付加価値税",
+      "taxCut": "減税",
+      "grandTotal": "合計",
+      "invCode": "請求書番号",
+      "invTime": "日時",
+      "invBy": "作成者",
+      "invValue": "金額",
+      "invStatus": "状態",
+      "invStatuses": {
+        "COMPLETED": "完了",
+        "CANCELLED": "キャンセル"
+      },
+      "delivered": "納品済み"
+    },
+    "cancelDlg": {
+      "title": "受注をキャンセル",
+      "body": "受注 {code} をキャンセルしてもよろしいですか？",
+      "depositTitle": "手付金のキャンセル",
+      "depositBody": "関連する手付金もキャンセルしますか？",
+      "agree": "同意",
+      "skip": "スキップ",
+      "yes": "同意",
+      "done": "受注をキャンセルしました",
+      "hasInvoice": "受注に請求書があるためキャンセルできません"
+    },
+    "finishDlg": {
+      "title": "受注を完了",
+      "body": "未出荷の商品があってもこの受注は処理できなくなります。完了にしてもよろしいですか？",
+      "done": "受注を完了しました"
+    },
+    "sale": {
+      "toDebt": "売掛金に計上",
+      "save": "保存",
+      "createInvoice": "請求書を作成",
+      "orderSaved": "受注 {code} を保存しました",
+      "needCustomer": "受注には顧客の選択が必要です",
+      "invoiceDone": "請求書を更新しました",
+      "deposited": "顧客支払済み"
+    },
+    "advance": "（前受金振替）",
+    "cancelPay": {
+      "title": "支払の取消",
+      "body": "関連する入金伝票も取り消しますか？",
+      "confirm": "確認"
+    }
   }
 }

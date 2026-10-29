@@ -24,7 +24,6 @@
     "orderRef": "注文",
     "paid": "お預かり",
     "pay": "支払い",
-    "payOnDelivery": "受取時の支払額",
     "placeOrder": "注文する",
     "saveOrder": "注文を保存",
     "speakPaid": "お客様のお支払いは{amount}ドンです",
@@ -255,7 +254,6 @@
   "open": {
     "copyLabel": "{code}のコピー",
     "invoiceCancelled": "請求書は取消済みです",
-    "invoiceFromOrderLabel": "請求書 / {code}",
     "orderCancelled": "注文{code}は取消済みです",
     "orderInvoiced": "注文{code}は請求書作成済み {invoice}",
     "returnLabel": "返品 / {code}"

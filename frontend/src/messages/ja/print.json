@@ -6,7 +6,8 @@
     "CASH_RECEIPT": "入金伝票",
     "CASH_PAYMENT": "出金伝票",
     "PURCHASE_RECEIPT": "仕入",
-    "PURCHASE_RETURN": "仕入返品"
+    "PURCHASE_RETURN": "仕入返品",
+    "ORDER": "注文"
   },
   "groups": {
     "orders": "注文",
@@ -103,6 +104,9 @@
     "prescriber": "処方医",
     "clinic": "医療機関",
     "diagnosis": "診断",
-    "taxReductionMethod": "減税方法"
+    "taxReductionMethod": "減税方法",
+    "orderCode": "注文番号",
+    "orderedAt": "注文日",
+    "paymentQr": "振込QR"
   }
 }

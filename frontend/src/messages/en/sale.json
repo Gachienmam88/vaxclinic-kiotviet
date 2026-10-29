@@ -24,7 +24,6 @@
     "orderRef": "Order",
     "paid": "Amount paid",
     "pay": "Pay",
-    "payOnDelivery": "Due on delivery",
     "placeOrder": "Place order",
     "saveOrder": "Save order",
     "speakPaid": "Customer paid {amount} dong",
@@ -258,7 +257,6 @@
   "open": {
     "copyLabel": "Copy of {code}",
     "invoiceCancelled": "The invoice has been cancelled",
-    "invoiceFromOrderLabel": "Invoice / {code}",
     "orderCancelled": "Order {code} has been cancelled",
     "orderInvoiced": "Order {code} already invoiced {invoice}",
     "returnLabel": "Return / {code}"

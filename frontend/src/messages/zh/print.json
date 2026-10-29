@@ -6,7 +6,8 @@
     "CASH_RECEIPT": "收款单",
     "CASH_PAYMENT": "付款单",
     "PURCHASE_RECEIPT": "进货",
-    "PURCHASE_RETURN": "进货退货"
+    "PURCHASE_RETURN": "进货退货",
+    "ORDER": "订货"
   },
   "groups": {
     "orders": "订单",
@@ -103,6 +104,9 @@
     "prescriber": "开方医生",
     "clinic": "就诊机构",
     "diagnosis": "诊断",
-    "taxReductionMethod": "减税方法"
+    "taxReductionMethod": "减税方法",
+    "orderCode": "订单号",
+    "orderedAt": "订货日期",
+    "paymentQr": "转账二维码"
   }
 }

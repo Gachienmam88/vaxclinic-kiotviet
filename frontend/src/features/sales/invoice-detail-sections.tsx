@@ -2,6 +2,7 @@
 
 import { useT } from "@/lib/i18n";
 import { formatDateTime, formatMoney, formatNumber } from "@/lib/format";
+import { ordersNs } from "@/messages/orders";
 import { salesNs } from "@/messages/sales";
 import { enumLabel } from "./i18n-enum-label";
 import { SUB_HEAD, StatusBadge } from "./invoice-list-kit";
@@ -54,6 +55,7 @@ export function InvoiceTotals({ inv }: { inv: Invoice }) {
 /** Tab "Lịch sử thanh toán": các phiếu thu gắn với hóa đơn. */
 export function InvoicePaymentHistory({ inv }: { inv: Invoice }) {
   const t = useT(salesNs);
+  const to = useT(ordersNs);
   return (
     <div className="p-4">
       <table className="w-full text-[13px]">
@@ -65,7 +67,9 @@ export function InvoicePaymentHistory({ inv }: { inv: Invoice }) {
           {!inv.payments.length && <ListEmptyRow cols={7} what={t("invoices.payments.emptyWhat")} compact />}
           {inv.payments.map((p) => (
             <tr key={p.voucherId} className="border-b border-[#eff0f3] [&_td]:px-2 [&_td]:py-2.5">
-              <td><DocCodeLink code={p.code} kind="/cashbook" /></td><td>{formatDateTime(p.occurredAt)}</td>
+              <td><DocCodeLink code={p.code} kind="/cashbook" />
+                {inv.orderCode && p.code.startsWith(`TT${inv.orderCode}`) && <span className="ml-1 text-muted-foreground">{to("kv.advance")}</span>}</td>
+              <td>{formatDateTime(p.occurredAt)}</td>
               <td>{p.createdByName}</td><td className="text-right">{formatMoney(p.voucherAmount)}</td>
               <td>{enumLabel(t, salesNs, "enums.fund", p.fund)}</td>
               <td><StatusBadge tone={p.status === "PAID" ? "green" : "red"}>{p.status === "PAID" ? t("enums.voucherStatus.PAID") : t("enums.voucherStatus.CANCELLED")}</StatusBadge></td>

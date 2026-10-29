@@ -1,6 +1,6 @@
 /**
  * Dựng mẫu in: {Ten_Truong} → giá trị (đã escape HTML); khối {#Dong_Hang}...{/Dong_Hang} lặp theo từng dòng hàng.
- * Trường đặc biệt {Logo} chèn thẻ <img> logo cửa hàng.
+ * Trường đặc biệt {Logo} chèn thẻ <img> logo cửa hàng; {QR_Thanh_Toan} chèn ảnh QR chuyển khoản.
  */
 /** Giá trị trường in; riêng khóa __lines là danh sách dòng hàng. */
 export type PrintData = Record<string, string | Record<string, string>[]>;
@@ -11,6 +11,9 @@ function fill(html: string, values: PrintData) {
   return html.replace(/\{([A-Za-z_][A-Za-z0-9_]*)\}/g, (m, key: string) => {
     const v = values[key];
     if (key === "Logo") return typeof v === "string" && v ? `<img src="${escape(v)}" alt="" style="max-height:60px;max-width:140px">` : "";
+    // QR chuyển khoản: chỉ nhận ảnh data:image/png do ứng dụng tạo (VietQR)
+    if (key === "QR_Thanh_Toan") return typeof v === "string" && v.startsWith("data:image/png;base64,")
+      ? `<img src="${escape(v)}" alt="" style="width:110px;height:110px">` : "";
     return typeof v === "string" ? escape(v) : m;
   });
 }

@@ -30,7 +30,7 @@ import { useSaleCatalog } from "./use-sale-catalog";
 import { useSaleInvoiceSubmit } from "./use-sale-invoice-submit";
 import { focusQty, useSaleLineKeys } from "./use-sale-line-keys";
 import { useSaleLookups } from "./use-sale-lookups";
-import { useSaleOrderSubmit } from "./use-sale-order-submit";
+import { useSaleOrderSubmit, useSaleOrderToInvoice } from "./use-sale-order-submit";
 import { useSalePriceBook } from "./use-sale-price-book";
 import { returnProblem, submitReturnDoc } from "./use-sale-return-submit";
 import { SaleSettingsProvider, useSaleSettings } from "./use-sale-settings";
@@ -70,13 +70,14 @@ function SaleScreenBody() {
   const d = tabs.active;
   const submitOrder = useSaleOrderSubmit(tabs, branchId, queue.enqueue);
   const submitInvoice = useSaleInvoiceSubmit(tabs, branchId, queue.enqueue);
+  const orderToInvoice = useSaleOrderToInvoice(tabs, branchId, catalog.products, userId);
   const priceBook = useSalePriceBook(tabs, catalog.priceBooks, branchId, !!catalog.loadedAt);
   const lookups = useSaleLookups();
   useSaleTaxPreview(tabs, branchId); // "Giảm thuế": số server tính theo phương pháp tính thuế
   const lineKeys = useSaleLineKeys(d?.lines ?? [], settings, tabs.setLines);
   useSaleUrlDrafts(me?.user.id, catalog.products, catalog.loadedAt, tabs.open);
   useSaleUrlDialog(() => setDialog("RETURN"));
-  useSaleNewTabParam(tabs.tabs.length > 0, () => tabs.add());
+  useSaleNewTabParam(tabs.tabs.length > 0, (kind) => tabs.add(kind));
 
   useEffect(() => {
     const update = () => setOnline(navigator.onLine);
@@ -116,6 +117,15 @@ function SaleScreenBody() {
     setPaying(true);
     if (d.kind === "ORDER") await submitOrder(d, sellerName); // Đặt hàng: không trừ kho
     else if (await submitInvoice(d, sellerName)) refreshAfterSave();
+    setPaying(false);
+  }
+
+  /** Tab đơn "DHxxx" → TẠO HÓA ĐƠN: lưu đơn rồi chuyển thành tab hóa đơn gắn đơn (THANH TOÁN mới trừ kho). */
+  async function createInvoiceFromOrderTab() {
+    if (!d?.orderOf || paying || !d.lines.length) return;
+    if (d.lines.some((l) => l.quantity <= 0)) return toast.error(t("screen.qtyPositive"));
+    setPaying(true);
+    await orderToInvoice(d, users.find((u) => u.id === d.sellerId)?.fullName);
     setPaying(false);
   }
 
@@ -174,7 +184,7 @@ function SaleScreenBody() {
         <aside className="flex w-[406px] shrink-0 flex-col rounded-lg bg-background px-4 pt-2.5 pb-4">
           {d.kind === "RETURN"
             ? <ReturnCheckout draft={d} branchId={branchId} update={tabs.update} onSubmit={pay} busy={paying} />
-            : <SaleCheckoutPanel draft={d} branchId={branchId} update={tabs.update} onPay={pay} paying={paying} priceBook={priceBook} lookups={lookups} branch={branch} />}
+            : <SaleCheckoutPanel draft={d} branchId={branchId} update={tabs.update} onPay={pay} onCreateInvoice={createInvoiceFromOrderTab} paying={paying} priceBook={priceBook} lookups={lookups} branch={branch} />}
         </aside>
         </>)}
       </main>

@@ -2,6 +2,7 @@
 
 import { SUB_HEAD, StatusBadge } from "@/features/sales/invoice-list-kit";
 import { enumLabel } from "@/features/sales/i18n-enum-label";
+import { useInvoice } from "@/features/sales/sales-queries";
 import { formatDateTime, formatMoney, formatNumber } from "@/lib/format";
 import { useT } from "@/lib/i18n";
 import { ordersNs } from "@/messages/orders";
@@ -45,6 +46,28 @@ export function OrderPaymentHistory({ order }: { order: Order }) {
               <td className="text-right">{p.voucherType === "PAYMENT" ? "-" : ""}{formatMoney(p.amount)}</td>
             </tr>))}
         </tbody>
+      </table>
+    </div>
+  );
+}
+
+/** Tab "Lịch sử hóa đơn" (khi đơn đã tạo hóa đơn): mã hóa đơn (link), thời gian, người tạo, giá trị, trạng thái. */
+export function OrderInvoiceHistory({ invoiceId }: { invoiceId: string }) {
+  const t = useT(ordersNs);
+  const { data: inv } = useInvoice(invoiceId);
+  const head = ["invCode", "invTime", "invBy", "invValue", "invStatus"] as const;
+  return (
+    <div className="p-4">
+      <table className="w-full text-[13px]">
+        <thead className={SUB_HEAD}><tr>{head.map((k, i) => <th key={k} className={i === 0 ? "pl-2.5" : i === 3 ? "text-right" : ""}>
+          {t(`kv.detail.${k}`)}</th>)}</tr></thead>
+        <tbody>{inv && (
+          <tr className="border-b border-[#eff0f3] [&_td]:px-2 [&_td]:py-2.5">
+            <td><DocCodeLink code={inv.code} kind="/invoices" /></td><td>{formatDateTime(inv.soldAt)}</td><td>{inv.createdByName}</td>
+            <td className="text-right">{formatMoney(inv.total)}</td>
+            <td><StatusBadge tone={inv.status === "CANCELLED" ? "red" : "green"}>
+              {t(inv.status === "CANCELLED" ? "kv.detail.invStatuses.CANCELLED" : "kv.detail.invStatuses.COMPLETED")}</StatusBadge></td>
+          </tr>)}</tbody>
       </table>
     </div>
   );

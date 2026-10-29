@@ -8,6 +8,7 @@ import { NumberInput } from "@/components/number-input";
 import { useT } from "@/lib/i18n";
 import { formatMoney, formatNumber } from "@/lib/format";
 import { commonNs } from "@/messages/common";
+import { ordersNs } from "@/messages/orders";
 import { saleNs } from "@/messages/sale";
 import { SaleBranchPicker } from "./sale-branch-picker";
 import { SaleChannelPicker } from "./sale-channel-picker";
@@ -31,6 +32,8 @@ type Props = {
   branchId: string;
   update: (patch: Partial<DraftInvoice>) => void;
   onPay: () => void;
+  /** Tab đơn đã lưu ("DHxxx"): TẠO HÓA ĐƠN (onPay = LƯU đơn). */
+  onCreateInvoice?: () => void;
   paying: boolean;
   priceBook: SalePriceBook;
   lookups: SaleLookups;
@@ -54,9 +57,10 @@ export function customerPatch(customer: SaleCustomer | null, draft: DraftInvoice
  * Tab đặt hàng: "Khách thanh toán" là tiền đặt cọc, nút ĐẶT HÀNG, Thời gian giao hàng; hóa đơn từ đơn đặt hàng: trừ tiền cọc.
  * Bán giao hàng: phần khách chưa trả = Thu hộ (COD) của vận đơn.
  */
-export function SaleCheckoutPanel({ draft, branchId, update, onPay, paying, priceBook, lookups, branch }: Props) {
+export function SaleCheckoutPanel({ draft, branchId, update, onPay, onCreateInvoice, paying, priceBook, lookups, branch }: Props) {
   const { settings } = useSaleSettings();
   const tr = useT(saleNs);
+  const to = useT(ordersNs);
   const tc = useT(commonNs);
   const [qr, setQr] = useState(false);
   const [autoPay, setAutoPay] = useState(false);
@@ -92,22 +96,29 @@ export function SaleCheckoutPanel({ draft, branchId, update, onPay, paying, pric
             onValueChange={(discount) => update({ discount, discountPercent: null })} />
         </SummaryRow>
         <SaleTaxReductionRow draft={draft} amount={t.taxCut} method={t.taxMethod} update={update} />
-        <SummaryRow label={tr("checkout.due")} bold><span className="text-[17px] text-primary">{formatMoney(t.total)}</span></SummaryRow>
-        {t.deposit > 0 && <SummaryRow label={tr(order ? "checkout.alreadyPaid" : "checkout.deposited")}>{formatMoney(t.deposit)}</SummaryRow>}
-        <SalePaidSection draft={draft} paid={t.paid} due={t.due} update={update} onQr={() => { update({ paymentMethod: "TRANSFER", extraPayments: [] }); setQr(true); }}
-          allowMixed={!order && !draft.editOf} suggest={settings.suggestPaid && !order && !delivery} />
+        {/* KiotViet: đơn đã cọc → "Khách đã trả" (cọc) trước, "Khách cần trả" = phần còn lại */}
+        {t.deposit > 0 && <SummaryRow label={tr("checkout.alreadyPaid")}>{formatMoney(t.deposit)}</SummaryRow>}
+        <SummaryRow label={tr("checkout.due")} bold><span className="text-[17px] text-primary">{formatMoney(t.deposit > 0 ? t.due : t.total)}</span></SummaryRow>
+        {!(order && t.due <= 0) && <SalePaidSection draft={draft} paid={t.paid} due={t.due} update={update}
+          onQr={() => { update({ paymentMethod: "TRANSFER", extraPayments: [] }); setQr(true); }}
+          allowMixed={!order && !draft.editOf} suggest={settings.suggestPaid && !delivery} />}
         {change > 0 && <SummaryRow label={tr("checkout.change")}>{formatMoney(change)}</SummaryRow>}
         {change < 0 && !order && !delivery && <div className="text-destructive"><SummaryRow label={tr("checkout.toDebt")}>{formatMoney(-change)}</SummaryRow></div>}
         {delivery && <SummaryRow bold label={tr("checkout.cod")}><span className="text-primary">{formatMoney(t.cod)}</span></SummaryRow>}
-        {change < 0 && order && <SummaryRow label={tr("checkout.payOnDelivery")}>{formatMoney(-change)}</SummaryRow>}
+        {change < 0 && order && <SummaryRow label={tr("checkout.toDebt")}>{formatMoney(-change)}</SummaryRow>}
         {order && <SummaryRow label={tr("checkout.deliveryTime")}>
           <DateTimePicker aria-label={tr("checkout.deliveryTime")} className={`${underlineInput} w-[180px]`}
             value={draft.expectedDeliveryAt ?? ""} onChange={(v) => update({ expectedDeliveryAt: v || null })} />
         </SummaryRow>}
       </div>
-      <Button title="F9" className="mt-3 h-12 w-full shrink-0 rounded-md bg-chrome text-[15px] font-bold uppercase hover:bg-chrome-hover" disabled={paying || !draft.lines.length} onClick={onPay}>
+      {order && draft.orderOf && onCreateInvoice ? <div className="mt-3 flex shrink-0 gap-2">
+        <Button className="h-12 flex-1 rounded-md bg-[#7c3aed] text-[15px] font-bold uppercase hover:bg-[#6d28d9]" disabled={paying || !draft.lines.length}
+          onClick={onCreateInvoice}>{paying ? tc("status.saving") : to("kv.sale.createInvoice")}</Button>
+        <Button title="F9" className="h-12 w-[110px] rounded-md bg-[#16a34a] text-[15px] font-bold uppercase hover:bg-[#15803d]" disabled={paying || !draft.lines.length}
+          onClick={onPay}>{to("kv.sale.save")}</Button>
+      </div> : <Button title="F9" className="mt-3 h-12 w-full shrink-0 rounded-md bg-chrome text-[15px] font-bold uppercase hover:bg-chrome-hover" disabled={paying || !draft.lines.length} onClick={onPay}>
         {paying ? tc("status.saving") : tr(order ? (draft.orderOf ? "checkout.saveOrder" : "checkout.placeOrder") : "checkout.pay")}
-      </Button>
+      </Button>}
       {qr && <QrPaymentDialog amount={t.paid} info={draft.editOf?.code ?? ref?.code ?? draft.label} onClose={() => setQr(false)}
         onPaid={draft.editOf ? undefined : (paid) => {
           update({ paid, paymentMethod: "TRANSFER", extraPayments: [] });

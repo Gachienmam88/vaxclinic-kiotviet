@@ -1,7 +1,7 @@
 import type viPrint from "@/messages/vi/print.json";
 
-/** 7 loại mẫu in A5: trường dùng được, dữ liệu mẫu để xem trước, mẫu mặc định. */
-export type PrintType = "INVOICE" | "DELIVERY_INVOICE" | "SALES_RETURN" | "CASH_RECEIPT" | "CASH_PAYMENT" | "PURCHASE_RECEIPT" | "PURCHASE_RETURN";
+/** 8 loại mẫu in A5: trường dùng được, dữ liệu mẫu để xem trước, mẫu mặc định. */
+export type PrintType = "INVOICE" | "DELIVERY_INVOICE" | "SALES_RETURN" | "CASH_RECEIPT" | "CASH_PAYMENT" | "PURCHASE_RECEIPT" | "PURCHASE_RETURN" | "ORDER";
 
 /** Khóa nhãn trường trong namespace print: hiển thị bằng t(`fields.${label}`) (mã trường {Ten_Truong} giữ nguyên). */
 export type PrintFieldLabel = keyof typeof viPrint.fields;
@@ -84,6 +84,28 @@ const DELIVERY_INVOICE_TEMPLATE = `<table><tr>
 <td class="c"><i>Ngày {Ngay} tháng {Thang} năm {Nam}</i><br><b>NGƯỜI BÁN HÀNG</b></td></tr></table>
 <p class="c" style="margin-top:40px"><i>Cảm ơn quý khách, hẹn gặp lại!</i></p>`;
 
+/** Hóa đơn đặt hàng (KiotViet): cửa hàng, mã đơn, ngày, khách, dòng hàng Đơn giá / SL / T.Tiền, tổng, bằng chữ, QR chuyển khoản phần còn lại. */
+const ORDER_TEMPLATE = `<div class="c"><h3>{Ten_Cua_Hang}</h3><p>Địa chỉ: {Dia_Chi_Cua_Hang}</p><p>Điện thoại: {Dien_Thoai_Cua_Hang}</p></div>
+<h2 class="c" style="margin-top:8px">HÓA ĐƠN ĐẶT HÀNG</h2>
+<p class="c">Mã đơn hàng: <b>{Ma_Dat_Hang}</b></p>
+<p class="c">{Ngay_Dat}</p>
+<p style="margin-top:6px">Khách hàng: <b>{Khach_Hang}</b></p>
+<p>SĐT: {SDT_Khach_Hang}</p>
+<table class="lines" style="margin-top:6px">
+<tr><th>Đơn giá</th><th style="width:12%">SL</th><th style="width:28%">T.Tiền</th></tr>
+{#Dong_Hang}<tr><td colspan="3"><b>{Ten_Hang}</b></td></tr><tr><td class="r">{Don_Gia}</td><td class="c">{So_Luong}</td><td class="r">{Thanh_Tien}</td></tr>{/Dong_Hang}
+</table>
+<table style="margin-top:4px">
+<tr><td class="r">Tổng tiền hàng:</td><td class="r" style="width:30%">{Tong_Tien_Hang}</td></tr>
+<tr><td class="r">Chiết khấu:</td><td class="r">{Giam_Gia}</td></tr>
+<tr><td class="r"><b>Tổng cộng:</b></td><td class="r"><b>{Tong_Cong}</b></td></tr>
+<tr><td class="r">Khách đã trả:</td><td class="r">{Khach_Da_Tra}</td></tr>
+<tr><td class="r">Còn cần trả:</td><td class="r">{Con_No}</td></tr>
+</table>
+<p><i>({Tong_Cong_Bang_Chu})</i></p>
+<div class="c" style="margin-top:6px">{QR_Thanh_Toan}</div>
+<p class="c" style="margin-top:8px"><i>Cảm ơn và hẹn gặp lại!</i></p>`;
+
 export const PRINT_DEFS: Record<PrintType, Def> = {
   INVOICE: {
     label: "Hóa đơn", group: "Đơn hàng", groupKey: "orders",
@@ -122,6 +144,16 @@ ${SIGN("Khách hàng", "Người bán hàng")}
       ["Ghi_Chu", "note"], ...TAX_RX],
     lineFields: LINE,
     template: DELIVERY_INVOICE_TEMPLATE,
+  },
+  ORDER: {
+    label: "Đặt hàng", group: "Đơn hàng", groupKey: "orders",
+    fields: [...STORE, ["Ma_Dat_Hang", "orderCode"], ["Ngay_Dat", "orderedAt"], ["Khach_Hang", "customer"],
+      ["Ma_Khach_Hang", "customerCode"], ["SDT_Khach_Hang", "customerPhone"], ["Nguoi_Ban", "seller"],
+      ["Tong_So_Luong", "totalQuantity"], ["Tong_Tien_Hang", "subtotal"], ["Giam_Gia", "invoiceDiscount"], ["Tong_Cong", "total"],
+      ["Tong_Cong_Bang_Chu", "totalInWords"], ["Khach_Da_Tra", "customerPaid"], ["Con_No", "remainingDebt"],
+      ["QR_Thanh_Toan", "paymentQr"], ["Ghi_Chu", "note"]],
+    lineFields: [...LINE, ["Chiet_Khau", "lineDiscount"]],
+    template: ORDER_TEMPLATE,
   },
   SALES_RETURN: {
     label: "Trả hàng", group: "Đơn hàng", groupKey: "orders",

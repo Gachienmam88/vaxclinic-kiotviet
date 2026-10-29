@@ -10,6 +10,7 @@ import { DocCodeLink } from "@/components/ui/doc-code-link";
 import { DetailTabsList } from "@/components/ui/detail-tabs-list";
 import { Tabs, TabsContent, TabsTrigger } from "@/components/ui/tabs";
 import { usePrinter } from "@/features/print/print-button";
+import { useUserLookup } from "@/features/purchases/purchase-queries";
 import { DETAIL_BTN, DETAIL_PANEL, DETAIL_TAB, DETAIL_TABS_LIST, StatusBadge } from "@/features/sales/invoice-list-kit";
 import { downloadCsv } from "@/features/sales/invoice-list-pager";
 import { SALES_KEYS } from "@/features/sales/sales-queries";
@@ -51,6 +52,7 @@ function OrderDetailBody({ o, onClose }: { o: Order; onClose?: () => void }) {
   const { can } = useCurrentUser();
   const { data: branches = [] } = useBranches();
   const print = usePrinter();
+  const { data: users = [] } = useUserLookup();
   const [draft, setDraft] = useState<OrderInfoDraft>(() => orderInfoDraft(o));
   const [dialog, setDialog] = useState<"cancel" | "finish" | null>(null);
   const open = o.status === "DRAFT" || o.status === "CONFIRMED";
@@ -58,7 +60,7 @@ function OrderDetailBody({ o, onClose }: { o: Order; onClose?: () => void }) {
 
   const save = useMutation({
     mutationFn: () => api(`/orders/${o.id}/info`, { method: "PATCH", body: {
-      sellerId: draft.sellerId || null, sellerName: null, orderedAt: iso(draft.orderedAt), salesChannel: draft.salesChannel,
+      sellerId: draft.sellerId || null, sellerName: users.find((u) => u.id === draft.sellerId)?.fullName ?? o.sellerName, orderedAt: iso(draft.orderedAt), salesChannel: draft.salesChannel,
       expectedDeliveryAt: iso(draft.expectedDeliveryAt), status: draft.status, note: draft.note } }),
     onSuccess: () => { toast.success(t("kv.detail.saved")); SALES_KEYS.forEach((k) => qc.invalidateQueries({ queryKey: k })); },
     onError: (e) => toast.error(errorMessage(e)),
@@ -104,7 +106,7 @@ function OrderDetailBody({ o, onClose }: { o: Order; onClose?: () => void }) {
               <Copy className="size-4" /> {t("kv.detail.copy")}</Button>}
             <Button variant="ghost" className={DETAIL_BTN} onClick={exportLines}><FileOutput className="size-4" /> {tc("actions.export")}</Button>
             <span className="ml-auto" />
-            {open && can("sales.perform") && <Button className={DETAIL_BTN} render={<Link href={`/sale?orderInvoice=${o.id}`} />}>
+            {open && can("sales.perform") && <Button className={DETAIL_BTN} render={<Link href={`/sale?order=${o.id}`} />}>
               <PackageCheck className="size-4" /> {t("kv.detail.process")}</Button>}
             {editable && <Button variant="outline" className={DETAIL_BTN} disabled={save.isPending} onClick={() => save.mutate()}>
               <Save className="size-4" /> {t("kv.detail.save")}</Button>}

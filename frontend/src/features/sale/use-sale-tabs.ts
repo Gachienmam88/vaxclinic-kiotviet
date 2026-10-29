@@ -112,6 +112,14 @@ export function useSaleTabs(userId: string, def: TabDefaults = NO_DEFAULTS) {
     });
   };
 
+  /** Thay tab đang mở bằng tab khác (vd. tab đơn "DHxxx" → tab hóa đơn "Hóa đơn N" khi bấm TẠO HÓA ĐƠN). */
+  const replaceActive = (make: (label: string) => DraftInvoice) => {
+    const t = make(label("invoice", counter));
+    setTabs((all) => all.map((x) => (x.id === active?.id ? t : x)));
+    setActiveId(t.id);
+    setCounter((c) => c + 1);
+  };
+
   /** Thêm nhiều tab một lần (Import file: mỗi trang tính 1 hóa đơn); tab cuối được chọn. */
   const openMany = (make: (label: string, i: number) => DraftInvoice, count: number) => {
     const made = Array.from({ length: count }, (_, i) => make(label("invoice", counter + i), i));
@@ -125,7 +133,7 @@ export function useSaleTabs(userId: string, def: TabDefaults = NO_DEFAULTS) {
   /** Tab trống mặc định (để import dựng tab mới). */
   const blankTab = (name: string) => blank(name, userId, def);
 
-  return { tabs, active, setActiveId, update, setLines, add, close, resetActive, open, openMany, blankTab };
+  return { tabs, active, setActiveId, update, setLines, add, close, resetActive, replaceActive, open, openMany, blankTab };
 }
 
 /**

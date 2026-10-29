@@ -6,7 +6,8 @@
     "CASH_RECEIPT": "Phiếu thu",
     "CASH_PAYMENT": "Phiếu chi",
     "PURCHASE_RECEIPT": "Nhập hàng",
-    "PURCHASE_RETURN": "Trả hàng nhập"
+    "PURCHASE_RETURN": "Trả hàng nhập",
+    "ORDER": "Đặt hàng"
   },
   "groups": {
     "orders": "Đơn hàng",
@@ -103,6 +104,9 @@
     "prescriber": "Bác sĩ kê đơn",
     "clinic": "Cơ sở khám",
     "diagnosis": "Chẩn đoán",
-    "taxReductionMethod": "Phương pháp giảm thuế"
+    "taxReductionMethod": "Phương pháp giảm thuế",
+    "orderCode": "Mã đặt hàng",
+    "orderedAt": "Ngày đặt",
+    "paymentQr": "QR chuyển khoản"
   }
 }

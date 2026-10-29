@@ -1,5 +1,10 @@
 {
-  "status": { "DRAFT": "Draft", "CONFIRMED": "Confirmed", "COMPLETED": "Completed", "CANCELLED": "Cancelled" },
+  "status": {
+    "DRAFT": "Draft",
+    "CONFIRMED": "Confirmed",
+    "COMPLETED": "Completed",
+    "CANCELLED": "Cancelled"
+  },
   "list": {
     "title": "Orders",
     "searchPlaceholder": "By order code, customer name / code / phone",
@@ -28,8 +33,15 @@
     "price": "Selling price",
     "amount": "Amount"
   },
-  "csv": { "listFile": "orders", "detailFile": "order-{code}" },
-  "filter": { "status": "Status", "createdBy": "Created by", "pickCreator": "Select creator" },
+  "csv": {
+    "listFile": "orders",
+    "detailFile": "order-{code}"
+  },
+  "filter": {
+    "status": "Status",
+    "createdBy": "Created by",
+    "pickCreator": "Select creator"
+  },
   "detail": {
     "tabInfo": "Info",
     "tabPayments": "Payment history",
@@ -73,5 +85,122 @@
     "done": "Order cancelled",
     "doneCredit": "Order cancelled; {amount} kept as customer prepayment",
     "doneRefund": "Order cancelled; {amount} refunded to the customer (payment voucher {voucher})"
+  },
+  "kv": {
+    "title": "Orders",
+    "search": "By order code",
+    "searchProduct": "By product code, name",
+    "searchCustomer": "By customer code, name, phone",
+    "doSearch": "Search",
+    "clear": "Clear",
+    "newOrder": "Order",
+    "export": "Export file",
+    "exportOverview": "Overview file",
+    "exportDetail": "Detail file",
+    "exporting": "Creating file...",
+    "settings": "Order settings",
+    "help": "User guide",
+    "favourite": "Mark",
+    "emptyWhat": "transactions",
+    "fileOverview": "Orders",
+    "fileDetail": "OrderDetails",
+    "time": "Time",
+    "status": "Status",
+    "pickStatus": "Select status",
+    "more": "+{n} more",
+    "deliveryTime": "Delivery time",
+    "payment": "Payment method",
+    "funds": {
+      "CASH": "Cash",
+      "BANK": "Transfer / Card",
+      "EWALLET": "E-wallet"
+    },
+    "createdBy": "Created by",
+    "seller": "Order taker",
+    "pickUser": "Select person",
+    "channel": "Sales channel",
+    "pickChannel": "Select channel",
+    "newChannel": "Create",
+    "cols": {
+      "orderedAt": "Time",
+      "customerCode": "Customer code",
+      "customer": "Customer",
+      "phone": "Phone",
+      "seller": "Order taker",
+      "createdBy": "Created by",
+      "channel": "Sales channel",
+      "expectedDeliveryAt": "Expected delivery",
+      "invoiceCode": "Invoice code",
+      "subtotal": "Subtotal",
+      "discount": "Discount",
+      "total": "Due",
+      "deposit": "Paid",
+      "status": "Status"
+    },
+    "detail": {
+      "createdBy": "Created by",
+      "seller": "Order taker",
+      "orderedAt": "Order date",
+      "channel": "Sales channel",
+      "priceBook": "Price book",
+      "defaultPriceBook": "General price book",
+      "expected": "Expected delivery",
+      "status": "Status",
+      "invoice": "Invoice code",
+      "tabInvoices": "Invoice history",
+      "notePh": "Note...",
+      "save": "Save",
+      "saved": "Order saved",
+      "copy": "Copy",
+      "process": "Process order",
+      "finish": "Finish",
+      "print": "Print",
+      "cancel": "Cancel",
+      "openCustomer": "Open customer",
+      "vat": "VAT",
+      "taxCut": "Tax reduction",
+      "grandTotal": "Total",
+      "invCode": "Invoice code",
+      "invTime": "Time",
+      "invBy": "Created by",
+      "invValue": "Value",
+      "invStatus": "Status",
+      "invStatuses": {
+        "COMPLETED": "Completed",
+        "CANCELLED": "Cancelled"
+      },
+      "delivered": "Delivered"
+    },
+    "cancelDlg": {
+      "title": "Cancel order",
+      "body": "Are you sure you want to cancel order {code}?",
+      "depositTitle": "Cancel deposit",
+      "depositBody": "Do you want to cancel the related deposits?",
+      "agree": "Agree",
+      "skip": "Skip",
+      "yes": "Agree",
+      "done": "Order cancelled",
+      "hasInvoice": "The order already has an invoice and cannot be cancelled"
+    },
+    "finishDlg": {
+      "title": "Finish order",
+      "body": "You will not be able to process this order even though not all items were delivered. Finish it and mark it completed?",
+      "done": "Order finished"
+    },
+    "sale": {
+      "toDebt": "Added to debt",
+      "save": "Save",
+      "createInvoice": "Create invoice",
+      "orderSaved": "Order {code} saved",
+      "needCustomer": "An order requires a customer",
+      "invoiceDone": "Invoice updated successfully",
+      "deposited": "Customer paid"
+    },
+    "advance": "(Advance transfer)",
+    "cancelPay": {
+      "title": "Cancel payments",
+      "body": "Do you want to cancel the related payment vouchers?",
+      "confirm": "Confirm"
+    }
   }
 }

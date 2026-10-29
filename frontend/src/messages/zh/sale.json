@@ -24,7 +24,6 @@
     "orderRef": "订单",
     "paid": "客户付款",
     "pay": "结账",
-    "payOnDelivery": "收货时待付",
     "placeOrder": "下单",
     "saveOrder": "保存订单",
     "speakPaid": "顾客付款{amount}越南盾",
@@ -255,7 +254,6 @@
   "open": {
     "copyLabel": "复制 {code}",
     "invoiceCancelled": "发票已作废",
-    "invoiceFromOrderLabel": "发票 / {code}",
     "orderCancelled": "订单 {code} 已取消",
     "orderInvoiced": "订单 {code} 已生成发票 {invoice}",
     "returnLabel": "退货 / {code}"

@@ -126,3 +126,20 @@ Date: 2026-10-29 · Branch: feature/phase-01-foundation
 - sales-service built (tests pass) + restarted; frontend tsc / eslint clean, `next build` OK, :3010 restarted.
 - e2e: delivery 71/71 (new KV1–KV10 shipments/dashboard/cashflow/partners vs DB incl. TL quy đổi dims, RT0–RT4 returns filters/columns/export/picker), sales 22/22, sale_backend 57/57, edit_return 18/18, invoice_tools 27/27.
 - Browser (Playwright): Vận đơn list + expanded detail, Quản lý giao hàng (Thống kê, Dòng tiền), Đối tác (Tích hợp, Khác), Trả hàng, return picker — rendered, no page errors.
+
+## Task 5 (2026-10-30): Đặt hàng (243–278)
+Backend (9b73085): list filters productQ/customerQ/deliveryFrom/To/sellerId/channels/paymentMethods, GET /orders/export, PATCH /orders/{id}/info, POST /orders/{id}/finish, cancel guard + CANCEL_VOUCHERS, invoice cancel ?cancelPayments=, delivered qty per line, ORDER print type (identity).
+Frontend: /orders list (search "Theo mã phiếu đặt" + panel hàng/khách, + Đặt hàng → /sale?newOrder=1, Xuất file tổng quan/chi tiết xlsx, column chooser, ☆ local, status chips, Thời gian giao hàng, PT thanh toán, Người tạo/nhận đặt, Kênh bán + Tạo mới, summary row, empty "vào đây"); detail panel (editable Người nhận đặt / Ngày đặt / Kênh bán / Dự kiến giao / Trạng thái / Ghi chú + Lưu, ordered + delivered (red) qty, tabs Thông tin / Lịch sử thanh toán / Lịch sử hóa đơn, footer Hủy (2 dialogs) · Sao chép · Xuất file · Xử lý đơn hàng · Lưu · Kết thúc · In); sale screen: tab "DHxxx" (Xử lý) with TẠO HÓA ĐƠN (purple) + LƯU (green), Khách đã trả → Khách cần trả = còn lại, payment hidden when deposit covers, "Tính vào công nợ"; TẠO HÓA ĐƠN saves order then replaces tab with "Hóa đơn N" (THANH TOÁN, deposit deducted); ?copyOrder= → "Copy_DHxxx"; customer-required toast + focus; invoice cancel "Hủy thanh toán" dialog; invoice payments "(Chuyển tạm ứng)" on TT{DH} rows; print "HÓA ĐƠN ĐẶT HÀNG" (ORDER) with VietQR of remaining amount.
+Verification: e2e_orders_flow 14/14 (OF14 new: deposit 5k + invoice paid 0 → debt), orders_groups 34/34, sales 22/22, sale_backend 57/57, invoice_tools 27/27, delivery 71/71; tsc/eslint clean; next build; screenshots list/detail/sale tabs, no JS errors.
+
+### Business-logic changes
+- Order cancel: blocked when invoice exists ("Phiếu đặt hàng đã có hóa đơn, không thể hủy", ORDER_HAS_INVOICE). New refundMethod CANCEL_VOUCHERS: cancels deposit receipts (PAYMENT_CANCEL debt +amount), no refund voucher. UI: "Đồng ý" = CANCEL_VOUCHERS, "Bỏ qua" = CREDIT (deposit kept as customer prepayment). Cash refund (PC{code}) still in API, no longer in UI.
+- Invoice cancel (invoice from order): cancelPayments=true cancels the order's deposit receipts too (order deposit → 0, debt restored); false keeps them (order reopens CONFIRMED with deposit).
+- Order finish: DRAFT/CONFIRMED → COMPLETED without invoice; no stock change; deposit receipts stay PAID; order can't be invoiced afterwards.
+- Order info save: seller, orderedAt (book-lock checked on old+new date), channel, expected delivery, note; status only DRAFT↔CONFIRMED while open; cancelled orders read-only.
+- Order creation: unchanged (customer required, receipt TT{code} only when paid > 0, reduces debt immediately; no stock).
+- Invoice from order: unchanged server rule — deposit allocated "(Chuyển tạm ứng)", new payment → 2nd receipt TT{HĐ}; unpaid remainder goes to customer debt at invoice time (not at order time — posting at order time would double count).
+- TẠO HÓA ĐƠN from order tab now first PUTs the order (cart/note; any "Khách thanh toán" typed there = extra deposit receipt) then opens the invoice tab.
+
+### Not built (reported)
+Gộp đơn; Đối tác giao hàng / Khu vực filters and "Đang giao hàng" status (orders have no shipment/address); row checkboxes (no bulk action without Gộp đơn); VAT/Giảm thuế lines on orders (orders carry no tax data); "Mở rộng" in search panel; "SL / SL đặt" (1 / 1) under invoice-tab lines.

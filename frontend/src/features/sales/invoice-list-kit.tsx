@@ -110,7 +110,7 @@ export function ListSearch({ value, onChange, placeholder }: { value: string; on
 
 const TONES = {
   green: "bg-[#e3f8ec] text-[#0f9d58]", red: "bg-[#fce4e4] text-[#d93025]",
-  gray: "bg-[#eff0f3] text-foreground", blue: "bg-[#e3f0fc] text-primary",
+  gray: "bg-[#eff0f3] text-foreground", blue: "bg-[#e3f0fc] text-primary", orange: "bg-[#fff1e0] text-[#f97316]",
 } as const;
 
 export function StatusBadge({ tone, children, title }: { tone: keyof typeof TONES; children: React.ReactNode; title?: string }) {

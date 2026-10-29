@@ -11,6 +11,7 @@ import { useEInvoiceRecords } from "@/features/integrations/integration-queries"
 import { fromLocalInput, toLocalInput } from "@/features/purchases/purchase-line-form";
 import { useUserLookup } from "@/features/purchases/purchase-queries";
 import { api, errorMessage } from "@/lib/api-client";
+import { InvoiceCancelPaymentsDialog } from "@/features/orders/invoice-cancel-payments-dialog";
 import { useT } from "@/lib/i18n";
 import { useCurrentUser } from "@/lib/use-current-user";
 import { cn } from "@/lib/utils";
@@ -39,6 +40,7 @@ export function InvoiceDetailPanel({ id, onClose }: { id: string; onClose?: () =
   const { data: users = [] } = useUserLookup();
   const [edit, setEdit] = useState<InvoiceInfoDraft | null>(null);
   const [taxDialog, setTaxDialog] = useState(false);
+  const [askPayments, setAskPayments] = useState(false); // hóa đơn từ đơn đặt hàng: hỏi hủy phiếu thu cọc
   const { data: einvoices = [] } = useEInvoiceRecords([id]);
   const published = einvoices[0]?.status === "PUBLISHED";
   const refresh = () => SALES_KEYS.forEach((k) => qc.invalidateQueries({ queryKey: k }));
@@ -54,8 +56,8 @@ export function InvoiceDetailPanel({ id, onClose }: { id: string; onClose?: () =
     onError: (e) => toast.error(errorMessage(e)),
   });
   const cancel = useMutation({
-    mutationFn: () => api(`/invoices/${id}/cancel`, { method: "POST" }),
-    onSuccess: () => { toast.success(t("invoices.detail.cancelled")); refresh(); },
+    mutationFn: (cancelPayments: boolean) => api(`/invoices/${id}/cancel?cancelPayments=${cancelPayments}`, { method: "POST" }),
+    onSuccess: () => { toast.success(t("invoices.detail.cancelled")); setAskPayments(false); refresh(); },
     onError: (e) => toast.error(errorMessage(e)),
   });
 
@@ -86,13 +88,14 @@ export function InvoiceDetailPanel({ id, onClose }: { id: string; onClose?: () =
               <div className="md:ml-auto"><InvoiceTotals inv={inv} /></div>
             </div>
           </div>
-          <InvoiceDetailFooter inv={inv} active={active} canCancel={can("sales.cancel")} cancelling={cancel.isPending} onCancel={() => cancel.mutate()}
+          <InvoiceDetailFooter inv={inv} active={active} canCancel={can("sales.cancel")} cancelling={cancel.isPending} onCancel={() => (inv.orderId && inv.payments.some((p) => p.status === "PAID") ? setAskPayments(true) : cancel.mutate(false))}
             dirty={!!edit} saving={save.isPending} onSave={() => save.mutate()} published={published} onEditTax={() => setTaxDialog(true)} />
           {taxDialog && <InvoiceTaxDialog invoice={inv} onClose={() => setTaxDialog(false)} />}
         </TabsContent>
         {shipmentId && <TabsContent value="delivery"><InvoiceDeliveryHistory shipmentId={shipmentId} /></TabsContent>}
         <TabsContent value="payments"><InvoicePaymentHistory inv={inv} /></TabsContent>
       </Tabs>
+      {askPayments && <InvoiceCancelPaymentsDialog busy={cancel.isPending} onChoose={(c) => cancel.mutate(c)} onClose={() => setAskPayments(false)} />}
     </div>
   );
 }

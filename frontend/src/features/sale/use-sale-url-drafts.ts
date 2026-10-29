@@ -13,7 +13,7 @@ import type { CatalogProduct, DraftInvoice } from "./sale-types";
 /**
  * Mở tab từ trang quản lý qua tham số URL rồi xóa tham số:
  * ?edit=<HĐ> sửa hóa đơn · ?return=<HĐ> trả hàng · ?copy=<HĐ> sao chép thành hóa đơn mới ·
- * ?order=<đơn> sửa đơn đặt hàng · ?orderInvoice=<đơn> tạo hóa đơn từ đơn. Cần danh mục đã tải (trừ trả hàng).
+ * ?order=<đơn> sửa đơn đặt hàng · ?orderInvoice=<đơn> tạo hóa đơn từ đơn · ?copyOrder=<đơn> sao chép thành đơn mới. Cần danh mục đã tải (trừ trả hàng).
  */
 export function useSaleUrlDrafts(userId: string | undefined, catalog: CatalogProduct[], loadedAt: string | null, open: (d: DraftInvoice) => void) {
   const params = useSearchParams();
@@ -21,9 +21,9 @@ export function useSaleUrlDrafts(userId: string | undefined, catalog: CatalogPro
   const t = useT(saleNs);
   useEffect(() => {
     const editId = params.get("edit"), returnId = params.get("return"), copyId = params.get("copy");
-    const orderId = params.get("order") ?? params.get("orderInvoice");
+    const orderId = params.get("order") ?? params.get("orderInvoice") ?? params.get("copyOrder");
     if (!userId || !(editId || returnId || orderId || copyId) || ((editId || orderId || copyId) && !loadedAt)) return;
-    const draft = orderId ? draftFromOrder(orderId, params.get("order") ? "edit" : "invoice", catalog, userId, t)
+    const draft = orderId ? draftFromOrder(orderId, params.get("order") ? "edit" : params.get("copyOrder") ? "copy" : "invoice", catalog, userId, t)
       : copyId ? draftCopyOfInvoice(copyId, catalog, userId, t)
         : draftFromInvoice((editId ?? returnId)!, editId ? "edit" : "return", catalog, userId, t);
     draft.then((dr) => { open(dr); router.replace(SALE_ROUTE); })

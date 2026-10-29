@@ -6,7 +6,8 @@
     "CASH_RECEIPT": "Receipt voucher",
     "CASH_PAYMENT": "Payment voucher",
     "PURCHASE_RECEIPT": "Goods receipt",
-    "PURCHASE_RETURN": "Purchase return"
+    "PURCHASE_RETURN": "Purchase return",
+    "ORDER": "Order"
   },
   "groups": {
     "orders": "Orders",
@@ -103,6 +104,9 @@
     "prescriber": "Prescribing doctor",
     "clinic": "Medical facility",
     "diagnosis": "Diagnosis",
-    "taxReductionMethod": "Tax reduction method"
+    "taxReductionMethod": "Tax reduction method",
+    "orderCode": "Order code",
+    "orderedAt": "Order date",
+    "paymentQr": "Transfer QR"
   }
 }

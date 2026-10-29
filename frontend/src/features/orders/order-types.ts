@@ -14,13 +14,15 @@ export const ORDER_STATUS_KEY = {
   DRAFT: "status.DRAFT", CONFIRMED: "status.CONFIRMED", COMPLETED: "status.COMPLETED", CANCELLED: "status.CANCELLED",
 } as const satisfies Record<OrderStatus, string>;
 
-/** Màu badge trạng thái: tạm xám, xác nhận xanh dương, hoàn thành xanh lá, hủy đỏ. */
-export const ORDER_STATUS_TONE = { DRAFT: "gray", CONFIRMED: "blue", COMPLETED: "green", CANCELLED: "red" } as const;
+/** Màu badge trạng thái (KiotViet): Phiếu tạm cam, Đã xác nhận xanh dương, Hoàn thành xanh lá, Đã hủy đỏ. */
+export const ORDER_STATUS_TONE = { DRAFT: "orange", CONFIRMED: "blue", COMPLETED: "green", CANCELLED: "red" } as const;
 
 export type OrderLine = {
   id: string; lineNo: number; productId: string; unitId: string; productCode: string; productName: string;
   unitName: string; quantity: number; unitPrice: number; discount: number; price: number; amount: number;
   note: string | null; taxCode: string | null;
+  /** Đã giao = số lượng trên hóa đơn (còn hiệu lực) tạo từ đơn. */
+  deliveredQuantity?: number;
 };
 
 /** Phiếu thu đặt cọc (RECEIPT) / phiếu chi hoàn cọc khi hủy đơn (PAYMENT). */
@@ -40,7 +42,8 @@ export type Order = {
 export type OrderListItem = {
   id: string; code: string; orderedAt: string; customerCode: string | null; customerName: string; createdByName: string;
   subtotal: number; discount: number; total: number; deposit: number; status: OrderStatus; invoiceCode: string | null;
-  expectedDeliveryAt: string | null; salesChannel: string;
+  expectedDeliveryAt: string | null; salesChannel: string; sellerName?: string | null; customerPhone?: string | null;
+  invoiceId?: string | null;
 };
 
 export type OrderList = {

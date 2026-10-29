@@ -24,7 +24,6 @@
     "orderRef": "Đặt hàng",
     "paid": "Khách thanh toán",
     "pay": "Thanh toán",
-    "payOnDelivery": "Còn phải trả khi nhận hàng",
     "placeOrder": "Đặt hàng",
     "saveOrder": "Lưu đơn",
     "speakPaid": "Khách thanh toán {amount} đồng",
@@ -255,7 +254,6 @@
   "open": {
     "copyLabel": "Sao chép {code}",
     "invoiceCancelled": "Hóa đơn đã hủy",
-    "invoiceFromOrderLabel": "Hóa đơn / {code}",
     "orderCancelled": "Đơn {code} đã hủy",
     "orderInvoiced": "Đơn {code} đã tạo hóa đơn {invoice}",
     "returnLabel": "Trả hàng / {code}"

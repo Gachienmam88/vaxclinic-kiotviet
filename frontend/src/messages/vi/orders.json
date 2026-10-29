@@ -1,5 +1,10 @@
 {
-  "status": { "DRAFT": "Phiếu tạm", "CONFIRMED": "Đã xác nhận", "COMPLETED": "Hoàn thành", "CANCELLED": "Đã hủy" },
+  "status": {
+    "DRAFT": "Phiếu tạm",
+    "CONFIRMED": "Đã xác nhận",
+    "COMPLETED": "Hoàn thành",
+    "CANCELLED": "Đã hủy"
+  },
   "list": {
     "title": "Đặt hàng",
     "searchPlaceholder": "Theo mã đặt hàng, tên / mã / SĐT khách",
@@ -28,8 +33,15 @@
     "price": "Giá bán",
     "amount": "Thành tiền"
   },
-  "csv": { "listFile": "dat-hang", "detailFile": "dat-hang-{code}" },
-  "filter": { "status": "Trạng thái", "createdBy": "Người tạo", "pickCreator": "Chọn người tạo" },
+  "csv": {
+    "listFile": "dat-hang",
+    "detailFile": "dat-hang-{code}"
+  },
+  "filter": {
+    "status": "Trạng thái",
+    "createdBy": "Người tạo",
+    "pickCreator": "Chọn người tạo"
+  },
   "detail": {
     "tabInfo": "Thông tin",
     "tabPayments": "Lịch sử thanh toán",
@@ -73,5 +85,122 @@
     "done": "Đã hủy đơn đặt hàng",
     "doneCredit": "Đã hủy đơn, giữ {amount} làm tiền khách trả trước",
     "doneRefund": "Đã hủy đơn, hoàn {amount} cho khách (phiếu chi {voucher})"
+  },
+  "kv": {
+    "title": "Đặt hàng",
+    "search": "Theo mã phiếu đặt",
+    "searchProduct": "Theo mã, tên hàng",
+    "searchCustomer": "Theo mã, tên, số điện thoại khách hàng",
+    "doSearch": "Tìm kiếm",
+    "clear": "Xóa điều kiện",
+    "newOrder": "Đặt hàng",
+    "export": "Xuất file",
+    "exportOverview": "File tổng quan",
+    "exportDetail": "File chi tiết",
+    "exporting": "Đang tạo file...",
+    "settings": "Thiết lập đơn hàng",
+    "help": "Hướng dẫn sử dụng",
+    "favourite": "Đánh dấu",
+    "emptyWhat": "giao dịch",
+    "fileOverview": "DanhSachDatHang",
+    "fileDetail": "DanhSachChiTietDatHang",
+    "time": "Thời gian",
+    "status": "Trạng thái",
+    "pickStatus": "Chọn trạng thái",
+    "more": "+{n} khác",
+    "deliveryTime": "Thời gian giao hàng",
+    "payment": "Phương thức thanh toán",
+    "funds": {
+      "CASH": "Tiền mặt",
+      "BANK": "Chuyển khoản / Thẻ",
+      "EWALLET": "Ví điện tử"
+    },
+    "createdBy": "Người tạo",
+    "seller": "Người nhận đặt",
+    "pickUser": "Chọn người",
+    "channel": "Kênh bán",
+    "pickChannel": "Chọn kênh bán",
+    "newChannel": "Tạo mới",
+    "cols": {
+      "orderedAt": "Thời gian",
+      "customerCode": "Mã KH",
+      "customer": "Khách hàng",
+      "phone": "Điện thoại",
+      "seller": "Người nhận đặt",
+      "createdBy": "Người tạo",
+      "channel": "Kênh bán",
+      "expectedDeliveryAt": "Dự kiến giao",
+      "invoiceCode": "Mã hóa đơn",
+      "subtotal": "Tổng tiền hàng",
+      "discount": "Giảm giá",
+      "total": "Khách cần trả",
+      "deposit": "Khách đã trả",
+      "status": "Trạng thái"
+    },
+    "detail": {
+      "createdBy": "Người tạo",
+      "seller": "Người nhận đặt",
+      "orderedAt": "Ngày đặt",
+      "channel": "Kênh bán",
+      "priceBook": "Bảng giá",
+      "defaultPriceBook": "Bảng giá chung",
+      "expected": "Dự kiến giao",
+      "status": "Trạng thái",
+      "invoice": "Mã hóa đơn",
+      "tabInvoices": "Lịch sử hóa đơn",
+      "notePh": "Ghi chú...",
+      "save": "Lưu",
+      "saved": "Đã lưu đơn đặt hàng",
+      "copy": "Sao chép",
+      "process": "Xử lý đơn hàng",
+      "finish": "Kết thúc",
+      "print": "In",
+      "cancel": "Hủy",
+      "openCustomer": "Mở khách hàng",
+      "vat": "Thuế GTGT",
+      "taxCut": "Giảm thuế",
+      "grandTotal": "Tổng cộng",
+      "invCode": "Mã hóa đơn",
+      "invTime": "Thời gian",
+      "invBy": "Người tạo",
+      "invValue": "Giá trị",
+      "invStatus": "Trạng thái",
+      "invStatuses": {
+        "COMPLETED": "Hoàn thành",
+        "CANCELLED": "Đã hủy"
+      },
+      "delivered": "Đã giao"
+    },
+    "cancelDlg": {
+      "title": "Hủy phiếu đặt hàng",
+      "body": "Bạn có chắc chắn muốn hủy phiếu đặt hàng {code} này không?",
+      "depositTitle": "Hủy đặt cọc",
+      "depositBody": "Bạn có muốn hủy đặt cọc liên quan?",
+      "agree": "Đồng ý",
+      "skip": "Bỏ qua",
+      "yes": "Đồng ý",
+      "done": "Đã hủy phiếu đặt hàng",
+      "hasInvoice": "Phiếu đặt hàng đã có hóa đơn, không thể hủy"
+    },
+    "finishDlg": {
+      "title": "Kết thúc đơn đặt hàng",
+      "body": "Bạn sẽ không thể xử lý đơn hàng mặc dù hàng hóa chưa giao hết. Bạn có chắc chắn kết thúc và chuyển trạng thái đơn hàng sang hoàn thành không?",
+      "done": "Đã kết thúc đơn đặt hàng"
+    },
+    "sale": {
+      "toDebt": "Tính vào công nợ",
+      "save": "Lưu",
+      "createInvoice": "Tạo hóa đơn",
+      "orderSaved": "Đã lưu đơn đặt hàng {code}",
+      "needCustomer": "Đặt hàng phải chọn khách hàng",
+      "invoiceDone": "Hóa đơn đã được cập nhật thành công",
+      "deposited": "Khách đã trả"
+    },
+    "advance": "(Chuyển tạm ứng)",
+    "cancelPay": {
+      "title": "Hủy thanh toán",
+      "body": "Bạn có muốn hủy những phiếu thanh toán liên quan?",
+      "confirm": "Xác nhận"
+    }
   }
 }
