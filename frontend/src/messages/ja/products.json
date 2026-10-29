@@ -152,12 +152,19 @@
     "invalidPrice": "価格が正しくありません",
     "priceCellAria": "価格表の価格",
     "books": "価格表",
-    "noBooks": "価格表がありません。＋で追加します。",
     "inactive": "未適用",
-    "editAria": "{name}を編集",
     "inBookOnly": "価格表にある商品のみ",
-    "applyFormula": "計算式を適用",
-    "importPrices": "価格をインポート"
+    "importPrices": "価格をインポート",
+    "createNew": "新規作成",
+    "addBook": "価格表",
+    "pickBooks": "価格表を選択",
+    "removeChip": "{name} を外す",
+    "noMoreBooks": "選択できる価格表がありません",
+    "searchCode": "コード検索",
+    "searchName": "名称検索",
+    "salePrice": "販売価格",
+    "baseNotEmpty": "一般価格は空にできません",
+    "import": "インポート"
   },
   "bookForm": {
     "errors": {
@@ -165,14 +172,15 @@
       "dateOrder": "終了日は開始日より後にしてください",
       "pickBranch": "店舗を1つ以上選択するか「すべて」を選択してください",
       "pickGroup": "顧客グループを1つ以上選択するか「すべて」を選択してください",
-      "pickSeller": "取引作成者を1人以上選択するか「すべて」を選択してください"
+      "pickSeller": "取引作成者を1人以上選択するか「すべて」を選択してください",
+      "pickFormulaBook": "計算式の基準となる価格表を選択してください"
     },
     "toastUpdated": "価格表を更新しました",
     "toastCreated": "価格表 {name} を作成しました",
     "confirmDelete": "価格表「{name}」を削除しますか？表内のすべての価格が削除されます。",
     "toastDeleted": "価格表を削除しました",
     "editTitle": "価格表を編集",
-    "createTitle": "価格表を追加",
+    "createTitle": "価格表を作成",
     "name": "価格表名",
     "validFrom": "有効開始日",
     "validTo": "終了日",
@@ -183,39 +191,40 @@
     "pickGroup": "顧客グループを選択",
     "seller": "取引作成者",
     "pickSeller": "取引作成者を選択",
-    "missingPolicy": "価格表にない商品を追加する場合",
-    "autoUpdate": "基本価格が変わったら価格を自動更新",
-    "autoFormula": "販売価格 = 基本価格"
+    "tabInfo": "情報",
+    "tabScope": "適用範囲",
+    "namePlaceholder": "価格表名を入力",
+    "validity": "有効期間",
+    "validityTo": "〜",
+    "statusLabel": "ステータス",
+    "formulaTitle": "価格計算式",
+    "formulaHint": "原価・仕入価格・他の価格表の販売価格をもとに計算式を作成",
+    "pickBase": "価格表を選択",
+    "cashierTitle": "レジ係がこの価格表で注文を作成するとき",
+    "allowMissing": "価格表にない商品の追加を許可",
+    "warnMissing": "価格表にない商品を追加したときに警告",
+    "blockMissing": "この価格表の商品のみ追加可能",
+    "blockMissingHint": "レジ係はこの価格表にない商品を追加できません",
+    "allBranches": "全システム",
+    "specificBranch": "特定の支店",
+    "specificGroup": "特定の顧客グループ",
+    "specificSeller": "特定の取引作成者"
   },
   "formula": {
-    "operator": "演算",
     "value": "値",
-    "unit": "単位",
     "errors": {
-      "invalidValue": "値が正しくありません",
-      "pickBaseBook": "基準とする価格表を選択してください"
+      "invalidValue": "値が正しくありません"
     },
     "toastApplied_other": "「{name}」の {count} 件の価格を更新しました",
-    "title": "計算式を適用 — {name}",
     "newPrice": "新価格 =",
-    "base": "基準価格",
-    "baseBook": "基準価格表",
-    "pickBook": "価格表を選択",
-    "onlyExisting": "価格表に登録済みの商品のみに適用",
-    "scopeExisting": "現在の絞り込み条件に該当する、価格表登録済みの商品に適用します。",
-    "scopeAll_other": "現在の絞り込み条件に該当する {count} 件の商品に適用します。",
-    "skipNote": "基準価格のない商品（例：仕入れ実績なし）はスキップされます。"
-  },
-  "missingPolicy": {
-    "ALLOW": "許可（基本価格を使用）",
-    "BLOCK": "許可しない",
-    "WARN": "警告付きで許可"
+    "base": "基準価格"
   },
   "formulaBase": {
-    "BASE_PRICE": "基本価格",
+    "BASE_PRICE": "一般価格表",
     "COST": "原価",
     "LAST_PURCHASE": "最終仕入価格",
-    "BOOK": "他の価格表"
+    "BOOK": "他の価格表",
+    "CURRENT": "現在の価格"
   },
   "import": {
     "noRows": "ファイルにデータ行がありません（列「Mã hàng」「Giá」が必要です）",
@@ -229,5 +238,31 @@
   "scope": {
     "loading": "一覧を読み込み中...",
     "loadError": "{what}の一覧を読み込めませんでした：{error}"
+  },
+  "priceFilter": {
+    "pickOp": "条件を選択",
+    "pickCompare": "比較価格を選択",
+    "op": {
+      "LT": "より小さい",
+      "LTE": "以下",
+      "EQ": "等しい",
+      "GTE": "以上",
+      "GT": "より大きい"
+    }
+  },
+  "formulaPopover": {
+    "hint": "または{link}を使用",
+    "hintLink": "計算式",
+    "title": "計算式で価格設定",
+    "newPrice": "新価格",
+    "plus": "加算",
+    "minus": "減算",
+    "applyAll_one": "{name}の全{count}商品にこの計算式を適用",
+    "applyAll_other": "{name}の全{count}商品にこの計算式を適用",
+    "unknownBase": "基準価格なし"
+  },
+  "categoryPicker": {
+    "selectAll": "すべて選択",
+    "empty": "商品グループが見つかりません"
   }
 }

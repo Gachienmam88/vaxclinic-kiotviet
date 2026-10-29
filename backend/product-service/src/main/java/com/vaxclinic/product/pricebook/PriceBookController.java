@@ -1,6 +1,8 @@
 package com.vaxclinic.product.pricebook;
 
 import com.vaxclinic.common.web.PageResponse;
+import com.vaxclinic.product.pricebook.PriceBookDtos.BasePricesRequest;
+import com.vaxclinic.product.pricebook.PriceBookDtos.CompareWith;
 import com.vaxclinic.product.pricebook.PriceBookDtos.CountResponse;
 import com.vaxclinic.product.pricebook.PriceBookDtos.FormulaRequest;
 import com.vaxclinic.product.pricebook.PriceBookDtos.ImportRequest;
@@ -8,6 +10,7 @@ import com.vaxclinic.product.pricebook.PriceBookDtos.ImportResult;
 import com.vaxclinic.product.pricebook.PriceBookDtos.ItemsRequest;
 import com.vaxclinic.product.pricebook.PriceBookDtos.PriceBookRequest;
 import com.vaxclinic.product.pricebook.PriceBookDtos.PriceBookResponse;
+import com.vaxclinic.product.pricebook.PriceBookDtos.PriceCompare;
 import com.vaxclinic.product.pricebook.PriceBookDtos.PriceRow;
 import com.vaxclinic.product.pricebook.PriceBookDtos.RowFilter;
 import com.vaxclinic.product.purchase.PurchaseDtos.Actor;
@@ -58,10 +61,29 @@ public class PriceBookController {
                                          @RequestParam(required = false) String stock,
                                          @RequestParam(required = false) UUID branchId,
                                          @RequestParam(defaultValue = "false") boolean inBookOnly,
+                                         @RequestParam(required = false) PriceCompare priceOp,
+                                         @RequestParam(required = false) CompareWith compareWith,
+                                         @RequestParam(required = false) UUID compareBookId,
+                                         @RequestParam(required = false) String code,
+                                         @RequestParam(required = false) String name,
                                          @RequestParam(defaultValue = "0") int page,
                                          @RequestParam(defaultValue = "15") int size) {
-        return service.matrix(bookIds, new RowFilter(q, categoryIds, stock, branchId, inBookOnly),
+        return service.matrix(bookIds, new RowFilter(q, categoryIds, stock, branchId, inBookOnly, priceOp, compareWith,
+                        compareBookId, code, name),
                 Math.max(page, 0), Math.min(Math.max(size, 1), 100));
+    }
+
+    /** Cột "Bảng giá chung": sửa giá chung (giá bán của đơn vị tính). */
+    @PutMapping("/base-prices")
+    @PreAuthorize("hasAuthority('catalog.manage')")
+    public CountResponse upsertBase(@Valid @RequestBody BasePricesRequest req, @AuthenticationPrincipal Jwt jwt) {
+        return service.upsertBase(req, Actor.of(jwt));
+    }
+
+    @PostMapping("/base-prices/apply-formula")
+    @PreAuthorize("hasAuthority('catalog.manage')")
+    public CountResponse applyFormulaToBase(@Valid @RequestBody FormulaRequest req, @AuthenticationPrincipal Jwt jwt) {
+        return service.applyFormulaToBase(req, Actor.of(jwt));
     }
 
     @GetMapping("/{id}")
@@ -78,7 +100,7 @@ public class PriceBookController {
                                         @RequestParam(defaultValue = "true") boolean inBookOnly,
                                         @RequestParam(defaultValue = "0") int page,
                                         @RequestParam(defaultValue = "15") int size) {
-        return service.items(id, new RowFilter(q, categoryIds, stock, branchId, inBookOnly),
+        return service.items(id, new RowFilter(q, categoryIds, stock, branchId, inBookOnly, null, null, null, null, null),
                 Math.max(page, 0), Math.min(Math.max(size, 1), 100));
     }
 

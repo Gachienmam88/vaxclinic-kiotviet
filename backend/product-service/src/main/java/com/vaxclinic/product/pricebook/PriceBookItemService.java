@@ -1,6 +1,7 @@
 package com.vaxclinic.product.pricebook;
 
 import com.vaxclinic.common.error.BusinessException;
+import com.vaxclinic.product.pricebook.PriceBookDtos.BasePriceInput;
 import com.vaxclinic.product.pricebook.PriceBookDtos.FormulaBase;
 import com.vaxclinic.product.pricebook.PriceBookDtos.FormulaRequest;
 import com.vaxclinic.product.pricebook.PriceBookDtos.ImportError;
@@ -16,7 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-/** Ghi giá trong bảng giá: sửa từng ô / hàng loạt, áp dụng công thức, nhập file (Mã hàng, Giá). */
+/** Ghi giá trong bảng giá / giá chung: sửa từng ô / hàng loạt, áp dụng công thức, nhập file (Mã hàng, Giá). */
 @Service
 public class PriceBookItemService {
 
@@ -50,13 +51,39 @@ public class PriceBookItemService {
     @Transactional
     public int applyFormula(UUID bookId, FormulaRequest req) {
         books.get(bookId);
+        checkFormula(req);
+        return repo.applyFormula(bookId, req);
+    }
+
+    /** Sửa giá chung từng đơn vị (cột "Bảng giá chung"); bảng giá theo giá chung tự cập nhật qua trigger. */
+    @Transactional
+    public int upsertBase(List<BasePriceInput> items) {
+        var unitIds = items.stream().map(BasePriceInput::unitId).distinct().toList();
+        Integer found = repo.countUnits(unitIds);
+        if (found == null || found != unitIds.size()) {
+            throw BusinessException.badRequest("UNIT_NOT_FOUND", "Có hàng hóa không tồn tại");
+        }
+        int n = 0;
+        for (BasePriceInput it : items) {
+            n += repo.updateBasePrice(it.unitId(), it.price());
+        }
+        return n;
+    }
+
+    /** Công thức trên cột "Bảng giá chung": ghi vào giá chung của các dòng thuộc bộ lọc / unitIds. */
+    @Transactional
+    public int applyFormulaToBase(FormulaRequest req) {
+        checkFormula(req);
+        return repo.applyFormulaToBase(req);
+    }
+
+    private void checkFormula(FormulaRequest req) {
         if (req.base() == FormulaBase.BOOK) {
             if (req.baseBookId() == null) {
                 throw BusinessException.badRequest("FORMULA_BOOK_REQUIRED", "Chọn bảng giá làm gốc công thức");
             }
             books.get(req.baseBookId());
         }
-        return repo.applyFormula(bookId, req);
     }
 
     /** Dòng hợp lệ được ghi, dòng lỗi trả về kèm số dòng; mã hàng trùng trong file → lấy dòng sau cùng. */

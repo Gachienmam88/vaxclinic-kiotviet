@@ -14,12 +14,15 @@ export type ProductFilters = {
   stock: StockFilter;
   createdFrom: string; // yyyy-mm-dd, "" = không lọc
   createdTo: string;
+  /** Ngày dự kiến hết hàng (yyyy-mm-dd, "" = không lọc); hàng chưa có số bán bị loại khi lọc. */
+  expectedOutFrom: string;
+  expectedOutTo: string;
   active: "all" | "yes" | "no";
 };
 
 export const EMPTY_FILTERS: ProductFilters = {
   q: "", categoryIds: [], taxRateIds: [], taxReduction: "all", stock: "ALL",
-  createdFrom: "", createdTo: "", active: "yes",
+  createdFrom: "", createdTo: "", expectedOutFrom: "", expectedOutTo: "", active: "yes",
 };
 
 function toQuery(f: ProductFilters, page: number, size: number) {
@@ -36,6 +39,8 @@ function toQuery(f: ProductFilters, page: number, size: number) {
     end.setDate(end.getDate() + 1);
     p.set("createdTo", end.toISOString());
   }
+  if (f.expectedOutFrom) p.set("expectedOutFrom", f.expectedOutFrom);
+  if (f.expectedOutTo) p.set("expectedOutTo", f.expectedOutTo);
   return p.toString();
 }
 

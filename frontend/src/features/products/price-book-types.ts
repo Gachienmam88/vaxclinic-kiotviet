@@ -3,11 +3,16 @@
 /** Hàng không có trong bảng giá: ALLOW = dùng giá chung, BLOCK = chặn, WARN = cho phép kèm cảnh báo. */
 export type MissingPolicy = "ALLOW" | "BLOCK" | "WARN";
 export type FormulaOp = "PLUS" | "MINUS";
-export type FormulaBase = "BASE_PRICE" | "COST" | "LAST_PURCHASE" | "BOOK";
+/** CURRENT = giá hiện tại của chính cột đang đặt giá (chỉ dùng cho "Đặt giá theo công thức"). */
+export type FormulaBase = "BASE_PRICE" | "COST" | "LAST_PURCHASE" | "BOOK" | "CURRENT";
+/** Lọc "Giá bán": so sánh giá với giá vốn / giá nhập cuối. Nhãn: t(`priceFilter.op.${k}`), t(`formulaBase.${k}`). */
+export type PriceCompare = "LT" | "LTE" | "EQ" | "GTE" | "GT";
+export type CompareWith = "COST" | "LAST_PURCHASE";
+export const PRICE_COMPARES: PriceCompare[] = ["LT", "LTE", "EQ", "GTE", "GT"];
+export const COMPARE_WITHS: CompareWith[] = ["COST", "LAST_PURCHASE"];
 
-/** Nhãn: t(`missingPolicy.${k}`) / t(`formulaBase.${k}`) (namespace products). */
-export const MISSING_POLICIES: MissingPolicy[] = ["ALLOW", "BLOCK", "WARN"];
-export const FORMULA_BASES: FormulaBase[] = ["BASE_PRICE", "COST", "LAST_PURCHASE", "BOOK"];
+/** Cột / chip "Bảng giá chung" (giá chung của đơn vị tính) trong danh sách bảng giá đang chọn. */
+export const BASE_BOOK_ID = "__base__";
 
 /** Phạm vi null = tất cả. */
 export type PriceBook = {
@@ -24,6 +29,9 @@ export type PriceBook = {
   autoOp: FormulaOp;
   autoValue: number;
   autoPercent: boolean;
+  /** Công thức giá của bảng giá: null = không có (autoUpdate cũ = theo giá chung). */
+  autoBase: Exclude<FormulaBase, "CURRENT"> | null;
+  autoBaseBookId: string | null;
   itemCount: number;
   createdByName: string;
   createdAt: string;
@@ -44,7 +52,11 @@ export type PriceRow = {
   prices: Record<string, number>;
 };
 
-export type PriceRowFilters = { q: string; categoryIds: string[]; stock: string; inBookOnly: boolean };
+/** code / name: ô tìm dưới tiêu đề bảng; priceOp + compareWith: lọc "Giá bán" ("" = không lọc). */
+export type PriceRowFilters = {
+  q: string; code: string; name: string; categoryIds: string[]; stock: string; inBookOnly: boolean;
+  priceOp: PriceCompare | ""; compareWith: CompareWith | "";
+};
 
 export type FormulaRequest = {
   base: FormulaBase;
@@ -53,9 +65,16 @@ export type FormulaRequest = {
   value: number;
   percent: boolean;
   onlyExisting: boolean;
+  /** null = mọi dòng thuộc bộ lọc; [unitId] = chỉ hàng này. */
+  unitIds: string[] | null;
   q: string;
+  code: string;
+  name: string;
   categoryIds: string[];
   stock: string;
+  priceOp: PriceCompare | null;
+  compareWith: CompareWith | null;
+  compareBookId: string | null;
 };
 
 export type ImportError = { line: number; code: string; message: string };

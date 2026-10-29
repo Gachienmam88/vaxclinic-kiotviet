@@ -1,5 +1,6 @@
 package com.vaxclinic.product.pricebook;
 
+import com.vaxclinic.product.pricebook.PriceBookDtos.FormulaBase;
 import com.vaxclinic.product.pricebook.PriceBookDtos.MissingPolicy;
 import com.vaxclinic.product.pricebook.PriceBookDtos.Op;
 import com.vaxclinic.product.pricebook.PriceBookDtos.PriceBookRequest;
@@ -18,7 +19,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-/** Bảng price_books: đọc kèm số dòng giá, thêm / sửa / xóa, tính lại giá khi bật tự cập nhật. Chỉ truy cập DB. */
+/** Bảng price_books: đọc kèm số dòng giá, thêm / sửa / xóa (kèm công thức giá). Chỉ truy cập DB. */
 @Repository
 public class PriceBookRepository {
 
@@ -47,10 +48,11 @@ public class PriceBookRepository {
                 .addValue("createdByName", userName == null ? "" : userName);
         jdbc.update("""
                 insert into price_books (id, name, valid_from, valid_to, active, branch_ids, customer_group_ids, seller_ids,
-                    missing_policy, auto_update, auto_op, auto_value, auto_percent, created_by, created_by_name)
+                    missing_policy, auto_update, auto_op, auto_value, auto_percent, auto_base, auto_base_book_id,
+                    created_by, created_by_name)
                 values (:id, :name, :validFrom, :validTo, :active, cast(:branchIds as uuid[]), cast(:groupIds as uuid[]),
-                    cast(:sellerIds as uuid[]), :policy, :autoUpdate, :autoOp, :autoValue, :autoPercent, :createdBy,
-                    :createdByName)""", p);
+                    cast(:sellerIds as uuid[]), :policy, :autoUpdate, :autoOp, :autoValue, :autoPercent, :autoBase,
+                    :autoBaseBook, :createdBy, :createdByName)""", p);
     }
 
     /** Có thể ném DuplicateKeyException (trùng tên). */
@@ -59,16 +61,9 @@ public class PriceBookRepository {
                 update price_books set name = :name, valid_from = :validFrom, valid_to = :validTo, active = :active,
                     branch_ids = cast(:branchIds as uuid[]), customer_group_ids = cast(:groupIds as uuid[]),
                     seller_ids = cast(:sellerIds as uuid[]), missing_policy = :policy, auto_update = :autoUpdate,
-                    auto_op = :autoOp, auto_value = :autoValue, auto_percent = :autoPercent, updated_at = now()
+                    auto_op = :autoOp, auto_value = :autoValue, auto_percent = :autoPercent, auto_base = :autoBase,
+                    auto_base_book_id = :autoBaseBook, updated_at = now()
                 where id = :id""", params(req).addValue("id", id));
-    }
-
-    /** Tính lại các dòng đang có theo giá chung hiện tại và công thức tự cập nhật của req. */
-    public void recalculateItems(UUID id, PriceBookRequest req) {
-        jdbc.update("""
-                update price_book_items i set price = price_book_formula(u.price, :autoOp, :autoValue, :autoPercent),
-                    updated_at = now()
-                from product_units u where u.id = i.unit_id and i.price_book_id = :id""", params(req).addValue("id", id));
     }
 
     public void delete(UUID id) {
@@ -85,10 +80,13 @@ public class PriceBookRepository {
                 .addValue("groupIds", pgArray(req.customerGroupIds()))
                 .addValue("sellerIds", pgArray(req.sellerIds()))
                 .addValue("policy", req.missingPolicy().name())
-                .addValue("autoUpdate", req.autoUpdate())
+                // Trigger theo giá chung chỉ đúng khi gốc công thức là giá chung.
+                .addValue("autoUpdate", req.effectiveBase() == FormulaBase.BASE_PRICE)
                 .addValue("autoOp", (req.autoOp() == null ? Op.PLUS : req.autoOp()).name())
                 .addValue("autoValue", req.autoValue() == null ? BigDecimal.ZERO : req.autoValue())
-                .addValue("autoPercent", req.autoPercent());
+                .addValue("autoPercent", req.autoPercent())
+                .addValue("autoBase", req.autoBase() == null ? null : req.autoBase().name())
+                .addValue("autoBaseBook", req.autoBase() == FormulaBase.BOOK ? req.autoBaseBookId() : null);
     }
 
     /** Mảng uuid dạng literal Postgres "{a,b}" (cast ở SQL); null = tất cả. */
@@ -107,6 +105,7 @@ public class PriceBookRepository {
                 uuids(rs, "branch_ids"), uuids(rs, "customer_group_ids"), uuids(rs, "seller_ids"),
                 MissingPolicy.valueOf(rs.getString("missing_policy")), rs.getBoolean("auto_update"),
                 Op.valueOf(rs.getString("auto_op")), rs.getBigDecimal("auto_value"), rs.getBoolean("auto_percent"),
-                rs.getLong("item_count"), rs.getString("created_by_name"), rs.getTimestamp("created_at").toInstant());
+                rs.getString("auto_base") == null ? null : FormulaBase.valueOf(rs.getString("auto_base")),
+                rs.getObject("auto_base_book_id", UUID.class), rs.getLong("item_count"), rs.getString("created_by_name"), rs.getTimestamp("created_at").toInstant());
     }
 }

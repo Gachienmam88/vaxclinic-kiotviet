@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -52,10 +53,12 @@ public class ProductController {
                                     @RequestParam(required = false) Instant createdFrom,
                                     @RequestParam(required = false) Instant createdTo,
                                     @RequestParam(required = false) Boolean active,
+                                    @RequestParam(required = false) LocalDate expectedOutFrom,
+                                    @RequestParam(required = false) LocalDate expectedOutTo,
                                     @RequestParam(defaultValue = "0") int page,
                                     @RequestParam(defaultValue = "15") int size) {
         return service.list(new ProductListRepository.Filter(q, categoryIds, taxRateIds, taxReduction, stock, branchId,
-                createdFrom, createdTo, active, Math.max(page, 0), Math.min(Math.max(size, 1), 100)));
+                createdFrom, createdTo, active, expectedOutFrom, expectedOutTo, Math.max(page, 0), Math.min(Math.max(size, 1), 100)));
     }
 
     /**

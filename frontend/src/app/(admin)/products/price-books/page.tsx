@@ -29,7 +29,7 @@ export default function PriceBooksPage() {
   const [filters, setFilters] = useState(EMPTY_PRICE_FILTERS);
   const [text, setText] = useState({ q: "", code: "", name: "" });
   const [page, setPage] = useState(0);
-  const [size, setSize] = useState(10);
+  const [size, setSize] = useState(15);
   const [bookDialog, setBookDialog] = useState<{ key: number; book?: PriceBook } | null>(null);
   const [formula, setFormula] = useState<{ target: PriceTarget; row: PriceRow; anchor: HTMLElement } | null>(null);
   const priceImport = usePriceImport();
@@ -74,7 +74,7 @@ export default function PriceBooksPage() {
         )}
         {editable && (
           <Button variant="outline" className={OUTLINE_GRAY_BTN} disabled={priceImport.isPending} onClick={importFile}
-            title={t("priceBooks.importHint")}><FileUp className="size-4" /> Import</Button>
+            title={t("priceBooks.importHint")}><FileUp className="size-4" /> {t("priceBooks.import")}</Button>
         )}
         <Button variant="outline" className={OUTLINE_GRAY_BTN} disabled={!data?.items.length}
           onClick={() => exportPriceRowsCsv(data?.items ?? [], shown)} title={t("priceBooks.exportHint")}>

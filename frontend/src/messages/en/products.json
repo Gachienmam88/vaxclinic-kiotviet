@@ -152,12 +152,19 @@
     "invalidPrice": "Invalid price",
     "priceCellAria": "Price in price book",
     "books": "Price books",
-    "noBooks": "No price books yet. Click + to add one.",
     "inactive": "inactive",
-    "editAria": "Edit {name}",
     "inBookOnly": "Only products in price book",
-    "applyFormula": "Apply formula",
-    "importPrices": "Import prices"
+    "importPrices": "Import prices",
+    "createNew": "Create new",
+    "addBook": "Price book",
+    "pickBooks": "Select price books",
+    "removeChip": "Remove {name}",
+    "noMoreBooks": "No more price books",
+    "searchCode": "Search code",
+    "searchName": "Search name",
+    "salePrice": "Selling price",
+    "baseNotEmpty": "The general price cannot be empty",
+    "import": "Import"
   },
   "bookForm": {
     "errors": {
@@ -165,14 +172,15 @@
       "dateOrder": "The end date must be after the start date",
       "pickBranch": "Select at least one branch or choose All",
       "pickGroup": "Select at least one customer group or choose All",
-      "pickSeller": "Select at least one transaction creator or choose All"
+      "pickSeller": "Select at least one transaction creator or choose All",
+      "pickFormulaBook": "Select the base price book of the formula"
     },
     "toastUpdated": "Price book updated",
     "toastCreated": "Price book {name} created",
     "confirmDelete": "Delete price book \"{name}\"? All prices in it will be deleted.",
     "toastDeleted": "Price book deleted",
     "editTitle": "Edit price book",
-    "createTitle": "Add price book",
+    "createTitle": "Create price book",
     "name": "Price book name",
     "validFrom": "Valid from",
     "validTo": "To",
@@ -183,41 +191,41 @@
     "pickGroup": "Select customer group",
     "seller": "Transaction creator",
     "pickSeller": "Select transaction creator",
-    "missingPolicy": "When adding a product not in the price book",
-    "autoUpdate": "Update prices automatically when the base price changes",
-    "autoFormula": "Sale price = Base price"
+    "tabInfo": "Information",
+    "tabScope": "Scope",
+    "namePlaceholder": "Enter price book name",
+    "validity": "Validity",
+    "validityTo": "to",
+    "statusLabel": "Status",
+    "formulaTitle": "Price formula",
+    "formulaHint": "Build a formula from cost, purchase price or selling prices in other price books",
+    "pickBase": "Select price book",
+    "cashierTitle": "When the cashier sells with this price book",
+    "allowMissing": "Allow adding items not in the price book",
+    "warnMissing": "Warn when adding items not in the price book",
+    "blockMissing": "Only allow items in this price book",
+    "blockMissingHint": "The cashier cannot add items outside this price book",
+    "allBranches": "Whole system",
+    "specificBranch": "Specific branches",
+    "specificGroup": "Specific customer groups",
+    "specificSeller": "Specific transaction creators"
   },
   "formula": {
-    "operator": "Operator",
     "value": "Value",
-    "unit": "Unit",
     "errors": {
-      "invalidValue": "Invalid value",
-      "pickBaseBook": "Select a base price book"
+      "invalidValue": "Invalid value"
     },
     "toastApplied_one": "Updated the price of {count} product in \"{name}\"",
     "toastApplied_other": "Updated prices of {count} products in \"{name}\"",
-    "title": "Apply formula — {name}",
     "newPrice": "New price =",
-    "base": "Base",
-    "baseBook": "Base price book",
-    "pickBook": "Select price book",
-    "onlyExisting": "Only products already in the price book",
-    "scopeExisting": "Applies to products already in the price book that match the current filter.",
-    "scopeAll_one": "Applies to {count} product matching the current filter.",
-    "scopeAll_other": "Applies to {count} products matching the current filter.",
-    "skipNote": "Products without a base price (e.g. never purchased) are skipped."
-  },
-  "missingPolicy": {
-    "ALLOW": "Allow (use base price)",
-    "BLOCK": "Do not allow",
-    "WARN": "Allow with warning"
+    "base": "Base"
   },
   "formulaBase": {
-    "BASE_PRICE": "Base price",
+    "BASE_PRICE": "General price book",
     "COST": "Cost",
     "LAST_PURCHASE": "Last purchase price",
-    "BOOK": "Other price book"
+    "BOOK": "Other price book",
+    "CURRENT": "Current price"
   },
   "import": {
     "noRows": "The file has no data rows (columns \"Mã hàng\", \"Giá\" are required)",
@@ -232,5 +240,31 @@
   "scope": {
     "loading": "Loading list...",
     "loadError": "Couldn't load {what}: {error}"
+  },
+  "priceFilter": {
+    "pickOp": "Select condition",
+    "pickCompare": "Select price to compare",
+    "op": {
+      "LT": "Less than",
+      "LTE": "Less than or equal",
+      "EQ": "Equal to",
+      "GTE": "Greater than or equal",
+      "GT": "Greater than"
+    }
+  },
+  "formulaPopover": {
+    "hint": "Or use a {link}",
+    "hintLink": "Formula",
+    "title": "Set price by formula",
+    "newPrice": "New price",
+    "plus": "Add",
+    "minus": "Subtract",
+    "applyAll_one": "Apply this formula to all {count} item in {name}",
+    "applyAll_other": "Apply this formula to all {count} items in {name}",
+    "unknownBase": "No base price"
+  },
+  "categoryPicker": {
+    "selectAll": "Select all",
+    "empty": "No category found"
   }
 }

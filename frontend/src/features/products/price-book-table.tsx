@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ListEmptyRow } from "@/components/ui/list-empty-state";
 import { LIST_HEADER_ROW } from "@/features/purchases/purchase-list-chrome";
 import type { PageResponse } from "@/lib/api-client";
-import { formatMoney, formatNumber } from "@/lib/format";
+import { formatNumber } from "@/lib/format";
 import type { PriceTarget } from "./price-book-formula-popover";
 import { PriceBookPriceCell } from "./price-book-price-cell";
 import { BASE_BOOK_ID, type PriceBook, type PriceRow } from "./price-book-types";

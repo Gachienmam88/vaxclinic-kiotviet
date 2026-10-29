@@ -3,6 +3,7 @@ package com.vaxclinic.product.pricebook;
 import com.vaxclinic.common.search.AccentInsensitiveSql;
 import com.vaxclinic.common.error.BusinessException;
 import com.vaxclinic.common.web.PageResponse;
+import com.vaxclinic.product.pricebook.PriceBookDtos.CompareWith;
 import com.vaxclinic.product.pricebook.PriceBookDtos.PriceRow;
 import com.vaxclinic.product.pricebook.PriceBookDtos.RowFilter;
 import com.vaxclinic.product.product.ProductListRepository.StockFilter;
@@ -53,6 +54,14 @@ public class PriceBookRowRepository {
             w.append(" and (" + AccentInsensitiveSql.like("p.name", ":q") + " or u.code ilike :q or u.barcode ilike :q)");
             p.addValue("q", "%" + f.q().trim() + "%");
         }
+        if (f.code() != null && !f.code().isBlank()) {
+            w.append(" and u.code ilike :code");
+            p.addValue("code", "%" + f.code().trim() + "%");
+        }
+        if (f.name() != null && !f.name().isBlank()) {
+            w.append(" and " + AccentInsensitiveSql.like("p.name", ":name"));
+            p.addValue("name", "%" + f.name().trim() + "%");
+        }
         if (f.categoryIds() != null && !f.categoryIds().isEmpty()) {
             w.append(" and p.category_id in (with recursive t as (select id from categories where id in (:categoryIds)")
                     .append(" union all select c.id from categories c join t on c.parent_id = t.id) select id from t)");
@@ -68,6 +77,23 @@ public class PriceBookRowRepository {
         if (inBooks != null) {
             w.append(" and exists (select 1 from price_book_items x where x.unit_id = u.id and x.price_book_id in (:inBooks))");
             p.addValue("inBooks", inBooks);
+        }
+        if (f.priceOp() != null && f.compareWith() != null) {
+            // Hàng không có trong bảng giá so sánh → giá null → không khớp.
+            String price = "u.price";
+            if (f.compareBookId() != null) {
+                price = "(select c.price from price_book_items c where c.price_book_id = :compareBook and c.unit_id = u.id)";
+                p.addValue("compareBook", f.compareBookId());
+            }
+            String other = f.compareWith() == CompareWith.COST ? COST : LAST_PURCHASE;
+            String op = switch (f.priceOp()) {
+                case LT -> "<";
+                case LTE -> "<=";
+                case EQ -> "=";
+                case GTE -> ">=";
+                case GT -> ">";
+            };
+            w.append(" and ").append(price).append(' ').append(op).append(' ').append(other);
         }
         return w.toString();
     }

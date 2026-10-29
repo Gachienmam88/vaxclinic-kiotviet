@@ -60,13 +60,30 @@ function Radio({ checked, label, onSelect }: { checked: boolean; label: string; 
   );
 }
 
+/** "Toàn thời gian" / "Tùy chỉnh" + chọn khoảng ngày (yyyy-mm-dd, "" = không lọc). */
+function DateRangeRadio({ from, to, onChange }: { from: string; to: string; onChange: (r: { from: string; to: string }) => void }) {
+  const [custom, setCustom] = useState(!!(from || to));
+  const t = useT(productsNs);
+  const tc = useT(commonNs);
+  return (
+    <div>
+      <Radio label={t("filter.allTime")} checked={!custom} onSelect={() => { setCustom(false); onChange({ from: "", to: "" }); }} />
+      <Radio label={tc("calendar.custom")} checked={custom} onSelect={() => setCustom(true)} />
+      {custom && (
+        <div className="mt-1">
+          <DateRangePicker placeholder={tc("calendar.pickRange")} value={{ from, to }} onChange={(r) => onChange({ from: r.from, to: r.to })} />
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function ProductFilterSidebar({ filters, onChange }: Props) {
   const qc = useQueryClient();
   const { can } = useCurrentUser();
   const { data: categories = [] } = useCategories();
   const { data: taxRates = [] } = useTaxRates();
   const set = (patch: Partial<ProductFilters>) => onChange({ ...filters, ...patch });
-  const [customTime, setCustomTime] = useState(!!(filters.createdFrom || filters.createdTo));
   const t = useT(productsNs);
   const tc = useT(commonNs);
   const stockOptions = STOCK_OPTIONS.map((value) => ({ value, label: t(`filter.stockOptions.${value}`) }));
@@ -104,17 +121,12 @@ export function ProductFilterSidebar({ filters, onChange }: Props) {
         </div>
       </Section>
       <Section title={t("filter.createdTime")}>
-        <div>
-          <Radio label={t("filter.allTime")} checked={!customTime}
-            onSelect={() => { setCustomTime(false); set({ createdFrom: "", createdTo: "" }); }} />
-          <Radio label={tc("calendar.custom")} checked={customTime} onSelect={() => setCustomTime(true)} />
-          {customTime && (
-            <div className="mt-1">
-              <DateRangePicker placeholder={tc("calendar.pickRange")} value={{ from: filters.createdFrom, to: filters.createdTo }}
-                onChange={(r) => set({ createdFrom: r.from, createdTo: r.to })} />
-            </div>
-          )}
-        </div>
+        <DateRangeRadio from={filters.createdFrom} to={filters.createdTo}
+          onChange={(r) => set({ createdFrom: r.from, createdTo: r.to })} />
+      </Section>
+      <Section title={t("fields.expectedOut")}>
+        <DateRangeRadio from={filters.expectedOutFrom} to={filters.expectedOutTo}
+          onChange={(r) => set({ expectedOutFrom: r.from, expectedOutTo: r.to })} />
       </Section>
       <Section title={t("filter.productStatus")}>
         <Pills value={filters.active} onChange={(v) => set({ active: v })}

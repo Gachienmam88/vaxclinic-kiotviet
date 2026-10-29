@@ -8,7 +8,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -21,7 +23,8 @@ public class CatalogLookupService {
     public record CategoryRequest(@NotBlank @Size(max = 150) String name, UUID parentId) {
     }
 
-    public record CategoryResponse(UUID id, String name, UUID parentId) {
+    /** productCount: số hàng hóa (chưa xóa) trực tiếp trong nhóm. */
+    public record CategoryResponse(UUID id, String name, UUID parentId, long productCount) {
     }
 
     public record TaxRateResponse(UUID id, String code, String name, BigDecimal vatRate) {
@@ -47,8 +50,10 @@ public class CatalogLookupService {
     }
 
     public List<CategoryResponse> listCategories() {
+        Map<UUID, Long> counts = productCounts();
         return categories.findAllByOrderByNameAsc().stream()
-                .map(c -> new CategoryResponse(c.getId(), c.getName(), c.getParentId())).toList();
+                .map(c -> new CategoryResponse(c.getId(), c.getName(), c.getParentId(), counts.getOrDefault(c.getId(), 0L)))
+                .toList();
     }
 
     @Transactional
@@ -57,7 +62,7 @@ public class CatalogLookupService {
         c.setId(UUID.randomUUID());
         applyCategory(c, req);
         categories.save(c);
-        return new CategoryResponse(c.getId(), c.getName(), c.getParentId());
+        return new CategoryResponse(c.getId(), c.getName(), c.getParentId(), 0);
     }
 
     /** Sửa trên entity đang quản lý — JPA tự ghi khi commit. */
@@ -69,7 +74,7 @@ public class CatalogLookupService {
             throw BusinessException.badRequest("CATEGORY_SELF_PARENT", "Nhóm cha không được là chính nó");
         }
         applyCategory(c, req);
-        return new CategoryResponse(c.getId(), c.getName(), c.getParentId());
+        return new CategoryResponse(c.getId(), c.getName(), c.getParentId(), productCounts().getOrDefault(id, 0L));
     }
 
     @Transactional
@@ -100,6 +105,14 @@ public class CatalogLookupService {
         p.setName(req.name().trim());
         positions.save(p);
         return new PositionResponse(p.getId(), p.getName());
+    }
+
+    private Map<UUID, Long> productCounts() {
+        Map<UUID, Long> counts = new HashMap<>();
+        for (Object[] row : products.countByCategory()) {
+            counts.put((UUID) row[0], ((Number) row[1]).longValue());
+        }
+        return counts;
     }
 
     private void applyCategory(Category c, CategoryRequest req) {

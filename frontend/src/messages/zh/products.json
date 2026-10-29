@@ -152,12 +152,19 @@
     "invalidPrice": "价格无效",
     "priceCellAria": "价格表中的价格",
     "books": "价格表",
-    "noBooks": "暂无价格表。点击 + 添加。",
     "inactive": "未启用",
-    "editAria": "编辑 {name}",
     "inBookOnly": "仅价格表中的商品",
-    "applyFormula": "应用公式",
-    "importPrices": "导入价格"
+    "importPrices": "导入价格",
+    "createNew": "新建",
+    "addBook": "价格表",
+    "pickBooks": "选择价格表",
+    "removeChip": "移除 {name}",
+    "noMoreBooks": "没有可选的价格表",
+    "searchCode": "搜索编码",
+    "searchName": "搜索名称",
+    "salePrice": "售价",
+    "baseNotEmpty": "通用价格不能为空",
+    "import": "导入"
   },
   "bookForm": {
     "errors": {
@@ -165,14 +172,15 @@
       "dateOrder": "结束日期必须晚于开始日期",
       "pickBranch": "请至少选择 1 个门店或选择全部",
       "pickGroup": "请至少选择 1 个客户分组或选择全部",
-      "pickSeller": "请至少选择 1 名交易创建人或选择全部"
+      "pickSeller": "请至少选择 1 名交易创建人或选择全部",
+      "pickFormulaBook": "请选择公式的基准价格表"
     },
     "toastUpdated": "价格表已更新",
     "toastCreated": "已创建价格表 {name}",
     "confirmDelete": "删除价格表“{name}”？表中所有价格都将被删除。",
     "toastDeleted": "价格表已删除",
     "editTitle": "编辑价格表",
-    "createTitle": "添加价格表",
+    "createTitle": "创建价格表",
     "name": "价格表名称",
     "validFrom": "生效日期",
     "validTo": "截止",
@@ -183,39 +191,40 @@
     "pickGroup": "选择客户分组",
     "seller": "交易创建人",
     "pickSeller": "选择交易创建人",
-    "missingPolicy": "添加不在价格表中的商品时",
-    "autoUpdate": "基础价格变动时自动更新价格",
-    "autoFormula": "售价 = 基础价格"
+    "tabInfo": "信息",
+    "tabScope": "适用范围",
+    "namePlaceholder": "输入价格表名称",
+    "validity": "有效期",
+    "validityTo": "至",
+    "statusLabel": "状态",
+    "formulaTitle": "价格公式",
+    "formulaHint": "基于成本价、进货价或其他价格表的售价创建公式",
+    "pickBase": "选择价格表",
+    "cashierTitle": "收银员使用此价格表开单时",
+    "allowMissing": "允许添加不在价格表中的商品",
+    "warnMissing": "添加不在价格表中的商品时发出警告",
+    "blockMissing": "仅允许添加此价格表中的商品",
+    "blockMissingHint": "收银员无法添加此价格表以外的商品",
+    "allBranches": "全系统",
+    "specificBranch": "指定分店",
+    "specificGroup": "指定客户组",
+    "specificSeller": "指定交易创建人"
   },
   "formula": {
-    "operator": "运算",
     "value": "数值",
-    "unit": "单位",
     "errors": {
-      "invalidValue": "数值无效",
-      "pickBaseBook": "请选择作为基准的价格表"
+      "invalidValue": "数值无效"
     },
     "toastApplied_other": "已更新“{name}”中 {count} 个商品的价格",
-    "title": "应用公式 — {name}",
     "newPrice": "新价格 =",
-    "base": "基准价",
-    "baseBook": "基准价格表",
-    "pickBook": "选择价格表",
-    "onlyExisting": "仅适用于已在价格表中的商品",
-    "scopeExisting": "适用于当前筛选条件下已在价格表中的商品。",
-    "scopeAll_other": "适用于当前筛选条件下的 {count} 个商品。",
-    "skipNote": "没有基准价的商品（如从未进货）将被跳过。"
-  },
-  "missingPolicy": {
-    "ALLOW": "允许（使用基础价格）",
-    "BLOCK": "不允许",
-    "WARN": "允许并提示"
+    "base": "基准价"
   },
   "formulaBase": {
-    "BASE_PRICE": "基础价格",
+    "BASE_PRICE": "通用价格表",
     "COST": "成本价",
     "LAST_PURCHASE": "最近进价",
-    "BOOK": "其他价格表"
+    "BOOK": "其他价格表",
+    "CURRENT": "当前价格"
   },
   "import": {
     "noRows": "文件中没有数据行（需要“Mã hàng”“Giá”列）",
@@ -229,5 +238,31 @@
   "scope": {
     "loading": "正在加载列表...",
     "loadError": "无法加载{what}列表：{error}"
+  },
+  "priceFilter": {
+    "pickOp": "选择条件",
+    "pickCompare": "选择比较价格",
+    "op": {
+      "LT": "小于",
+      "LTE": "小于或等于",
+      "EQ": "等于",
+      "GTE": "大于或等于",
+      "GT": "大于"
+    }
+  },
+  "formulaPopover": {
+    "hint": "或使用{link}",
+    "hintLink": "公式",
+    "title": "按公式定价",
+    "newPrice": "新价格",
+    "plus": "加",
+    "minus": "减",
+    "applyAll_one": "将此公式应用于{name}中的全部{count}个商品",
+    "applyAll_other": "将此公式应用于{name}中的全部{count}个商品",
+    "unknownBase": "无基准价格"
+  },
+  "categoryPicker": {
+    "selectAll": "全选",
+    "empty": "未找到商品组"
   }
 }

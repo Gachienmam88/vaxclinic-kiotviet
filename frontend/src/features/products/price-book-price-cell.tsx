@@ -31,6 +31,8 @@ type Props = {
 export function PriceBookPriceCell({ bookId, unitId, price, basePrice, editable, onFormula }: Props) {
   const [draft, setDraft] = useState<string | null>(null);
   const input = useRef<HTMLInputElement>(null);
+  /** Bấm "Công thức" → rời ô không lưu bản nháp. */
+  const skipCommit = useRef(false);
   const setPrices = useSetPrices();
   const t = useT(productsNs);
   const isBase = bookId === BASE_BOOK_ID;
@@ -40,6 +42,7 @@ export function PriceBookPriceCell({ bookId, unitId, price, basePrice, editable,
 
   function commit() {
     if (draft == null) return;
+    if (skipCommit.current) { skipCommit.current = false; setDraft(null); return; }
     const text = draft.trim();
     setDraft(null);
     if (text === shown) return;
@@ -75,7 +78,7 @@ export function PriceBookPriceCell({ bookId, unitId, price, basePrice, editable,
                 <button type="button" className="text-primary hover:underline"
                   // Giữ focus ở ô giá để gợi ý không đóng trước khi bấm.
                   onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => { const el = input.current; setDraft(null); if (el) { el.blur(); onFormula(el); } }}>
+                  onClick={() => { const el = input.current; if (el) { skipCommit.current = true; el.blur(); onFormula(el); } }}>
                   {t("formulaPopover.hintLink")}
                 </button>
               ),

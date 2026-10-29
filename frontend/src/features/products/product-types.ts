@@ -1,6 +1,7 @@
 /** Kiểu dữ liệu khớp với ProductDtos của product-service. Số BigDecimal về dạng number. */
 
-export type Category = { id: string; name: string; parentId: string | null };
+/** productCount: số hàng hóa trực tiếp trong nhóm. */
+export type Category = { id: string; name: string; parentId: string | null; productCount: number };
 export type TaxRate = { id: string; code: string; name: string; vatRate: number | null };
 export type Position = { id: string; name: string };
 

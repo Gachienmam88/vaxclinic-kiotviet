@@ -2,11 +2,14 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, type PageResponse } from "@/lib/api-client";
+import { BASE_BOOK_ID } from "./price-book-types";
 import type {
   CustomerGroupRef, FormulaRequest, ImportResult, PriceBook, PriceBookRequest, PriceRow, PriceRowFilters,
 } from "./price-book-types";
 
-export const EMPTY_PRICE_FILTERS: PriceRowFilters = { q: "", categoryIds: [], stock: "ALL", inBookOnly: false };
+export const EMPTY_PRICE_FILTERS: PriceRowFilters = {
+  q: "", code: "", name: "", categoryIds: [], stock: "ALL", inBookOnly: false, priceOp: "", compareWith: "",
+};
 
 export const usePriceBooks = () =>
   useQuery({ queryKey: ["price-books"], queryFn: () => api<PriceBook[]>("/price-books") });
@@ -20,14 +23,22 @@ export const useCustomerGroupRefs = () =>
     retry: 1,
   });
 
-export function usePriceRows(bookIds: string[], f: PriceRowFilters, page: number, size: number) {
+/** compareBookId: bảng giá so sánh của lọc "Giá bán" (null = giá chung). */
+export function usePriceRows(bookIds: string[], f: PriceRowFilters, compareBookId: string | null, page: number, size: number) {
   const p = new URLSearchParams({ page: String(page), size: String(size), stock: f.stock });
   bookIds.forEach((id) => p.append("bookIds", id));
   if (f.q.trim()) p.set("q", f.q.trim());
+  if (f.code.trim()) p.set("code", f.code.trim());
+  if (f.name.trim()) p.set("name", f.name.trim());
   f.categoryIds.forEach((id) => p.append("categoryIds", id));
   if (f.inBookOnly) p.set("inBookOnly", "true");
+  if (f.priceOp && f.compareWith) {
+    p.set("priceOp", f.priceOp);
+    p.set("compareWith", f.compareWith);
+    if (compareBookId) p.set("compareBookId", compareBookId);
+  }
   return useQuery({
-    queryKey: ["price-rows", bookIds, f, page, size],
+    queryKey: ["price-rows", bookIds, f, compareBookId, page, size],
     queryFn: () => api<PageResponse<PriceRow>>(`/price-books/items?${p}`),
     placeholderData: (prev) => prev,
   });
@@ -59,22 +70,30 @@ export function useDeletePriceBook() {
   });
 }
 
-/** price = null → bỏ hàng khỏi bảng giá. */
+/**
+ * price = null → bỏ hàng khỏi bảng giá. bookId = BASE_BOOK_ID → sửa giá chung (giá bán của đơn vị tính, không bỏ trống được);
+ * giá chung đổi thì danh sách hàng hóa cũng phải làm mới.
+ */
 export function useSetPrices() {
   const invalidate = useInvalidate();
+  const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ bookId, items }: { bookId: string; items: { unitId: string; price: number | null }[] }) =>
-      api<{ updated: number }>(`/price-books/${bookId}/items`, { method: "PUT", body: { items } }),
-    onSuccess: invalidate,
+      api<{ updated: number }>(bookId === BASE_BOOK_ID ? "/price-books/base-prices" : `/price-books/${bookId}/items`,
+        { method: "PUT", body: { items } }),
+    onSuccess: (_r, v) => Promise.all([invalidate(), v.bookId === BASE_BOOK_ID && qc.invalidateQueries({ queryKey: ["products"] })]),
   });
 }
 
+/** "Đặt giá theo công thức" cho 1 bảng giá hoặc cột Bảng giá chung (bookId = BASE_BOOK_ID). */
 export function useApplyFormula() {
   const invalidate = useInvalidate();
+  const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ bookId, body }: { bookId: string; body: FormulaRequest }) =>
-      api<{ updated: number }>(`/price-books/${bookId}/items/apply-formula`, { method: "POST", body }),
-    onSuccess: invalidate,
+      api<{ updated: number }>(bookId === BASE_BOOK_ID ? "/price-books/base-prices/apply-formula"
+        : `/price-books/${bookId}/items/apply-formula`, { method: "POST", body }),
+    onSuccess: (_r, v) => Promise.all([invalidate(), v.bookId === BASE_BOOK_ID && qc.invalidateQueries({ queryKey: ["products"] })]),
   });
 }
 

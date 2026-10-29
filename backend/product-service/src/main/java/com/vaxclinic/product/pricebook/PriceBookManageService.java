@@ -2,6 +2,7 @@ package com.vaxclinic.product.pricebook;
 
 import com.vaxclinic.common.audit.AuditLogger;
 import com.vaxclinic.common.web.PageResponse;
+import com.vaxclinic.product.pricebook.PriceBookDtos.BasePricesRequest;
 import com.vaxclinic.product.pricebook.PriceBookDtos.CountResponse;
 import com.vaxclinic.product.pricebook.PriceBookDtos.FormulaRequest;
 import com.vaxclinic.product.pricebook.PriceBookDtos.ImportRequest;
@@ -25,6 +26,7 @@ import java.util.UUID;
 public class PriceBookManageService {
 
     private static final String FEATURE = "Thiết lập giá";
+    private static final String BASE_BOOK = "Bảng giá chung";
 
     private final PriceBookService books;
     private final PriceBookItemService items;
@@ -87,9 +89,19 @@ public class PriceBookManageService {
     public CountResponse applyFormula(UUID id, FormulaRequest req, Actor actor) {
         int n = items.applyFormula(id, req);
         String name = books.get(id).name();
-        log(actor, "Áp dụng công thức", name, "Áp dụng công thức " + req.base() + (req.op() == PriceBookDtos.Op.PLUS ? " + " : " - ")
-                + req.value().stripTrailingZeros().toPlainString() + (req.percent() ? "%" : "") + " cho " + n
-                + " hàng trong bảng giá " + name);
+        log(actor, "Áp dụng công thức", name, formulaText(req) + " cho " + n + " hàng trong bảng giá " + name);
+        return new CountResponse(n);
+    }
+
+    public CountResponse upsertBase(BasePricesRequest req, Actor actor) {
+        int n = items.upsertBase(req.items());
+        log(actor, "Sửa giá", BASE_BOOK, "Cập nhật " + n + " giá trong " + BASE_BOOK);
+        return new CountResponse(n);
+    }
+
+    public CountResponse applyFormulaToBase(FormulaRequest req, Actor actor) {
+        int n = items.applyFormulaToBase(req);
+        log(actor, "Áp dụng công thức", BASE_BOOK, formulaText(req) + " cho " + n + " hàng trong " + BASE_BOOK);
         return new CountResponse(n);
     }
 
@@ -99,6 +111,11 @@ public class PriceBookManageService {
         log(actor, "Nhập file", name, "Nhập file giá: " + r.updated() + " dòng thành công, " + r.errors().size()
                 + " dòng lỗi, bảng giá " + name);
         return r;
+    }
+
+    private static String formulaText(FormulaRequest req) {
+        return "Áp dụng công thức " + req.base() + (req.op() == PriceBookDtos.Op.PLUS ? " + " : " - ")
+                + req.value().stripTrailingZeros().toPlainString() + (req.percent() ? "%" : "");
     }
 
     private void log(Actor actor, String action, String bookName, String detail) {

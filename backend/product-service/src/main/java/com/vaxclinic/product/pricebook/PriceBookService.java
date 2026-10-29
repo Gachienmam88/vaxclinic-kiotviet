@@ -1,6 +1,8 @@
 package com.vaxclinic.product.pricebook;
 
 import com.vaxclinic.common.error.BusinessException;
+import com.vaxclinic.product.pricebook.PriceBookDtos.FormulaBase;
+import com.vaxclinic.product.pricebook.PriceBookDtos.FormulaRequest;
 import com.vaxclinic.product.pricebook.PriceBookDtos.PriceBookRequest;
 import com.vaxclinic.product.pricebook.PriceBookDtos.PriceBookResponse;
 import org.springframework.dao.DuplicateKeyException;
@@ -10,14 +12,16 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.UUID;
 
-/** Bảng giá: thêm / sửa / xóa + kiểm tra hợp lệ (tên không trùng, hiệu lực từ < đến, phạm vi không rỗng). */
+/** Bảng giá: thêm / sửa / xóa + kiểm tra hợp lệ (tên không trùng, hiệu lực từ < đến, phạm vi không rỗng) + công thức giá. */
 @Service
 public class PriceBookService {
 
     private final PriceBookRepository repo;
+    private final PriceBookItemRepository items;
 
-    public PriceBookService(PriceBookRepository repo) {
+    public PriceBookService(PriceBookRepository repo, PriceBookItemRepository items) {
         this.repo = repo;
+        this.items = items;
     }
 
     public List<PriceBookResponse> list() {
@@ -31,21 +35,19 @@ public class PriceBookService {
 
     @Transactional
     public UUID create(PriceBookRequest req, UUID userId, String userName) {
-        validate(req);
+        validate(null, req);
         UUID id = UUID.randomUUID();
         save(() -> repo.insert(id, req, userId, userName));
+        applyStoredFormula(id, req, false);
         return id;
     }
 
     @Transactional
     public void update(UUID id, PriceBookRequest req) {
         get(id);
-        validate(req);
+        validate(id, req);
         save(() -> repo.update(id, req));
-        if (req.autoUpdate()) {
-            // Bật tự cập nhật → tính lại ngay các dòng đang có theo giá chung hiện tại.
-            repo.recalculateItems(id, req);
-        }
+        applyStoredFormula(id, req, true);
     }
 
     @Transactional
@@ -54,7 +56,28 @@ public class PriceBookService {
         repo.delete(id);
     }
 
-    private static void validate(PriceBookRequest req) {
+    /**
+     * Công thức giá của bảng giá: tạo mới → điền giá cho mọi hàng đang kinh doanh có giá gốc; sửa → tính lại các hàng
+     * đang có trong bảng (onlyExisting).
+     */
+    private void applyStoredFormula(UUID id, PriceBookRequest req, boolean onlyExisting) {
+        FormulaBase base = req.effectiveBase();
+        if (base != null) {
+            items.applyFormula(id, FormulaRequest.of(base, req.autoBaseBookId(), req.autoOp(), req.autoValue(),
+                    req.autoPercent(), onlyExisting));
+        }
+    }
+
+    private void validate(UUID id, PriceBookRequest req) {
+        if (req.autoBase() == FormulaBase.CURRENT) {
+            throw BusinessException.badRequest("FORMULA_BASE_INVALID", "Gốc công thức không hợp lệ");
+        }
+        if (req.autoBase() == FormulaBase.BOOK) {
+            if (req.autoBaseBookId() == null || req.autoBaseBookId().equals(id)) {
+                throw BusinessException.badRequest("FORMULA_BOOK_REQUIRED", "Chọn bảng giá khác làm gốc công thức");
+            }
+            get(req.autoBaseBookId());
+        }
         if (!req.validFrom().isBefore(req.validTo())) {
             throw BusinessException.badRequest("PRICE_BOOK_VALIDITY", "Ngày hiệu lực đến phải sau ngày hiệu lực từ");
         }
