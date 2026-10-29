@@ -41,7 +41,7 @@ Records (`Filter`, `Page`, ...) moved with the class; refs updated (controllers,
 ## Verification
 - `grep -rl JdbcTemplate --include=*.java backend/sales-service/src/main | xargs grep -L @Repository` → empty.
 - `mvn -pl sales-service -am package` OK (unit tests pass). 8086 redeployed via start-all-local.ps1, health 200.
-- e2e: RESULTS_PLACEHOLDER
+- e2e (8086 redeployed): e2e_sales 22/22, e2e_sale_backend 57/57, e2e_edit_return 18/18, e2e_offline_sync PASS (1 invoice, stock once), e2e_orders_groups 34/34, e2e_invoice_filters 15/15, e2e_reports 39/39, e2e_sectors_wallets 12/12, e2e_delivery 37/37, e2e_price_books 40/0, e2e_hr 85/0, e2e_settings 31/31, e2e_notifications ALL PASSED, e2e_hardening 25/25 (checkout_attempts left 0), e2e_suppliers 59/59, smoke_sales_layering 49/49. All cleanups 0 leftover rows.
 
 ## Commits
 - `refactor(sales): move service SQL into repositories` (some new files captured earlier by auto-commit hook as `auto: update ...`). Not pushed.
