@@ -41,9 +41,11 @@ public class StockMovementService {
     private final ProductLotRepository lots;
     private final StockLedgerRepository ledger;
     private final ShopSettingsClient settings;
+    private final ProductCostLockRepository costLock;
 
     public StockMovementService(StockBalanceRepository balances, ProductLotRepository lots,
-                                StockLedgerRepository ledger, ShopSettingsClient settings) {
+                                StockLedgerRepository ledger, ShopSettingsClient settings, ProductCostLockRepository costLock) {
+        this.costLock = costLock;
         this.balances = balances;
         this.lots = lots;
         this.ledger = ledger;
@@ -66,6 +68,10 @@ public class StockMovementService {
         if (m.quantity().signum() == 0) {
             return;
         }
+        boolean costing = m.docType().affectsCost() && m.unitPrice() != null;
+        if (costing) {
+            costLock.lockForCost(product); // khóa products trước tồn chi nhánh: giá vốn đọc mới nhất, phiếu đồng thời chạy tuần tự
+        }
         var key = new StockBalance.Key(product.getId(), m.branchId());
         var balance = balances.findForUpdate(key)
                 .orElseGet(() -> balances.saveAndFlush(new StockBalance(product.getId(), m.branchId())));
@@ -83,11 +89,16 @@ public class StockMovementService {
         // Moving-average cost: (old value + qty × price) / new qty, for supplier-side documents only.
         // Works both ways: +qty on receipt, -qty when a receipt is cancelled or goods are returned to the supplier.
         // Sales never change cost. If stock reaches 0 or the result would go negative, keep the last cost.
-        if (m.docType().affectsCost() && m.unitPrice() != null && after.signum() > 0) {
-            BigDecimal value = product.getCost().multiply(before.max(BigDecimal.ZERO))
-                    .add(m.unitPrice().multiply(m.quantity()));
-            if (value.signum() >= 0) {
-                product.setCost(value.divide(after, 4, RoundingMode.HALF_UP));
+        // products.cost là 1 giá cho mọi chi nhánh → tồn trước / sau tính trên TOÀN cửa hàng (mọi chi nhánh).
+        if (costing) {
+            BigDecimal shopBefore = balances.sumOtherBranches(product.getId(), m.branchId()).add(before);
+            BigDecimal shopAfter = shopBefore.add(m.quantity());
+            if (shopAfter.signum() > 0) {
+                BigDecimal value = product.getCost().multiply(shopBefore.max(BigDecimal.ZERO))
+                        .add(m.unitPrice().multiply(m.quantity()));
+                if (value.signum() >= 0) {
+                    product.setCost(value.divide(shopAfter, 4, RoundingMode.HALF_UP));
+                }
             }
         }
         balance.setQuantity(after);

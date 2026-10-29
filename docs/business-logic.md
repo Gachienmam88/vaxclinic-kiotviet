@@ -220,9 +220,9 @@ Nguồn: `PS/product/ProductController.java:37-115`, `PS/internal/InternalProduc
 - **Giá vốn bình quân di động** (`PS/stock/StockMovementService.java:73-82`):
   - chỉ với loại "đổi giá vốn" ở bảng trên, khi `unitPrice ≠ null` và tồn sau > 0;
   - `cost_mới = (cost_cũ × max(tồn_trước,0) + unitPrice × qty) / tồn_sau`, làm tròn 4 số lẻ HALF_UP; nếu tử số < 0 thì giữ giá cũ; tồn về 0 thì giữ giá cuối;
-  - `tồn_trước`/`tồn_sau` là tồn **của chi nhánh đang ghi**, còn `products.cost` là **một giá chung cho mọi chi nhánh**.
+  - `tồn_trước`/`tồn_sau` = tồn **toàn cửa hàng** (mọi chi nhánh: `sumOtherBranches` + tồn chi nhánh đang ghi), vì `products.cost` là một giá chung (audit #8) (`PS/stock/StockBalanceRepository.java:19-21`).
 - Thẻ kho: `unit_price` = đơn giá movement, nếu NULL thì = giá vốn hiện tại; `cost` = giá vốn sau giao dịch (`PS/stock/StockMovementService.java:94-95`).
-- **Khóa đồng thời**: `stock_balances` và `product_lots` dùng `PESSIMISTIC_WRITE` (`PS/stock/StockBalanceRepository.java:12-15`). Entity `Product` không có `@Version` (grep không thấy `@Version` trong service), nên `products.cost` có thể bị ghi đè khi 2 chi nhánh nhập cùng 1 hàng đồng thời (chỉ khóa theo hàng × chi nhánh).
+- **Khóa đồng thời**: `stock_balances` và `product_lots` dùng `PESSIMISTIC_WRITE` (`PS/stock/StockBalanceRepository.java:12-15`). Movement đổi giá vốn còn khóa dòng `products` trước (`SELECT … FOR NO KEY UPDATE` rồi nạp lại entity, `PS/stock/ProductCostLockRepository.java`) → phiếu nhập / trả đồng thời cùng hàng (mọi chi nhánh) chạy tuần tự trên giá vốn mới nhất (audit #8). Dùng NO KEY UPDATE vì dòng phiếu vừa INSERT giữ khóa FK `FOR KEY SHARE` trên products; `FOR UPDATE` sẽ deadlock.
 - **Thời điểm thẻ kho = ngày chứng từ (audit #7)**: `Movement.occurredAt` (null = bây giờ) (`PS/stock/StockMovementService.java:24-40`):
   - phiếu nhập + hủy phiếu nhập → `received_at`; trả hàng nhập + hủy → `returned_at`; xuất hủy / xuất nội bộ + hủy → `issued_at`; tồn đầu, kiểm kho, chứng từ bán từ sales-service → thời điểm ghi. Hủy ghi **cùng ngày** chứng từ gốc nên triệt tiêu đúng ngày đó trên thẻ kho / S2d (khóa sổ theo ngày chứng từ đã chặn hủy trong kỳ khóa).
   - Dòng lùi ngày (đã có dòng sau thời điểm đó): ghi xong flush rồi tính lại `balance_after` cho mọi dòng của (hàng, chi nhánh) theo thứ tự `(occurred_at, seq)`: tồn sau dòng = tồn hiện tại − Σ SL các dòng sau nó (`PS/stock/StockLedgerRepository.java:23-40`, `PS/stock/StockMovementService.java:108-117`). Thẻ kho sắp `occurred_at desc, seq desc`.
@@ -745,7 +745,7 @@ Nguồn: `PS/purchase/SupplierController.java:33-107`, `PS/purchase/SupplierGrou
 - Cột "Khách đặt" (`reserved`) không được service nào trong product-service ghi.
 - Tiền NCC hoàn khi trả hàng nhập (`refund_amount`) không sinh phiếu thu Sổ quỹ, không sinh chứng từ công nợ riêng.
 - ~~Thẻ kho ghi theo thời điểm hoàn thành chứng từ~~ — đã sửa (audit #7, mục 1.5). Còn lại: chứng từ bán/trả từ sales-service vẫn ghi theo thời điểm gọi kho (không theo ngày HĐ nếu HĐ lùi ngày).
-- Giá vốn là 1 giá cho mọi chi nhánh nhưng công thức bình quân dùng tồn của 1 chi nhánh.
+- ~~Giá vốn bình quân dùng tồn 1 chi nhánh / bị ghi đè khi nhập đồng thời~~ — đã sửa (audit #8, mục 1.5).
 - Danh sách hàng hóa / phiếu nhập / trả / kiểm / xuất và sổ S2d không lọc theo chi nhánh của user (báo cáo `report/*` thì có).
 - Hủy phiếu tạm (nhập, trả, kiểm, xuất) không kiểm chi nhánh; tồn đầu kỳ khi tạo hàng và lưu tạm không kiểm khóa sổ; cân bằng kiểm kho kiểm khóa sổ theo thời điểm hiện tại.
 - Nhóm hàng không chặn vòng cha–con nhiều cấp; truy vấn đệ quy không có điều kiện dừng.
