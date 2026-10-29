@@ -10,7 +10,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
-/** Xóa nhân viên, Nợ và tạm ứng (hr_advances), mã phiếu chi HR. Chỉ truy cập DB. */
+/** Tra cứu / xóa nhân viên (hr_employees), Nợ và tạm ứng (hr_advances), mã phiếu chi HR. Chỉ truy cập DB. */
 @Repository
 public class EmployeeRepository {
 
@@ -32,10 +32,24 @@ public class EmployeeRepository {
         jdbc.update("delete from hr_employees where id = ?", id);
     }
 
-    /** Ca tìm nhân viên theo mã (không phân biệt hoa thường); null = không có. */
+    /** Tìm nhân viên theo mã (không phân biệt hoa thường); null = không có. */
     public UUID findIdByCode(String code) {
         return jdbc.query("select id from hr_employees where upper(code) = upper(?)",
                 rs -> rs.next() ? rs.getObject(1, UUID.class) : null, code);
+    }
+
+    /** Họ tên nhân viên; null = không có. */
+    public String findName(UUID id) {
+        return jdbc.query("select name from hr_employees where id = ?", rs -> rs.next() ? rs.getString(1) : null, id);
+    }
+
+    /** Mã chấm công (chưa chuẩn hóa) của nhân viên đang làm việc. */
+    public record TimekeepingCode(String code, UUID employeeId) {
+    }
+
+    public List<TimekeepingCode> workingTimekeepingCodes() {
+        return jdbc.query("select timekeeping_code, id from hr_employees where timekeeping_code is not null and status = 'WORKING'",
+                (rs, i) -> new TimekeepingCode(rs.getString(1), rs.getObject(2, UUID.class)));
     }
 
     /** Mới nhất trước. */

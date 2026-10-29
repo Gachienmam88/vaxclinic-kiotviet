@@ -85,4 +85,9 @@ public final class HrSettings {
                            @DecimalMin("0") BigDecimal salaryAmount, @DecimalMin("0") BigDecimal overtimePercent,
                            UUID commissionTableId, List<@Valid PayItem> allowances, List<@Valid PayItem> deductions) {
     }
+
+    /** Toàn bộ thiết lập (màn Nhân viên → Thiết lập). */
+    public record AllHrSettings(Timekeeping timekeeping, Payroll payroll, List<BranchWorkdays> workdays, List<Holiday> holidays,
+                                Mobile mobile, List<Template> templates) {
+    }
 }

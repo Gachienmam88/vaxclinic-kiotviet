@@ -1,5 +1,6 @@
 package com.vaxclinic.identity.hr.employee;
 
+import com.vaxclinic.common.audit.AuditLogger;
 import com.vaxclinic.common.search.AccentInsensitiveSql;
 import com.vaxclinic.common.error.BusinessException;
 import com.vaxclinic.common.web.PageResponse;
@@ -23,7 +24,10 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.UUID;
 
-/** Lưu / tra cứu hồ sơ nhân viên (JDBC). Mã NV tự sinh NV000001 khi để trống. */
+/**
+ * Lưu / tra cứu hồ sơ nhân viên (JDBC). Mã NV tự sinh NV000001 khi để trống. Thêm / sửa / xóa từ màn hình ghi Lịch sử thao tác;
+ * chỉ xóa được nhân viên chưa phát sinh dữ liệu ({@link EmployeeRepository}).
+ */
 @Service
 public class EmployeeService {
 
@@ -36,9 +40,39 @@ public class EmployeeService {
             + " left join hr_job_titles j on j.id = e.job_title_id";
 
     private final JdbcTemplate jdbc;
+    private final EmployeeRepository employees;
+    private final AuditLogger audit;
 
-    public EmployeeService(JdbcTemplate jdbc) {
+    public EmployeeService(JdbcTemplate jdbc, EmployeeRepository employees, AuditLogger audit) {
         this.jdbc = jdbc;
+        this.employees = employees;
+        this.audit = audit;
+    }
+
+    @Transactional
+    public Employee create(EmployeeRequest req, HrActor actor) {
+        Employee e = save(null, req);
+        actor.audit(audit, HrActor.FEATURE, "Tạo", e.code(), "Tạo nhân viên " + e.code() + " - " + e.name());
+        return e;
+    }
+
+    @Transactional
+    public Employee update(UUID id, EmployeeRequest req, HrActor actor) {
+        Employee e = save(id, req);
+        actor.audit(audit, HrActor.FEATURE, "Sửa", e.code(), "Cập nhật nhân viên " + e.code() + " - " + e.name()
+                + (e.salaryType() == null ? "" : ", lương " + e.salaryType() + " " + HrActor.money(e.salaryAmount())));
+        return e;
+    }
+
+    /** Chỉ xóa được nhân viên chưa phát sinh chấm công / bảng lương; đã phát sinh → chuyển trạng thái "Đã nghỉ". */
+    @Transactional
+    public void delete(UUID id, HrActor actor) {
+        Employee e = get(id);
+        if (employees.usageCount(id) > 0) {
+            throw BusinessException.badRequest("EMPLOYEE_IN_USE", "Nhân viên đã có dữ liệu chấm công / lương, hãy chuyển sang trạng thái Đã nghỉ");
+        }
+        employees.delete(id);
+        actor.audit(audit, HrActor.FEATURE, "Xóa", e.code(), "Xóa nhân viên " + e.code() + " - " + e.name());
     }
 
     public PageResponse<EmployeeRow> search(String status, UUID departmentId, UUID jobTitleId, UUID branchId, String q,

@@ -2,8 +2,8 @@ package com.vaxclinic.identity.hr.attendance;
 
 import com.vaxclinic.common.error.BusinessException;
 import com.vaxclinic.common.settings.ShopSettings;
-import com.vaxclinic.identity.hr.schedule.ShiftController;
-import com.vaxclinic.identity.hr.schedule.ShiftController.Shift;
+import com.vaxclinic.identity.hr.schedule.Shift;
+import com.vaxclinic.identity.hr.schedule.ShiftRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
@@ -37,13 +37,15 @@ public class AttendanceWriter {
     private static final Duration WINDOW = Duration.ofHours(4);
 
     private final JdbcTemplate jdbc;
+    private final ShiftRepository shiftRepo;
 
-    public AttendanceWriter(JdbcTemplate jdbc) {
+    public AttendanceWriter(JdbcTemplate jdbc, ShiftRepository shiftRepo) {
         this.jdbc = jdbc;
+        this.shiftRepo = shiftRepo;
     }
 
     public List<Slot> scheduledSlots(UUID employeeId, LocalDate from, LocalDate to) {
-        var shifts = ShiftController.load(jdbc);
+        var shifts = shiftRepo.findAll();
         return jdbc.query("select shift_id, work_date from hr_schedules where employee_id = ? and work_date between ? and ?", (rs, i) -> {
             UUID sid = rs.getObject(1, UUID.class);
             Shift sh = shifts.stream().filter(s -> s.id().equals(sid)).findFirst().orElseThrow();
@@ -61,7 +63,7 @@ public class AttendanceWriter {
         LocalDate d = at.atZone(ShopSettings.ZONE).toLocalDate();
         var candidates = new ArrayList<>(scheduledSlots(employeeId, d.minusDays(1), d));
         if (candidates.stream().noneMatch(s -> inWindow(s, at)) && allowUnscheduled) {
-            for (Shift sh : ShiftController.load(jdbc)) {
+            for (Shift sh : shiftRepo.findAll()) {
                 if (sh.active()) {
                     candidates.add(slot(sh, d));
                     candidates.add(slot(sh, d.minusDays(1)));
