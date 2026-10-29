@@ -25,7 +25,8 @@ Date: 2026-10-29 · Branch: feature/phase-01-foundation
 
 ## Verification
 - e2e_delivery.py: 43/43 pass (new `e2e_delivery_selfship.py`: G1–G3 groups/kind, T1 self-delivery fields + initial status DELIVERING, T2 COD off + walk-in guard, T3 receiver success rate). Cleanup also deletes test groups; 0 rows left.
-- All services healthy (8081/8082/8086/8088/8090). Frontend :3010 is `next start` (production) → rebuilt with `next build` and restarted.
+- All services healthy (8081/8082/8086/8088/8090, :3010 200). Frontend :3010 is `next start` (production, not dev). Working-tree `next build` currently FAILS on another agent's in-progress invoice import/export/columns work (missing `invoices.columns.*`/`exportColumns.*`/`jobs.*` keys, `onImport/onMerge` props, `StoreProfile.taxCode`) — not this task's files. To keep :3010 up, bundle was built in a temp worktree at b44ead2 + this task's 707fbb0 fixes and copied into frontend/.next, then restarted. Once the invoices agent finishes, rebuild normally.
+- Playwright screenshots of the delivery sale screen (self tab, portal tab, partner modal) checked: no page errors.
 
 ## Not implemented (no backend → no fake UI)
 - "Bán thuốc theo đơn" checkbox, "Giảm thuế" toggle in sale screen.
