@@ -59,6 +59,9 @@ public class InternalStockService {
     public record StockDocResult(UUID docId, String docType, List<LineResult> lines) {
     }
 
+    /** Chứng từ xuất bán có thể hoàn lại (hủy / sửa / gộp tiếp hóa đơn). */
+    private static final List<String> SALE_DOCS = List.of("SALE", "SALE_REPLACE", "SALE_MERGE");
+
     private final ExternalStockDocRepository docs;
     private final ProductRepository products;
     private final ProductLotRepository lots;
@@ -85,9 +88,9 @@ public class InternalStockService {
         }
         StockDocResult result = switch (req.docType()) {
             case "SALE" -> sale(req, DocType.SALE);
-            case "SALE_CANCEL" -> reverse(req, List.of("SALE", "SALE_REPLACE"), req.docId(), DocType.SALE_CANCEL, true);
+            case "SALE_CANCEL" -> reverse(req, SALE_DOCS, req.docId(), DocType.SALE_CANCEL, true);
             case "SALE_REPLACE" -> {
-                reverse(req, List.of("SALE", "SALE_REPLACE"), req.previousDocId(), DocType.SALE_CANCEL, true);
+                reverse(req, SALE_DOCS, req.previousDocId(), DocType.SALE_CANCEL, true);
                 yield sale(req, DocType.SALE);
             }
             case "SALE_MERGE" -> merge(req);
@@ -166,7 +169,7 @@ public class InternalStockService {
             if (load(prev, List.of("SALE_CANCEL")) != null) {
                 throw BusinessException.badRequest("STOCK_DOC_CANCELLED", "Chứng từ kho của hóa đơn gộp đã được hoàn trước đó");
             }
-            StockDocResult reversed = reverse(req, List.of("SALE", "SALE_REPLACE"), prev, DocType.SALE_CANCEL, true);
+            StockDocResult reversed = reverse(req, SALE_DOCS, prev, DocType.SALE_CANCEL, true);
             docs.insert(prev, "SALE_CANCEL", req.docCode(), reversed);
             reversed.lines().forEach(l -> source.put(l.lineId(), l));
         }

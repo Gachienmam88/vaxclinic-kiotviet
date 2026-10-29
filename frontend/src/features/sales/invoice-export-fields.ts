@@ -1,4 +1,4 @@
-import { formatDate, formatDateTime } from "@/lib/format";
+import { formatDate } from "@/lib/format";
 import { einvoiceState, EINVOICE_STATE_OPTIONS } from "./invoice-einvoice-state";
 import { stateLabel } from "./invoice-filter-model";
 import type { EInvoiceRecord } from "@/features/integrations/integration-queries";
@@ -9,7 +9,8 @@ import type { InvoiceListItem } from "./sales-types";
  * Chỉ gồm cột hệ thống có dữ liệu — bỏ: Trạng thái / Ghi chú CSDL về dược, Địa chỉ lấy hàng, Mã đối soát, Bác sĩ,
  * Giá trị VAT, VAT, Có dùng VAT, Trạng thái Áp dụng giảm thuế, Giá trị giảm thuế.
  */
-export type Cell = string | number | null | undefined;
+/** Ô Excel: Date = ô ngày giờ thật (định dạng dd/mm/yyyy hh:mm) để lọc / sắp xếp được như file KiotViet. */
+export type Cell = string | number | Date | null | undefined;
 
 export type ExportExtra = {
   invoiceId: string; cash: number; card: number; transfer: number; ewallet: number; receiverName: string | null;
@@ -45,7 +46,7 @@ export function invoiceValue(i: InvoiceListItem, key: string, lk: Pick<ExportLoo
   const issued = st === "PUBLISHED" || st === "ACCEPTED";
   switch (key) {
     case "code": return i.code;
-    case "soldAt": case "createdAt": case "updatedAt": case "deliveryTime": return formatDateTime(i[key]) || null;
+    case "soldAt": case "createdAt": case "updatedAt": case "deliveryTime": return i[key] ? new Date(i[key]!) : null;
     case "customerBirthday": return formatDate(i.customerBirthday) || null;
     case "state": return stateLabel(i.state);
     case "einvoice": return st === "NONE" ? null : EINVOICE_STATE_OPTIONS.find(([v]) => v === st)?.[1];

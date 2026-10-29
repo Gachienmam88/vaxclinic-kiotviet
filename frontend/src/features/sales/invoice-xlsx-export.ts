@@ -64,15 +64,15 @@ async function lookups(data: ExportResponse, keys: string[]): Promise<ExportLook
 
 async function writeXlsx(header: string[], rows: Cell[][], keys: string[], sheetName: string): Promise<Blob> {
   const XLSX = await import("xlsx");
-  const ws = XLSX.utils.aoa_to_sheet([header, ...rows.map((r) => r.map(safe))]);
+  const ws = XLSX.utils.aoa_to_sheet([header, ...rows.map((r) => r.map(safe))], { cellDates: true });
   const range = XLSX.utils.decode_range(ws["!ref"] ?? "A1");
-  ws["!autofilter"] = { ref: XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: 0, c: range.e.c } }) };
+  ws["!autofilter"] = { ref: ws["!ref"] ?? "A1" };
   ws["!cols"] = header.map((h) => ({ wch: Math.max(12, h.length + 4) }));
   keys.forEach((k, c) => {
-    if (!MONEY.has(k)) return;
     for (let r = 1; r <= range.e.r; r++) {
       const cell = ws[XLSX.utils.encode_cell({ r, c })];
-      if (cell?.t === "n") cell.z = "#,##0";
+      if (cell?.t === "d") cell.z = "dd/mm/yyyy hh:mm";
+      else if (cell?.t === "n" && MONEY.has(k)) cell.z = "#,##0";
     }
   });
   const wb = XLSX.utils.book_new();

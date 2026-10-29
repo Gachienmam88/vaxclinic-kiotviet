@@ -56,7 +56,7 @@ const pad = (n: number) => String(n).padStart(2, "0");
 export async function readInvoiceImportFile(file: File, msg: { header: (col: number, name: string) => string; empty: string }): Promise<ImportRow[]> {
   const XLSX = await import("xlsx");
   const csv = file.name.toLowerCase().endsWith(".csv");
-  const wb = XLSX.read(await file.arrayBuffer(), { type: "array", raw: csv, codepage: 65001 });
+  const wb = XLSX.read(await file.arrayBuffer(), { type: "array", raw: csv });
   const ws = wb.Sheets[wb.SheetNames[0]];
   const rows = XLSX.utils.sheet_to_json<unknown[]>(ws, { header: 1, raw: true, defval: "" });
   const headerAt = rows.findIndex((r) => norm(r[0]) === norm(IMPORT_HEADER[0]));

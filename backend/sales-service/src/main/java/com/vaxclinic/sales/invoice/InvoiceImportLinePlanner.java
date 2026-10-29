@@ -92,6 +92,7 @@ final class InvoiceImportLinePlanner {
     }
 
     private String checkLot(ImportRow r, Item item, BigDecimal base, List<ImportError> errors) {
+        int n = errors.size();
         String lotNo = text(r.lot());
         String name = item.product().name();
         if (lotNo.isEmpty()) {
@@ -112,18 +113,24 @@ final class InvoiceImportLinePlanner {
         if (lot.expiryDate().isBefore(LocalDate.now(InvoiceImportCells.VN))) {
             err(errors, r, name + ": lô " + lotNo + " đã hết hạn sử dụng (" + vn(lot.expiryDate()) + ")");
         }
-        BigDecimal used = lotUse.merge(item.product().id() + "|" + lot.lotNumber(), base, BigDecimal::add);
+        // Cộng dồn số lượng theo lô giữa các dòng hợp lệ (dòng đã lỗi không tính → không kéo theo lỗi dây chuyền)
+        String key = item.product().id() + "|" + lot.lotNumber();
+        BigDecimal used = lotUse.getOrDefault(key, BigDecimal.ZERO).add(base);
         if (used.compareTo(lot.quantity()) > 0) {
             err(errors, r, name + ": lô " + lotNo + " không đủ tồn (còn " + plain(lot.quantity()) + ", file cần " + plain(used) + ")");
+        } else if (errors.size() == n) {
+            lotUse.put(key, used);
         }
         return lot.lotNumber();
     }
 
     private void checkStock(ImportRow r, Item item, BigDecimal base, List<ImportError> errors) {
-        BigDecimal used = stockUse.merge(item.product().id(), base, BigDecimal::add);
+        BigDecimal used = stockUse.getOrDefault(item.product().id(), BigDecimal.ZERO).add(base);
         BigDecimal stock = item.product().stock() == null ? BigDecimal.ZERO : item.product().stock();
         if (!allowNegativeStock && used.compareTo(stock) > 0) {
             err(errors, r, item.product().name() + ": không đủ tồn kho (còn " + plain(stock) + ", file cần " + plain(used) + ")");
+        } else {
+            stockUse.put(item.product().id(), used);
         }
     }
 
