@@ -37,7 +37,7 @@ integration:
 - `grep -rl JdbcTemplate --include=*.java <svc>/src/main | xargs grep -L @Repository` → empty for both services.
 - `mvn -pl identity-service -am package`, `mvn -pl integration-service -am package` OK (unit tests pass).
 - identity (8081 redeployed): e2e_login_flow 10/10, e2e_hr 84/0, e2e_store_profile 66/0, e2e_2fa_reset 23/0, e2e_notifications ALL PASSED, e2e_settings 31/31, e2e_phase2_settings 23/23, e2e_reports 39/39, smoke_identity_layering none failed.
-- integration (8088 redeployed): see section below.
+- integration (8088 redeployed): e2e_integration 16/16, e2e_store_profile 66/0, e2e_notifications ALL PASSED, e2e_sales 22/22, e2e_invoice_filters 15/15 (0 leftover rows), e2e_sectors_wallets 12/12, smoke_integration_layering 24/24.
 
 ## Commits
 - `refactor(identity): move service SQL into repositories`
