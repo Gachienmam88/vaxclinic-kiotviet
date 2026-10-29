@@ -20,16 +20,16 @@ import java.util.UUID;
 @Repository
 public class SupplierListRepository {
 
-    /** Sổ công nợ NCC: mỗi dòng 1 phát sinh, v > 0 tăng nợ. ord: thứ tự trong cùng thời điểm (nhập trước, thanh toán sau). */
+    /** Sổ công nợ NCC: mỗi dòng 1 phát sinh, v > 0 tăng nợ. Trả hàng nhập −total; NCC hoàn tiền (REFUND PT{THN}) +amount. ord: thứ tự trong cùng thời điểm (nhập trước, thanh toán sau). */
     static final String LEDGER = """
             select r.supplier_id sid, r.id doc_id, r.code, r.received_at t, 0 ord, 'PURCHASE' type, r.total v, r.created_at c
             from purchase_receipts r where r.status = 'COMPLETED' and r.supplier_id is not null
             union all
-            select r.supplier_id, r.id, r.code, r.returned_at, 1, 'PURCHASE_RETURN', -(r.total - r.refund_amount), r.created_at
+            select r.supplier_id, r.id, r.code, r.returned_at, 1, 'PURCHASE_RETURN', -r.total, r.created_at
             from purchase_returns r where r.status = 'COMPLETED' and r.supplier_id is not null
             union all
             select d.supplier_id, d.id, d.code, d.occurred_at, 2, d.kind,
-              case when d.kind = 'ADJUSTMENT' then d.amount else -d.amount end, d.created_at
+              case when d.kind in ('ADJUSTMENT', 'REFUND') then d.amount else -d.amount end, d.created_at
             from supplier_debt_docs d where d.status = 'ACTIVE'""";
 
     public record Filter(String q, UUID groupId, Boolean active, BigDecimal buyFrom, BigDecimal buyTo, Instant from,

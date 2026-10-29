@@ -16,7 +16,7 @@ import java.util.UUID;
 /**
  * Báo cáo nhà cung cấp: Nhập hàng (theo NCC), Hàng nhập theo NCC (NCC × hàng) và Công nợ NCC.
  * Giá trị nhập / trả = tổng cộng phiếu (sau giảm giá, gồm VAT) — dòng hàng được phân bổ theo tỷ lệ tiền hàng.
- * Công nợ NCC = Σ tổng phiếu nhập − Σ (tổng phiếu trả hàng nhập − NCC đã hoàn) của phiếu hoàn thành
+ * Công nợ NCC = Σ tổng phiếu nhập − Σ tổng phiếu trả hàng nhập của phiếu hoàn thành + Σ NCC hoàn tiền (REFUND PT{THN})
  * − Σ thanh toán (kể cả phiếu chi lúc nhập hàng) − Σ chiết khấu thanh toán ± điều chỉnh (sổ supplier_debt_docs còn hiệu lực).
  * Nghiệp vụ ở {@link SupplierReportService}.
  */

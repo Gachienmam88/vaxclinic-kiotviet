@@ -10,18 +10,19 @@ export type SupplierPage = { items: SupplierRow[]; total: number; page: number; 
 
 export type SupplierGroup = { id: string; name: string; note: string | null; supplierCount: number };
 
-export type SupplierDebtType = "PURCHASE" | "PURCHASE_RETURN" | "PAYMENT" | "DISCOUNT" | "ADJUSTMENT";
+export type SupplierDebtType = "PURCHASE" | "PURCHASE_RETURN" | "PAYMENT" | "DISCOUNT" | "ADJUSTMENT" | "REFUND";
 
 /** Nhãn loại giao dịch trên màn hình (khóa namespace "purchases"). */
 export const SUPPLIER_DEBT_TYPE_KEY = {
   PURCHASE: "suppliers.debtType.purchase", PURCHASE_RETURN: "suppliers.debtType.purchaseReturn",
   PAYMENT: "suppliers.debtType.payment", ADJUSTMENT: "suppliers.debtType.adjustment", DISCOUNT: "suppliers.debtType.discount",
+  REFUND: "suppliers.debtType.refund",
 } as const satisfies Record<SupplierDebtType, string>;
 
 /** Nhãn tiếng Việt cố định cho file CSV công nợ (sổ công nợ dùng đối chiếu kế toán → giữ tiếng Việt mọi ngôn ngữ). */
 export const SUPPLIER_DEBT_TYPE_LABEL: Record<SupplierDebtType, string> = {
   PURCHASE: "Nhập hàng", PURCHASE_RETURN: "Trả hàng nhập", PAYMENT: "Thanh toán", ADJUSTMENT: "Điều chỉnh",
-  DISCOUNT: "Chiết khấu thanh toán",
+  DISCOUNT: "Chiết khấu thanh toán", REFUND: "NCC hoàn tiền",
 };
 
 export type SupplierLedgerRow = {
@@ -40,7 +41,7 @@ export type SupplierDocAllocation = {
 };
 
 export type SupplierDebtDoc = {
-  id: string; code: string; kind: "PAYMENT" | "DISCOUNT" | "ADJUSTMENT"; status: "ACTIVE" | "CANCELLED";
+  id: string; code: string; kind: "PAYMENT" | "DISCOUNT" | "ADJUSTMENT" | "REFUND"; status: "ACTIVE" | "CANCELLED";
   supplierId: string; supplierCode: string; supplierName: string; branchId: string | null; occurredAt: string;
   amount: number; paymentMethod: string | null; bankAccountId: string | null; staffId: string | null;
   staffName: string | null; createdByName: string; note: string | null; receiptId: string | null;

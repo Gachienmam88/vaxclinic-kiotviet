@@ -48,6 +48,23 @@ public class SupplierDebtRepository {
                 r.getCreatedByName(), "Thanh toán phiếu nhập " + r.getCode(), r.getId(), r.getId());
     }
 
+    /** Chứng từ REFUND PT{mã THN}: NCC hoàn tiền khi trả hàng nhập (return_id = cash_source_id = id phiếu trả). */
+    public void insertReturnRefund(UUID id, PurchaseReturn r) {
+        jdbc.update("""
+                insert into supplier_debt_docs(id, code, supplier_id, kind, occurred_at, amount, branch_id, payment_method,
+                  staff_id, staff_name, created_by, created_by_name, note, return_id, cash_source_id)
+                values (?, ?, ?, 'REFUND', ?, ?, ?, 'CASH', ?, ?, ?, ?, ?, ?, ?)""", id, "PT" + r.getCode(), r.getSupplierId(),
+                Timestamp.from(r.getReturnedAt()), r.getRefundAmount(), r.getBranchId(),
+                r.getReturnerId() == null ? r.getCreatedBy() : r.getReturnerId(),
+                r.getReturnerName() == null ? r.getCreatedByName() : r.getReturnerName(), r.getCreatedBy(), r.getCreatedByName(),
+                "NCC hoàn tiền trả hàng nhập " + r.getCode(), r.getId(), r.getId());
+    }
+
+    public void cancelReturnDocs(UUID returnId) {
+        jdbc.update("update supplier_debt_docs set status = 'CANCELLED', cancelled_at = now() where return_id = ? and status = 'ACTIVE'",
+                returnId);
+    }
+
     /** Phiếu chi PC{mã PN} tạo lúc hoàn thành phiếu nhập (cash_source_id = receipt_id = id phiếu nhập) đổi ngày theo phiếu nhập. */
     public void redateReceiptPayment(UUID receiptId, Instant at) {
         jdbc.update("""

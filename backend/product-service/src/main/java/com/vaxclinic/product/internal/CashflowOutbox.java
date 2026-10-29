@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vaxclinic.common.http.InternalRestClientFactory;
 import com.vaxclinic.common.security.ServiceTokenProvider;
 import com.vaxclinic.product.purchase.PurchaseReceipt;
+import com.vaxclinic.product.purchase.PurchaseReturn;
 import com.vaxclinic.product.purchase.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -86,6 +87,39 @@ public class CashflowOutbox {
     public void receiptRedated(PurchaseReceipt r) {
         supplierPaymentUpdated(r.getId(), r.getReceivedAt(), r.getReceiverId() == null ? r.getCreatedBy() : r.getReceiverId(),
                 r.getReceiverName() == null ? r.getCreatedByName() : r.getReceiverName(), "Thanh toán phiếu nhập " + r.getCode());
+    }
+
+    /**
+     * Trả hàng nhập hoàn thành có tiền NCC hoàn lại → phiếu thu PT{mã THN} ở Sổ quỹ (sourceType PURCHASE + sourceId = id phiếu
+     * trả: chống trùng theo nguồn; Sổ quỹ lưu accounting = false như mọi phiếu từ product-service). Quỹ tiền mặt.
+     */
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void returnRefunded(PurchaseReturn r, Supplier s) {
+        var p = new LinkedHashMap<String, Object>();
+        p.put("action", "CREATE");
+        p.put("sourceType", "PURCHASE");
+        p.put("sourceId", r.getId());
+        p.put("code", "PT" + r.getCode());
+        p.put("voucherType", "RECEIPT");
+        p.put("fund", "CASH");
+        p.put("category", "Thu Tiền NCC hoàn trả");
+        p.put("amount", r.getRefundAmount());
+        p.put("occurredAt", r.getReturnedAt());
+        p.put("branchId", r.getBranchId());
+        p.put("partnerType", "SUPPLIER");
+        p.put("partnerId", r.getSupplierId());
+        p.put("partnerName", s == null ? null : s.getName());
+        p.put("partnerPhone", s == null ? null : s.getPhone());
+        p.put("userId", r.getReturnerId() == null ? r.getCreatedBy() : r.getReturnerId());
+        p.put("userName", r.getReturnerName() == null ? r.getCreatedByName() : r.getReturnerName());
+        p.put("note", "NCC hoàn tiền trả hàng nhập " + r.getCode());
+        insert(p);
+    }
+
+    /** Hủy trả hàng nhập đã có tiền hoàn → hủy phiếu thu PT{mã THN}. */
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void returnRefundCancelled(PurchaseReturn r) {
+        supplierPaymentCancelled(r.getId());
     }
 
     /** Phiếu chi trả nợ NCC (màn Nhà cung cấp) → phiếu chi Sổ quỹ, sourceType PURCHASE + sourceId = id phiếu công nợ. */

@@ -32,6 +32,7 @@ import { purchasesNs } from "@/messages/purchases";
 
 const TITLE = {
   PAYMENT: "suppliers.doc.titlePayment", DISCOUNT: "suppliers.doc.titleDiscount", ADJUSTMENT: "suppliers.doc.titleAdjustment",
+  REFUND: "suppliers.doc.titleRefund",
 } as const;
 const ro = cn(kvInput, "bg-[#eff0f3]");
 const select = "h-8 w-full rounded-md border border-[#d9dbe0] bg-white px-2.5 text-[13px] outline-none focus:border-primary disabled:bg-[#eff0f3]";
@@ -62,7 +63,8 @@ function DocBody({ d, supplierPhone, onClose }: { d: SupplierDebtDoc; supplierPh
   const [note, setNote] = useState(d.note ?? "");
   const [confirm, setConfirm] = useState(false);
   const [viewReceipt, setViewReceipt] = useState<string | null>(null);
-  const active = d.status === "ACTIVE" && can("inventory.manage");
+  // Phiếu thu NCC hoàn tiền (REFUND) đi theo phiếu trả hàng nhập: chỉ xem, sửa / hủy ở phiếu trả
+  const active = d.status === "ACTIVE" && d.kind !== "REFUND" && can("inventory.manage");
   const done = (msg: string) => { toast.success(msg); invalidate(); onClose(); };
   const save = useMutation({
     mutationFn: () => api(`/suppliers/debt-docs/${d.id}`, { method: "PATCH", body: {
@@ -78,7 +80,8 @@ function DocBody({ d, supplierPhone, onClose }: { d: SupplierDebtDoc; supplierPh
     ? { code: t("suppliers.doc.paymentCode"), staff: t("suppliers.doc.staff"), total: t("suppliers.doc.totalPaid"),
       paid: t("suppliers.doc.paidAmount"), before: t("suppliers.doc.paidBefore") }
     : { code: t("suppliers.history.docCode"), staff: t("suppliers.doc.performer"),
-      total: d.kind === "DISCOUNT" ? t("suppliers.doc.discountValue") : t("suppliers.doc.adjustValue"),
+      total: d.kind === "DISCOUNT" ? t("suppliers.doc.discountValue") : d.kind === "REFUND" ? t("suppliers.doc.refundValue")
+        : t("suppliers.doc.adjustValue"),
       paid: t("suppliers.alloc.discountAlloc"), before: t("suppliers.alloc.paidBefore") };
   const methodKey = SUPPLIER_PAYMENT_METHODS.find(([v]) => v === d.paymentMethod)?.[1] ?? "payMethods.cash";
   return (
@@ -105,7 +108,7 @@ function DocBody({ d, supplierPhone, onClose }: { d: SupplierDebtDoc; supplierPh
           <div className="grid gap-1.5 md:col-span-2"><Label className={kvLabel}>{tc("fields.note")}</Label>
             <Input placeholder={t("suppliers.doc.notePlaceholder")} aria-label={tc("fields.note")} disabled={!active} className={kvInput} value={note} onChange={(e) => setNote(e.target.value)} /></div>
         </div>
-        {d.kind !== "ADJUSTMENT" && <>
+        {d.kind !== "ADJUSTMENT" && d.kind !== "REFUND" && <>
           <label className="flex w-fit items-center gap-2 py-1 text-[13px] text-muted-foreground">
             <Checkbox checked={d.allocations.length > 0} disabled /> {t("suppliers.doc.allocated")}
           </label>

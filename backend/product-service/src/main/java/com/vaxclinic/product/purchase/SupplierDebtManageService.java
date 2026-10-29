@@ -24,7 +24,7 @@ import java.util.UUID;
 public class SupplierDebtManageService {
 
     private static final Map<String, String> KIND_LABEL = Map.of("PAYMENT", "phiếu chi trả NCC", "DISCOUNT",
-            "chiết khấu thanh toán NCC", "ADJUSTMENT", "điều chỉnh công nợ NCC");
+            "chiết khấu thanh toán NCC", "ADJUSTMENT", "điều chỉnh công nợ NCC", "REFUND", "phiếu thu NCC hoàn tiền");
 
     private final SupplierDebtService service;
     private final SupplierDebtQueryRepository query;

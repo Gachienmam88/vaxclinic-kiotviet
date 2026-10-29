@@ -225,7 +225,8 @@
       "purchaseReturn": "进货退货",
       "payment": "付款",
       "adjustment": "调整",
-      "discount": "付款折扣"
+      "discount": "付款折扣",
+      "refund": "供应商退款"
     },
     "adjust": {
       "title": "调整欠款",
@@ -270,7 +271,9 @@
       "toastUpdated": "已更新 {code}",
       "toastCancelled": "已作废 {code}",
       "confirmCancel": "确定作废单据 {code} 吗？",
-      "confirmCancelPayment": "确定作废单据 {code} 吗？收支中对应的付款单也会作废。"
+      "confirmCancelPayment": "确定作废单据 {code} 吗？收支中对应的付款单也会作废。",
+      "titleRefund": "供应商退款收款单",
+      "refundValue": "供应商退还金额"
     },
     "payment": {
       "titlePay": "付款",

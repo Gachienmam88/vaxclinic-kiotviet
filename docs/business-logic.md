@@ -526,8 +526,12 @@ Nguồn: `PS/purchase/PurchaseController.java:35-102`.
   - ghi `PURCHASE_RETURN` âm, đơn giá = giá trả gồm VAT, phân bổ giảm giá phiếu, / quy đổi → **tính lại giá vốn bình quân theo giá trả** (`PS/purchase/PurchaseReturnService.java:171-185`);
   - được âm kho nếu bật thiết lập và hàng không theo lô.
 - **Hủy** (`PS/purchase/PurchaseReturnService.java:81-92`): COMPLETED → kiểm chi nhánh + khóa sổ, nhập lại `PURCHASE_RETURN_CANCEL` (đổi giá vốn); DRAFT → hủy luôn; gọi lại trên phiếu đã hủy không báo lỗi (ghi đè `cancelled_at`).
-- **Công nợ**: phiếu trả COMPLETED giảm nợ NCC `−(total − refund_amount)` qua truy vấn sổ (1.12).
-- **Không thấy code** ghi `refund_amount` sang Sổ quỹ hay tạo `supplier_debt_docs` (`PurchaseReturnService` không gọi `CashflowOutbox`).
+- **Công nợ + Sổ quỹ khi NCC hoàn tiền (audit #9)** (`PS/purchase/PurchaseReturnService.java:70-100`):
+  - phiếu trả COMPLETED giảm nợ NCC `−total` trong sổ (1.12);
+  - `refund_amount > 0` → outbox `CREATE` phiếu thu `PT{mã THN}` (RECEIPT, quỹ tiền mặt, "Thu Tiền NCC hoàn trả", `sourceType=PURCHASE`, `sourceId`=id phiếu trả, Sổ quỹ lưu `accounting=false`) (`PS/internal/CashflowOutbox.java:93-125`) + chứng từ công nợ `kind=REFUND` cùng mã, `+refund` (`return_id` = `cash_source_id` = id phiếu trả) (`PS/purchase/SupplierDebtRepository.java:51-67`). Số dư nợ như trước (−total + refund). Trả nhanh không có NCC: chỉ có phiếu thu.
+  - Hủy phiếu trả COMPLETED → chứng từ REFUND `CANCELLED` + outbox `CANCEL` phiếu thu.
+  - Chứng từ REFUND không sửa / hủy riêng được: `PATCH` / `cancel` → 400 `SUPPLIER_DOC_AUTO` "…hãy hủy phiếu trả hàng nhập để hủy phiếu thu"; FE chỉ xem (`FE/features/purchases/supplier-debt-doc-dialog.tsx`).
+  - Migration `MIG/V11__purchase_return_refund_receipt.sql`: cột `return_id`, tạo bù REFUND + outbox phiếu thu cho phiếu trả cũ có tiền hoàn.
 - Lịch sử thao tác chức năng "Trả hàng nhập": Lưu tạm / Trả hàng / Hủy.
 - FE trả theo phiếu nhập: điền sẵn dòng, giá trả = đơn giá nhập − giảm giá, cùng VAT; khóa chi nhánh và NCC (`FE/features/purchases/purchase-editor-state.ts:144-149`, `FE/features/purchases/purchase-editor-panel.tsx:60-66`).
 
@@ -617,7 +621,7 @@ Nguồn: `PS/purchase/SupplierController.java:33-107`, `PS/purchase/SupplierGrou
 
 **2. Dữ liệu** (`MIG/V6__supplier_groups_and_debt_ledger.sql:26-65`)
 - `supplier_debt_docs`:
-  - `kind` `PAYMENT|DISCOUNT|ADJUSTMENT`, `status` `ACTIVE|CANCELLED`, `occurred_at`;
+  - `kind` `PAYMENT|DISCOUNT|ADJUSTMENT|REFUND` (REFUND = NCC hoàn tiền khi trả hàng nhập, `PT{mã THN}`, tăng nợ), `status` `ACTIVE|CANCELLED`, `occurred_at`, `return_id` (`MIG/V11`);
   - `amount` NUMERIC(18,0): PAYMENT / DISCOUNT > 0 (giảm nợ); ADJUSTMENT có dấu (= nợ mới − nợ cũ);
   - `payment_method` `CASH|TRANSFER|EWALLET`, `bank_account_id` (tài khoản ở sales-service), `staff_id/name`;
   - `receipt_id` (phiếu chi lúc nhập hàng), `cash_source_id` (sourceId bên Sổ quỹ).
@@ -628,8 +632,8 @@ Nguồn: `PS/purchase/SupplierController.java:33-107`, `PS/purchase/SupplierGrou
 **3. Quy tắc**
 - **Sổ công nợ** (`v > 0` tăng nợ) (`PS/purchase/SupplierListRepository.java:23-33`):
   - `+total` phiếu nhập COMPLETED có NCC;
-  - `−(total − refund_amount)` phiếu trả COMPLETED;
-  - `−amount` PAYMENT / DISCOUNT ACTIVE; `±amount` ADJUSTMENT ACTIVE.
+  - `−total` phiếu trả COMPLETED;
+  - `−amount` PAYMENT / DISCOUNT ACTIVE; `±amount` ADJUSTMENT ACTIVE; `+amount` REFUND ACTIVE (audit #9).
   - Số dư lũy kế theo `(thời gian, thứ tự: nhập=0 / trả=1 / chứng từ=2, created_at, id)`, hiển thị mới nhất trước (`PS/purchase/SupplierDebtQueryRepository.java:32-40`).
   - Nợ có thể âm (trả trước).
 - **Validation** (`PS/purchase/SupplierDebtDtos.java:27-41`): `branchId` NotNull "Chọn chi nhánh"; `amount` NotNull "Nhập số tiền", ≥1 "Số tiền phải lớn hơn 0"; `paymentMethod` `CASH|TRANSFER|EWALLET` "Phương thức thanh toán không hợp lệ"; điều chỉnh `newDebt` NotNull "Nhập giá trị nợ điều chỉnh".
@@ -743,7 +747,7 @@ Nguồn: `PS/purchase/SupplierController.java:33-107`, `PS/purchase/SupplierGrou
 
 - Chuyển hàng giữa chi nhánh: chỉ có enum `TRANSFER_OUT/IN` và danh sách loại được phép âm, không có API (`PS/stock/StockLedgerEntry.java:26`).
 - Cột "Khách đặt" (`reserved`) không được service nào trong product-service ghi.
-- Tiền NCC hoàn khi trả hàng nhập (`refund_amount`) không sinh phiếu thu Sổ quỹ, không sinh chứng từ công nợ riêng.
+- ~~Tiền NCC hoàn khi trả hàng nhập không sinh phiếu thu / chứng từ công nợ~~ — đã sửa (audit #9, mục 1.10).
 - ~~Thẻ kho ghi theo thời điểm hoàn thành chứng từ~~ — đã sửa (audit #7, mục 1.5). Còn lại: chứng từ bán/trả từ sales-service vẫn ghi theo thời điểm gọi kho (không theo ngày HĐ nếu HĐ lùi ngày).
 - ~~Giá vốn bình quân dùng tồn 1 chi nhánh / bị ghi đè khi nhập đồng thời~~ — đã sửa (audit #8, mục 1.5).
 - Danh sách hàng hóa / phiếu nhập / trả / kiểm / xuất và sổ S2d không lọc theo chi nhánh của user (báo cáo `report/*` thì có).

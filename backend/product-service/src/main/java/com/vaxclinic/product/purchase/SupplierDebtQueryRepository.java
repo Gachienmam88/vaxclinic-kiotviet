@@ -92,6 +92,6 @@ public class SupplierDebtQueryRepository {
                 ((java.sql.Timestamp) d.get("occurred_at")).toInstant(), amount, (String) d.get("payment_method"),
                 (UUID) d.get("bank_account_id"), (UUID) d.get("staff_id"), (String) d.get("staff_name"),
                 (String) d.get("created_by_name"), (String) d.get("note"), (UUID) d.get("receipt_id"), allocations,
-                "ADJUSTMENT".equals(d.get("kind")) ? BigDecimal.ZERO : amount.subtract(allocated));
+                "ADJUSTMENT".equals(d.get("kind")) || "REFUND".equals(d.get("kind")) ? BigDecimal.ZERO : amount.subtract(allocated));
     }
 }

@@ -1,6 +1,7 @@
 package com.vaxclinic.product.purchase;
 
 import com.vaxclinic.common.error.BusinessException;
+import com.vaxclinic.product.internal.CashflowOutbox;
 import com.vaxclinic.product.product.Product;
 import com.vaxclinic.product.purchase.PurchaseDtos.Actor;
 import com.vaxclinic.product.purchase.PurchaseDtos.ReturnRequest;
@@ -21,6 +22,8 @@ import java.util.UUID;
 /**
  * Trả hàng nhập: hoàn thành → trừ kho (theo lô), giá vốn bình quân tính lại theo giá trả, ghi thẻ kho.
  * Trả theo phiếu nhập: không được trả quá số đã nhập (theo hàng + lô) trừ đi các lần trả trước.
+ * NCC hoàn tiền (refund_amount > 0): phiếu thu PT{mã THN} ở Sổ quỹ (outbox) + chứng từ công nợ REFUND (nợ +refund, phiếu trả
+ * ghi −total); hủy phiếu trả → hủy cả hai.
  */
 @Service
 public class PurchaseReturnService {
@@ -29,9 +32,14 @@ public class PurchaseReturnService {
     private final PurchaseReceiptRepository receipts;
     private final PurchaseLineSupport support;
     private final StockMovementService stock;
+    private final CashflowOutbox cashflows;
+    private final SupplierDebtService debts;
 
     public PurchaseReturnService(PurchaseReturnRepository returns, PurchaseReceiptRepository receipts,
-                                 PurchaseLineSupport support, StockMovementService stock) {
+                                 PurchaseLineSupport support, StockMovementService stock, CashflowOutbox cashflows,
+                                 SupplierDebtService debts) {
+        this.cashflows = cashflows;
+        this.debts = debts;
         this.returns = returns;
         this.receipts = receipts;
         this.support = support;
@@ -74,6 +82,11 @@ public class PurchaseReturnService {
             move(r, false, actor);
             r.setStatus(DocStatus.COMPLETED);
             r.setCompletedAt(Instant.now());
+            if (r.getRefundAmount().signum() > 0) {
+                Supplier s = support.supplierOrNull(r.getSupplierId());
+                cashflows.returnRefunded(r, s); // phiếu thu PT{mã THN} → Sổ quỹ
+                debts.returnRefunded(r);        // chứng từ REFUND trong sổ công nợ NCC
+            }
         }
         return r.getId();
     }
@@ -85,6 +98,10 @@ public class PurchaseReturnService {
             support.checkBranch(actor, r.getBranchId());
             support.checkNotLocked(r.getBranchId(), r.getReturnedAt());
             move(r, true, actor); // nhập lại kho số đã trả
+            if (r.getRefundAmount().signum() > 0) {
+                cashflows.returnRefundCancelled(r);
+                debts.returnCancelled(r);
+            }
         }
         r.setStatus(DocStatus.CANCELLED);
         r.setCancelledAt(Instant.now());

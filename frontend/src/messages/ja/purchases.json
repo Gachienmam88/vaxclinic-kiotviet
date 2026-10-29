@@ -225,7 +225,8 @@
       "purchaseReturn": "仕入返品",
       "payment": "支払",
       "adjustment": "調整",
-      "discount": "支払割引"
+      "discount": "支払割引",
+      "refund": "仕入先返金"
     },
     "adjust": {
       "title": "買掛金の調整",
@@ -270,7 +271,9 @@
       "toastUpdated": "{code} を更新しました",
       "toastCancelled": "{code} を取り消しました",
       "confirmCancel": "{code} を取り消してもよろしいですか？",
-      "confirmCancelPayment": "{code} を取り消してもよろしいですか？入出金の対応する出金伝票も取り消されます。"
+      "confirmCancelPayment": "{code} を取り消してもよろしいですか？入出金の対応する出金伝票も取り消されます。",
+      "titleRefund": "仕入先返金入金伝票",
+      "refundValue": "仕入先返金額"
     },
     "payment": {
       "titlePay": "支払",

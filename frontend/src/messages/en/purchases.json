@@ -225,7 +225,8 @@
       "purchaseReturn": "Purchase return",
       "payment": "Payment",
       "adjustment": "Adjustment",
-      "discount": "Payment discount"
+      "discount": "Payment discount",
+      "refund": "Supplier refund"
     },
     "adjust": {
       "title": "Adjust debt",
@@ -270,7 +271,9 @@
       "toastUpdated": "{code} updated",
       "toastCancelled": "{code} cancelled",
       "confirmCancel": "Are you sure you want to cancel {code}?",
-      "confirmCancelPayment": "Are you sure you want to cancel {code}? The matching payment voucher in Cash flow will also be cancelled."
+      "confirmCancelPayment": "Are you sure you want to cancel {code}? The matching payment voucher in Cash flow will also be cancelled.",
+      "titleRefund": "Supplier refund receipt",
+      "refundValue": "Refunded by supplier"
     },
     "payment": {
       "titlePay": "Payment",

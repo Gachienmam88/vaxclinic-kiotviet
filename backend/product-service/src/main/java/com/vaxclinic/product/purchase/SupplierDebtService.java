@@ -88,6 +88,7 @@ public class SupplierDebtService {
     @Transactional
     public Map<String, Object> update(UUID docId, DocUpdateRequest req) {
         var d = lockDoc(docId);
+        rejectAuto(d);
         UUID branch = (UUID) d.get("branch_id");
         Instant oldAt = ((Timestamp) d.get("occurred_at")).toInstant();
         Instant at = req.occurredAt() == null ? oldAt : req.occurredAt();
@@ -107,6 +108,7 @@ public class SupplierDebtService {
     @Transactional
     public Map<String, Object> cancel(UUID docId) {
         var d = lockDoc(docId);
+        rejectAuto(d);
         support.checkNotLocked((UUID) d.get("branch_id"), ((Timestamp) d.get("occurred_at")).toInstant());
         repo.cancelDoc(docId);
         if ("PAYMENT".equals(d.get("kind"))) {
@@ -129,6 +131,21 @@ public class SupplierDebtService {
         String staffName = r.getReceiverName() == null ? r.getCreatedByName() : r.getReceiverName();
         repo.insertReceiptPayment(id, r, staff, staffName);
         repo.insertAllocation(id, r.getId(), r.getPaidAmount());
+    }
+
+    /** Trả hàng nhập có tiền NCC hoàn → chứng từ REFUND PT{mã THN} (tăng nợ +refund; phiếu trả ghi −total trong sổ). */
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.MANDATORY)
+    public void returnRefunded(PurchaseReturn r) {
+        if (r.getSupplierId() == null) {
+            return; // trả nhanh không NCC: chỉ có phiếu thu Sổ quỹ, không có sổ công nợ
+        }
+        repo.insertReturnRefund(UUID.randomUUID(), r);
+    }
+
+    /** Hủy trả hàng nhập → chứng từ REFUND của phiếu bị hủy theo. */
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.MANDATORY)
+    public void returnCancelled(PurchaseReturn r) {
+        repo.cancelReturnDocs(r.getId());
     }
 
     /** Đổi ngày nhập của phiếu đã hoàn thành → phiếu chi PC{mã PN} (tạo lúc nhập) đổi ngày theo. */
@@ -154,6 +171,14 @@ public class SupplierDebtService {
         Instant at = occurredAt == null ? Instant.now() : occurredAt;
         support.checkNotLocked(branchId, at);
         return at;
+    }
+
+    /** Phiếu thu NCC hoàn tiền (REFUND) đi theo phiếu trả hàng nhập: sửa / hủy ở phiếu trả, không sửa riêng. */
+    private static void rejectAuto(Map<String, Object> d) {
+        if ("REFUND".equals(d.get("kind"))) {
+            throw BusinessException.badRequest("SUPPLIER_DOC_AUTO",
+                    "Phiếu thu này tạo từ trả hàng nhập, hãy hủy phiếu trả hàng nhập để hủy phiếu thu");
+        }
     }
 
     private Map<String, Object> lockDoc(UUID docId) {

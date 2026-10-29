@@ -225,7 +225,8 @@
       "purchaseReturn": "Trả hàng nhập",
       "payment": "Thanh toán",
       "adjustment": "Điều chỉnh",
-      "discount": "Chiết khấu thanh toán"
+      "discount": "Chiết khấu thanh toán",
+      "refund": "NCC hoàn tiền"
     },
     "adjust": {
       "title": "Điều chỉnh",
@@ -270,7 +271,9 @@
       "toastUpdated": "Đã cập nhật {code}",
       "toastCancelled": "Đã hủy {code}",
       "confirmCancel": "Bạn có chắc chắn muốn hủy phiếu {code}?",
-      "confirmCancelPayment": "Bạn có chắc chắn muốn hủy phiếu {code}? Phiếu chi tương ứng trong Sổ quỹ cũng bị hủy."
+      "confirmCancelPayment": "Bạn có chắc chắn muốn hủy phiếu {code}? Phiếu chi tương ứng trong Sổ quỹ cũng bị hủy.",
+      "titleRefund": "Phiếu thu NCC hoàn tiền",
+      "refundValue": "Tiền NCC hoàn trả"
     },
     "payment": {
       "titlePay": "Thanh toán",

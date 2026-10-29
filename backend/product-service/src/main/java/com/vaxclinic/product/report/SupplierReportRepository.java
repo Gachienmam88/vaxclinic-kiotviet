@@ -66,11 +66,13 @@ public class SupplierReportRepository {
                   select supplier_id, received_at t, total dr, 0 cr from purchase_receipts
                   where status = 'COMPLETED' and received_at < :to and branch_id in (:branches) and supplier_id is not null
                   union all
-                  select supplier_id, returned_at, 0, total - refund_amount from purchase_returns
+                  select supplier_id, returned_at, 0, total from purchase_returns
                   where status = 'COMPLETED' and returned_at < :to and branch_id in (:branches) and supplier_id is not null
                   union all
-                  select supplier_id, occurred_at, case when kind = 'ADJUSTMENT' then greatest(amount, 0) else 0 end,
-                    case when kind = 'ADJUSTMENT' then greatest(-amount, 0) else amount end from supplier_debt_docs
+                  select supplier_id, occurred_at,
+                    case when kind = 'ADJUSTMENT' then greatest(amount, 0) when kind = 'REFUND' then amount else 0 end,
+                    case when kind = 'ADJUSTMENT' then greatest(-amount, 0) when kind = 'REFUND' then 0 else amount end
+                  from supplier_debt_docs
                   where status = 'ACTIVE' and occurred_at < :to and branch_id in (:branches)
                 )
                 select s.id, s.code, s.name, s.phone,
