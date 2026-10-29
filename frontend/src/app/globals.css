@@ -168,3 +168,18 @@
 html:has([data-kv-scale]) {
   zoom: 1.12;
 }
+
+/*
+ * Bảng danh sách (Table stickyHeader): cuộn trong khung cao bằng màn hình trừ thanh menu (46px + 43px) và lề dưới,
+ * dòng tiêu đề cột đứng yên như KiotViet. 100vh bị nhân theo zoom 1.12 ở trên nên chia lại. Chỉ thead của bảng
+ * ngoài cùng dính; bảng con trong dòng mở rộng giữ nguyên.
+ */
+.kv-list-scroll {
+  max-height: calc(100vh / 1.12 - 89px - 1rem);
+  overflow: auto;
+}
+.kv-list-scroll > table > thead {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}

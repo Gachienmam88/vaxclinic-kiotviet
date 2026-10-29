@@ -67,7 +67,7 @@ function CustomersPage({ link }: { link: DeepLink }) {
 
       <div className="min-w-0 space-y-2.5">
         <div className="overflow-hidden rounded-lg bg-white">
-          <Table>
+          <Table stickyHeader>
             <TableHeader><TableRow className="bg-primary-tint hover:bg-primary-tint">
               <TableHead className="pl-4">{t("list.cols.code")}</TableHead><TableHead>{t("list.cols.name")}</TableHead><TableHead>{t("list.cols.phone")}</TableHead>
               <TableHead className="text-right">{t("list.cols.debt")}</TableHead><TableHead className="text-right">{t("list.cols.totalSales")}</TableHead>

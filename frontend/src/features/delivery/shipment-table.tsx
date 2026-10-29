@@ -37,7 +37,7 @@ export function ShipmentTable({ data, selected, onSelect, onWiden, compact, link
 
   return (
     <div className="overflow-x-auto rounded-lg bg-background">
-      <Table>
+      <Table stickyHeader>
         <TableHeader><TableRow className={LIST_HEAD_ROW}>
           <TableHead className="w-10 pl-4">{pick && <input type="checkbox" aria-label={t("table.selectAll")} className="accent-primary" checked={all}
             onChange={(e) => onSelect?.(e.target.checked ? items.map((s) => s.id) : [])} />}</TableHead>

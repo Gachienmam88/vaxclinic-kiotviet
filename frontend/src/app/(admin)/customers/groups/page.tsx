@@ -50,7 +50,7 @@ export default function CustomerGroupsPage() {
           <Plus className="size-4" /> {t("groups.addButton")}</Button>}
       </div>
       <div className="overflow-x-auto rounded-lg bg-background">
-        <Table>
+        <Table stickyHeader>
           <TableHeader><TableRow className={LIST_HEAD_ROW}>
             <TableHead className="pl-4">{t("groups.cols.name")}</TableHead><TableHead className="text-right">{t("groups.cols.discount")}</TableHead>
             <TableHead className="text-right">{t("groups.cols.count")}</TableHead><TableHead>{t("groups.cols.note")}</TableHead><TableHead className="w-24 pr-4" />

@@ -48,7 +48,7 @@ function ReceiptsPage({ link }: { link: DeepLink }) {
       sidebar={<PurchaseFilterSidebar filters={filters} statusLabels={statusLabels} personLabel={t("receipts.receiver")} showInvoiceNo
         onChange={applyFilters} />}>
       <div className="min-h-[calc(100vh-190px)] overflow-hidden rounded-lg bg-background">
-        <Table>
+        <Table stickyHeader>
           <TableHeader>
             <TableRow className={LIST_HEADER_ROW}>
               <TableHead className="pl-4">{t("receipts.cols.code")}</TableHead><TableHead>{t("receipts.cols.time")}</TableHead>

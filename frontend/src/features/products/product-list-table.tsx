@@ -29,7 +29,7 @@ export function ProductListTable({ data, isLoading, expanded, onToggle, onEdit }
   const tc = useT(commonNs);
   return (
     <div className="overflow-x-auto rounded-lg bg-background">
-      <Table style={{ minWidth: `calc(100% + ${EXTRA_W})` }}>
+      <Table stickyHeader style={{ minWidth: `calc(100% + ${EXTRA_W})` }}>
         <TableHeader>
           <TableRow className="bg-primary-tint hover:bg-primary-tint">
             <TableHead className="w-28 pl-4">{t("fields.code")}</TableHead>

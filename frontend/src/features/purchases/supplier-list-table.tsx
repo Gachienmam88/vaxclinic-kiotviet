@@ -35,7 +35,7 @@ export function SupplierListTable({ data, loading, columns, expanded, onExpand, 
   const sums = { debt: data?.sumDebt ?? 0, totalBuy: data?.sumTotalBuy ?? 0 };
   return (
     <div className="overflow-hidden rounded-lg bg-white">
-      <Table>
+      <Table stickyHeader>
         <TableHeader><TableRow className={LIST_HEADER_ROW}>
           <TableHead className="w-10 pl-3"><Checkbox aria-label={t("suppliers.table.selectAll")} checked={allChecked}
             onCheckedChange={(on) => onSelect(on ? [...new Set([...selected, ...pageIds])] : selected.filter((id) => !pageIds.includes(id)))} /></TableHead>

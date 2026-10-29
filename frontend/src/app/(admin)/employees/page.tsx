@@ -80,7 +80,7 @@ function EmployeesPage({ link }: { link: DeepLink }) {
 
       <div className="min-w-0 space-y-2.5">
         <div className="min-h-[470px] overflow-hidden rounded-lg bg-white">
-          <Table className="text-[12px]">
+          <Table stickyHeader className="text-[12px]">
             <TableHeader><TableRow className={LIST_HEAD_ROW}>
               <TableHead className="w-9 pl-3"><input type="checkbox" aria-label={t("commissionGrid.selectAll")} className="size-3.5" /></TableHead>
               <TableHead className="w-8" /><TableHead>{t("employee.code")}</TableHead><TableHead>{t("employee.timekeepingCode")}</TableHead>

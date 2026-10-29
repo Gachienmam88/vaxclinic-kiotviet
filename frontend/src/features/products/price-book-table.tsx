@@ -41,7 +41,7 @@ export function PriceBookTable({ data, isLoading, columns, books, editable, code
   const bookOf = (id: string) => books.find((b) => b.id === id);
   return (
     <div className="overflow-x-auto rounded-lg bg-background">
-      <Table>
+      <Table stickyHeader>
         <TableHeader>
           <TableRow className={LIST_HEADER_ROW}>
             <TableHead className="w-32 pl-2">{t("fields.code")}</TableHead>

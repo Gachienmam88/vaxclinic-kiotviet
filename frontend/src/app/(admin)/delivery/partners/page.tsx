@@ -75,7 +75,7 @@ function DeliveryPartnersPage({ link }: { link: DeepLink }) {
             <FileOutput className="size-4" /> {tc("actions.export")}</Button>
         </div>
         <div className="overflow-x-auto rounded-lg bg-background">
-          <Table>
+          <Table stickyHeader>
             <TableHeader><TableRow className={LIST_HEAD_ROW}>
               <TableHead className="pl-4">{t("partner.code")}</TableHead><TableHead>{t("partner.name")}</TableHead><TableHead>{tc("fields.phone")}</TableHead>
               <TableHead className="text-right">{t("partners.totalShipments")}</TableHead><TableHead className="text-right">{t("fields.fee")}</TableHead>

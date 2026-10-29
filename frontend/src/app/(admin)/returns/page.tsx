@@ -74,7 +74,7 @@ function SalesReturnsPage({ link }: { link: DeepLink }) {
             title={t("returns.exportTitle")}><FileOutput className="size-4" /> {tc("actions.export")}</Button>
         </div>
         <div className="overflow-x-auto rounded-lg bg-background">
-          <Table>
+          <Table stickyHeader>
             <TableHeader><TableRow className={LIST_HEAD_ROW}>
               <TableHead className="pl-4">{t("returns.columns.code")}</TableHead><TableHead>{t("returns.columns.time")}</TableHead>
               <TableHead>{t("returns.columns.invoiceCode")}</TableHead><TableHead>{t("returns.columns.customer")}</TableHead>

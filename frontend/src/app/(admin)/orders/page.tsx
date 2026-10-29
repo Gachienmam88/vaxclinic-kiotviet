@@ -70,7 +70,7 @@ function OrdersPage({ link }: { link: DeepLink }) {
             title={t("list.exportHint")}><FileOutput className="size-4" /> {tc("actions.export")}</Button>
         </div>
         <div className="overflow-x-auto rounded-lg bg-background">
-          <Table>
+          <Table stickyHeader>
             <TableHeader><TableRow className={LIST_HEAD_ROW}>
               <TableHead className="pl-4">{t("cols.code")}</TableHead><TableHead>{t("cols.time")}</TableHead><TableHead>{t("cols.customer")}</TableHead>
               <TableHead className="text-right">{t("cols.subtotal")}</TableHead><TableHead className="text-right">{t("cols.total")}</TableHead>

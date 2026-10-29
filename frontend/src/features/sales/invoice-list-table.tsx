@@ -32,7 +32,7 @@ export function InvoiceListTable({ data, cols, expanded, onExpand, isFav, onTogg
   const right = (c: InvoiceColumn) => MONEY_COLUMNS.includes(c) && "text-right";
   const star = (on: boolean) => <Star className={cn("size-4", on ? "fill-[#ffb400] text-[#ffb400]" : "text-muted-foreground")} />;
   return (
-    <Table>
+    <Table stickyHeader>
       <TableHeader><TableRow className={LIST_HEAD_ROW}>
         <TableHead className="w-8 pl-4"><button type="button" onClick={onFavOnly} aria-pressed={favOnly}
           title={favOnly ? t("invoices.table.showAll") : t("invoices.table.favOnly")}>{star(favOnly)}</button></TableHead>

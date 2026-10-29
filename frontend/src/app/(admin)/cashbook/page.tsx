@@ -80,7 +80,7 @@ function CashbookPage({ link }: { link: DeepLink }) {
             </div>))}
         </div>
         <div className="overflow-x-auto rounded-lg bg-background">
-          <Table>
+          <Table stickyHeader>
             <TableHeader><TableRow className={LIST_HEAD_ROW}>
               <TableHead className="pl-4">{t("page.cols.code")}</TableHead><TableHead>{t("page.cols.time")}</TableHead><TableHead>{t("page.cols.category")}</TableHead>
               <TableHead>{t("page.cols.partner")}</TableHead><TableHead className="pr-4 text-right">{t("page.cols.amount")}</TableHead></TableRow></TableHeader>

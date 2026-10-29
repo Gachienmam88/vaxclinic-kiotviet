@@ -48,7 +48,7 @@ function PurchaseReturnsPage({ link }: { link: DeepLink }) {
       sidebar={<PurchaseFilterSidebar filters={filters} statusLabels={statusLabels} personLabel={t("returns.returner")}
         onChange={applyFilters} />}>
       <div className="min-h-[calc(100vh-190px)] overflow-hidden rounded-lg bg-background">
-        <Table>
+        <Table stickyHeader>
           <TableHeader>
             <TableRow className={LIST_HEADER_ROW}>
               <TableHead className="pl-4">{t("returns.cols.code")}</TableHead><TableHead>{t("receipts.cols.time")}</TableHead>

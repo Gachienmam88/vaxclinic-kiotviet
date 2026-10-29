@@ -40,7 +40,7 @@ function StockIssueList({ type, link }: { type: IssueType; link: DeepLink }) {
         onExport={data?.items.length ? () => exportStockIssuesCsv(t, type, data.items, s.branchName) : undefined} />}
       sidebar={<PurchaseFilterSidebar filters={s.filters} statusLabels={statusLabels} onChange={s.applyFilters} />}>
       <div className="min-h-[calc(100vh-190px)] overflow-hidden rounded-lg bg-background">
-        <Table>
+        <Table stickyHeader>
           <TableHeader>
             <TableRow className={LIST_HEADER_ROW}>
               <TableHead className="pl-4">{t(`issue.${cfg.msg}.codeLabel`)}</TableHead><TableHead className="text-right">{t(`issue.${cfg.msg}.valueLabel`)}</TableHead>

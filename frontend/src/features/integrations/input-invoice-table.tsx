@@ -24,7 +24,7 @@ export function InputInvoiceTable({ items, sumTotal }: { items: InputInvoice[] |
   const toggle = (id: string) => setExpanded(expanded === id ? null : id);
   return (
     <div className="overflow-x-auto rounded-lg bg-background">
-      <Table>
+      <Table stickyHeader>
         <TableHeader><TableRow className={LIST_HEAD_ROW}>
           <TableHead className="pl-4">{t("inputInvoices.table.number")}</TableHead><TableHead>{t("inputInvoices.table.date")}</TableHead>
           <TableHead>{t("inputInvoices.filter.supplier")}</TableHead>

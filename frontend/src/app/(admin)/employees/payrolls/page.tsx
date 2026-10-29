@@ -84,7 +84,7 @@ function PayrollsPage({ link }: { link: DeepLink }) {
 
       <div className="min-w-0 space-y-2.5">
         <div className="overflow-hidden rounded-lg bg-white">
-          <Table className="text-[13px]">
+          <Table stickyHeader className="text-[13px]">
             <TableHeader><TableRow className={LIST_HEAD_ROW}>
               <TableHead className="w-10 pl-3">
                 <input type="checkbox" aria-label={t("commissionGrid.selectAll")} className="size-4 accent-primary"

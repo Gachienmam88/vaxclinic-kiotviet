@@ -40,7 +40,7 @@ function StockTakesPage({ link }: { link: DeepLink }) {
         onExport={data?.items.length ? () => exportStockTakesCsv(tr, data.items, s.branchName) : undefined} />}
       sidebar={<PurchaseFilterSidebar filters={s.filters} statusLabels={statusLabels} onChange={s.applyFilters} />}>
       <div className="min-h-[calc(100vh-190px)] overflow-hidden rounded-lg bg-background">
-        <Table>
+        <Table stickyHeader>
           <TableHeader>
             <TableRow className={LIST_HEADER_ROW}>
               <TableHead className="pl-4">{tr("fields.takeCode")}</TableHead><TableHead>{tr("fields.time")}</TableHead><TableHead>{tr("fields.balancedAt")}</TableHead>
