@@ -45,6 +45,12 @@ public class OrderMergeRepository {
      * Phiếu thu cọc còn hiệu lực của các đơn gốc chuyển sang đơn gộp (nguồn ORDER, source_id = đơn gộp): mã phiếu, số tiền,
      * sổ quỹ, công nợ giữ nguyên. Phiếu đã hủy / phiếu chi ở lại đơn gốc làm lịch sử.
      */
+    /** Mã các đơn đang được lập hóa đơn ở máy khác (invoicing_id đã giữ chỗ) — không gộp được. */
+    public List<String> beingInvoiced(List<UUID> ids) {
+        return jdbc.queryForList("select code from customer_orders where id in (:ids) and invoicing_id is not null order by code",
+                new MapSqlParameterSource("ids", ids), String.class);
+    }
+
     public int moveReceipts(List<UUID> fromIds, UUID toId) {
         return jdbc.update("""
                 update cash_vouchers set source_id = :to

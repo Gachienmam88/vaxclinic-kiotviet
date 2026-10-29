@@ -75,6 +75,11 @@ public class OrderMergeService {
             return target;
         }
         Instant since = since();
+        // Kiểm lại ở server mọi điều kiện của danh sách ứng viên (không tin client): đơn đang được lập hóa đơn → không gộp
+        List<String> busy = merges.beingInvoiced(ids);
+        if (!busy.isEmpty()) {
+            throw BusinessException.badRequest("MERGE_NOT_ALLOWED", "Đơn " + busy.get(0) + " không gộp được: đang được lập hóa đơn");
+        }
         for (CustomerOrder o : list) {
             check(o, target, req.branchId(), since);
             rules.checkNotLocked(o.getBranchId(), o.getOrderedAt()); // đơn gốc bị hủy trong kỳ đã khóa sổ → chặn
