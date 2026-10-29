@@ -18,4 +18,4 @@ export const deliverySetter = (d: DraftInvoice, update: (p: Partial<DraftInvoice
 
 /** Ô nhập gạch chân của khung giao hàng (như KiotViet). */
 export const lineField =
-  "h-8 w-full min-w-0 border-0 border-b border-[#c8ccd2] bg-transparent px-0 text-[13px] outline-none placeholder:text-[#9ca3af] focus:border-primary disabled:opacity-60";
+  "h-8 w-full min-w-0 border-0 border-b border-[#c8ccd2] bg-transparent px-0 text-[13px] outline-none placeholder:text-[#9ca3af] focus:border-primary disabled:opacity-60 rounded-none shadow-none focus-visible:border-primary focus-visible:ring-0 dark:bg-transparent";
