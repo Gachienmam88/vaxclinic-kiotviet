@@ -100,6 +100,12 @@ public class CashbookService {
         }
     }
 
+    /**
+     * Nguồn outbox là chi phí kinh doanh → phiếu hạch toán (vào "Chi phí lương" Báo cáo tài chính): chi trả lương (PAYROLL) và
+     * tạm ứng lương (HR_ADVANCE) từ identity-service. Phiếu từ product-service (PURCHASE: trả NCC, NCC hoàn tiền) không hạch toán.
+     */
+    private static final java.util.Set<String> ACCOUNTED_SOURCES = java.util.Set.of("PAYROLL", "HR_ADVANCE");
+
     /** Idempotent: CREATE lặp lại (unique source) bị bỏ qua; CANCEL khi đã hủy cũng bỏ qua. */
     @Transactional
     public void inbound(InboundCashflow in) {
@@ -136,7 +142,7 @@ public class CashbookService {
         v.setCollectorName(in.userName());
         v.setCreatedBy(in.userId());
         v.setCreatedByName(in.userName());
-        v.setAccounting(false); // tiền hàng nhập đã vào giá vốn
+        v.setAccounting(ACCOUNTED_SOURCES.contains(in.sourceType())); // lương / tạm ứng = chi phí; tiền hàng NCC đã vào giá vốn
         v.setSourceType(in.sourceType());
         v.setSourceId(in.sourceId());
         v.setNote(in.note());

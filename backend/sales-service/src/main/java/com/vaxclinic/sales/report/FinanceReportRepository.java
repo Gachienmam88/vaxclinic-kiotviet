@@ -20,6 +20,9 @@ public class FinanceReportRepository {
     private static final String EXPENSE = "v.voucher_type = 'PAYMENT' and v.status = 'PAID' and v.accounting"
             + " and coalesce(v.partner_type, '') <> 'SUPPLIER' and coalesce(v.source_type, '') not in ('RETURN', 'PURCHASE')";
 
+    /** Chi phí lương: phiếu chi trả lương / tạm ứng lương từ Nhân viên (PAYROLL, HR_ADVANCE) hoặc phiếu chi tay loại có chữ "lương". */
+    private static final String SALARY = "(coalesce(v.source_type, '') in ('PAYROLL', 'HR_ADVANCE') or v.category ilike '%lương%')";
+
     private final NamedParameterJdbcTemplate jdbc;
 
     public FinanceReportRepository(NamedParameterJdbcTemplate jdbc) {
@@ -42,8 +45,8 @@ public class FinanceReportRepository {
                   select %s, 0, 0, 0, 0, 0, -d.amount, 0, 0, 0, 0 from customer_debt_ledger d
                   where d.doc_type = 'DISCOUNT' and d.occurred_at >= :from and d.occurred_at < :to
                   union all
-                  select %s, 0, 0, 0, 0, 0, 0, case when v.category ilike '%%lương%%' then v.amount else 0 end,
-                    case when v.category ilike '%%lương%%' then 0 else v.amount end, 0, 0
+                  select %s, 0, 0, 0, 0, 0, 0, case when %s then v.amount else 0 end,
+                    case when %s then 0 else v.amount end, 0, 0
                   from cash_vouchers v where %s%s
                   union all
                   select %s, 0, 0, 0, 0, 0, 0, 0, 0, v.amount, 0 from cash_vouchers v
@@ -55,7 +58,7 @@ public class FinanceReportRepository {
                 select m, sum(s) s, sum(d) d, sum(rv) rv, sum(cogs) cogs, sum(fee) fee, sum(pd) pd, sum(sal) sal,
                   sum(oe) oe, sum(oi) oi, sum(df) df from x group by m order by m""".formatted(
                 M.formatted("i.sold_at"), f.invoiceWhere(), M.formatted("r.returned_at"), f.returnWhere(),
-                M.formatted("d.occurred_at"), M.formatted("v.occurred_at"), EXPENSE, voucherScope,
+                M.formatted("d.occurred_at"), M.formatted("v.occurred_at"), SALARY, SALARY, EXPENSE, voucherScope,
                 M.formatted("v.occurred_at"), voucherScope, M.formatted("l.occurred_at")), p,
                 (rs, n) -> new MonthRow(rs.getString("m"), rs.getBigDecimal("s"), rs.getBigDecimal("d"), rs.getBigDecimal("rv"),
                         rs.getBigDecimal("cogs"), rs.getBigDecimal("fee"), rs.getBigDecimal("pd"), rs.getBigDecimal("sal"),

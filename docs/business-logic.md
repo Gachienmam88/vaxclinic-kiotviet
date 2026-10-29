@@ -1887,7 +1887,7 @@ Quy tắc dùng chung:
   - Người thu/chi: mặc định là người thao tác. `accounting` theo checkbox (FE mặc định bật). `affects_debt` luôn false.
   - Hệ quả: phiếu thu tay gắn khách **không** làm thay đổi công nợ khách.
 - **Hạch toán** (`accounting`): phiếu được tính vào kết quả kinh doanh.
-  - Các phiếu tự động đều `accounting = false`: thu khi bán (`InvoiceWriter.java:112`), thu nợ (`DebtService.java:82`), outbox NCC (`CashbookService.java:139`), đối soát giao hàng (`DeliverySettlementService.java:134`).
+  - Các phiếu tự động đều `accounting = false`: thu khi bán (`InvoiceWriter.java:112`), thu nợ (`DebtService.java:82`), outbox NCC (`CashbookService.java:145`; phiếu lương / tạm ứng từ HR thì `accounting = true`, audit #10), đối soát giao hàng (`DeliverySettlementService.java:134`).
   - Sổ doanh thu lấy "chi phí khác" từ: phiếu chi PAID có `accounting`, trừ phiếu NCC và nguồn RETURN/PURCHASE (`BE/accounting/RevenueBookRepository.java:72-80`).
 - **Hủy phiếu** (`CashbookService.java:82-101`):
   - Nguồn INVOICE, INVOICE_EXTRA, PURCHASE, RETURN, ORDER, DELIVERY bị chặn với lỗi `VOUCHER_AUTO`: phải hủy từ chứng từ gốc.
@@ -3201,10 +3201,10 @@ Quy ước chung (đọc từ code):
 
 - Ghi outbox **cùng transaction** nghiệp vụ (`Propagation.MANDATORY`); bảng `outbox_cashflows(id, payload, attempts, last_error, sent_at, created_at)` + index pending (`PS-res/db/migration/V3__internal_stock_docs.sql:12-21`; identity `V4__hr_schema.sql:189-198`).
 - Gửi: job `@Scheduled(fixedDelay = app.outbox-delay-ms, mặc định 5000ms)`, lấy tối đa 50 bản ghi chưa gửi theo `created_at`; lỗi → `attempts+1`, `last_error`, **dừng ở bản ghi lỗi đầu tiên** để giữ thứ tự CREATE→CANCEL; không backoff, không giới hạn số lần thử (`PS/internal/CashflowOutbox.java:146-163`, `CashflowOutboxRepository.java:25-36`; `ID/hr/HrCashflowOutbox.java:93-109`).
-- Nhận (`SS/cashbook/CashbookService.java:103-145`, quyền `internal` `SS/cashbook/CashbookController.java:112-116`): tra phiếu theo `(sourceType, sourceId)`; CANCEL → hủy nếu có; UPDATE → sửa occurredAt/collector/note nếu chưa hủy; CREATE đã có → bỏ qua; mới → tạo phiếu với `accounting = false` ("tiền hàng nhập đã vào giá vốn") (:139). Unique index `uq_cash_vouchers_source` chỉ cho `source_type IN ('INVOICE','PURCHASE')` (`SS-res/db/migration/V1__init_sales_schema.sql:135-137`) → 2 lần gửi song song của PURCHASE bị rollback và gửi lại.
+- Nhận (`SS/cashbook/CashbookService.java:103-145`, quyền `internal` `SS/cashbook/CashbookController.java:112-116`): tra phiếu theo `(sourceType, sourceId)`; CANCEL → hủy nếu có; UPDATE → sửa occurredAt/collector/note nếu chưa hủy; CREATE đã có → bỏ qua; mới → tạo phiếu; `accounting = true` chỉ cho nguồn `PAYROLL`, `HR_ADVANCE` (chi phí lương), còn lại (PURCHASE) `false` vì tiền hàng đã vào giá vốn (audit #10). Unique index `uq_cash_vouchers_source` cho `source_type IN ('INVOICE','PURCHASE','PAYROLL','HR_ADVANCE')` (`SS-res/db/migration/V22__hr_cashflow_accounting_and_source_index.sql`; migration này cũng bật `accounting` cho phiếu lương / tạm ứng cũ) → bản gửi song song trùng nguồn lỗi unique (500), outbox gửi lại rơi vào nhánh "đã có".
 - Phiếu tự động (`INVOICE, INVOICE_EXTRA, PURCHASE, RETURN, ORDER, DELIVERY`) không hủy tay được ở Sổ quỹ → 400 `VOUCHER_AUTO` (`CashbookService.java:84-91`); phiếu tay với NCC bị chặn `SUPPLIER_VOUCHER_VIA_SUPPLIER_SCREEN` (:56-60).
 - Gọi đồng bộ khác: sales→product `POST /internal/products/tax-info` (≤ 500 id, chuỗi nhóm hàng đệ quy ≤ 20 cấp) (`PS/internal/InternalProductTaxController.java:20-35`, `ProductTaxInfoRepository.java:30-47`); sales→identity `GET /internal/settings/tax` (`ID/settings/TaxSettingsController.java:108-112`); lỗi → 503 `TAX_LOOKUP_DOWN` (`SS/invoice/TaxReductionLookupClient.java:52-74`); identity→sales `GET /internal/seller-revenue` (hoa hồng) (`ID/hr/commission/SellerRevenueClient.java:38`); integration→sales `/internal/invoices/{id}`; sales→integration `/internal/einvoices/*`.
-- **Giới hạn**: phiếu PAYROLL/HR_ADVANCE không có unique index (chỉ kiểm tra tồn tại trước khi tạo); phiếu lương từ outbox `accounting=false` nên **không** vào cột "Chi phí lương" của Báo cáo tài chính (cột này chỉ lấy phiếu `accounting`) (`SS/report/FinanceReportRepository.java:20-21,45-47`). Bản ghi outbox lỗi vĩnh viễn chặn cả hàng đợi.
+- **Giới hạn**: ~~phiếu PAYROLL/HR_ADVANCE không unique index, `accounting=false` → không vào "Chi phí lương"~~ — đã sửa (audit #10). Bản ghi outbox lỗi vĩnh viễn chặn cả hàng đợi. Phiếu lương / tạm ứng hạch toán nên cũng hiện trong "Chi phí khác" của sổ doanh thu HKD (`/accounting/revenue/expenses`, nhóm theo loại).
 
 ---
 
@@ -3364,7 +3364,7 @@ Quy ước chung (đọc từ code):
 | cogs | giá vốn bán − giá vốn trả |
 | returnFee | Σ `r.fee` |
 | paymentDiscount | −Σ `customer_debt_ledger.amount` loại DISCOUNT (**không lọc chi nhánh**) (:42-43) |
-| salary | phiếu chi PAID `accounting`, category chứa "lương", trừ NCC/RETURN/PURCHASE (:20-21,45-47) |
+| salary | phiếu chi PAID `accounting`, trừ NCC/RETURN/PURCHASE, nguồn `PAYROLL`/`HR_ADVANCE` hoặc category chứa "lương" (`SALARY`, `SS/report/FinanceReportRepository.java:22-24`) |
 | otherExpense | phiếu chi như trên, category không chứa "lương" |
 | otherIncome | phiếu thu PAID `accounting` (:49-50) |
 | deliveryFee | −Σ `delivery_partner_ledger` FEE (phí giao hàng cửa hàng chịu) (:52-53) |
@@ -3428,7 +3428,7 @@ Quy ước chung (đọc từ code):
 ### Câu hỏi chưa giải quyết
 - Dashboard và Sổ doanh thu tính phí trả hàng vào doanh thu thuần, còn Báo cáo bán hàng/tài chính tách phí trả thành cột riêng — có chủ ý không?
 - `/accounting/revenue/*`, `/accounting/stock/summary`, `/reports/customers/debt`, `paymentDiscount` không giới hạn chi nhánh người dùng — có chủ ý không?
-- Phiếu lương/tạm ứng từ HR outbox có `accounting=false` nên không vào "Chi phí lương" của báo cáo tài chính — có đúng ý đồ không?
+- ~~Phiếu lương/tạm ứng từ HR outbox `accounting=false`~~ — đã sửa (audit #10): hạch toán, vào "Chi phí lương".
 - Mã tính chất hóa đơn đầu vào: XML (`TCHDon` 1=thay thế, 2=điều chỉnh) và cổng (`tchat` 2=điều chỉnh, 3=thay thế) dùng hai bảng mã khác nhau — chưa kiểm chứng với dữ liệu thật.
 
 
