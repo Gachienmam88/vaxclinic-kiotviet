@@ -9,7 +9,10 @@ import { useT } from "@/lib/i18n";
 import { formatMoney, formatNumber } from "@/lib/format";
 import { commonNs } from "@/messages/common";
 import { saleNs } from "@/messages/sale";
+import { SaleBranchPicker } from "./sale-branch-picker";
 import { SaleChannelPicker } from "./sale-channel-picker";
+import { SalePrescriptionFields } from "./sale-prescription-fields";
+import { SaleTaxReductionRow } from "./sale-tax-reduction-row";
 import { SaleCustomerPicker } from "./sale-customer-picker";
 import { SalePaidSection } from "./sale-paid-section";
 import { SalePriceBookSelect } from "./sale-price-book-select";
@@ -20,6 +23,7 @@ import { cartTotals } from "./use-sale-tabs";
 import type { DraftInvoice, SaleCustomer } from "./sale-types";
 import type { SalePriceBook } from "./use-sale-price-book";
 import type { SaleLookups } from "./use-sale-lookups";
+import type { SaleBranch } from "./use-sale-branch";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
 
 type Props = {
@@ -30,6 +34,7 @@ type Props = {
   paying: boolean;
   priceBook: SalePriceBook;
   lookups: SaleLookups;
+  branch: SaleBranch;
 };
 
 /**
@@ -49,7 +54,7 @@ export function customerPatch(customer: SaleCustomer | null, draft: DraftInvoice
  * Tab đặt hàng: "Khách thanh toán" là tiền đặt cọc, nút ĐẶT HÀNG, Thời gian giao hàng; hóa đơn từ đơn đặt hàng: trừ tiền cọc.
  * Bán giao hàng: phần khách chưa trả = Thu hộ (COD) của vận đơn.
  */
-export function SaleCheckoutPanel({ draft, branchId, update, onPay, paying, priceBook, lookups }: Props) {
+export function SaleCheckoutPanel({ draft, branchId, update, onPay, paying, priceBook, lookups, branch }: Props) {
   const { settings } = useSaleSettings();
   const tr = useT(saleNs);
   const tc = useT(commonNs);
@@ -69,6 +74,7 @@ export function SaleCheckoutPanel({ draft, branchId, update, onPay, paying, pric
   return (
     <div className="flex h-full flex-col text-[13px]">
       <div className="flex h-8 items-center gap-2">
+        <SaleBranchPicker branch={branch} />
         <SaleSellerPicker value={draft.sellerId} onChange={(sellerId) => update({ sellerId })} />
         <SaleChannelPicker value={draft.salesChannel ?? "DIRECT"} lookups={lookups} onChange={(salesChannel) => update({ salesChannel })} />
         <span className="ml-auto"><SaleDateTime /></span>
@@ -77,6 +83,7 @@ export function SaleCheckoutPanel({ draft, branchId, update, onPay, paying, pric
         <div className="min-w-0 flex-1"><SaleCustomerPicker value={draft.customer} branchId={branchId} onChange={(c) => update(customerPatch(c, draft))} /></div>
         <SalePriceBookSelect options={priceBook.options} value={priceBook.value} onChange={priceBook.select} />
       </div>
+      <SalePrescriptionFields draft={draft} update={update} />
       {ref && <p className="mt-3 text-[13px] font-bold text-[#16a34a]">{tr(order ? "checkout.orderRef" : "checkout.invoiceFromOrder")} / <DocCodeLink code={ref.code} newTab className="font-medium" /></p>}
       <div className="mt-4 min-h-0 flex-1 space-y-1 overflow-y-auto border-t border-dashed border-[#d6d9de] pt-3">
         <SummaryRow label={tr("checkout.subtotal")} sub={formatNumber(t.quantity)}>{formatMoney(t.subtotal)}</SummaryRow>
@@ -84,6 +91,7 @@ export function SaleCheckoutPanel({ draft, branchId, update, onPay, paying, pric
           <NumberInput aria-label={tr("checkout.invoiceDiscount")} className={`${underlineInput} w-[104px] text-[15px]`} value={t.discount}
             onValueChange={(discount) => update({ discount, discountPercent: null })} />
         </SummaryRow>
+        <SaleTaxReductionRow draft={draft} amount={t.taxCut} update={update} />
         <SummaryRow label={tr("checkout.due")} bold><span className="text-[17px] text-primary">{formatMoney(t.total)}</span></SummaryRow>
         {t.deposit > 0 && <SummaryRow label={tr(order ? "checkout.alreadyPaid" : "checkout.deposited")}>{formatMoney(t.deposit)}</SummaryRow>}
         <SalePaidSection draft={draft} paid={t.paid} due={t.due} update={update} onQr={() => { update({ paymentMethod: "TRANSFER", extraPayments: [] }); setQr(true); }}

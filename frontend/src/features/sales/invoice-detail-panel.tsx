@@ -20,6 +20,7 @@ import { InvoiceDetailFooter } from "./invoice-detail-footer";
 import { InvoiceDetailHeader, type InvoiceInfoDraft } from "./invoice-detail-header";
 import { InvoiceLinesTable, InvoicePaymentHistory, InvoiceTotals } from "./invoice-detail-sections";
 import { InvoiceEInvoiceCard } from "./invoice-einvoice-card";
+import { InvoicePrescriptionInfo } from "./invoice-prescription-info";
 import { invoiceState } from "./invoice-filter-model";
 import { DETAIL_PANEL, DETAIL_TAB, DETAIL_TABS_LIST } from "./invoice-list-kit";
 import { InvoiceTaxDialog } from "./invoice-tax-dialog";
@@ -77,6 +78,7 @@ export function InvoiceDetailPanel({ id, onClose }: { id: string; onClose?: () =
             <InvoiceDetailHeader inv={inv} state={invoiceState(inv.status, inv.shipment?.status)} f={f} set={set} editable={active} />
             <InvoiceEInvoiceCard inv={inv} active={active} />
             <InvoiceShipmentInfo inv={inv} withMeta={false} />
+            <InvoicePrescriptionInfo inv={inv} />
             <InvoiceLinesTable inv={inv} />
             <div className="flex flex-col-reverse gap-4 md:flex-row md:items-start">
               <textarea className="mt-6 min-h-24 w-full max-w-[750px] rounded-md border px-3 py-2 outline-none placeholder:text-muted-foreground focus-visible:border-primary disabled:bg-muted/40"

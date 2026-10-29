@@ -19,7 +19,11 @@ export function SaleTaxReductionRow({ draft, amount, update }: { draft: DraftInv
   return (
     <SummaryRow label={<>
       {t("taxReduction.label")}
-      <Info className="size-3.5 text-[#4b5563]" aria-label={t("taxReduction.tooltip")}><title>{t("taxReduction.tooltip")}</title></Info>
+      <span className="group relative inline-flex" tabIndex={0} aria-label={t("taxReduction.tooltip")}>
+        <Info className="size-4 text-[#4b5563]" />
+        <span role="tooltip" className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-1.5 hidden w-44 -translate-x-1/2 rounded-md bg-popover px-3 py-2 text-center text-[12px] font-normal text-foreground shadow-lg ring-1 ring-foreground/10 group-hover:block group-focus:block">
+          {t("taxReduction.tooltip")}</span>
+      </span>
       <Switch className="ml-4" aria-label={t("taxReduction.label")} checked={!!draft.taxReduction}
         onCheckedChange={(on) => update({ taxReduction: on })} />
     </>}><span className="text-[#2171bc]">{formatMoney(amount)}</span></SummaryRow>

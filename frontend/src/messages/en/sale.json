@@ -501,5 +501,22 @@
     "returnN": "Return {n}",
     "scrollLeft": "Scroll tabs left",
     "scrollRight": "Scroll tabs right"
+  },
+  "branch": {
+    "label": "Branch"
+  },
+  "taxReduction": {
+    "label": "Tax reduction",
+    "tooltip": "Apply VAT reduction under Resolution 204/2025/QH15"
+  },
+  "prescription": {
+    "label": "Prescription sale",
+    "fields": {
+      "code": "Prescription code",
+      "doctor": "Prescribing doctor",
+      "facility": "Medical facility",
+      "diagnosis": "Diagnosis"
+    },
+    "notConnected": "Not connected to the National e-Prescription System — prescription details are only stored on the invoice."
   }
 }

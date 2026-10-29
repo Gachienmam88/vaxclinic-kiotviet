@@ -262,6 +262,13 @@
       "skipped": "{count}件は前回取り込み済みのためスキップしました。",
       "nothingSaved": "ファイルに {count} 件のエラーがあります — 請求書は保存されていません。修正して再度取り込んでください。",
       "lineError": "{line} 行目: {message}"
+    },
+    "prescription": {
+      "title": "処方箋販売",
+      "code": "処方箋番号",
+      "doctor": "処方医",
+      "facility": "医療機関",
+      "diagnosis": "診断"
     }
   },
   "refund": {

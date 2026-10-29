@@ -35,6 +35,7 @@ import { useSalePriceBook } from "./use-sale-price-book";
 import { returnProblem, submitReturnDoc } from "./use-sale-return-submit";
 import { SaleSettingsProvider, useSaleSettings } from "./use-sale-settings";
 import { focusCustomerSearch, toggleFullscreen, useSaleShortcuts } from "./use-sale-shortcuts";
+import { useSaleBranch } from "./use-sale-branch";
 import { cartTotals, useSaleTabs } from "./use-sale-tabs";
 import { openPicked, useSaleUrlDrafts } from "./use-sale-url-drafts";
 import { useSaleNewTabParam } from "./use-sale-new-tab-param";
@@ -52,7 +53,8 @@ function SaleScreenBody() {
   const { settings, set } = useSaleSettings();
   const { data: me } = useCurrentUser();
   const { data: users = [] } = useUserLookup();
-  const branchId = me?.user.branches[0]?.id ?? "";
+  const branch = useSaleBranch(me?.user.id, me?.user.branches ?? []); // đổi chi nhánh → tải lại danh mục / bảng giá
+  const branchId = branch.id;
   const userId = me?.user.id ?? "";
   const catalog = useSaleCatalog(branchId);
   const tabs = useSaleTabs(userId, { paymentMethod: settings.defaultPaymentMethod, paidEqualsDue: settings.paidEqualsDue });
@@ -119,7 +121,7 @@ function SaleScreenBody() {
       const s = sheets[i];
       return { ...tabs.blankTab(label), customer: s.customer, lines: s.lines.map((l) => ({ key: newId(), productId: l.product.id,
         productName: l.product.name, unitId: l.unit.id, units: l.product.units, quantity: l.quantity, unitPrice: l.unitPrice,
-        discount: l.discount, note: "", taxCode: l.product.taxCode, priceEdited: true })).reverse() };
+        discount: l.discount, note: "", taxCode: l.product.taxCode, taxReduction: !!l.product.taxReduction, priceEdited: true })).reverse() };
     }, sheets.length);
   }
 
@@ -150,7 +152,7 @@ function SaleScreenBody() {
         pending={queue.queue.length} userName={me.user.fullName} onAction={setDialog} />
       <main className="flex min-h-0 flex-1 gap-2 p-2">
         {deliveryView ? (
-          <SaleDeliveryLayout draft={d} update={tabs.update} lookups={lookups} branchId={branchId} cart={cart} onPay={pay} paying={paying} />
+          <SaleDeliveryLayout draft={d} update={tabs.update} lookups={lookups} branch={branch} cart={cart} onPay={pay} paying={paying} />
         ) : (<>
         <section className="flex min-w-0 flex-1 flex-col gap-2">
           {!cartView ? (
@@ -169,7 +171,7 @@ function SaleScreenBody() {
         <aside className="flex w-[406px] shrink-0 flex-col rounded-lg bg-background px-4 pt-2.5 pb-4">
           {d.kind === "RETURN"
             ? <ReturnCheckout draft={d} branchId={branchId} update={tabs.update} onSubmit={pay} busy={paying} />
-            : <SaleCheckoutPanel draft={d} branchId={branchId} update={tabs.update} onPay={pay} paying={paying} priceBook={priceBook} lookups={lookups} />}
+            : <SaleCheckoutPanel draft={d} branchId={branchId} update={tabs.update} onPay={pay} paying={paying} priceBook={priceBook} lookups={lookups} branch={branch} />}
         </aside>
         </>)}
       </main>

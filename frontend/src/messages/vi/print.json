@@ -1,6 +1,7 @@
 {
   "types": {
     "INVOICE": "Hóa đơn",
+    "DELIVERY_INVOICE": "Hóa đơn giao hàng",
     "SALES_RETURN": "Trả hàng",
     "CASH_RECEIPT": "Phiếu thu",
     "CASH_PAYMENT": "Phiếu chi",
@@ -91,6 +92,16 @@
     "paidToSupplier": "Đã trả NCC",
     "receiptCode": "Mã phiếu nhập",
     "supplierDue": "NCC cần trả",
-    "supplierPaid": "NCC đã trả"
+    "supplierPaid": "NCC đã trả",
+    "receiverName": "Tên người nhận",
+    "receiverPhone": "SĐT người nhận",
+    "shipmentCode": "Mã vận đơn",
+    "codAmount": "Tiền thu hộ (COD)",
+    "taxReduction": "Giảm thuế",
+    "prescriptionSummary": "Thông tin đơn thuốc",
+    "prescriptionCode": "Mã đơn thuốc",
+    "prescriber": "Bác sĩ kê đơn",
+    "clinic": "Cơ sở khám",
+    "diagnosis": "Chẩn đoán"
   }
 }

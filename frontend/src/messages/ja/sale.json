@@ -498,5 +498,22 @@
     "returnN": "返品 {n}",
     "scrollLeft": "タブを左へスクロール",
     "scrollRight": "タブを右へスクロール"
+  },
+  "branch": {
+    "label": "支店"
+  },
+  "taxReduction": {
+    "label": "減税",
+    "tooltip": "決議204/2025/QH15に基づく減税を適用"
+  },
+  "prescription": {
+    "label": "処方箋販売",
+    "fields": {
+      "code": "処方箋番号",
+      "doctor": "処方医",
+      "facility": "医療機関",
+      "diagnosis": "診断"
+    },
+    "notConnected": "国家電子処方箋システムには未接続です。処方箋情報は請求書にのみ保存されます。"
   }
 }

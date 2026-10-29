@@ -5,6 +5,7 @@ import { useT } from "@/lib/i18n";
 import { saleNs, type SaleT } from "@/messages/sale";
 import { migrateDraft } from "./sale-price-book-pricing";
 import { KEYS, load, newId, save } from "./sale-storage";
+import { taxReductionActive, taxReductionAmount } from "./sale-tax-reduction";
 import type { CartLine, DraftInvoice } from "./sale-types";
 
 /** Mặc định tab mới theo Thiết lập → Thanh toán (phương thức mặc định; "Tiền khách thanh toán bằng khách cần trả"). */
@@ -136,7 +137,10 @@ export function cartTotals(t: DraftInvoice) {
   const subtotal = t.lines.reduce((s, l) => s + Math.round(l.quantity * (l.unitPrice - l.discount)), 0);
   const raw = t.discountPercent != null ? (subtotal * t.discountPercent) / 100 : t.discount;
   const discount = Math.min(Math.round(raw), subtotal);
-  const total = subtotal - discount;
+  // Giảm thuế (Nghị quyết 204/2025/QH15): chỉ hóa đơn bán, khi bật và trong thời gian áp dụng
+  const taxCut = t.taxReduction && t.kind !== "ORDER" && t.kind !== "RETURN" && taxReductionActive()
+    ? taxReductionAmount(t.lines, subtotal, subtotal - discount) : 0;
+  const total = subtotal - discount - taxCut;
   const quantity = t.lines.reduce((s, l) => s + l.quantity, 0);
   const deposit = (t.orderOf ?? t.fromOrder)?.deposit ?? 0;
   const due = Math.max(0, total - deposit);
@@ -144,7 +148,7 @@ export function cartTotals(t: DraftInvoice) {
   const paid = t.paid ?? (t.kind === "ORDER" || (t.mode === "DELIVERY" && !t.editOf) ? 0 : due);
   // Tắt "Thu hộ tiền (COD)" → không thu hộ, phần chưa trả ghi công nợ khách
   const codOn = t.mode === "DELIVERY" && t.kind !== "ORDER" && t.delivery?.codEnabled !== false;
-  return { subtotal, discount, total, quantity, deposit, due, paid, cod: codOn ? Math.max(0, due - paid) : 0 };
+  return { subtotal, discount, taxCut, total, quantity, deposit, due, paid, cod: codOn ? Math.max(0, due - paid) : 0 };
 }
 
 export type SaleTabs = ReturnType<typeof useSaleTabs>;

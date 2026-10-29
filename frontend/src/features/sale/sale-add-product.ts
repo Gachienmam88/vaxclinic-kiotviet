@@ -38,6 +38,6 @@ export function addProductToTab(t: SaleT, tabs: SaleTabs, p: CatalogProduct, uni
   if (r.warning) toast.warning(`${p.name}: ${priceWarningText(t, r.warning)}`);
   const key = newId();
   tabs.setLines((lines) => [{ key, productId: p.id, productName: p.name, unitId: unit.id, units: p.units, quantity: 1,
-    unitPrice: r.price, discount: 0, note: "", taxCode: p.taxCode, priceEdited: false }, ...lines]);
+    unitPrice: r.price, discount: 0, note: "", taxCode: p.taxCode, taxReduction: !!p.taxReduction, priceEdited: false }, ...lines]);
   return key;
 }

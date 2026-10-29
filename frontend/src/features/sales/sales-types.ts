@@ -46,6 +46,8 @@ export type InvoiceLine = {
   id: string; lineNo: number; productId: string; unitId: string; productCode: string; productName: string;
   unitName: string; quantity: number; unitPrice: number; discount: number; price: number; amount: number;
   cost: number; lots: string | null; note: string | null; taxCode: string | null; returnedQuantity: number;
+  /** Dòng được giảm thuế 10% → 8% (Nghị quyết 204/2025/QH15). */
+  taxReduced?: boolean;
 };
 
 export type InvoicePayment = {
@@ -64,6 +66,9 @@ export type Invoice = {
   shipment: import("@/features/delivery/delivery-types").ShipmentInfo | null;
   /** Địa chỉ khách ghép "địa chỉ, Phường/Xã, Tỉnh/Thành phố" (null: khách lẻ / chưa có địa chỉ). */
   customerAddress?: string | null;
+  /** Giảm thuế GTGT (Nghị quyết 204/2025/QH15) đã trừ trong total; prescription: "Bán thuốc theo đơn" (null = không). */
+  taxReduction?: number;
+  prescription?: { code: string | null; doctor: string | null; facility: string | null; diagnosis: string | null } | null;
 };
 
 export type InvoiceListItem = {

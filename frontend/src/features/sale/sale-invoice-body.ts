@@ -1,7 +1,7 @@
 import { cartTotals } from "./use-sale-tabs";
 import type { SaleT } from "@/messages/sale";
 import { splitPayments } from "./sale-payment-split";
-import type { DeliveryDraft, DraftInvoice } from "./sale-types";
+import type { DeliveryDraft, DraftInvoice, Prescription } from "./sale-types";
 
 /**
  * Body gửi POST /invoices (bán mới / offline queue / tạo hóa đơn từ đơn đặt hàng — kèm orderId) và PUT /invoices/{id}.
@@ -18,14 +18,21 @@ export function toBody(d: DraftInvoice, branchId: string, sellerName: string | u
     paymentMethod: d.paymentMethod, note: d.note, offline, orderId: d.fromOrder?.orderId ?? null,
     priceBookId: d.priceBookId, priceBookName: d.priceBookId ? d.priceBookName ?? null : null, salesChannel: d.salesChannel || "DIRECT",
     delivery: d.mode === "DELIVERY" && d.kind !== "ORDER" && d.delivery ? deliveryBody(d.delivery) : null,
+    taxReduction: d.kind !== "ORDER" && !!d.taxReduction,
+    prescription: d.kind !== "ORDER" && d.prescription ? prescriptionBody(d.prescription) : null,
     expectedDeliveryAt: d.kind === "ORDER" && d.expectedDeliveryAt ? new Date(d.expectedDeliveryAt).toISOString() : null,
     lines: d.lines.map((l) => {
       const u = l.units.find((x) => x.id === l.unitId)!;
       return { productId: l.productId, unitId: l.unitId, productCode: u.code, productName: l.productName, unitName: u.unitName,
-        quantity: l.quantity, unitPrice: l.unitPrice, discount: l.discount, note: l.note || null, taxCode: l.taxCode };
+        quantity: l.quantity, unitPrice: l.unitPrice, discount: l.discount, note: l.note || null, taxCode: l.taxCode,
+        taxReducible: !!l.taxReduction };
     }),
   };
 }
+
+/** Đơn thuốc: bỏ khoảng trắng, ô trống → null. */
+const prescriptionBody = (p: Prescription) => ({ code: p.code.trim() || null, doctor: p.doctor.trim() || null,
+  facility: p.facility.trim() || null, diagnosis: p.diagnosis.trim() || null });
 
 const deliveryBody = (v: DeliveryDraft) => ({
   partnerId: v.partnerId, receiverName: v.receiverName.trim(), receiverPhone: v.receiverPhone.trim(),

@@ -6,6 +6,7 @@ import { formatMoney, formatNumber } from "@/lib/format";
 import { useT } from "@/lib/i18n";
 import { saleNs } from "@/messages/sale";
 import { SaleEInvoiceBox } from "./sale-einvoice-dialog";
+import { SaleTaxReductionRow } from "./sale-tax-reduction-row";
 import { SummaryRow, underlineInput } from "./sale-ui-parts";
 import { cartTotals } from "./use-sale-tabs";
 import type { DraftInvoice } from "./sale-types";
@@ -30,6 +31,7 @@ export function SaleDeliveryTotalsCard({ draft, update }: { draft: DraftInvoice;
           <NumberInput aria-label={t("checkout.invoiceDiscount")} className={`${underlineInput} w-[104px] text-right text-[15px]`} value={totals.discount}
             onValueChange={(discount) => update({ discount, discountPercent: null })} />
         </SummaryRow>
+        <SaleTaxReductionRow draft={draft} amount={totals.taxCut} update={update} />
         <SummaryRow label={t("checkout.due")} bold><span className="text-[17px] text-primary">{formatMoney(totals.total)}</span></SummaryRow>
         {totals.deposit > 0 && <SummaryRow label={t("checkout.deposited")}>{formatMoney(totals.deposit)}</SummaryRow>}
         {draft.kind !== "RETURN" && <SaleEInvoiceBox plain value={draft.einvoiceBuyer} customer={draft.customer}

@@ -262,6 +262,13 @@
       "skipped": "{count} hóa đơn đã import ở lần trước, bỏ qua.",
       "nothingSaved": "File có {count} lỗi — chưa lưu hóa đơn nào. Sửa file rồi import lại.",
       "lineError": "Dòng {line}: {message}"
+    },
+    "prescription": {
+      "title": "Bán thuốc theo đơn",
+      "code": "Mã đơn thuốc",
+      "doctor": "Bác sĩ kê đơn",
+      "facility": "Cơ sở khám",
+      "diagnosis": "Chẩn đoán"
     }
   },
   "refund": {

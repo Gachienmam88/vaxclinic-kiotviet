@@ -1,7 +1,7 @@
 import type viPrint from "@/messages/vi/print.json";
 
-/** 6 loại mẫu in A5: trường dùng được, dữ liệu mẫu để xem trước, mẫu mặc định. */
-export type PrintType = "INVOICE" | "SALES_RETURN" | "CASH_RECEIPT" | "CASH_PAYMENT" | "PURCHASE_RECEIPT" | "PURCHASE_RETURN";
+/** 7 loại mẫu in A5: trường dùng được, dữ liệu mẫu để xem trước, mẫu mặc định. */
+export type PrintType = "INVOICE" | "DELIVERY_INVOICE" | "SALES_RETURN" | "CASH_RECEIPT" | "CASH_PAYMENT" | "PURCHASE_RECEIPT" | "PURCHASE_RETURN";
 
 /** Khóa nhãn trường trong namespace print: hiển thị bằng t(`fields.${label}`) (mã trường {Ten_Truong} giữ nguyên). */
 export type PrintFieldLabel = keyof typeof viPrint.fields;
@@ -50,6 +50,39 @@ const VOUCHER = (title: string, person: string, signer: string) => `${HEADER}
 <td class="c"><b>Người lập phiếu</b></td><td class="c"><b>${signer}</b></td><td class="c"><b>Thủ quỹ</b></td>
 </tr></table>`;
 
+/** Giảm thuế (Nghị quyết 204/2025/QH15) + "Bán thuốc theo đơn". */
+const TAX_RX: Field[] = [["Giam_Thue", "taxReduction"], ["Thong_Tin_Don_Thuoc", "prescriptionSummary"],
+  ["Ma_Don_Thuoc", "prescriptionCode"], ["Bac_Si_Ke_Don", "prescriber"], ["Co_So_Kham", "clinic"], ["Chan_Doan", "diagnosis"]];
+
+/**
+ * Hóa đơn giao hàng (in sau khi thanh toán ở Bán giao hàng): logo + tên cửa hàng, địa chỉ / hotline / MST, số HĐ; khung
+ * Khách hàng / SĐT / Địa chỉ người nhận, bên phải SĐT / địa chỉ cửa hàng; bảng TT | Tên Hàng | SL | Đơn giá | Thành tiền,
+ * Cộng, Tổng Cộng; ngày + NGƯỜI BÁN HÀNG. Dữ liệu cửa hàng lấy từ Thiết lập (không dùng thương hiệu khác).
+ */
+const DELIVERY_INVOICE_TEMPLATE = `<table><tr>
+<td style="width:40%;vertical-align:middle">{Logo}</td>
+<td class="c"><h3 style="font-size:15px">{Ten_Cua_Hang}</h3><p>{Dia_Chi_Cua_Hang}</p><p><b>Hotline: {Dien_Thoai_Cua_Hang}</b></p>
+<p><b>MST: {MST_Cua_Hang}</b></p><p><b>Số HĐ: {Ma_Hoa_Don}</b></p></td>
+</tr></table>
+<table style="margin-top:8px"><tr>
+<td style="width:55%;vertical-align:top">
+<div style="border:1px solid #000;border-radius:4px;padding:3px 5px;margin-bottom:3px"><b>Khách hàng: {Nguoi_Nhan}</b></div>
+<div style="border:1px solid #000;border-radius:4px;padding:3px 5px"><b>SĐT: {SDT_Nguoi_Nhan}</b></div>
+</td>
+<td style="vertical-align:top;padding-left:6px"><p><b>SĐT: {Dien_Thoai_Cua_Hang}</b></p><p><b>Địa chỉ: {Dia_Chi_Cua_Hang}</b></p></td>
+</tr></table>
+<div style="border:1px solid #000;border-radius:4px;padding:3px 5px;margin-top:3px"><b>Địa chỉ: {Dia_Chi_Giao_Hang}</b></div>
+<table class="lines" style="margin-top:10px">
+<tr><th style="width:7%">TT</th><th>Tên Hàng</th><th style="width:10%">SL</th><th style="width:17%">Đơn giá</th><th style="width:19%">Thành tiền</th></tr>
+{#Dong_Hang}<tr><td class="c">{STT}</td><td><b>{Ten_Hang}</b></td><td class="c">{So_Luong}</td><td class="r">{Don_Gia}</td><td class="r">{Thanh_Tien}</td></tr>{/Dong_Hang}
+<tr><td></td><td class="c"><b>Cộng</b></td><td class="c">{Tong_So_Luong}</td><td></td><td class="r">{Tong_Tien_Hang}</td></tr>
+<tr><td></td><td class="c"><b>Tổng Cộng</b></td><td></td><td></td><td class="r"><b>{Tong_Cong}</b></td></tr>
+<tr><td colspan="5" style="height:18px"></td></tr>
+</table>
+<table style="margin-top:6px"><tr><td style="width:50%"></td>
+<td class="c"><i>Ngày {Ngay} tháng {Thang} năm {Nam}</i><br><b>NGƯỜI BÁN HÀNG</b></td></tr></table>
+<p class="c" style="margin-top:40px"><i>Cảm ơn quý khách, hẹn gặp lại!</i></p>`;
+
 export const PRINT_DEFS: Record<PrintType, Def> = {
   INVOICE: {
     label: "Hóa đơn", group: "Đơn hàng", groupKey: "orders",
@@ -58,17 +91,19 @@ export const PRINT_DEFS: Record<PrintType, Def> = {
       ["Dia_Chi_Giao_Hang", "shippingAddress"], ["Nguoi_Ban", "seller"],
       ["Tong_So_Luong", "totalQuantity"], ["Tong_Tien_Hang", "subtotal"], ["Giam_Gia", "invoiceDiscount"],
       ["Tong_Cong", "total"], ["Tong_Cong_Bang_Chu", "totalInWords"], ["Khach_Da_Tra", "customerPaid"],
-      ["Con_No", "remainingDebt"], ["PT_Thanh_Toan", "paymentMethod"], ["Ghi_Chu", "note"]],
+      ["Con_No", "remainingDebt"], ["PT_Thanh_Toan", "paymentMethod"], ["Ghi_Chu", "note"], ...TAX_RX],
     lineFields: [...LINE, ["Chiet_Khau", "lineDiscount"]],
     template: `${HEADER}
 <h2 class="c" style="margin-top:8px">HÓA ĐƠN BÁN HÀNG</h2>
 <p class="c">Số: <b>{Ma_Hoa_Don}</b> — {Ngay_Ban}</p>
 <p>Khách hàng: <b>{Khach_Hang}</b> — SĐT: {SDT_Khach_Hang}</p>
 <p>Địa chỉ: {Dia_Chi_Khach_Hang}</p>
+<p>{Thong_Tin_Don_Thuoc}</p>
 ${LINES_TABLE("<th>Số lô</th>", "<td>{So_Lo}</td>")}
 <table style="margin-top:4px">
 <tr><td class="r">Tổng tiền hàng:</td><td class="r" style="width:30%">{Tong_Tien_Hang}</td></tr>
 <tr><td class="r">Giảm giá:</td><td class="r">{Giam_Gia}</td></tr>
+<tr><td class="r">Giảm thuế:</td><td class="r">{Giam_Thue}</td></tr>
 <tr><td class="r"><b>Tổng cộng:</b></td><td class="r"><b>{Tong_Cong}</b></td></tr>
 <tr><td class="r">Khách đã trả:</td><td class="r">{Khach_Da_Tra}</td></tr>
 <tr><td class="r">Còn nợ:</td><td class="r">{Con_No}</td></tr>
@@ -76,6 +111,16 @@ ${LINES_TABLE("<th>Số lô</th>", "<td>{So_Lo}</td>")}
 <p><i>Bằng chữ: {Tong_Cong_Bang_Chu}</i></p>
 ${SIGN("Khách hàng", "Người bán hàng")}
 <p class="c" style="margin-top:8px"><i>Cảm ơn quý khách, hẹn gặp lại!</i></p>`,
+  },
+  DELIVERY_INVOICE: {
+    label: "Hóa đơn giao hàng", group: "Đơn hàng", groupKey: "orders",
+    fields: [...STORE, ["Ma_Hoa_Don", "invoiceCode"], ["Ngay_Ban", "soldAt"], ["Khach_Hang", "customer"],
+      ["Nguoi_Nhan", "receiverName"], ["SDT_Nguoi_Nhan", "receiverPhone"], ["Dia_Chi_Giao_Hang", "shippingAddress"],
+      ["Ma_Van_Don", "shipmentCode"], ["Thu_Ho", "codAmount"], ["Nguoi_Ban", "seller"], ["Tong_So_Luong", "totalQuantity"],
+      ["Tong_Tien_Hang", "subtotal"], ["Giam_Gia", "invoiceDiscount"], ["Tong_Cong", "total"], ["Khach_Da_Tra", "customerPaid"],
+      ["Ghi_Chu", "note"], ...TAX_RX],
+    lineFields: LINE,
+    template: DELIVERY_INVOICE_TEMPLATE,
   },
   SALES_RETURN: {
     label: "Trả hàng", group: "Đơn hàng", groupKey: "orders",

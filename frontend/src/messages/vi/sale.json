@@ -498,5 +498,22 @@
     "returnN": "Trả hàng {n}",
     "scrollLeft": "Cuộn tab sang trái",
     "scrollRight": "Cuộn tab sang phải"
+  },
+  "branch": {
+    "label": "Chi nhánh"
+  },
+  "taxReduction": {
+    "label": "Giảm thuế",
+    "tooltip": "Áp dụng giảm thuế theo Nghị quyết 204/2025/QH15"
+  },
+  "prescription": {
+    "label": "Bán thuốc theo đơn",
+    "fields": {
+      "code": "Mã đơn thuốc",
+      "doctor": "Bác sĩ kê đơn",
+      "facility": "Cơ sở khám",
+      "diagnosis": "Chẩn đoán"
+    },
+    "notConnected": "Chưa kết nối Hệ thống Đơn thuốc Quốc gia — thông tin đơn thuốc chỉ lưu trên hóa đơn."
   }
 }

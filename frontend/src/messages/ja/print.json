@@ -1,6 +1,7 @@
 {
   "types": {
     "INVOICE": "請求書",
+    "DELIVERY_INVOICE": "配送用請求書",
     "SALES_RETURN": "返品",
     "CASH_RECEIPT": "入金伝票",
     "CASH_PAYMENT": "出金伝票",
@@ -91,6 +92,16 @@
     "paidToSupplier": "仕入先支払済",
     "receiptCode": "仕入伝票番号",
     "supplierDue": "仕入先返金額",
-    "supplierPaid": "仕入先返金済"
+    "supplierPaid": "仕入先返金済",
+    "receiverName": "受取人",
+    "receiverPhone": "受取人電話番号",
+    "shipmentCode": "送り状番号",
+    "codAmount": "代引き金額",
+    "taxReduction": "減税",
+    "prescriptionSummary": "処方箋情報",
+    "prescriptionCode": "処方箋番号",
+    "prescriber": "処方医",
+    "clinic": "医療機関",
+    "diagnosis": "診断"
   }
 }

@@ -2,9 +2,8 @@
 
 import { useBranches, useShopSettings } from "@/features/settings/settings-queries";
 import type { Invoice } from "@/features/sales/sales-types";
-import { invoiceData, storeFields, usePrintTemplates } from "@/features/print/print-data";
+import { deliveryInvoiceData, invoiceData, storeFields, usePrintTemplates } from "@/features/print/print-data";
 import { printHtml, renderTemplate } from "@/features/print/print-render";
-import { DELIVERY_INVOICE_TEMPLATE, deliveryInvoiceData } from "@/features/print/delivery-invoice-print-template";
 import { PRINT_DEFS } from "@/features/print/print-template-defaults";
 import { useSaleSettings } from "./use-sale-settings";
 
@@ -34,7 +33,8 @@ export function useSaleInvoicePrinter() {
     const shown = settings.mergePrintLines ? mergeInvoiceLines(inv) : inv;
     // Hóa đơn Bán giao hàng (có vận đơn đang hoạt động): mẫu in giao hàng (người nhận + địa chỉ giao)
     const delivery = !!inv.shipment && inv.shipment.status !== "CANCELLED";
-    const template = delivery ? DELIVERY_INVOICE_TEMPLATE : templates?.INVOICE ?? PRINT_DEFS.INVOICE.template;
+    const type = delivery ? "DELIVERY_INVOICE" : "INVOICE";
+    const template = templates?.[type] ?? PRINT_DEFS[type].template;
     const data = { ...storeFields(shop?.store ?? null, branchName), ...(delivery ? deliveryInvoiceData(shown) : invoiceData(shown)) };
     const page = renderTemplate(template, data);
     printHtml(Array.from({ length: settings.printCopies }, () => page).join('<div style="break-after:page;page-break-after:always"></div>'));

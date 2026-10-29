@@ -9,13 +9,14 @@ import { SaleDeliveryInfoPanel } from "./sale-delivery-info-panel";
 import { SaleDeliveryTotalsCard } from "./sale-delivery-totals-card";
 import type { DraftInvoice } from "./sale-types";
 import type { SaleLookups } from "./use-sale-lookups";
+import type { SaleBranch } from "./use-sale-branch";
 
 /**
  * Bố cục 3 cột của "Bán giao hàng" (KiotViet): trái = giỏ hàng + thẻ tổng tiền; giữa = khách, người nhận, kiện hàng, COD
  * (nút » thu gọn / mở lại); phải = tab Cổng giao hàng / Tự giao hàng + THANH TOÁN. Chưa kết nối cổng nào → mặc định Tự giao hàng.
  */
-export function SaleDeliveryLayout({ draft, update, lookups, branchId, cart, onPay, paying }: {
-  draft: DraftInvoice; update: (p: Partial<DraftInvoice>) => void; lookups: SaleLookups; branchId: string; cart: React.ReactNode;
+export function SaleDeliveryLayout({ draft, update, lookups, branch, cart, onPay, paying }: {
+  draft: DraftInvoice; update: (p: Partial<DraftInvoice>) => void; lookups: SaleLookups; branch: SaleBranch; cart: React.ReactNode;
   onPay: () => void; paying: boolean;
 }) {
   const t = useT(saleNs);
@@ -31,7 +32,7 @@ export function SaleDeliveryLayout({ draft, update, lookups, branchId, cart, onP
         aria-label={t(collapsed ? "delivery.expand" : "delivery.collapse")} title={t(collapsed ? "delivery.expand" : "delivery.collapse")}>
         {collapsed ? <ChevronsLeft className="size-4" /> : <ChevronsRight className="size-4" />}
       </button>
-      {!collapsed && <SaleDeliveryInfoPanel draft={draft} update={update} lookups={lookups} branchId={branchId} portal={tab === "PORTAL"} />}
+      {!collapsed && <SaleDeliveryInfoPanel draft={draft} update={update} lookups={lookups} branch={branch} portal={tab === "PORTAL"} />}
       <aside className="w-[362px] shrink-0 overflow-hidden rounded-lg">
         <SaleDeliveryCarrierPanel draft={draft} update={update} lookups={lookups} tab={tab} onTab={setTab} onPay={onPay} paying={paying} />
       </aside>

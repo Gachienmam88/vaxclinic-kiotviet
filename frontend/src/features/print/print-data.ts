@@ -45,8 +45,28 @@ export function invoiceData(inv: Invoice): PrintData {
     Tong_Tien_Hang: formatMoney(inv.subtotal), Giam_Gia: formatMoney(inv.discount), Tong_Cong: formatMoney(inv.total),
     Tong_Cong_Bang_Chu: amountInWords(Number(inv.total)), Khach_Da_Tra: formatMoney(inv.paid),
     Con_No: formatMoney(Number(inv.total) - Number(inv.paid)), PT_Thanh_Toan: methodLabel(inv.paymentMethod), Ghi_Chu: inv.note ?? "",
-    __lines: lines(inv.lines),
+    Giam_Thue: formatMoney(Math.max(0, Number(inv.subtotal) - Number(inv.discount) - Number(inv.total))),
+    ...prescriptionFields(inv.prescription), __lines: lines(inv.lines),
   };
+}
+
+/** Hóa đơn giao hàng: trường hóa đơn + người nhận (tên, SĐT, địa chỉ giao), mã vận đơn, thu hộ. */
+export function deliveryInvoiceData(inv: Invoice): PrintData {
+  const s = inv.shipment;
+  return {
+    ...invoiceData(inv),
+    Nguoi_Nhan: s?.receiverName ?? inv.customerName, SDT_Nguoi_Nhan: s?.receiverPhone ?? inv.customerPhone ?? "",
+    Dia_Chi_Giao_Hang: s ? joinAddress(s.receiverAddress, s.area) : inv.customerAddress ?? "",
+    Ma_Van_Don: s?.code ?? "", Thu_Ho: formatMoney(s?.codAmount ?? 0),
+  };
+}
+
+/** Đơn thuốc ("Bán thuốc theo đơn"): từng trường + 1 dòng tóm tắt (rỗng khi không bán theo đơn). */
+function prescriptionFields(p: Invoice["prescription"]): PrintData {
+  const parts = p ? [["Mã đơn thuốc", p.code], ["Bác sĩ kê đơn", p.doctor], ["Cơ sở khám", p.facility], ["Chẩn đoán", p.diagnosis]]
+    .filter(([, v]) => v).map(([k, v]) => `${k}: ${v}`) : [];
+  return { Ma_Don_Thuoc: p?.code ?? "", Bac_Si_Ke_Don: p?.doctor ?? "", Co_So_Kham: p?.facility ?? "", Chan_Doan: p?.diagnosis ?? "",
+    Thong_Tin_Don_Thuoc: parts.join(" — ") };
 }
 
 export type SalesReturnDoc = { code: string; returnedAt: string; invoiceCode: string; customerName: string; createdByName: string;
@@ -105,6 +125,12 @@ export function sampleData(type: PrintType): PrintData {
         customerPhone: "0987654321", customerAddress: "12 Lê Lợi, Phường Bến Thành, Thành phố Hồ Chí Minh",
         sellerName: "Thu ngân", createdByName: "Thu ngân", subtotal: 2695000, discount: 0, total: 2695000,
         paid: 2695000, paymentMethod: "CASH", note: "", lines: sampleLines } as unknown as Invoice);
+    case "DELIVERY_INVOICE":
+      return deliveryInvoiceData({ code: "HD000124", soldAt: new Date().toISOString(), customerName: "Nguyễn Văn An",
+        customerPhone: "0987654321", sellerName: "Thu ngân", createdByName: "Thu ngân", subtotal: 2695000, discount: 0, total: 2695000,
+        paid: 0, paymentMethod: null, note: "", lines: sampleLines, shipment: { code: "VD000001", receiverName: "Nguyễn Văn An",
+          receiverPhone: "0987654321", receiverAddress: "12 Lê Lợi", area: "Phường Bến Thành, Thành phố Hồ Chí Minh", codAmount: 2695000 },
+      } as unknown as Invoice);
     case "SALES_RETURN":
       return salesReturnData({ code: "TH000012", returnedAt: new Date().toISOString(), invoiceCode: "HD000123", customerName: "Nguyễn Văn An",
         createdByName: "Thu ngân", subtotal: 665000, discount: 0, fee: 0, total: 665000, refunded: 665000, note: "", lines: sampleLines.slice(0, 1) });

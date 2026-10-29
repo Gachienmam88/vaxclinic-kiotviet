@@ -1,6 +1,7 @@
 {
   "types": {
     "INVOICE": "销售单",
+    "DELIVERY_INVOICE": "配送发票",
     "SALES_RETURN": "退货",
     "CASH_RECEIPT": "收款单",
     "CASH_PAYMENT": "付款单",
@@ -91,6 +92,16 @@
     "paidToSupplier": "已付供应商",
     "receiptCode": "进货单号",
     "supplierDue": "供应商应退",
-    "supplierPaid": "供应商已退"
+    "supplierPaid": "供应商已退",
+    "receiverName": "收件人",
+    "receiverPhone": "收件人电话",
+    "shipmentCode": "运单号",
+    "codAmount": "代收货款",
+    "taxReduction": "减税",
+    "prescriptionSummary": "处方信息",
+    "prescriptionCode": "处方编号",
+    "prescriber": "开方医生",
+    "clinic": "就诊机构",
+    "diagnosis": "诊断"
   }
 }

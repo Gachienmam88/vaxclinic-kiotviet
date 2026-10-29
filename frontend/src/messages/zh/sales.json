@@ -262,6 +262,13 @@
       "skipped": "{count} 张发票此前已导入，已跳过。",
       "nothingSaved": "文件有 {count} 处错误 — 未保存任何发票。请修改文件后重新导入。",
       "lineError": "第 {line} 行：{message}"
+    },
+    "prescription": {
+      "title": "凭处方售药",
+      "code": "处方编号",
+      "doctor": "开方医生",
+      "facility": "就诊机构",
+      "diagnosis": "诊断"
     }
   },
   "refund": {

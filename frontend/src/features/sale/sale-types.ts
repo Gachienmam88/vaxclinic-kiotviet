@@ -4,6 +4,8 @@ import type { GroupDiscount } from "@/features/sales/customer-group-discount";
 export type CatalogUnit = { id: string; code: string; barcode: string | null; unitName: string; conversionRate: number; price: number };
 export type CatalogProduct = {
   id: string; name: string; lotManaged: boolean; stock: number; taxCode: string | null; units: CatalogUnit[];
+  /** Hàng "Áp dụng giảm thuế" (Nghị quyết 204/2025/QH15); bản danh mục cũ có thể thiếu. */
+  taxReduction?: boolean;
 };
 
 export type CartLine = {
@@ -17,6 +19,7 @@ export type CartLine = {
   discount: number; // giảm giá / 1 đơn vị
   note: string;
   taxCode: string | null; // mã thuế suất lúc bán → phát hành hóa đơn điện tử
+  taxReduction?: boolean; // hàng có cờ giảm thuế (VAT10 → 8% khi bật "Giảm thuế")
   priceEdited: boolean; // thu ngân sửa đơn giá tay (hoặc giá của hóa đơn/đơn đã lưu) → đổi bảng giá không tính lại
   lotNumber?: string | null; // chỉ tab Trả nhanh: lô nhập lại (hàng quản lý theo lô)
   lotExpiry?: string | null; // chỉ tab Trả nhanh, nhập lô mới: HSD yyyy-MM-dd ("" = chưa nhập); null = chọn lô có sẵn
@@ -49,6 +52,9 @@ export type DeliveryDraft = {
   /** Thu hộ tiền (COD): mặc định bật; tắt = phần khách chưa trả ghi công nợ khách. */
   codEnabled?: boolean;
 };
+
+/** "Bán thuốc theo đơn": mã đơn thuốc, bác sĩ kê đơn, cơ sở khám, chẩn đoán (chưa kết nối Hệ thống Đơn thuốc Quốc gia). */
+export type Prescription = { code: string; doctor: string; facility: string; diagnosis: string };
 
 /** Thông tin xuất hóa đơn điện tử của người mua (lưu trên hóa đơn). */
 export type EInvoiceBuyer = { buyerName: string; companyName: string; taxCode: string; address: string; email: string; phone: string };
@@ -87,6 +93,10 @@ export type DraftInvoice = {
   /** Trả nhanh (không theo hóa đơn): hàng trả nằm ở `lines` (giá trả = đơn giá − giảm giá), phí + tiền trả khách ở đây. */
   quickReturn?: { fee: number; refund: number | null };
   einvoiceBuyer?: EInvoiceBuyer | null;
+  /** Bật "Giảm thuế" (Nghị quyết 204/2025/QH15). */
+  taxReduction?: boolean;
+  /** null / thiếu = không bán theo đơn. */
+  prescription?: Prescription | null;
   extraPayments?: ExtraPayment[];
   label: string;
   mode: "QUICK" | "NORMAL" | "DELIVERY";

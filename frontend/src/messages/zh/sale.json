@@ -498,5 +498,22 @@
     "returnN": "退货 {n}",
     "scrollLeft": "标签向左滚动",
     "scrollRight": "标签向右滚动"
+  },
+  "branch": {
+    "label": "分店"
+  },
+  "taxReduction": {
+    "label": "减税",
+    "tooltip": "按第204/2025/QH15号决议适用减税"
+  },
+  "prescription": {
+    "label": "凭处方售药",
+    "fields": {
+      "code": "处方编号",
+      "doctor": "开方医生",
+      "facility": "就诊机构",
+      "diagnosis": "诊断"
+    },
+    "notConnected": "尚未连接国家电子处方系统——处方信息仅保存在发票上。"
   }
 }

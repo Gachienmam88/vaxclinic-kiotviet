@@ -263,6 +263,13 @@
       "skipped": "{count} invoices were imported before and skipped.",
       "nothingSaved": "The file has {count} errors — no invoice was saved. Fix the file and import again.",
       "lineError": "Row {line}: {message}"
+    },
+    "prescription": {
+      "title": "Prescription sale",
+      "code": "Prescription code",
+      "doctor": "Prescribing doctor",
+      "facility": "Medical facility",
+      "diagnosis": "Diagnosis"
     }
   },
   "refund": {

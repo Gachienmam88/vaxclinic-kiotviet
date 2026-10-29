@@ -4,11 +4,11 @@ import { toLocalInput } from "@/features/purchases/purchase-line-form";
 import type { Invoice } from "@/features/sales/sales-types";
 import type { SaleT } from "@/messages/sale";
 import { KEYS, load, newId } from "./sale-storage";
-import type { CartLine, CatalogProduct, DeliveryDraft, DraftInvoice, EInvoiceBuyer, SaleCustomer } from "./sale-types";
+import type { CartLine, CatalogProduct, DeliveryDraft, DraftInvoice, EInvoiceBuyer, Prescription, SaleCustomer } from "./sale-types";
 
 type SavedLine = {
   productId: string; unitId: string; productCode: string; productName: string; unitName: string;
-  quantity: number; unitPrice: number; discount: number; note: string | null; taxCode: string | null;
+  quantity: number; unitPrice: number; discount: number; note: string | null; taxCode: string | null; taxReduced?: boolean;
 };
 
 /**
@@ -22,7 +22,7 @@ export function toCartLines(lines: SavedLine[], catalog: CatalogProduct[]): Cart
       : [{ id: l.unitId, code: l.productCode, barcode: null, unitName: l.unitName, conversionRate: 1, price: Number(l.unitPrice) }];
     return { key: newId(), productId: l.productId, productName: l.productName, unitId: l.unitId, units,
       quantity: Number(l.quantity), unitPrice: Number(l.unitPrice), discount: Number(l.discount), note: l.note ?? "",
-      taxCode: l.taxCode ?? p?.taxCode ?? null, priceEdited: true };
+      taxCode: l.taxCode ?? p?.taxCode ?? null, taxReduction: l.taxReduced || !!p?.taxReduction, priceEdited: true };
   });
 }
 
@@ -66,7 +66,13 @@ export async function draftFromInvoice(invoiceId: string, mode: "edit" | "return
     note: inv.note ?? "", lines: toCartLines(inv.lines, catalog), priceBookId: inv.priceBookId ?? null,
     priceBookName: inv.priceBookName, salesChannel: inv.salesChannel ?? "DIRECT", delivery: deliveryDraftOf(shipment),
     einvoiceBuyer: (inv as Invoice & { einvoiceBuyer?: EInvoiceBuyer | null }).einvoiceBuyer ?? null,
+    taxReduction: Number(inv.taxReduction ?? 0) > 0, prescription: prescriptionDraftOf(inv.prescription),
   };
+}
+
+/** Đơn thuốc đã lưu → ô nhập (null = không bán theo đơn). */
+export function prescriptionDraftOf(p: Invoice["prescription"]): Prescription | null {
+  return p ? { code: p.code ?? "", doctor: p.doctor ?? "", facility: p.facility ?? "", diagnosis: p.diagnosis ?? "" } : null;
 }
 
 /** Vận đơn đã lưu → khung giao hàng (sửa hóa đơn trước khi lấy hàng). */
