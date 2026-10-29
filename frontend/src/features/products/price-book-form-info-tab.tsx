@@ -106,9 +106,9 @@ export function PriceBookFormInfoTab({ form, set, valueText, onValueText, books,
         <label className="flex cursor-pointer items-center gap-2">
           <input type="radio" name="pb-missing" className={RADIO} checked={!allowMissing} onChange={() => set({ missingPolicy: "BLOCK" })} />
           {t("bookForm.blockMissing")}
-          <Info className="size-3.5 text-muted-foreground" aria-label={t("bookForm.blockMissingHint")}>
-            <title>{t("bookForm.blockMissingHint")}</title>
-          </Info>
+          <span title={t("bookForm.blockMissingHint")} aria-label={t("bookForm.blockMissingHint")}>
+            <Info className="size-3.5 text-muted-foreground" />
+          </span>
         </label>
       </Card>
     </div>
