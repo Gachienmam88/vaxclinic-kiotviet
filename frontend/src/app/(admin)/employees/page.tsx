@@ -61,7 +61,7 @@ function EmployeesPage({ link }: { link: DeepLink }) {
   ]);
 
   return (
-    <div className="grid grid-cols-[166px_minmax(0,1fr)] gap-x-2.5 gap-y-2.5">
+    <div className="grid grid-cols-[200px_minmax(0,1fr)] gap-x-2.5 gap-y-2.5">
       <h1 className="flex h-8 items-center text-[18px] font-bold whitespace-nowrap">{t("list.title")}</h1>
       <div className="flex h-8 items-center gap-2">
         <div className="relative h-[30px] w-[300px] max-w-full">
