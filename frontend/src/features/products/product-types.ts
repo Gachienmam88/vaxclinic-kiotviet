@@ -21,6 +21,9 @@ export type ProductListItem = {
   stock: number;
   reserved: number;
   active: boolean;
+  createdAt: string;
+  /** Số ngày còn bán được theo tốc độ bán 30 ngày gần nhất; null = chưa bán trong khoảng đó. */
+  expectedOutDays: number | null;
 };
 
 export type ProductListResponse = {
