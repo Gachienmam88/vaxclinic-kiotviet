@@ -89,7 +89,11 @@ public class InvoiceManageService {
     }
 
     public InvoiceResponse cancel(UUID id, Actor actor) {
-        service.cancel(id, actor);
+        return cancel(id, actor, false);
+    }
+
+    public InvoiceResponse cancel(UUID id, Actor actor, boolean cancelOrderPayments) {
+        service.cancel(id, actor, cancelOrderPayments);
         InvoiceResponse r = query.detail(id);
         actor.audit(audit, r.branchId(), FEATURE, "Hủy", r.code(), "Hủy hóa đơn " + r.code() + ", khách "
                 + r.customerName() + ", tổng " + Actor.money(r.total()));

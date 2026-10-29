@@ -35,7 +35,22 @@ public final class OrderDtos {
 
     public record OrderLineResponse(UUID id, int lineNo, UUID productId, UUID unitId, String productCode,
                                     String productName, String unitName, BigDecimal quantity, BigDecimal unitPrice,
-                                    BigDecimal discount, BigDecimal price, BigDecimal amount, String note, String taxCode) {
+                                    BigDecimal discount, BigDecimal price, BigDecimal amount, String note, String taxCode,
+                                    BigDecimal deliveredQuantity) {
+        // deliveredQuantity: đã giao = số lượng trên hóa đơn (còn hiệu lực) tạo từ đơn, cùng hàng + đơn vị, tối đa số đặt
+    }
+
+    /** Sửa nhanh ở chi tiết đơn ("Lưu"): người nhận đặt, ngày đặt, kênh bán, dự kiến giao, trạng thái (Phiếu tạm / Đã xác nhận), ghi chú. */
+    public record InfoRequest(UUID sellerId, @Size(max = 150) String sellerName, Instant orderedAt, @Size(max = 30) String salesChannel,
+                              Instant expectedDeliveryAt, @Pattern(regexp = "DRAFT|CONFIRMED") String status, String note) {
+    }
+
+    /** "Xuất file": đơn khớp bộ lọc (tối đa 5.000) + dòng hàng. */
+    public record ExportLine(UUID orderId, String productCode, String productName, String unitName, BigDecimal quantity,
+                             BigDecimal unitPrice, BigDecimal discount, BigDecimal amount) {
+    }
+
+    public record ExportResponse(List<OrderListItem> items, List<ExportLine> lines) {
     }
 
     /** Phiếu thu đặt cọc (RECEIPT) / phiếu chi hoàn cọc khi hủy đơn (PAYMENT). */
@@ -55,7 +70,7 @@ public final class OrderDtos {
     public record OrderListItem(UUID id, String code, Instant orderedAt, String customerCode, String customerName,
                                 String createdByName, BigDecimal subtotal, BigDecimal discount, BigDecimal total,
                                 BigDecimal deposit, String status, String invoiceCode, Instant expectedDeliveryAt,
-                                String salesChannel) {
+                                String salesChannel, String sellerName, String customerPhone, UUID invoiceId) {
     }
 
     public record OrderListResponse(List<OrderListItem> items, long total, int page, int size, BigDecimal sumSubtotal,

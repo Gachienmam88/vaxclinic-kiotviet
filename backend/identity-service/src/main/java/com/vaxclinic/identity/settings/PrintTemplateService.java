@@ -18,7 +18,7 @@ import java.util.UUID;
 public class PrintTemplateService {
 
     static final Set<String> TYPES = Set.of("INVOICE", "SALES_RETURN", "CASH_RECEIPT", "CASH_PAYMENT",
-            "PURCHASE_RECEIPT", "PURCHASE_RETURN", "DELIVERY_INVOICE"); // DELIVERY_INVOICE: hóa đơn giao hàng
+            "PURCHASE_RECEIPT", "PURCHASE_RETURN", "DELIVERY_INVOICE", "ORDER"); // DELIVERY_INVOICE: hóa đơn giao hàng
     private static final String FEATURE = "Mẫu in";
 
     private final SettingsRepository store;

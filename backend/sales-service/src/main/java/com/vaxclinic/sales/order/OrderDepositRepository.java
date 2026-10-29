@@ -45,6 +45,13 @@ public class OrderDepositRepository {
                   and v.status = 'PAID' order by v.occurred_at""", orderId);
     }
 
+    /** Phiếu thu cọc còn hiệu lực của đơn (để hủy cùng đơn / cùng hóa đơn). */
+    public List<UUID> paidReceiptIds(UUID orderId) {
+        return jdbc.queryForList("""
+                select id from cash_vouchers where source_type = 'ORDER' and source_id = ? and voucher_type = 'RECEIPT'
+                  and status = 'PAID' order by occurred_at""", UUID.class, orderId);
+    }
+
     /** Gỡ phân bổ của các phiếu cọc khỏi hóa đơn. */
     public void deleteAllocations(UUID invoiceId) {
         jdbc.update("delete from voucher_allocations where invoice_id = ? and voucher_id in "

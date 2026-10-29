@@ -143,6 +143,11 @@ public class InvoiceService {
     }
 
     public void cancel(UUID id, Actor actor) {
+        cancel(id, actor, false);
+    }
+
+    /** cancelOrderPayments: hóa đơn từ đơn đặt hàng, hủy luôn phiếu cọc của đơn (xem OrderDepositLedger.detach). */
+    public void cancel(UUID id, Actor actor, boolean cancelOrderPayments) {
         Invoice inv = find(id);
         if ("CANCELLED".equals(inv.getStatus())) {
             return;
@@ -151,7 +156,7 @@ public class InvoiceService {
         guard.checkCancellable(inv, actor);
         stock.apply(new ProductStockClient.Request(inv.getStockDocId(), "SALE_CANCEL", inv.getCode(), inv.getBranchId(),
                 inv.getCustomerName(), actor.id(), null, List.of()));
-        writer.markCancelled(id, actor);
+        writer.markCancelled(id, actor, cancelOrderPayments);
     }
 
     /** Sửa người bán / thời gian / kênh bán / ghi chú. Thiết lập "Không cho phép thay đổi thời gian giao dịch" chặn đổi thời gian. */

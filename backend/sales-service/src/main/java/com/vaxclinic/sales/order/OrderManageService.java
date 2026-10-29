@@ -66,15 +66,35 @@ public class OrderManageService {
         return r;
     }
 
-    /** refundMethod: CASH / TRANSFER / CARD / EWALLET (lập phiếu chi hoàn cọc) hoặc CREDIT (giữ cọc làm tiền trả trước). */
+    public OrderResponse finish(UUID id, Actor actor) {
+        OrderResponse r = query.detail(service.finish(id, actor).getId());
+        log(actor, r, "Kết thúc", "Kết thúc đơn đặt hàng " + r.code() + " (chưa giao hết vẫn chuyển Hoàn thành)");
+        return r;
+    }
+
+    public OrderResponse updateInfo(UUID id, OrderDtos.InfoRequest req, Actor actor) {
+        OrderResponse r = query.detail(service.updateInfo(id, req, actor).getId());
+        log(actor, r, "Sửa", "Cập nhật thông tin đơn đặt hàng " + r.code());
+        return r;
+    }
+
+    public OrderDtos.ExportResponse export(OrderQuery.Filter filter) {
+        return query.export(filter);
+    }
+
+    /**
+     * refundMethod: CASH / TRANSFER / CARD / EWALLET (lập phiếu chi hoàn cọc), CREDIT (giữ cọc làm tiền trả trước)
+     * hoặc CANCEL_VOUCHERS (hủy phiếu cọc).
+     */
     public OrderResponse cancel(UUID id, String refundMethod, UUID bankAccountId, Actor actor) {
-        if (refundMethod != null && !refundMethod.matches("CASH|TRANSFER|CARD|EWALLET|CREDIT")) {
+        if (refundMethod != null && !refundMethod.matches("CASH|TRANSFER|CARD|EWALLET|CREDIT|CANCEL_VOUCHERS")) {
             throw BusinessException.badRequest("REFUND_METHOD_INVALID", "Hình thức hoàn cọc không hợp lệ");
         }
         var before = query.detail(id).deposit();
         OrderResponse r = query.detail(service.cancel(id, refundMethod, bankAccountId, actor).getId());
         log(actor, r, "Hủy", "Hủy đơn đặt hàng " + r.code() + (before.signum() <= 0 ? "" : "CREDIT".equals(refundMethod)
                 ? ", giữ tiền cọc " + Actor.money(before) + " làm công nợ (tiền khách trả trước)"
+                : "CANCEL_VOUCHERS".equals(refundMethod) ? ", hủy phiếu cọc " + Actor.money(before)
                 : ", hoàn tiền cọc " + Actor.money(before) + " (phiếu PC" + r.code() + ")"));
         return r;
     }

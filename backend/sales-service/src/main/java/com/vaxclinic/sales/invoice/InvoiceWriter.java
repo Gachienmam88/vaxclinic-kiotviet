@@ -137,6 +137,12 @@ public class InvoiceWriter {
     /** Sau khi kho đã hoàn: hủy phiếu thu tự động, ghi giảm công nợ, đánh dấu hủy. */
     @Transactional
     public void markCancelled(UUID id, Actor actor) {
+        markCancelled(id, actor, false);
+    }
+
+    /** cancelOrderPayments: hóa đơn từ đơn đặt hàng — hủy luôn phiếu cọc của đơn (hộp thoại "Hủy thanh toán?" → Xác nhận). */
+    @Transactional
+    public void markCancelled(UUID id, Actor actor, boolean cancelOrderPayments) {
         Invoice inv = invoices.findForUpdate(id).orElseThrow();
         if ("CANCELLED".equals(inv.getStatus())) {
             return;
@@ -146,7 +152,7 @@ public class InvoiceWriter {
         auto.ifPresent(cashbook::cancel);
         var extras = extraPayments.cancelAll(id);
         if (inv.getOrderId() != null) {
-            orderDeposits.detach(inv);
+            orderDeposits.detach(inv, cancelOrderPayments);
         }
         inv.setStatus("CANCELLED");
         inv.setCancelledAt(Instant.now());

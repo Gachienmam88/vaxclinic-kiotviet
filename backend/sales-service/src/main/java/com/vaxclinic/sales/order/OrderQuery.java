@@ -18,8 +18,13 @@ import java.util.UUID;
 @Component
 public class OrderQuery {
 
+    /**
+     * productQ: mã / tên hàng; customerQ: mã / tên / SĐT khách; deliveryFrom/To: thời gian giao dự kiến; sellerId: người nhận đặt;
+     * channels: kênh bán; paymentMethods: quỹ của phiếu cọc (CASH / BANK / EWALLET).
+     */
     public record Filter(String q, List<String> statuses, Instant from, Instant to, UUID createdBy, UUID customerId,
-                         UUID branchId, int page, int size) {
+                         UUID branchId, int page, int size, String productQ, String customerQ, Instant deliveryFrom,
+                         Instant deliveryTo, UUID sellerId, List<String> channels, List<String> paymentMethods) {
     }
 
     private final OrderQueryRepository queries;
@@ -36,16 +41,22 @@ public class OrderQuery {
         return queries.search(f);
     }
 
+    public OrderDtos.ExportResponse export(Filter f) {
+        return queries.export(f);
+    }
+
     @Transactional(readOnly = true)
     public OrderResponse detail(UUID id) {
         CustomerOrder o = orders.findById(id)
                 .orElseThrow(() -> BusinessException.notFound("ORDER_NOT_FOUND", "Không tìm thấy đơn đặt hàng"));
         var customer = customers.findById(o.getCustomerId()).orElse(null);
+        var delivered = o.getInvoiceId() == null ? java.util.Map.<String, BigDecimal>of() : queries.deliveredByLine(o.getInvoiceId());
         var lines = o.getLines().stream().map(l -> {
             BigDecimal price = l.getUnitPrice().subtract(l.getDiscount());
             return new OrderLineResponse(l.getId(), l.getLineNo(), l.getProductId(), l.getUnitId(), l.getProductCode(),
                     l.getProductName(), l.getUnitName(), l.getQuantity(), l.getUnitPrice(), l.getDiscount(), price,
-                    InvoiceMath.money(l.getQuantity().multiply(price)), l.getNote(), l.getTaxCode());
+                    InvoiceMath.money(l.getQuantity().multiply(price)), l.getNote(), l.getTaxCode(),
+                    o.getInvoiceId() == null ? BigDecimal.ZERO : l.getQuantity().min(delivered.getOrDefault(l.getProductId() + "|" + l.getUnitId(), BigDecimal.ZERO)));
         }).toList();
         var payments = queries.payments(id);
         String invoiceCode = o.getInvoiceId() == null ? null : queries.invoiceCode(o.getInvoiceId());

@@ -108,7 +108,8 @@ public class InvoiceController {
 
     @PostMapping("/{id}/cancel")
     @PreAuthorize("hasAuthority('sales.cancel')")
-    public InvoiceResponse cancel(@PathVariable UUID id, @AuthenticationPrincipal Jwt jwt) {
-        return service.cancel(id, Actor.of(jwt));
+    public InvoiceResponse cancel(@PathVariable UUID id, @RequestParam(defaultValue = "false") boolean cancelPayments,
+                                  @AuthenticationPrincipal Jwt jwt) {
+        return service.cancel(id, Actor.of(jwt), cancelPayments);
     }
 }

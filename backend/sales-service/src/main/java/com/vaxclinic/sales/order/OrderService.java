@@ -106,16 +106,65 @@ public class OrderService {
         return o;
     }
 
-    /** Hủy đơn: tiền cọc (nếu có) hoàn lại khách bằng phiếu chi PC{mã đơn} ngay lúc hủy, hoặc giữ làm công nợ (CREDIT). */
+    /**
+     * Hủy đơn (đơn đã có hóa đơn → "Phiếu đặt hàng đã có hóa đơn, không thể hủy"). refundMethod: CANCEL_VOUCHERS = hủy phiếu cọc
+     * ("Bạn có muốn hủy đặt cọc liên quan?" → Đồng ý); CREDIT = giữ cọc làm tiền khách trả trước; CASH / TRANSFER / CARD / EWALLET =
+     * hoàn cọc bằng phiếu chi PC{mã đơn}.
+     */
     @Transactional
     public CustomerOrder cancel(UUID id, String refundMethod, UUID bankAccountId, Actor actor) {
+        CustomerOrder pre = orders.findById(id)
+                .orElseThrow(() -> BusinessException.notFound("ORDER_NOT_FOUND", "Không tìm thấy đơn đặt hàng"));
+        if (pre.getInvoiceId() != null) {
+            throw BusinessException.badRequest("ORDER_HAS_INVOICE", "Phiếu đặt hàng đã có hóa đơn, không thể hủy");
+        }
         CustomerOrder o = openForUpdate(id, actor);
         rules.checkNotLocked(o.getBranchId(), Instant.now());
-        if (!"CREDIT".equals(refundMethod)) {
+        if ("CANCEL_VOUCHERS".equals(refundMethod)) {
+            deposits.cancelReceipts(o);
+        } else if (!"CREDIT".equals(refundMethod)) {
             deposits.refund(o, refundMethod, bankAccountId, actor);
         }
         o.setStatus("CANCELLED");
         o.setCancelledAt(Instant.now());
+        return o;
+    }
+
+    /** "Kết thúc": đơn chưa giao hết vẫn chuyển Hoàn thành, không tạo hóa đơn; phiếu cọc giữ nguyên (vẫn là tiền khách đã trả). */
+    @Transactional
+    public CustomerOrder finish(UUID id, Actor actor) {
+        CustomerOrder o = openForUpdate(id, actor);
+        rules.checkNotLocked(o.getBranchId(), Instant.now());
+        o.setStatus("COMPLETED");
+        return o;
+    }
+
+    /** "Lưu" ở chi tiết đơn: người nhận đặt, ngày đặt, kênh bán, dự kiến giao, trạng thái Phiếu tạm / Đã xác nhận, ghi chú. */
+    @Transactional
+    public CustomerOrder updateInfo(UUID id, OrderDtos.InfoRequest r, Actor actor) {
+        CustomerOrder o = orders.findForUpdate(id)
+                .orElseThrow(() -> BusinessException.notFound("ORDER_NOT_FOUND", "Không tìm thấy đơn đặt hàng"));
+        actor.checkBranch(o.getBranchId());
+        if ("CANCELLED".equals(o.getStatus())) {
+            throw BusinessException.badRequest("ORDER_NOT_OPEN", "Đơn " + o.getCode() + " đã hủy");
+        }
+        rules.checkNotLocked(o.getBranchId(), o.getOrderedAt());
+        if (r.sellerId() != null) {
+            o.setSellerId(r.sellerId());
+            o.setSellerName(Actor.blankToNull(r.sellerName()));
+        }
+        if (r.orderedAt() != null && !r.orderedAt().equals(o.getOrderedAt())) {
+            rules.checkNotLocked(o.getBranchId(), r.orderedAt());
+            o.setOrderedAt(r.orderedAt());
+        }
+        if (r.salesChannel() != null) {
+            o.setSalesChannel(channels.resolve(r.salesChannel(), o.getSalesChannel()));
+        }
+        o.setExpectedDeliveryAt(r.expectedDeliveryAt());
+        o.setNote(r.note());
+        if (r.status() != null && o.isOpen()) {
+            o.setStatus(r.status());
+        }
         return o;
     }
 

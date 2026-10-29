@@ -42,9 +42,43 @@ public class OrderController {
                                   @RequestParam(required = false) UUID createdBy,
                                   @RequestParam(required = false) UUID customerId,
                                   @RequestParam(required = false) UUID branchId,
-                                  @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "15") int size) {
+                                  @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "15") int size,
+                                  @RequestParam(required = false) String productQ, @RequestParam(required = false) String customerQ,
+                                  @RequestParam(required = false) Instant deliveryFrom, @RequestParam(required = false) Instant deliveryTo,
+                                  @RequestParam(required = false) UUID sellerId, @RequestParam(required = false) List<String> channels,
+                                  @RequestParam(required = false) List<String> paymentMethods) {
         return service.list(new OrderQuery.Filter(q, statuses, from, to, createdBy, customerId, branchId,
-                Math.max(page, 0), Math.min(Math.max(size, 1), 100)));
+                Math.max(page, 0), Math.min(Math.max(size, 1), 100), productQ, customerQ, deliveryFrom, deliveryTo, sellerId,
+                channels, paymentMethods));
+    }
+
+    /** "Xuất file" (tổng quan / chi tiết): đơn khớp bộ lọc + dòng hàng. */
+    @GetMapping("/export")
+    public OrderDtos.ExportResponse export(@RequestParam(required = false) String q, @RequestParam(required = false) List<String> statuses,
+                                           @RequestParam(required = false) Instant from, @RequestParam(required = false) Instant to,
+                                           @RequestParam(required = false) UUID createdBy, @RequestParam(required = false) String productQ,
+                                           @RequestParam(required = false) String customerQ,
+                                           @RequestParam(required = false) Instant deliveryFrom,
+                                           @RequestParam(required = false) Instant deliveryTo,
+                                           @RequestParam(required = false) UUID sellerId,
+                                           @RequestParam(required = false) List<String> channels,
+                                           @RequestParam(required = false) List<String> paymentMethods) {
+        return service.export(new OrderQuery.Filter(q, statuses, from, to, createdBy, null, null, 0, 5000, productQ, customerQ,
+                deliveryFrom, deliveryTo, sellerId, channels, paymentMethods));
+    }
+
+    /** "Lưu" ở chi tiết đơn (người nhận đặt, ngày đặt, kênh bán, dự kiến giao, trạng thái, ghi chú). */
+    @org.springframework.web.bind.annotation.PatchMapping("/{id}/info")
+    @PreAuthorize("hasAuthority('sales.perform')")
+    public OrderResponse updateInfo(@PathVariable UUID id, @Valid @RequestBody OrderDtos.InfoRequest req, @AuthenticationPrincipal Jwt jwt) {
+        return service.updateInfo(id, req, Actor.of(jwt));
+    }
+
+    /** "Kết thúc": chuyển Hoàn thành không tạo hóa đơn. */
+    @PostMapping("/{id}/finish")
+    @PreAuthorize("hasAuthority('sales.perform')")
+    public OrderResponse finish(@PathVariable UUID id, @AuthenticationPrincipal Jwt jwt) {
+        return service.finish(id, Actor.of(jwt));
     }
 
     @GetMapping("/{id}")
