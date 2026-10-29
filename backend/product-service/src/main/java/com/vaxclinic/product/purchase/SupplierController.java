@@ -1,6 +1,5 @@
 package com.vaxclinic.product.purchase;
 
-import com.vaxclinic.common.audit.AuditLogger;
 import com.vaxclinic.product.purchase.PurchaseDtos.Actor;
 import com.vaxclinic.product.purchase.SupplierCommandService.SupplierRequest;
 import com.vaxclinic.product.purchase.SupplierListQuery.SupplierPage;
@@ -25,10 +24,12 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.util.List;
 import java.util.UUID;
 
-/** Nhà cung cấp: xem cần catalog.view, thêm/sửa/ngừng hoạt động/xóa/import cần inventory.manage (thủ kho, quản lý). */
+/**
+ * Nhà cung cấp: xem cần catalog.view, thêm/sửa/ngừng hoạt động/xóa/import cần inventory.manage (thủ kho, quản lý).
+ * Nghiệp vụ ở {@link SupplierManageService}.
+ */
 @RestController
 @RequestMapping("/api/suppliers")
 @PreAuthorize("hasAuthority('catalog.view')")
@@ -40,17 +41,10 @@ public class SupplierController {
     public record StatusRequest(boolean active) {
     }
 
-    private final SupplierCommandService commands;
-    private final SupplierListQuery query;
-    private final SupplierImportService importer;
-    private final AuditLogger audit;
+    private final SupplierManageService service;
 
-    public SupplierController(SupplierCommandService commands, SupplierListQuery query, SupplierImportService importer,
-                              AuditLogger audit) {
-        this.commands = commands;
-        this.query = query;
-        this.importer = importer;
-        this.audit = audit;
+    public SupplierController(SupplierManageService service) {
+        this.service = service;
     }
 
     /** buyFrom/buyTo: Tổng mua (giá trị); from/to: thời gian tính Tổng mua; debtFrom/debtTo: Nợ hiện tại;
@@ -63,54 +57,45 @@ public class SupplierController {
                                @RequestParam(required = false) BigDecimal debtFrom, @RequestParam(required = false) BigDecimal debtTo,
                                @RequestParam(required = false) String docCode,
                                @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "15") int size) {
-        return query.search(new SupplierListQuery.Filter(q, groupId, active, buyFrom, buyTo, from, to, debtFrom, debtTo,
+        return service.search(new SupplierListQuery.Filter(q, groupId, active, buyFrom, buyTo, from, to, debtFrom, debtTo,
                 docCode, Math.max(page, 0), Math.min(Math.max(size, 1), 100)));
     }
 
     @GetMapping("/{id}")
     public SupplierRow get(@PathVariable UUID id) {
-        return query.one(id);
+        return service.get(id);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAuthority('inventory.manage')")
     public SupplierRow create(@Valid @RequestBody SupplierRequest req, @AuthenticationPrincipal Jwt jwt) {
-        Supplier s = commands.create(req, actor(jwt));
-        log(jwt, "Thêm mới", s, "Tạo nhà cung cấp " + s.getCode() + " - " + s.getName());
-        return query.one(s.getId());
+        return service.create(req, Actor.of(jwt));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('inventory.manage')")
     public SupplierRow update(@PathVariable UUID id, @Valid @RequestBody SupplierRequest req, @AuthenticationPrincipal Jwt jwt) {
-        Supplier s = commands.update(id, req);
-        log(jwt, "Sửa", s, "Sửa nhà cung cấp " + s.getCode() + " - " + s.getName());
-        return query.one(id);
+        return service.update(id, req, Actor.of(jwt));
     }
 
     @PatchMapping("/{id}/note")
     @PreAuthorize("hasAuthority('inventory.manage')")
     public SupplierRow note(@PathVariable UUID id, @RequestBody NoteRequest req, @AuthenticationPrincipal Jwt jwt) {
-        Supplier s = commands.setNote(id, req.note());
-        log(jwt, "Sửa", s, "Sửa ghi chú nhà cung cấp " + s.getCode());
-        return query.one(id);
+        return service.setNote(id, req.note(), Actor.of(jwt));
     }
 
     @PatchMapping("/{id}/status")
     @PreAuthorize("hasAuthority('inventory.manage')")
     public SupplierRow status(@PathVariable UUID id, @RequestBody StatusRequest req, @AuthenticationPrincipal Jwt jwt) {
-        Supplier s = commands.setActive(id, req.active());
-        log(jwt, "Sửa", s, (req.active() ? "Cho phép hoạt động" : "Ngừng hoạt động") + " nhà cung cấp " + s.getCode());
-        return query.one(id);
+        return service.setActive(id, req.active(), Actor.of(jwt));
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasAuthority('inventory.manage')")
     public void delete(@PathVariable UUID id, @AuthenticationPrincipal Jwt jwt) {
-        Supplier s = commands.delete(id);
-        log(jwt, "Xóa", s, "Xóa nhà cung cấp " + s.getCode() + " - " + s.getName());
+        service.delete(id, Actor.of(jwt));
     }
 
     /** Import file CSV / XLSX: cập nhật theo mã NCC, thêm mới nếu mã chưa có / để trống. Lỗi trả theo từng dòng. */
@@ -118,20 +103,6 @@ public class SupplierController {
     @PreAuthorize("hasAuthority('inventory.manage')")
     public SupplierImportService.ImportResult importFile(@RequestParam("file") MultipartFile file,
                                                          @AuthenticationPrincipal Jwt jwt) {
-        var result = importer.importFile(file, actor(jwt));
-        audit.record(UUID.fromString(jwt.getSubject()), jwt.getClaimAsString("name"), null, "Nhà cung cấp", "Import", null,
-                "Import nhà cung cấp từ file " + file.getOriginalFilename() + ": thêm " + result.created() + ", cập nhật "
-                        + result.updated() + ", lỗi " + result.errors().size());
-        return result;
-    }
-
-    static Actor actor(Jwt jwt) {
-        List<String> branches = jwt.getClaimAsStringList("branches");
-        return new Actor(UUID.fromString(jwt.getSubject()), jwt.getClaimAsString("name"), branches == null ? List.of() : branches);
-    }
-
-    private void log(Jwt jwt, String action, Supplier s, String detail) {
-        audit.record(UUID.fromString(jwt.getSubject()), jwt.getClaimAsString("name"), s.getBranchId(), "Nhà cung cấp", action,
-                s.getCode(), detail);
+        return service.importFile(file, Actor.of(jwt));
     }
 }
