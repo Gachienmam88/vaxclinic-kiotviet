@@ -42,12 +42,12 @@ export function useInvoiceFavourites(userId: string | undefined) {
 export const INVOICE_COLUMNS = [
   ["soldAt", "Thời gian"], ["returnCodes", "Mã trả hàng"], ["customerCode", "Mã KH"], ["customerName", "Khách hàng"],
   ["sellerName", "Người bán"], ["subtotal", "Tổng tiền hàng"], ["discount", "Giảm giá"], ["total", "Khách cần trả"],
-  ["paid", "Khách đã trả"], ["paymentMethod", "Thanh toán"], ["state", "Trạng thái"],
+  ["paid", "Khách đã trả"], ["paymentMethod", "Thanh toán"], ["state", "Trạng thái"], ["einvoice", "Trạng thái HĐĐT"],
 ] as const;
 
 export type InvoiceColumn = (typeof INVOICE_COLUMNS)[number][0];
 
-const DEFAULT_COLUMNS: InvoiceColumn[] = ["soldAt", "returnCodes", "customerCode", "customerName", "subtotal", "discount", "total", "paid"];
+const DEFAULT_COLUMNS: InvoiceColumn[] = ["soldAt", "returnCodes", "customerCode", "customerName", "subtotal", "discount", "total", "paid", "einvoice"];
 
 export function useInvoiceColumns(userId: string | undefined) {
   const [cols, setCols] = useUserPref<InvoiceColumn[]>("columns", userId, DEFAULT_COLUMNS);

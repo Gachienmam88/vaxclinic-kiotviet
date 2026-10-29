@@ -86,7 +86,8 @@
       "total": "应付金额",
       "paid": "客户已付",
       "paymentMethod": "付款",
-      "state": "状态"
+      "state": "状态",
+      "einvoice": "电子发票状态"
     },
     "table": {
       "showAll": "显示全部销售单",

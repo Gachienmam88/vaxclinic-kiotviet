@@ -87,7 +87,8 @@
       "total": "Amount due",
       "paid": "Customer paid",
       "paymentMethod": "Payment",
-      "state": "Status"
+      "state": "Status",
+      "einvoice": "E-invoice status"
     },
     "table": {
       "showAll": "Show all invoices",

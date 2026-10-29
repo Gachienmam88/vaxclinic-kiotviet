@@ -86,7 +86,8 @@
       "total": "Khách cần trả",
       "paid": "Khách đã trả",
       "paymentMethod": "Thanh toán",
-      "state": "Trạng thái"
+      "state": "Trạng thái",
+      "einvoice": "Trạng thái HĐĐT"
     },
     "table": {
       "showAll": "Xem tất cả hóa đơn",

@@ -3,6 +3,7 @@
 import { Fragment } from "react";
 import { Star } from "lucide-react";
 import { DocCodeLink } from "@/components/ui/doc-code-link";
+import { useEInvoiceRecords, type EInvoiceRecord } from "@/features/integrations/integration-queries";
 import { ListEmptyRow } from "@/components/ui/list-empty-state";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useT, type TFunction } from "@/lib/i18n";
@@ -11,6 +12,7 @@ import { salesNs } from "@/messages/sales";
 import { cn } from "@/lib/utils";
 import { InvoiceDetailPanel } from "./invoice-detail-panel";
 import { enumLabel } from "./i18n-enum-label";
+import { einvoiceState } from "./invoice-einvoice-state";
 import { STATE_TONE } from "./invoice-filter-model";
 import { LIST_HEAD_ROW, StatusBadge } from "./invoice-list-kit";
 import { INVOICE_COLUMNS, type InvoiceColumn } from "./invoice-list-prefs";
@@ -19,8 +21,13 @@ import type { InvoiceList, InvoiceListItem } from "./sales-types";
 const MONEY: InvoiceColumn[] = ["subtotal", "discount", "total", "paid"];
 const SUM_KEY = { subtotal: "sumSubtotal", discount: "sumDiscount", total: "sumTotal", paid: "sumPaid" } as const;
 
-function cell(i: InvoiceListItem, c: InvoiceColumn, t: TFunction<typeof salesNs.vi>) {
+function cell(i: InvoiceListItem, c: InvoiceColumn, t: TFunction<typeof salesNs.vi>, einv: Map<string, EInvoiceRecord>) {
   switch (c) {
+    case "einvoice": {
+      // Như KiotViet: chưa phát hành thì để trống.
+      const s = einvoiceState(einv.get(i.id));
+      return s === "NONE" ? null : t(`enums.einvoiceState.${s}`);
+    }
     case "soldAt": return formatDateTime(i.soldAt);
     case "state": return <StatusBadge tone={STATE_TONE[i.state]}>{t(`enums.invoiceState.${i.state}`)}</StatusBadge>;
     case "paymentMethod": return enumLabel(t, salesNs, "enums.paymentMethod", i.paymentMethod);
@@ -42,6 +49,9 @@ export function InvoiceListTable({ data, cols, expanded, onExpand, isFav, onTogg
   const t = useT(salesNs);
   const visible = INVOICE_COLUMNS.map(([k]) => [k, t(`invoices.columns.${k}`)] as const).filter(([k]) => cols.includes(k));
   const span = visible.length + 2;
+  const ids = cols.includes("einvoice") ? (data?.items.map((i) => i.id) ?? []) : [];
+  const { data: records } = useEInvoiceRecords(ids);
+  const einv = new Map((records ?? []).map((r) => [r.invoice_id, r]));
   const right = (c: InvoiceColumn) => MONEY.includes(c) && "text-right";
   const star = (on: boolean) => <Star className={cn("size-4", on ? "fill-[#ffb400] text-[#ffb400]" : "text-muted-foreground")} />;
   return (
@@ -67,7 +77,7 @@ export function InvoiceListTable({ data, cols, expanded, onExpand, isFav, onTogg
               <TableCell className="pl-4" onClick={(e) => e.stopPropagation()}>
                 <button type="button" aria-label={isFav(i.id) ? t("invoices.table.unmark") : t("invoices.table.mark")} onClick={() => onToggleFav(i.id)}>{star(isFav(i.id))}</button></TableCell>
               <TableCell>{i.code}</TableCell>
-              {visible.map(([k]) => <TableCell key={k} className={cn(right(k), k === "customerName" && "whitespace-normal", "last:pr-4")}>{cell(i, k, t)}</TableCell>)}
+              {visible.map(([k]) => <TableCell key={k} className={cn(right(k), k === "customerName" && "whitespace-normal", "last:pr-4")}>{cell(i, k, t, einv)}</TableCell>)}
             </TableRow>
             {expanded === i.id && (
               <TableRow className="hover:bg-transparent"><TableCell colSpan={span} className="p-0 whitespace-normal">

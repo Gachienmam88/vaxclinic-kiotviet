@@ -86,7 +86,8 @@
       "total": "請求額",
       "paid": "入金額",
       "paymentMethod": "支払方法",
-      "state": "ステータス"
+      "state": "ステータス",
+      "einvoice": "電子請求書の状態"
     },
     "table": {
       "showAll": "すべての伝票を表示",
