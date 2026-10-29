@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { FileOutput, FileUp, Plus, Search } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { DeepLinkRoute, type DeepLink } from "@/components/ui/deep-link-route";
 import { OUTLINE_BLUE_BTN, OUTLINE_GRAY_BTN, PurchaseListLayout, PurchaseListPager } from "@/features/purchases/purchase-list-chrome";
 import { exportPriceRowsCsv } from "@/features/products/price-book-csv";
 import { PriceBookFormDialog } from "@/features/products/price-book-form-dialog";
@@ -18,8 +19,15 @@ import { useT } from "@/lib/i18n";
 import { commonNs } from "@/messages/common";
 import { productsNs } from "@/messages/products";
 
-/** Hàng hóa → Thiết lập giá (KiotViet): Bảng giá chung + giá theo từng bảng giá, sửa trực tiếp / theo công thức trên bảng. */
+/**
+ * Hàng hóa → Thiết lập giá (KiotViet): Bảng giá chung + giá theo từng bảng giá, sửa trực tiếp / theo công thức trên bảng.
+ * Link sâu ?code=<mã hàng> (VD từ dòng phiếu nhập) → điền sẵn ô "Tìm mã hàng".
+ */
 export default function PriceBooksPage() {
+  return <DeepLinkRoute>{(link) => <PriceBooksScreen link={link} />}</DeepLinkRoute>;
+}
+
+function PriceBooksScreen({ link }: { link: DeepLink }) {
   const { can } = useCurrentUser();
   const editable = can("catalog.manage");
   const t = useT(productsNs);
@@ -27,7 +35,7 @@ export default function PriceBooksPage() {
   const { data: books = [] } = usePriceBooks();
   const [selected, setSelected] = useState<string[]>([BASE_BOOK_ID]);
   const [filters, setFilters] = useState(EMPTY_PRICE_FILTERS);
-  const [text, setText] = useState({ q: "", code: "", name: "" });
+  const [text, setText] = useState({ q: "", code: link.code ?? "", name: "" });
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(15);
   const [bookDialog, setBookDialog] = useState<{ key: number; book?: PriceBook } | null>(null);

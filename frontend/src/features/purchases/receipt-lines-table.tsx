@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import { Tag } from "lucide-react";
 import { formatDate, formatMoney, formatNumber } from "@/lib/format";
 import type { Receipt } from "./purchase-types";
 import { DocCodeLink } from "@/components/ui/doc-code-link";
@@ -11,7 +13,10 @@ import { purchasesNs } from "@/messages/purchases";
 const SEARCH = "h-[30px] w-full max-w-[150px] rounded-md border border-[#d1d5db] bg-background px-2.5 text-sm font-normal outline-none placeholder:text-muted-foreground focus-visible:border-primary";
 const norm = (s: string) => s.toLocaleLowerCase("vi").normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/g, "d");
 
-/** Bảng dòng hàng của phiếu nhập (nền tiêu đề #eff0f3) + hàng lọc "Tìm mã hàng / Tìm tên hàng" phía client. */
+/**
+ * Bảng dòng hàng của phiếu nhập (nền tiêu đề #eff0f3) + hàng lọc "Tìm mã hàng / Tìm tên hàng" phía client.
+ * Mỗi dòng có biểu tượng nhãn giá → Thiết lập giá lọc sẵn theo mã hàng (KiotViet).
+ */
 export function ReceiptLinesTable({ r }: { r: Receipt }) {
   const t = useT(purchasesNs);
   const [code, setCode] = useState("");
@@ -25,13 +30,14 @@ export function ReceiptLinesTable({ r }: { r: Receipt }) {
           <th className="px-2 text-right">{t("lines.quantity")}</th>
           <th className="px-2 text-right">{t("lines.unitPrice")}</th><th className="px-2 text-right">{t("lines.discount")}</th>
           <th className="px-2 text-right">{t("lines.priceWithVat")}</th><th className="px-2 text-right">{t("lines.amount")}</th>
+          <th className="w-8" />
         </tr>
       </thead>
       <tbody>
         <tr className="border-b border-[#e5e7eb]">
           <td className="px-2 py-1.5"><input aria-label={t("lines.searchCode")} placeholder={t("lines.searchCode")} className={SEARCH} value={code} onChange={(e) => setCode(e.target.value)} /></td>
           <td className="px-2 py-1.5"><input aria-label={t("lines.searchName")} placeholder={t("lines.searchName")} className={SEARCH} value={name} onChange={(e) => setName(e.target.value)} /></td>
-          <td colSpan={5} />
+          <td colSpan={6} />
         </tr>
         {lines.map((l) => (
           <tr key={l.id} className="border-b border-[#e5e7eb] align-top hover:bg-[#edeef0]">
@@ -43,9 +49,14 @@ export function ReceiptLinesTable({ r }: { r: Receipt }) {
             <td className="px-2 py-2.5 text-right">{Number(l.discount) ? formatNumber(l.discount) : ""}</td>
             <td className="px-2 py-2.5 text-right">{formatNumber(l.priceWithVat)}</td>
             <td className="px-2 py-2.5 text-right font-bold">{formatMoney(l.amount)}</td>
+            <td className="px-1 py-2.5 text-center">
+              <Link href={`/products/price-books?code=${encodeURIComponent(l.productCode)}`} prefetch={false}
+                aria-label={t("detail.priceSetupLine", { code: l.productCode })} title={t("detail.priceSetupLine", { code: l.productCode })}
+                className="inline-flex text-[#2171bc] hover:text-[#1a9dcc]"><Tag className="size-4" /></Link>
+            </td>
           </tr>
         ))}
-        {!lines.length && <ListEmptyRow cols={7} what={t("lines.emptyWhat")} compact />}
+        {!lines.length && <ListEmptyRow cols={8} what={t("lines.emptyWhat")} compact />}
       </tbody>
     </table>
   );

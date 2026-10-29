@@ -3,13 +3,17 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Copy, ExternalLink, FileOutput, Save, Trash2, Undo2 } from "lucide-react";
+import Link from "next/link";
+import { Barcode, Copy, Ellipsis, ExternalLink, FileOutput, Save, Tag, Trash2, Undo2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { docCodeHref, DocCodeLink } from "@/components/ui/doc-code-link";
 import { DetailSingleTab } from "@/components/ui/detail-tabs-list";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { MAX_LABELS, printBarcodeLabels } from "@/features/print/barcode-label-print";
+import type { ProductDetail } from "@/features/products/product-types";
 import { Textarea } from "@/components/ui/textarea";
-import { useBranches } from "@/features/settings/settings-queries";
+import { useBranches, useShopSettings } from "@/features/settings/settings-queries";
 import { api, errorMessage } from "@/lib/api-client";
 import { useCurrentUser } from "@/lib/use-current-user";
 import { exportReceiptLinesCsv } from "./purchase-csv-export";
@@ -36,7 +40,10 @@ function Info({ label, children }: { label: string; children: React.ReactNode })
   );
 }
 
-/** Chi tiết phiếu nhập mở ngay dưới dòng. Sửa được người nhập, ngày nhập, số HĐ, ghi chú (kể cả phiếu đã nhập). */
+/**
+ * Chi tiết phiếu nhập mở ngay dưới dòng. Sửa được người nhập, ngày nhập, số HĐ, ghi chú (kể cả phiếu đã nhập).
+ * Chân như KiotViet: Hủy · Xuất file | Mở phiếu · Lưu · Trả hàng nhập · In tem mã · In · "…" (Sao chép).
+ */
 export function ReceiptDetailPanel({ id, onClose }: { id: string; onClose?: () => void }) {
   const router = useRouter();
   const qc = useQueryClient();
@@ -44,6 +51,7 @@ export function ReceiptDetailPanel({ id, onClose }: { id: string; onClose?: () =
   const { data: r } = useReceipt(id);
   const { data: users = [] } = useUserLookup();
   const { data: branches = [] } = useBranches();
+  const { data: shop } = useShopSettings();
   const [info, setInfo] = useState<{ at: string; receiverId: string; invoiceNo: string; note: string } | null>(null);
   const manage = can("inventory.manage");
   const t = useT(purchasesNs);
@@ -60,6 +68,21 @@ export function ReceiptDetailPanel({ id, onClose }: { id: string; onClose?: () =
   const cancel = useMutation({
     mutationFn: () => api(`/purchase-receipts/${id}/cancel`, { method: "POST" }),
     onSuccess: () => { toast.success(t("detail.toastCancelled")); refresh(); qc.invalidateQueries({ queryKey: ["products"] }); },
+    onError: (e) => toast.error(errorMessage(e)),
+  });
+
+  /** In tem mã: số tem = số lượng nhập (làm tròn lên) mỗi dòng; giá bán lấy theo đơn vị của dòng ở danh mục hàng. */
+  const printLabels = useMutation({
+    mutationFn: async () => {
+      const products = await Promise.all([...new Set(r!.lines.map((l) => l.productId))].map((pid) => api<ProductDetail>(`/products/${pid}`)));
+      const unitOf = new Map(products.flatMap((p) => p.units.map((u) => [u.id, { p, u }] as const)));
+      return printBarcodeLabels(r!.lines.map((l) => {
+        const hit = unitOf.get(l.unitId);
+        return { code: l.productCode, barcode: hit?.u.barcode, name: `${l.productName} (${l.unitName})`,
+          price: Number(hit?.u.price ?? 0), copies: Math.ceil(Number(l.quantity)) };
+      }), shop?.store?.name ?? "");
+    },
+    onSuccess: (n) => { if (n >= MAX_LABELS) toast.info(tc("errors.labelsCapped", { max: MAX_LABELS })); },
     onError: (e) => toast.error(errorMessage(e)),
   });
 
@@ -95,6 +118,10 @@ export function ReceiptDetailPanel({ id, onClose }: { id: string; onClose?: () =
             <input aria-label={t("filter.inputInvoiceNo")} className={FIELD} value={f.invoiceNo} disabled={!editable} onChange={(e) => setF({ invoiceNo: e.target.value })} />
           </Info>
         </div>
+        <div className="flex justify-end">
+          <Link href="/products/price-books" prefetch={false} className="inline-flex items-center gap-1 text-[13px] text-[#2171bc] hover:text-[#1a9dcc] hover:underline">
+            <Tag className="size-4" /> {t("detail.priceSetup")}</Link>
+        </div>
         <ReceiptLinesTable r={r} />
         <div className="flex items-end gap-6">
           <Textarea className="h-[95px] max-w-[720px] resize-none rounded-md" placeholder={t("detail.notePlaceholder")} value={f.note} disabled={!editable}
@@ -108,7 +135,6 @@ export function ReceiptDetailPanel({ id, onClose }: { id: string; onClose?: () =
             onClick={() => confirm(t(r.status === "COMPLETED" ? "detail.confirmCancelCompleted" : "detail.confirmCancelDraft", { code: r.code })) && cancel.mutate()}>
             <Trash2 className="size-4" /> {tc("actions.cancel")}</Button>
         )}
-        <Button variant="ghost" onClick={() => router.push(`/purchases/receipts/new?copyFrom=${r.id}`)}><Copy className="size-4" /> {tc("actions.copy")}</Button>
         <Button variant="ghost" onClick={() => exportReceiptLinesCsv(r, t)}><FileOutput className="size-4" /> {tc("actions.export")}</Button>
         <div className="ml-auto flex flex-wrap gap-2">
           {r.status === "DRAFT" && (
@@ -123,7 +149,16 @@ export function ReceiptDetailPanel({ id, onClose }: { id: string; onClose?: () =
             <Button variant="outline" className={OUTLINE_GRAY_BTN} onClick={() => router.push(`/purchases/returns/new?receiptId=${r.id}`)}>
               <Undo2 className="size-4" /> {t("returns.create")}</Button>
           )}
+          <Button variant="outline" className={OUTLINE_GRAY_BTN} disabled={printLabels.isPending || !r.lines.length} onClick={() => printLabels.mutate()}>
+            <Barcode className="size-4" /> {tc("actions.printLabels")}</Button>
           <PrintButton type="PURCHASE_RECEIPT" data={receiptData(r)} branchId={r.branchId} />
+          <DropdownMenu>
+            <DropdownMenuTrigger className="inline-flex size-[30px] items-center justify-center rounded-md border hover:bg-muted" aria-label={tc("actions.more")}>
+              <Ellipsis className="size-4" /></DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => router.push(`/purchases/receipts/new?copyFrom=${r.id}`)}><Copy className="size-4" /> {tc("actions.copy")}</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>}
     </div>
