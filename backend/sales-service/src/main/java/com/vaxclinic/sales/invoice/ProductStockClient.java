@@ -64,7 +64,29 @@ public class ProductStockClient {
         this.tokens = new ServiceTokenProvider(secret, "sales-service");
     }
 
+    /** Dòng của hóa đơn gộp: lineId mới, sourceLineId = dòng của hóa đơn gốc (kho xuất lại đúng lô của dòng gốc). */
+    public record MergeLine(UUID lineId, UUID sourceLineId) {
+    }
+
+    /** SALE_MERGE: hoàn previousDocIds + xuất lại đúng lô cho dòng mới, 1 transaction phía product-service. */
+    public record MergeRequest(UUID docId, String docType, String docCode, UUID branchId, String partnerName, UUID userId,
+                               List<UUID> previousDocIds, List<MergeLine> lines) {
+        public MergeRequest(UUID docId, String docCode, UUID branchId, String partnerName, UUID userId,
+                            List<UUID> previousDocIds, List<MergeLine> lines) {
+            this(docId, "SALE_MERGE", docCode, branchId, partnerName, userId, previousDocIds, lines);
+        }
+    }
+
     public Result apply(Request req) {
+        return post(req);
+    }
+
+    /** Gộp hóa đơn — idempotent theo docId như các chứng từ khác. */
+    public Result applyMerge(MergeRequest req) {
+        return post(req);
+    }
+
+    private Result post(Object req) {
         try {
             return http.post().uri("/internal/stock-docs").header("Authorization", "Bearer " + tokens.token())
                     .body(req).retrieve().body(Result.class);
