@@ -129,8 +129,7 @@ Nguồn: `PS/product/ProductController.java:37-115`, `PS/internal/InternalProduc
   - thời gian tạo `[from 00:00, to+1 ngày 00:00)` giờ máy;
   - **dự kiến hết hàng** theo khoảng ngày;
   - trạng thái, **mặc định "Đang kinh doanh"** (`FE/features/products/product-queries.ts:23-26`).
-- **Dự kiến hết hàng** `expectedOutDays` = `floor(max(tồn,0) × min(30, max(1, số ngày từ lúc tạo)) / bán ròng 30 ngày)`; bán ròng = −Σ`quantity` thẻ kho loại `SALE`,`RETURN` trong 30 ngày; NULL nếu chưa bán. Lọc theo ngày = hôm nay (VN) + days; hàng NULL bị loại (`PS/product/ProductListRepository.java:37-49,109-120`).
-  - Lưu ý: code lọc `doc_type in ('SALE','RETURN')`, nhưng enum không có `RETURN` mà là `SALE_RETURN`/`SALE_CANCEL`, nên hiện chỉ tính `SALE` (`PS/stock/StockLedgerEntry.java:24-27`).
+- **Dự kiến hết hàng** `expectedOutDays` = `floor(max(tồn,0) × min(30, max(1, số ngày từ lúc tạo)) / bán ròng 30 ngày)`; bán ròng = −Σ`quantity` thẻ kho loại `SALE` (xuất bán), `SALE_CANCEL` (hủy / sửa / gộp HĐ hoàn lại), `SALE_RETURN` (khách trả nhập lại), `SALE_RETURN_CANCEL_OUT` (hủy phiếu trả) trong 30 ngày — đã trừ hàng khách trả (audit #6); NULL nếu bán ròng ≤ 0. Lọc theo ngày = hôm nay (VN) + days; hàng NULL bị loại (`PS/product/ProductListRepository.java:37-51,111-122`).
 - Cột (`FE/features/products/product-list-table.tsx:35-45`): Mã hàng (đơn vị cơ bản), Tên (+ĐVT, các ĐVT khác, "· Lô"), Tên viết tắt, Giá bán (giá chung đv cơ bản), VAT bán ra, Giảm thuế, Giá vốn, Tồn kho, Khách đặt, Thời gian tạo, Dự kiến hết hàng. Dòng đầu = tổng tồn của toàn bộ kết quả lọc. Sắp xếp `created_at desc`. Trang 15 dòng cố định (`FE/app/(admin)/products/page.tsx:18`).
 - Chi tiết (panel dưới dòng):
   - Thẻ kho: 10 dòng/trang (`FE/features/products/product-queries.ts:66`); API kẹp ≤100, mới nhất trước (`PS/product/ProductDetailQuery.java:66-74`).
@@ -746,7 +745,7 @@ Nguồn: `PS/purchase/SupplierController.java:33-107`, `PS/purchase/SupplierGrou
 - Danh sách hàng hóa / phiếu nhập / trả / kiểm / xuất và sổ S2d không lọc theo chi nhánh của user (báo cáo `report/*` thì có).
 - Hủy phiếu tạm (nhập, trả, kiểm, xuất) không kiểm chi nhánh; tồn đầu kỳ khi tạo hàng và lưu tạm không kiểm khóa sổ; cân bằng kiểm kho kiểm khóa sổ theo thời điểm hiện tại.
 - Nhóm hàng không chặn vòng cha–con nhiều cấp; truy vấn đệ quy không có điều kiện dừng.
-- "Dự kiến hết hàng" lọc `doc_type in ('SALE','RETURN')`; `RETURN` không có trong enum (`PS/product/ProductListRepository.java:45`).
+- ~~"Dự kiến hết hàng" lọc `doc_type in ('SALE','RETURN')`~~ — đã sửa (audit #6): dùng `SALE`, `SALE_CANCEL`, `SALE_RETURN`, `SALE_RETURN_CANCEL_OUT` (mục 1.1).
 - FE phiếu nhập chỉ có CASH / TRANSFER; backend nhận `payment_method` tự do ≤20 ký tự.
 - Payment / discount / adjust NCC trên FE luôn lấy chi nhánh đầu tiên của user.
 - CSV danh sách NCC, sổ nợ NCC và hóa đơn đầu vào không chặn công thức Excel.

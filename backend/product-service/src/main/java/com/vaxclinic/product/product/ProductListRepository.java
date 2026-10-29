@@ -37,12 +37,14 @@ public class ProductListRepository {
     /**
      * Dự kiến hết hàng (e.days) = tồn / (số bán ròng 30 ngày gần nhất ÷ số ngày); null khi chưa bán. Hàng tạo chưa đủ
      * 30 ngày thì chia theo số ngày từ lúc tạo (tối thiểu 1) để không đánh giá thấp tốc độ bán. Cần s (tồn) đã join.
+     * Bán ròng = −Σ thẻ kho các chứng từ bán: SALE (xuất), SALE_CANCEL (hủy / sửa / gộp hóa đơn hoàn lại), SALE_RETURN
+     * (khách trả nhập lại), SALE_RETURN_CANCEL_OUT (hủy phiếu trả xuất lại).
      */
     private static final String EXPECTED_OUT_JOIN = """
             left join lateral (select case when sold > 0 then floor(greatest(coalesce(s.qty, 0), 0) * least(30,
                                    greatest(1, ceil(extract(epoch from now() - p.created_at) / 86400))) / sold)::int end days
                         from (select -sum(l.quantity) sold from stock_ledger l
-                              where l.product_id = p.id and l.doc_type in ('SALE', 'RETURN')
+                              where l.product_id = p.id and l.doc_type in ('SALE', 'SALE_CANCEL', 'SALE_RETURN', 'SALE_RETURN_CANCEL_OUT')
                                 and l.occurred_at >= now() - interval '30 days'
                                 and (cast(:branchId as uuid) is null or l.branch_id = cast(:branchId as uuid))) v
                        ) e on true
