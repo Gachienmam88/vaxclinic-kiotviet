@@ -30,6 +30,7 @@ public class DeliveryPartnerGroupRepository {
     }
 
     public boolean exists(UUID id) {
-        return Boolean.TRUE.equals(jdbc.query("select 1 from delivery_partner_groups where id = ?", rs -> rs.next(), id));
+        Integer n = jdbc.queryForObject("select count(*) from delivery_partner_groups where id = ?", Integer.class, id);
+        return n != null && n > 0;
     }
 }
