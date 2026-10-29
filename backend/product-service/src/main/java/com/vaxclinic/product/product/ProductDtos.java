@@ -79,11 +79,15 @@ public final class ProductDtos {
                                 List<UnitResponse> units, List<BranchStock> stocks) {
     }
 
-    /** 1 dòng danh sách hàng hóa (theo đơn vị cơ bản). */
+    /**
+     * 1 dòng danh sách hàng hóa (theo đơn vị cơ bản). expectedOutDays: số ngày còn bán được theo tốc độ bán 30 ngày gần
+     * nhất; null khi chưa bán được gì trong khoảng đó.
+     */
     public record ProductListItem(UUID id, String code, String name, String shortName, String unitName,
                                   List<String> otherUnits, BigDecimal price, BigDecimal cost,
                                   String taxRateName, boolean taxReduction, boolean lotManaged,
-                                  BigDecimal stock, BigDecimal reserved, boolean active) {
+                                  BigDecimal stock, BigDecimal reserved, boolean active, Instant createdAt,
+                                  Integer expectedOutDays) {
     }
 
     public record ProductListResponse(List<ProductListItem> items, long total, int page, int size,
