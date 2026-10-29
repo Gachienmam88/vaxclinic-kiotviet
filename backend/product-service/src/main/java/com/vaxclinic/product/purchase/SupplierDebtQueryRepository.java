@@ -8,15 +8,15 @@ import com.vaxclinic.product.purchase.SupplierDebtDtos.LedgerRow;
 import com.vaxclinic.product.purchase.SupplierDebtDtos.UnpaidReceipt;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
 /** Đọc sổ công nợ NCC: sổ chi tiết + số dư lũy kế, lịch sử nhập/trả, phiếu nhập còn nợ, chi tiết 1 phiếu công nợ. */
-@Component
-public class SupplierDebtQuery {
+@Repository
+public class SupplierDebtQueryRepository {
 
     /** Σ phân bổ (thanh toán + chiết khấu) còn hiệu lực của từng phiếu nhập. */
     static final String SETTLED = """
@@ -25,7 +25,7 @@ public class SupplierDebtQuery {
 
     private final NamedParameterJdbcTemplate jdbc;
 
-    public SupplierDebtQuery(NamedParameterJdbcTemplate jdbc) {
+    public SupplierDebtQueryRepository(NamedParameterJdbcTemplate jdbc) {
         this.jdbc = jdbc;
     }
 
@@ -33,7 +33,7 @@ public class SupplierDebtQuery {
     public List<LedgerRow> ledger(UUID supplierId) {
         return jdbc.query("""
                 select doc_id, type, code, t, v, sum(v) over (order by t, ord, c, doc_id rows unbounded preceding) bal
-                from (%s) l where l.sid = :id order by t desc, ord desc, c desc, doc_id desc""".formatted(SupplierListQuery.LEDGER),
+                from (%s) l where l.sid = :id order by t desc, ord desc, c desc, doc_id desc""".formatted(SupplierListRepository.LEDGER),
                 new MapSqlParameterSource("id", supplierId),
                 (rs, n) -> new LedgerRow(rs.getObject("doc_id", UUID.class), rs.getString("type"), rs.getString("code"),
                         rs.getTimestamp("t").toInstant(), rs.getBigDecimal("v"), rs.getBigDecimal("bal")));

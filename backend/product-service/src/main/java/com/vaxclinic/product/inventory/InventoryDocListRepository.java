@@ -5,7 +5,7 @@ import com.vaxclinic.product.inventory.InventoryDocDtos.IssueListItem;
 import com.vaxclinic.product.inventory.InventoryDocDtos.TakeListItem;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Repository;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -15,8 +15,8 @@ import java.util.List;
 import java.util.UUID;
 
 /** Danh sách phiếu kiểm kho / xuất hủy / xuất dùng nội bộ với bộ lọc bên trái (trạng thái, thời gian, người tạo). */
-@Component
-public class InventoryDocListQuery {
+@Repository
+public class InventoryDocListRepository {
 
     public record Filter(String q, List<String> statuses, Instant from, Instant to, UUID createdBy, UUID branchId,
                          int page, int size) {
@@ -24,7 +24,7 @@ public class InventoryDocListQuery {
 
     private final NamedParameterJdbcTemplate jdbc;
 
-    public InventoryDocListQuery(NamedParameterJdbcTemplate jdbc) {
+    public InventoryDocListRepository(NamedParameterJdbcTemplate jdbc) {
         this.jdbc = jdbc;
     }
 

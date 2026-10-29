@@ -19,11 +19,11 @@ import java.util.UUID;
 public class StockIssueManageService {
 
     private final StockIssueService service;
-    private final InventoryDocListQuery listQuery;
+    private final InventoryDocListRepository listQuery;
     private final InventoryDocMapper mapper;
     private final AuditLogger audit;
 
-    public StockIssueManageService(StockIssueService service, InventoryDocListQuery listQuery, InventoryDocMapper mapper,
+    public StockIssueManageService(StockIssueService service, InventoryDocListRepository listQuery, InventoryDocMapper mapper,
                                    AuditLogger audit) {
         this.service = service;
         this.listQuery = listQuery;
@@ -31,7 +31,7 @@ public class StockIssueManageService {
         this.audit = audit;
     }
 
-    public PageResponse<IssueListItem> list(String type, InventoryDocListQuery.Filter filter) {
+    public PageResponse<IssueListItem> list(String type, InventoryDocListRepository.Filter filter) {
         return listQuery.issues(type(type), filter);
     }
 

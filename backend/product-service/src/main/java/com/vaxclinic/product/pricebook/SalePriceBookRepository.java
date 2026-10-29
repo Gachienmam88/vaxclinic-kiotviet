@@ -3,7 +3,7 @@ package com.vaxclinic.product.pricebook;
 import com.vaxclinic.product.pricebook.PriceBookDtos.MissingPolicy;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -18,8 +18,8 @@ import java.util.UUID;
  * Bảng giá cho màn bán hàng (lưu cùng danh mục để bán khi mất mạng): chỉ bảng "Áp dụng", chưa hết hạn, có phạm vi
  * chi nhánh chứa branchId. Máy bán hàng tự lọc tiếp theo ngày / nhóm khách / người bán (price-book-resolver.ts).
  */
-@Component
-public class SalePriceBookQuery {
+@Repository
+public class SalePriceBookRepository {
 
     /** prices: unitId → giá. Phạm vi null = tất cả. */
     public record SalePriceBook(UUID id, String name, Instant validFrom, Instant validTo, List<UUID> branchIds,
@@ -29,7 +29,7 @@ public class SalePriceBookQuery {
 
     private final NamedParameterJdbcTemplate jdbc;
 
-    public SalePriceBookQuery(NamedParameterJdbcTemplate jdbc) {
+    public SalePriceBookRepository(NamedParameterJdbcTemplate jdbc) {
         this.jdbc = jdbc;
     }
 
@@ -42,8 +42,8 @@ public class SalePriceBookQuery {
                 order by lower(name)""", p, rs -> {
             UUID id = rs.getObject("id", UUID.class);
             out.put(id, new SalePriceBook(id, rs.getString("name"), rs.getTimestamp("valid_from").toInstant(),
-                    rs.getTimestamp("valid_to").toInstant(), PriceBookService.uuids(rs, "branch_ids"),
-                    PriceBookService.uuids(rs, "customer_group_ids"), PriceBookService.uuids(rs, "seller_ids"),
+                    rs.getTimestamp("valid_to").toInstant(), PriceBookRepository.uuids(rs, "branch_ids"),
+                    PriceBookRepository.uuids(rs, "customer_group_ids"), PriceBookRepository.uuids(rs, "seller_ids"),
                     MissingPolicy.valueOf(rs.getString("missing_policy")), new HashMap<>()));
         });
         if (!out.isEmpty()) {

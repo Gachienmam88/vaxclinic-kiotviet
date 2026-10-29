@@ -1,7 +1,5 @@
 package com.vaxclinic.product.internal;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vaxclinic.common.error.BusinessException;
 import com.vaxclinic.product.product.Product;
 import com.vaxclinic.product.product.ProductRepository;
@@ -12,7 +10,6 @@ import com.vaxclinic.product.stock.StockBalanceRepository;
 import com.vaxclinic.product.stock.StockLedgerEntry.DocType;
 import com.vaxclinic.product.stock.StockMovementService;
 import com.vaxclinic.product.stock.StockMovementService.Movement;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -58,19 +55,17 @@ public class InternalStockService {
     public record StockDocResult(UUID docId, String docType, List<LineResult> lines) {
     }
 
-    private final JdbcTemplate jdbc;
-    private final ObjectMapper json;
+    private final ExternalStockDocRepository docs;
     private final ProductRepository products;
     private final ProductLotRepository lots;
     private final StockBalanceRepository balances;
     private final StockMovementService stock;
     private final SaleReturnLotExpiryResolver returnLots;
 
-    public InternalStockService(JdbcTemplate jdbc, ObjectMapper json, ProductRepository products,
+    public InternalStockService(ExternalStockDocRepository docs, ProductRepository products,
                                 ProductLotRepository lots, StockBalanceRepository balances, StockMovementService stock,
                                 SaleReturnLotExpiryResolver returnLots) {
-        this.jdbc = jdbc;
-        this.json = json;
+        this.docs = docs;
         this.products = products;
         this.lots = lots;
         this.balances = balances;
@@ -95,12 +90,7 @@ public class InternalStockService {
             case "SALE_RETURN_CANCEL" -> reverse(req, List.of("SALE_RETURN"), req.docId(), DocType.SALE_RETURN, false);
             default -> throw BusinessException.badRequest("DOC_TYPE_UNSUPPORTED", "Loại chứng từ kho không hỗ trợ");
         };
-        try {
-            jdbc.update("insert into external_stock_docs(doc_id, doc_type, doc_code, result) values (?,?,?,?)",
-                    req.docId(), req.docType(), req.docCode(), json.writeValueAsString(result));
-        } catch (JsonProcessingException e) {
-            throw new IllegalStateException(e);
-        }
+        docs.insert(req.docId(), req.docType(), req.docCode(), result);
         return result;
     }
 
@@ -199,15 +189,6 @@ public class InternalStockService {
         if (docId == null) {
             return null;
         }
-        var rows = jdbc.queryForList("select result from external_stock_docs where doc_id = ? and doc_type = any(?)",
-                String.class, docId, docTypes.toArray(String[]::new));
-        if (rows.isEmpty()) {
-            return null;
-        }
-        try {
-            return json.readValue(rows.get(0), StockDocResult.class);
-        } catch (JsonProcessingException e) {
-            throw new IllegalStateException(e);
-        }
+        return docs.find(docId, docTypes);
     }
 }

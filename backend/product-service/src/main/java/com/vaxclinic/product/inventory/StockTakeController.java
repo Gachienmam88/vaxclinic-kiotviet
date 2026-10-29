@@ -48,7 +48,7 @@ public class StockTakeController {
                                            @RequestParam(required = false) UUID branchId,
                                            @RequestParam(defaultValue = "0") int page,
                                            @RequestParam(defaultValue = "15") int size) {
-        return service.list(new InventoryDocListQuery.Filter(q, statuses, from, to, createdBy, branchId,
+        return service.list(new InventoryDocListRepository.Filter(q, statuses, from, to, createdBy, branchId,
                 Math.max(page, 0), Math.min(Math.max(size, 1), 100)));
     }
 

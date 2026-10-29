@@ -23,12 +23,12 @@ public class PurchaseManageService {
 
     private final PurchaseReceiptService receiptService;
     private final PurchaseReturnService returnService;
-    private final PurchaseListQuery listQuery;
+    private final PurchaseListRepository listQuery;
     private final PurchaseDetailMapper mapper;
     private final AuditLogger audit;
 
     public PurchaseManageService(PurchaseReceiptService receiptService, PurchaseReturnService returnService,
-                                 PurchaseListQuery listQuery, PurchaseDetailMapper mapper, AuditLogger audit) {
+                                 PurchaseListRepository listQuery, PurchaseDetailMapper mapper, AuditLogger audit) {
         this.receiptService = receiptService;
         this.returnService = returnService;
         this.listQuery = listQuery;
@@ -38,7 +38,7 @@ public class PurchaseManageService {
 
     // ===== Phiếu nhập =====
 
-    public ReceiptListResponse listReceipts(PurchaseListQuery.Filter filter) {
+    public ReceiptListResponse listReceipts(PurchaseListRepository.Filter filter) {
         return listQuery.receipts(filter);
     }
 
@@ -69,7 +69,7 @@ public class PurchaseManageService {
 
     // ===== Trả hàng nhập =====
 
-    public ReturnListResponse listReturns(PurchaseListQuery.Filter filter) {
+    public ReturnListResponse listReturns(PurchaseListRepository.Filter filter) {
         return listQuery.returns(filter);
     }
 

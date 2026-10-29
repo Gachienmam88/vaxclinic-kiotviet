@@ -1,20 +1,17 @@
 package com.vaxclinic.product.pricebook;
 
 import com.vaxclinic.common.error.BusinessException;
+import com.vaxclinic.product.pricebook.PriceBookDtos.FormulaBase;
 import com.vaxclinic.product.pricebook.PriceBookDtos.FormulaRequest;
 import com.vaxclinic.product.pricebook.PriceBookDtos.ImportError;
 import com.vaxclinic.product.pricebook.PriceBookDtos.ImportResult;
 import com.vaxclinic.product.pricebook.PriceBookDtos.ImportRow;
 import com.vaxclinic.product.pricebook.PriceBookDtos.ItemInput;
-import com.vaxclinic.product.pricebook.PriceBookDtos.RowFilter;
-import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -23,15 +20,11 @@ import java.util.UUID;
 @Service
 public class PriceBookItemService {
 
-    private static final String UPSERT = """
-            insert into price_book_items (price_book_id, unit_id, price) values (:book, :unit, :price)
-            on conflict (price_book_id, unit_id) do update set price = excluded.price, updated_at = now()""";
-
-    private final NamedParameterJdbcTemplate jdbc;
+    private final PriceBookItemRepository repo;
     private final PriceBookService books;
 
-    public PriceBookItemService(NamedParameterJdbcTemplate jdbc, PriceBookService books) {
-        this.jdbc = jdbc;
+    public PriceBookItemService(PriceBookItemRepository repo, PriceBookService books) {
+        this.repo = repo;
         this.books = books;
     }
 
@@ -40,17 +33,15 @@ public class PriceBookItemService {
     public int upsert(UUID bookId, List<ItemInput> items) {
         books.get(bookId);
         var unitIds = items.stream().map(ItemInput::unitId).distinct().toList();
-        Integer found = jdbc.queryForObject("select count(*) from product_units where id in (:ids)",
-                new MapSqlParameterSource("ids", unitIds), Integer.class);
+        Integer found = repo.countUnits(unitIds);
         if (found == null || found != unitIds.size()) {
             throw BusinessException.badRequest("UNIT_NOT_FOUND", "Có hàng hóa không tồn tại");
         }
         int n = 0;
         for (ItemInput it : items) {
-            var p = new MapSqlParameterSource("book", bookId).addValue("unit", it.unitId()).addValue("price", it.price());
             n += it.price() == null
-                    ? jdbc.update("delete from price_book_items where price_book_id = :book and unit_id = :unit", p)
-                    : jdbc.update(UPSERT, p);
+                    ? repo.delete(bookId, it.unitId())
+                    : repo.upsert(bookId, it.unitId(), it.price());
         }
         return n;
     }
@@ -59,26 +50,13 @@ public class PriceBookItemService {
     @Transactional
     public int applyFormula(UUID bookId, FormulaRequest req) {
         books.get(bookId);
-        var p = new MapSqlParameterSource("book", bookId).addValue("op", req.op().name())
-                .addValue("value", req.value()).addValue("pct", req.percent());
-        String base = switch (req.base()) {
-            case BASE_PRICE -> "u.price";
-            case COST -> PriceBookRowQuery.COST;
-            case LAST_PURCHASE -> PriceBookRowQuery.LAST_PURCHASE;
-            case BOOK -> {
-                if (req.baseBookId() == null) {
-                    throw BusinessException.badRequest("FORMULA_BOOK_REQUIRED", "Chọn bảng giá làm gốc công thức");
-                }
-                books.get(req.baseBookId());
-                p.addValue("baseBook", req.baseBookId());
-                yield "(select y.price from price_book_items y where y.price_book_id = :baseBook and y.unit_id = u.id)";
+        if (req.base() == FormulaBase.BOOK) {
+            if (req.baseBookId() == null) {
+                throw BusinessException.badRequest("FORMULA_BOOK_REQUIRED", "Chọn bảng giá làm gốc công thức");
             }
-        };
-        var filter = new RowFilter(req.q(), req.categoryIds(), req.stock(), req.branchId(), false);
-        String from = PriceBookRowQuery.from(filter, req.onlyExisting() ? List.of(bookId) : null, p);
-        return jdbc.update("insert into price_book_items (price_book_id, unit_id, price) select :book, u.id, "
-                + "price_book_formula(" + base + ", :op, :value, :pct)" + from + " and " + base + " is not null"
-                + " on conflict (price_book_id, unit_id) do update set price = excluded.price, updated_at = now()", p);
+            books.get(req.baseBookId());
+        }
+        return repo.applyFormula(bookId, req);
     }
 
     /** Dòng hợp lệ được ghi, dòng lỗi trả về kèm số dòng; mã hàng trùng trong file → lấy dòng sau cùng. */
@@ -86,13 +64,7 @@ public class PriceBookItemService {
     public ImportResult importRows(UUID bookId, List<ImportRow> rows) {
         books.get(bookId);
         var codes = rows.stream().map(r -> r.code() == null ? "" : r.code().trim().toLowerCase()).distinct().toList();
-        Map<String, UUID> units = new HashMap<>();
-        jdbc.query("select u.id, lower(u.code) code from product_units u join products p on p.id = u.product_id"
-                        + " where not p.deleted and lower(u.code) in (:codes)",
-                new MapSqlParameterSource("codes", codes),
-                rs -> {
-                    units.put(rs.getString("code"), rs.getObject("id", UUID.class));
-                });
+        Map<String, UUID> units = repo.unitIdsByCode(codes);
         var errors = new ArrayList<ImportError>();
         int n = 0;
         for (ImportRow r : rows) {
@@ -108,7 +80,7 @@ public class PriceBookItemService {
             } else if (price.signum() < 0) {
                 errors.add(new ImportError(r.line(), code, "Giá không được âm"));
             } else {
-                n += jdbc.update(UPSERT, new MapSqlParameterSource("book", bookId).addValue("unit", unit).addValue("price", price));
+                n += repo.upsert(bookId, unit, price);
             }
         }
         return new ImportResult(n, errors);

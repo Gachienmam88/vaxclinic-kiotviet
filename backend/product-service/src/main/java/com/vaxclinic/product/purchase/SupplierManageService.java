@@ -3,8 +3,8 @@ package com.vaxclinic.product.purchase;
 import com.vaxclinic.common.audit.AuditLogger;
 import com.vaxclinic.product.purchase.PurchaseDtos.Actor;
 import com.vaxclinic.product.purchase.SupplierCommandService.SupplierRequest;
-import com.vaxclinic.product.purchase.SupplierListQuery.SupplierPage;
-import com.vaxclinic.product.purchase.SupplierListQuery.SupplierRow;
+import com.vaxclinic.product.purchase.SupplierListRepository.SupplierPage;
+import com.vaxclinic.product.purchase.SupplierListRepository.SupplierRow;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -18,11 +18,11 @@ import java.util.UUID;
 public class SupplierManageService {
 
     private final SupplierCommandService commands;
-    private final SupplierListQuery query;
+    private final SupplierListRepository query;
     private final SupplierImportService importer;
     private final AuditLogger audit;
 
-    public SupplierManageService(SupplierCommandService commands, SupplierListQuery query, SupplierImportService importer,
+    public SupplierManageService(SupplierCommandService commands, SupplierListRepository query, SupplierImportService importer,
                                  AuditLogger audit) {
         this.commands = commands;
         this.query = query;
@@ -30,7 +30,7 @@ public class SupplierManageService {
         this.audit = audit;
     }
 
-    public SupplierPage search(SupplierListQuery.Filter filter) {
+    public SupplierPage search(SupplierListRepository.Filter filter) {
         return query.search(filter);
     }
 

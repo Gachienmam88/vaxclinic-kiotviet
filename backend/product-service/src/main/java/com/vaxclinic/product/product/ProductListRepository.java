@@ -5,7 +5,7 @@ import com.vaxclinic.product.product.ProductDtos.ProductListItem;
 import com.vaxclinic.product.product.ProductDtos.ProductListResponse;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.sql.Array;
@@ -19,8 +19,8 @@ import java.util.UUID;
  * Danh sách hàng hóa với bộ lọc bên trái (nhóm hàng, thuế, giảm thuế, tồn kho, thời gian tạo, trạng thái).
  * Dùng SQL thuần vì lọc theo tồn kho cần join + group by mà JPA viết rất rối.
  */
-@Component
-public class ProductListQuery {
+@Repository
+public class ProductListRepository {
 
     /** Tiêu chí tồn: ALL, BELOW_MIN (dưới định mức), ABOVE_MAX (vượt định mức), IN_STOCK (còn hàng), OUT_OF_STOCK (hết hàng). */
     public enum StockFilter { ALL, BELOW_MIN, ABOVE_MAX, IN_STOCK, OUT_OF_STOCK }
@@ -32,7 +32,7 @@ public class ProductListQuery {
 
     private final NamedParameterJdbcTemplate jdbc;
 
-    public ProductListQuery(NamedParameterJdbcTemplate jdbc) {
+    public ProductListRepository(NamedParameterJdbcTemplate jdbc) {
         this.jdbc = jdbc;
     }
 

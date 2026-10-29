@@ -7,7 +7,6 @@ import com.vaxclinic.product.purchase.PurchaseDtos.Actor;
 import com.vaxclinic.product.purchase.SupplierDebtDtos.AdjustmentRequest;
 import com.vaxclinic.product.purchase.SupplierDebtDtos.DocUpdateRequest;
 import com.vaxclinic.product.purchase.SupplierDebtDtos.PaymentRequest;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,16 +23,16 @@ import java.util.UUID;
 @Service
 public class SupplierDebtService {
 
-    private final JdbcTemplate jdbc;
+    private final SupplierDebtRepository repo;
     private final SupplierCommandService suppliers;
-    private final SupplierListQuery listQuery;
+    private final SupplierListRepository listQuery;
     private final SupplierDebtAllocator allocator;
     private final PurchaseLineSupport support;
     private final CashflowOutbox cashflows;
 
-    public SupplierDebtService(JdbcTemplate jdbc, SupplierCommandService suppliers, SupplierListQuery listQuery,
+    public SupplierDebtService(SupplierDebtRepository repo, SupplierCommandService suppliers, SupplierListRepository listQuery,
                                SupplierDebtAllocator allocator, PurchaseLineSupport support, CashflowOutbox cashflows) {
-        this.jdbc = jdbc;
+        this.repo = repo;
         this.suppliers = suppliers;
         this.listQuery = listQuery;
         this.allocator = allocator;
@@ -97,8 +96,7 @@ public class SupplierDebtService {
         UUID staffId = req.staffId() == null ? (UUID) d.get("staff_id") : req.staffId();
         String staffName = req.staffId() == null ? (String) d.get("staff_name") : req.staffName();
         String note = PurchaseLineSupport.blankToNull(req.note());
-        jdbc.update("update supplier_debt_docs set occurred_at = ?, staff_id = ?, staff_name = ?, note = ? where id = ?",
-                Timestamp.from(at), staffId, staffName, note, docId);
+        repo.updateDoc(docId, at, staffId, staffName, note);
         if ("PAYMENT".equals(d.get("kind")) && d.get("cash_source_id") != null) {
             cashflows.supplierPaymentUpdated((UUID) d.get("cash_source_id"), at, staffId, staffName, note);
         }
@@ -110,11 +108,9 @@ public class SupplierDebtService {
     public Map<String, Object> cancel(UUID docId) {
         var d = lockDoc(docId);
         support.checkNotLocked((UUID) d.get("branch_id"), ((Timestamp) d.get("occurred_at")).toInstant());
-        jdbc.update("update supplier_debt_docs set status = 'CANCELLED', cancelled_at = now() where id = ?", docId);
+        repo.cancelDoc(docId);
         if ("PAYMENT".equals(d.get("kind"))) {
-            jdbc.update("""
-                    update purchase_receipts r set paid_amount = r.paid_amount - a.amount, updated_at = now()
-                    from supplier_debt_allocations a where a.doc_id = ? and a.receipt_id = r.id""", docId);
+            repo.revertPaidAmounts(docId);
             if (d.get("cash_source_id") != null) {
                 cashflows.supplierPaymentCancelled((UUID) d.get("cash_source_id"));
             }
@@ -131,15 +127,8 @@ public class SupplierDebtService {
         UUID id = UUID.randomUUID();
         UUID staff = r.getReceiverId() == null ? r.getCreatedBy() : r.getReceiverId();
         String staffName = r.getReceiverName() == null ? r.getCreatedByName() : r.getReceiverName();
-        jdbc.update("""
-                insert into supplier_debt_docs(id, code, supplier_id, kind, occurred_at, amount, branch_id, payment_method,
-                  staff_id, staff_name, created_by, created_by_name, note, receipt_id, cash_source_id)
-                values (?, ?, ?, 'PAYMENT', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", id, "PC" + r.getCode(), r.getSupplierId(),
-                Timestamp.from(r.getReceivedAt()), r.getPaidAmount(), r.getBranchId(),
-                r.getPaymentMethod() == null ? "CASH" : r.getPaymentMethod(), staff, staffName, r.getCreatedBy(),
-                r.getCreatedByName(), "Thanh toán phiếu nhập " + r.getCode(), r.getId(), r.getId());
-        jdbc.update("insert into supplier_debt_allocations(doc_id, receipt_id, amount) values (?, ?, ?)", id, r.getId(),
-                r.getPaidAmount());
+        repo.insertReceiptPayment(id, r, staff, staffName);
+        repo.insertAllocation(id, r.getId(), r.getPaidAmount());
     }
 
     /**
@@ -148,14 +137,9 @@ public class SupplierDebtService {
      */
     @Transactional(propagation = org.springframework.transaction.annotation.Propagation.MANDATORY)
     public void receiptCancelled(PurchaseReceipt r) {
-        jdbc.update("update supplier_debt_docs set status = 'CANCELLED', cancelled_at = now() where receipt_id = ? and status = 'ACTIVE'",
-                r.getId());
-        BigDecimal released = jdbc.queryForObject("""
-                select coalesce(sum(a.amount), 0) from supplier_debt_allocations a join supplier_debt_docs d on d.id = a.doc_id
-                where a.receipt_id = ? and d.status = 'ACTIVE' and d.kind = 'PAYMENT'""", BigDecimal.class, r.getId());
-        jdbc.update("""
-                delete from supplier_debt_allocations a using supplier_debt_docs d
-                where d.id = a.doc_id and a.receipt_id = ? and d.status = 'ACTIVE'""", r.getId());
+        repo.cancelActiveDocsOfReceipt(r.getId());
+        BigDecimal released = repo.activePaymentAllocated(r.getId());
+        repo.deleteActiveAllocations(r.getId());
         r.setPaidAmount(r.getPaidAmount().subtract(released));
     }
 
@@ -167,7 +151,7 @@ public class SupplierDebtService {
     }
 
     private Map<String, Object> lockDoc(UUID docId) {
-        var rows = jdbc.queryForList("select * from supplier_debt_docs where id = ? for update", docId);
+        var rows = repo.lockDoc(docId);
         if (rows.isEmpty()) {
             throw BusinessException.notFound("SUPPLIER_DOC_NOT_FOUND", "Không tìm thấy phiếu");
         }
@@ -179,12 +163,8 @@ public class SupplierDebtService {
 
     private void insert(UUID id, String code, Supplier s, String kind, Instant at, BigDecimal amount, UUID branchId,
                         String method, UUID bankAccountId, PaymentRequest req, Actor actor, String note, UUID cashSourceId) {
-        jdbc.update("""
-                insert into supplier_debt_docs(id, code, supplier_id, kind, occurred_at, amount, branch_id, payment_method,
-                  bank_account_id, staff_id, staff_name, created_by, created_by_name, note, cash_source_id)
-                values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", id, code, s.getId(), kind, Timestamp.from(at), amount,
-                branchId, method, bankAccountId, staffId(req, actor), staffName(req, actor), actor.id(), actor.name(), note,
-                cashSourceId);
+        repo.insertDoc(id, code, s.getId(), kind, at, amount, branchId, method, bankAccountId, staffId(req, actor),
+                staffName(req, actor), actor.id(), actor.name(), note, cashSourceId);
     }
 
     private static UUID staffId(PaymentRequest req, Actor actor) {
@@ -196,6 +176,6 @@ public class SupplierDebtService {
     }
 
     private long next(String seq) {
-        return jdbc.queryForObject("select nextval('" + seq + "')", Long.class);
+        return repo.next(seq);
     }
 }

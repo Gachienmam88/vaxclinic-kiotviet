@@ -2,7 +2,6 @@ package com.vaxclinic.product.purchase;
 
 import com.vaxclinic.common.error.BusinessException;
 import com.vaxclinic.product.purchase.SupplierDebtDtos.AllocationInput;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,11 +20,11 @@ import java.util.UUID;
 @Component
 public class SupplierDebtAllocator {
 
-    private final JdbcTemplate jdbc;
-    private final SupplierDebtQuery query;
+    private final SupplierDebtRepository repo;
+    private final SupplierDebtQueryRepository query;
 
-    public SupplierDebtAllocator(JdbcTemplate jdbc, SupplierDebtQuery query) {
-        this.jdbc = jdbc;
+    public SupplierDebtAllocator(SupplierDebtRepository repo, SupplierDebtQueryRepository query) {
+        this.repo = repo;
         this.query = query;
     }
 
@@ -50,23 +49,20 @@ public class SupplierDebtAllocator {
             if (total.compareTo(amount) > 0) {
                 throw BusinessException.badRequest("ALLOCATION_EXCEEDS", "Tổng phân bổ lớn hơn số tiền phiếu");
             }
-            var rows = jdbc.queryForList("select code, supplier_id, status, total from purchase_receipts where id = ? for update",
-                    a.receiptId());
+            var rows = repo.lockReceipt(a.receiptId());
             if (rows.isEmpty() || !"COMPLETED".equals(rows.get(0).get("status"))
                     || !supplierId.equals(rows.get(0).get("supplier_id"))) {
                 throw BusinessException.badRequest("ALLOCATION_RECEIPT_INVALID", "Phiếu nhập không thuộc nhà cung cấp hoặc chưa hoàn thành");
             }
             var r = rows.get(0);
-            BigDecimal remaining = ((BigDecimal) r.get("total")).subtract(settled(a.receiptId()));
+            BigDecimal remaining = ((BigDecimal) r.get("total")).subtract(repo.settled(a.receiptId()));
             if (v.compareTo(remaining) > 0) {
                 throw BusinessException.badRequest("ALLOCATION_EXCEEDS_RECEIPT", "Phiếu " + r.get("code") + " chỉ còn cần trả "
                         + String.format("%,.0f", remaining));
             }
-            jdbc.update("insert into supplier_debt_allocations(doc_id, receipt_id, amount) values (?, ?, ?)", docId,
-                    a.receiptId(), v);
+            repo.insertAllocation(docId, a.receiptId(), v);
             if (payment) {
-                jdbc.update("update purchase_receipts set paid_amount = paid_amount + ?, updated_at = now() where id = ?", v,
-                        a.receiptId());
+                repo.addPaidAmount(a.receiptId(), v);
             }
         }
     }
@@ -84,11 +80,5 @@ public class SupplierDebtAllocator {
             left = left.subtract(take);
         }
         return out;
-    }
-
-    private BigDecimal settled(UUID receiptId) {
-        return jdbc.queryForObject("""
-                select coalesce(sum(a.amount), 0) from supplier_debt_allocations a join supplier_debt_docs d on d.id = a.doc_id
-                where a.receipt_id = ? and d.status = 'ACTIVE'""", BigDecimal.class, receiptId);
     }
 }

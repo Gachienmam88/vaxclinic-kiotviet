@@ -28,10 +28,10 @@ public class PriceBookManageService {
 
     private final PriceBookService books;
     private final PriceBookItemService items;
-    private final PriceBookRowQuery rows;
+    private final PriceBookRowRepository rows;
     private final AuditLogger audit;
 
-    public PriceBookManageService(PriceBookService books, PriceBookItemService items, PriceBookRowQuery rows,
+    public PriceBookManageService(PriceBookService books, PriceBookItemService items, PriceBookRowRepository rows,
                                   AuditLogger audit) {
         this.books = books;
         this.items = items;

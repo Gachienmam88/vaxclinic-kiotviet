@@ -2,8 +2,8 @@ package com.vaxclinic.product.purchase;
 
 import com.vaxclinic.product.purchase.PurchaseDtos.Actor;
 import com.vaxclinic.product.purchase.SupplierCommandService.SupplierRequest;
-import com.vaxclinic.product.purchase.SupplierListQuery.SupplierPage;
-import com.vaxclinic.product.purchase.SupplierListQuery.SupplierRow;
+import com.vaxclinic.product.purchase.SupplierListRepository.SupplierPage;
+import com.vaxclinic.product.purchase.SupplierListRepository.SupplierRow;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -57,7 +57,7 @@ public class SupplierController {
                                @RequestParam(required = false) BigDecimal debtFrom, @RequestParam(required = false) BigDecimal debtTo,
                                @RequestParam(required = false) String docCode,
                                @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "15") int size) {
-        return service.search(new SupplierListQuery.Filter(q, groupId, active, buyFrom, buyTo, from, to, debtFrom, debtTo,
+        return service.search(new SupplierListRepository.Filter(q, groupId, active, buyFrom, buyTo, from, to, debtFrom, debtTo,
                 docCode, Math.max(page, 0), Math.min(Math.max(size, 1), 100)));
     }
 

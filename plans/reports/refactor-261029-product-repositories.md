@@ -32,7 +32,7 @@ Refs updated in controllers, *ManageService, SupplierDebtService/Allocator, Supp
 ## Verification
 - `grep -rl JdbcTemplate --include=*.java backend/product-service/src/main | xargs grep -L @Repository` → empty.
 - `mvn -pl product-service -am package` OK (unit tests pass). 8082 redeployed via start-all-local.ps1, health 200.
-- e2e: RESULTS_PLACEHOLDER
+- e2e (8082 redeployed): e2e_purchasing 21/21, e2e_suppliers 59/59, e2e_inventory_docs 50/0, e2e_reports 39/39, e2e_price_books 40/0, e2e_sales 22/22, e2e_sale_backend 57/57, e2e_edit_return 18/18, e2e_offline_sync PASS (1 invoice, stock once), e2e_hardening PASS (checkout_attempts left 0), e2e_settings 31/31, e2e_notifications ALL PASSED, e2e_delivery 37/37, e2e_orders_groups 34/34, smoke_product_layering 63/63. Cleanups 0 leftover rows. e2e_products skipped (fresh DB).
 
 ## Commits
 - `refactor(product): move service SQL into repositories` (new files captured earlier by auto-commit hook as `auto: update ...`). Not pushed.

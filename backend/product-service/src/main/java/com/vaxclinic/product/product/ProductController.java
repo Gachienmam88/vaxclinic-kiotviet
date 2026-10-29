@@ -6,7 +6,7 @@ import com.vaxclinic.product.product.ProductDtos.LotResponse;
 import com.vaxclinic.product.product.ProductDtos.ProductDetail;
 import com.vaxclinic.product.product.ProductDtos.ProductListResponse;
 import com.vaxclinic.product.product.ProductDtos.ProductRequest;
-import com.vaxclinic.product.product.ProductListQuery.StockFilter;
+import com.vaxclinic.product.product.ProductListRepository.StockFilter;
 import com.vaxclinic.product.purchase.PurchaseDtos.Actor;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -54,7 +54,7 @@ public class ProductController {
                                     @RequestParam(required = false) Boolean active,
                                     @RequestParam(defaultValue = "0") int page,
                                     @RequestParam(defaultValue = "15") int size) {
-        return service.list(new ProductListQuery.Filter(q, categoryIds, taxRateIds, taxReduction, stock, branchId,
+        return service.list(new ProductListRepository.Filter(q, categoryIds, taxRateIds, taxReduction, stock, branchId,
                 createdFrom, createdTo, active, Math.max(page, 0), Math.min(Math.max(size, 1), 100)));
     }
 

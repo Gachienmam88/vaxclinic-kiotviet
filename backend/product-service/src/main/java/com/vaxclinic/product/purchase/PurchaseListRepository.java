@@ -7,7 +7,7 @@ import com.vaxclinic.product.purchase.PurchaseDtos.ReturnListItem;
 import com.vaxclinic.product.purchase.PurchaseDtos.ReturnListResponse;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
@@ -17,8 +17,8 @@ import java.util.Map;
 import java.util.UUID;
 
 /** Danh sách phiếu nhập / trả hàng nhập với bộ lọc bên trái + dòng tổng. */
-@Component
-public class PurchaseListQuery {
+@Repository
+public class PurchaseListRepository {
 
     public record Filter(String q, List<String> statuses, Instant from, Instant to, UUID createdBy, UUID personId,
                          String inputInvoiceNo, UUID supplierId, UUID branchId, int page, int size) {
@@ -26,7 +26,7 @@ public class PurchaseListQuery {
 
     private final NamedParameterJdbcTemplate jdbc;
 
-    public PurchaseListQuery(NamedParameterJdbcTemplate jdbc) {
+    public PurchaseListRepository(NamedParameterJdbcTemplate jdbc) {
         this.jdbc = jdbc;
     }
 

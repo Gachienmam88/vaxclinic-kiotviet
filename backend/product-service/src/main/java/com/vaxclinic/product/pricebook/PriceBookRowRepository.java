@@ -5,10 +5,10 @@ import com.vaxclinic.common.error.BusinessException;
 import com.vaxclinic.common.web.PageResponse;
 import com.vaxclinic.product.pricebook.PriceBookDtos.PriceRow;
 import com.vaxclinic.product.pricebook.PriceBookDtos.RowFilter;
-import com.vaxclinic.product.product.ProductListQuery.StockFilter;
+import com.vaxclinic.product.product.ProductListRepository.StockFilter;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
@@ -22,8 +22,8 @@ import java.util.UUID;
  * Giá nhập cuối (phiếu nhập hoàn thành gần nhất), Giá chung và giá ở từng bảng giá đang chọn.
  * Mệnh đề FROM/WHERE dùng chung với "Áp dụng công thức" để công thức chạy đúng tập dòng đang lọc.
  */
-@Component
-public class PriceBookRowQuery {
+@Repository
+public class PriceBookRowRepository {
 
     /** Giá vốn bình quân lưu theo đơn vị cơ bản → nhân quy đổi. */
     static final String COST = "(p.cost * u.conversion_rate)";
@@ -35,7 +35,7 @@ public class PriceBookRowQuery {
 
     private final NamedParameterJdbcTemplate jdbc;
 
-    public PriceBookRowQuery(NamedParameterJdbcTemplate jdbc) {
+    public PriceBookRowRepository(NamedParameterJdbcTemplate jdbc) {
         this.jdbc = jdbc;
     }
 

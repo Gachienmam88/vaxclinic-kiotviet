@@ -7,7 +7,6 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,12 +30,12 @@ public class SupplierCommandService {
 
     private final SupplierRepository suppliers;
     private final SupplierGroupService groups;
-    private final JdbcTemplate jdbc;
+    private final SupplierDebtRepository debts;
 
-    public SupplierCommandService(SupplierRepository suppliers, SupplierGroupService groups, JdbcTemplate jdbc) {
+    public SupplierCommandService(SupplierRepository suppliers, SupplierGroupService groups, SupplierDebtRepository debts) {
         this.suppliers = suppliers;
         this.groups = groups;
-        this.jdbc = jdbc;
+        this.debts = debts;
     }
 
     @Transactional
@@ -90,10 +89,7 @@ public class SupplierCommandService {
     @Transactional
     public Supplier delete(UUID id) {
         var s = find(id);
-        Long used = jdbc.queryForObject("""
-                select (select count(*) from purchase_receipts where supplier_id = ?)
-                     + (select count(*) from purchase_returns where supplier_id = ?)
-                     + (select count(*) from supplier_debt_docs where supplier_id = ?)""", Long.class, id, id, id);
+        Long used = debts.transactionCount(id);
         if (used != null && used > 0) {
             throw BusinessException.badRequest("SUPPLIER_HAS_TRANSACTIONS",
                     "Nhà cung cấp đã có giao dịch, không thể xóa. Hãy chọn Ngừng hoạt động để không dùng nhà cung cấp này nữa");

@@ -41,10 +41,10 @@ public class PurchaseController {
         this.service = service;
     }
 
-    private static PurchaseListQuery.Filter filter(String q, List<String> statuses, Instant from, Instant to,
+    private static PurchaseListRepository.Filter filter(String q, List<String> statuses, Instant from, Instant to,
                                                    UUID createdBy, UUID personId, String invoiceNo, UUID supplierId,
                                                    UUID branchId, int page, int size) {
-        return new PurchaseListQuery.Filter(q, statuses, from, to, createdBy, personId, invoiceNo, supplierId, branchId,
+        return new PurchaseListRepository.Filter(q, statuses, from, to, createdBy, personId, invoiceNo, supplierId, branchId,
                 Math.max(page, 0), Math.min(Math.max(size, 1), 100));
     }
 

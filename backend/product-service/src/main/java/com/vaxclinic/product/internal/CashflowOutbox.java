@@ -9,7 +9,6 @@ import com.vaxclinic.product.purchase.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
@@ -30,14 +29,14 @@ public class CashflowOutbox {
 
     private static final Logger log = LoggerFactory.getLogger(CashflowOutbox.class);
 
-    private final JdbcTemplate jdbc;
+    private final CashflowOutboxRepository repo;
     private final ObjectMapper json;
     private final RestClient http;
     private final ServiceTokenProvider tokens;
 
-    public CashflowOutbox(InternalRestClientFactory httpFactory, JdbcTemplate jdbc, ObjectMapper json, @Value("${app.sales-url}") String salesUrl,
+    public CashflowOutbox(InternalRestClientFactory httpFactory, CashflowOutboxRepository repo, ObjectMapper json, @Value("${app.sales-url}") String salesUrl,
                           @Value("${app.jwt.secret}") String secret) {
-        this.jdbc = jdbc;
+        this.repo = repo;
         this.json = json;
         this.http = httpFactory.create(salesUrl);
         this.tokens = new ServiceTokenProvider(secret, "product-service");
@@ -138,8 +137,7 @@ public class CashflowOutbox {
 
     private void insert(Object payload) {
         try {
-            jdbc.update("insert into outbox_cashflows(id, payload) values (?, ?)", UUID.randomUUID(),
-                    json.writeValueAsString(payload));
+            repo.insert(json.writeValueAsString(payload));
         } catch (JsonProcessingException e) {
             throw new IllegalStateException(e);
         }
@@ -148,18 +146,16 @@ public class CashflowOutbox {
     /** Gửi lần lượt theo thứ tự tạo; dừng ở bản ghi lỗi đầu tiên để giữ đúng thứ tự CREATE → CANCEL. */
     @Scheduled(fixedDelayString = "${app.outbox-delay-ms:5000}")
     public void publish() {
-        var pending = jdbc.queryForList(
-                "select id, payload from outbox_cashflows where sent_at is null order by created_at limit 50");
+        var pending = repo.pending();
         for (var row : pending) {
             UUID id = (UUID) row.get("id");
             try {
                 http.post().uri("/internal/cashflows").header("Authorization", "Bearer " + tokens.token())
                         .header("Content-Type", "application/json").body((String) row.get("payload"))
                         .retrieve().toBodilessEntity();
-                jdbc.update("update outbox_cashflows set sent_at = now(), last_error = null where id = ?", id);
+                repo.markSent(id);
             } catch (Exception e) {
-                jdbc.update("update outbox_cashflows set attempts = attempts + 1, last_error = ? where id = ?",
-                        e.getMessage(), id);
+                repo.markFailed(id, e.getMessage());
                 log.warn("Cashflow outbox {} not delivered yet: {}", id, e.getMessage());
                 return;
             }

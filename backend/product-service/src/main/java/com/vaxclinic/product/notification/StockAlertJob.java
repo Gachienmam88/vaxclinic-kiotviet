@@ -5,7 +5,6 @@ import com.vaxclinic.common.notification.NotificationClient.Item;
 import com.vaxclinic.common.settings.ShopSettings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -34,11 +33,11 @@ public class StockAlertJob {
     private static final DateTimeFormatter DATE = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private static final Logger log = LoggerFactory.getLogger(StockAlertJob.class);
 
-    private final JdbcTemplate jdbc;
+    private final StockAlertRepository repo;
     private final NotificationClient notifications;
 
-    public StockAlertJob(JdbcTemplate jdbc, NotificationClient notifications) {
-        this.jdbc = jdbc;
+    public StockAlertJob(StockAlertRepository repo, NotificationClient notifications) {
+        this.repo = repo;
         this.notifications = notifications;
     }
 
@@ -61,11 +60,7 @@ public class StockAlertJob {
     }
 
     private List<Item> lotAlerts(LocalDate today, int days) {
-        List<Map<String, Object>> rows = jdbc.queryForList("""
-                select l.id, l.branch_id, l.lot_number, l.expiry_date, l.quantity, p.name, u.code
-                from product_lots l join products p on p.id = l.product_id
-                join product_units u on u.product_id = p.id and u.is_base
-                where l.quantity > 0 and not p.deleted and l.expiry_date <= ?""", Date.valueOf(today.plusDays(days)));
+        List<Map<String, Object>> rows = repo.expiringLots(today.plusDays(days));
         List<Item> items = new ArrayList<>();
         for (var r : rows) {
             LocalDate expiry = ((Date) r.get("expiry_date")).toLocalDate();
@@ -87,12 +82,7 @@ public class StockAlertJob {
 
     /** Chi nhánh = các chi nhánh đã từng có tồn; hàng chưa có dòng tồn ở chi nhánh đó tính tồn 0. */
     private List<Item> lowStockAlerts() {
-        List<Map<String, Object>> rows = jdbc.queryForList("""
-                select p.id, b.branch_id, coalesce(sb.quantity, 0) as quantity, p.min_stock, p.name, u.code
-                from products p join product_units u on u.product_id = p.id and u.is_base
-                cross join (select distinct branch_id from stock_balances) b
-                left join stock_balances sb on sb.product_id = p.id and sb.branch_id = b.branch_id
-                where not p.deleted and p.active and p.min_stock > 0 and coalesce(sb.quantity, 0) < p.min_stock""");
+        List<Map<String, Object>> rows = repo.lowStock();
         List<Item> items = new ArrayList<>();
         for (var r : rows) {
             String title = "Hàng " + r.get("name") + " (" + r.get("code") + ") dưới định mức tồn tối thiểu";

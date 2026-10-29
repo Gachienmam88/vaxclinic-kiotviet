@@ -20,11 +20,11 @@ public class StockTakeManageService {
     private static final String FEATURE = "Kiểm kho";
 
     private final StockTakeService service;
-    private final InventoryDocListQuery listQuery;
+    private final InventoryDocListRepository listQuery;
     private final InventoryDocMapper mapper;
     private final AuditLogger audit;
 
-    public StockTakeManageService(StockTakeService service, InventoryDocListQuery listQuery, InventoryDocMapper mapper,
+    public StockTakeManageService(StockTakeService service, InventoryDocListRepository listQuery, InventoryDocMapper mapper,
                                   AuditLogger audit) {
         this.service = service;
         this.listQuery = listQuery;
@@ -32,7 +32,7 @@ public class StockTakeManageService {
         this.audit = audit;
     }
 
-    public PageResponse<TakeListItem> list(InventoryDocListQuery.Filter filter) {
+    public PageResponse<TakeListItem> list(InventoryDocListRepository.Filter filter) {
         return listQuery.takes(filter);
     }
 

@@ -2,7 +2,7 @@ package com.vaxclinic.product.product;
 
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -15,8 +15,8 @@ import java.util.UUID;
  * Danh mục cho màn bán hàng: mọi hàng đang kinh doanh + đơn vị bán trực tiếp + tồn tại 1 điểm tiêm.
  * Máy bán hàng tải 1 lần, lưu cục bộ → tìm hàng (F3) và quét mã vẫn chạy khi mất mạng.
  */
-@Component
-public class SaleCatalogQuery {
+@Repository
+public class SaleCatalogRepository {
 
     public record SaleUnit(UUID id, String code, String barcode, String unitName, BigDecimal conversionRate,
                           BigDecimal price) {
@@ -28,7 +28,7 @@ public class SaleCatalogQuery {
 
     private final NamedParameterJdbcTemplate jdbc;
 
-    public SaleCatalogQuery(NamedParameterJdbcTemplate jdbc) {
+    public SaleCatalogRepository(NamedParameterJdbcTemplate jdbc) {
         this.jdbc = jdbc;
     }
 

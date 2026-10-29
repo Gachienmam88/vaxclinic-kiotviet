@@ -2,7 +2,7 @@ package com.vaxclinic.product.product;
 
 import com.vaxclinic.common.audit.AuditLogger;
 import com.vaxclinic.common.web.PageResponse;
-import com.vaxclinic.product.pricebook.SalePriceBookQuery;
+import com.vaxclinic.product.pricebook.SalePriceBookRepository;
 import com.vaxclinic.product.product.ProductDtos.LedgerLine;
 import com.vaxclinic.product.product.ProductDtos.LotResponse;
 import com.vaxclinic.product.product.ProductDtos.ProductDetail;
@@ -22,18 +22,18 @@ import java.util.UUID;
 public class ProductManageService {
 
     /** Danh mục + bảng giá đang áp dụng tại điểm tiêm (withPriceBooks=true). */
-    public record SaleCatalogResponse(List<SaleCatalogQuery.SaleProduct> products, List<SalePriceBookQuery.SalePriceBook> priceBooks) {
+    public record SaleCatalogResponse(List<SaleCatalogRepository.SaleProduct> products, List<SalePriceBookRepository.SalePriceBook> priceBooks) {
     }
 
     private final ProductCommandService commands;
-    private final ProductListQuery listQuery;
+    private final ProductListRepository listQuery;
     private final ProductDetailQuery detailQuery;
-    private final SaleCatalogQuery saleCatalog;
-    private final SalePriceBookQuery salePriceBooks;
+    private final SaleCatalogRepository saleCatalog;
+    private final SalePriceBookRepository salePriceBooks;
     private final AuditLogger audit;
 
-    public ProductManageService(ProductCommandService commands, ProductListQuery listQuery, ProductDetailQuery detailQuery,
-                                SaleCatalogQuery saleCatalog, SalePriceBookQuery salePriceBooks, AuditLogger audit) {
+    public ProductManageService(ProductCommandService commands, ProductListRepository listQuery, ProductDetailQuery detailQuery,
+                                SaleCatalogRepository saleCatalog, SalePriceBookRepository salePriceBooks, AuditLogger audit) {
         this.commands = commands;
         this.listQuery = listQuery;
         this.detailQuery = detailQuery;
@@ -42,13 +42,13 @@ public class ProductManageService {
         this.audit = audit;
     }
 
-    public ProductListResponse list(ProductListQuery.Filter filter) {
+    public ProductListResponse list(ProductListRepository.Filter filter) {
         return listQuery.search(filter);
     }
 
     /** Mặc định trả mảng hàng hóa; withPriceBooks=true trả {products, priceBooks}. */
     public Object saleCatalog(UUID branchId, boolean withPriceBooks) {
-        List<SaleCatalogQuery.SaleProduct> products = saleCatalog.load(branchId);
+        List<SaleCatalogRepository.SaleProduct> products = saleCatalog.load(branchId);
         return withPriceBooks ? new SaleCatalogResponse(products, salePriceBooks.load(branchId)) : products;
     }
 

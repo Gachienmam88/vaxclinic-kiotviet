@@ -27,10 +27,10 @@ public class SupplierDebtManageService {
             "chiết khấu thanh toán NCC", "ADJUSTMENT", "điều chỉnh công nợ NCC");
 
     private final SupplierDebtService service;
-    private final SupplierDebtQuery query;
+    private final SupplierDebtQueryRepository query;
     private final AuditLogger audit;
 
-    public SupplierDebtManageService(SupplierDebtService service, SupplierDebtQuery query, AuditLogger audit) {
+    public SupplierDebtManageService(SupplierDebtService service, SupplierDebtQueryRepository query, AuditLogger audit) {
         this.service = service;
         this.query = query;
         this.audit = audit;

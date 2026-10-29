@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import java.util.Optional;
 import java.util.UUID;
 
-/** Danh sách / tìm kiếm NCC kèm công nợ nằm ở {@link SupplierListQuery}; repository chỉ phục vụ ghi. */
+/** Danh sách / tìm kiếm NCC kèm công nợ nằm ở {@link SupplierListRepository}; repository chỉ phục vụ ghi. */
 public interface SupplierRepository extends JpaRepository<Supplier, UUID> {
 
     boolean existsByCodeIgnoreCase(String code);

@@ -5,7 +5,7 @@ import com.vaxclinic.common.error.BusinessException;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
@@ -17,8 +17,8 @@ import java.util.UUID;
  * Danh sách NCC kiểu KiotViet: Nợ cần trả hiện tại + Tổng mua, lọc nhóm / tổng mua (giá trị + thời gian) / nợ / trạng thái.
  * Nợ = Σ sổ công nợ {@link #LEDGER}; Tổng mua = Σ tổng phiếu nhập − Σ tổng phiếu trả hàng nhập (đã hoàn thành).
  */
-@Component
-public class SupplierListQuery {
+@Repository
+public class SupplierListRepository {
 
     /** Sổ công nợ NCC: mỗi dòng 1 phát sinh, v > 0 tăng nợ. ord: thứ tự trong cùng thời điểm (nhập trước, thanh toán sau). */
     static final String LEDGER = """
@@ -57,7 +57,7 @@ public class SupplierListQuery {
 
     private final NamedParameterJdbcTemplate jdbc;
 
-    public SupplierListQuery(NamedParameterJdbcTemplate jdbc) {
+    public SupplierListRepository(NamedParameterJdbcTemplate jdbc) {
         this.jdbc = jdbc;
     }
 
