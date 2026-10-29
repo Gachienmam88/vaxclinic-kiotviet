@@ -66,16 +66,14 @@ public class ShipmentDashboardRepository {
                 select p.id, p.code, p.name, p.debt,
                   coalesce(sum(case when l.doc_type = 'COD' then l.amount end), 0) cod,
                   coalesce(-sum(case when l.doc_type = 'FEE' then l.amount end), 0) fee,
-                  coalesce(-sum(case when l.doc_type in ('SETTLEMENT','SETTLEMENT_CANCEL') and l.amount < 0 then l.amount end), 0) s_in,
-                  coalesce(sum(case when l.doc_type in ('SETTLEMENT','SETTLEMENT_CANCEL') and l.amount > 0 then l.amount end), 0) s_out
+                  coalesce(-sum(case when l.doc_type in ('SETTLEMENT','SETTLEMENT_CANCEL') then l.amount end), 0) settled
                 from delivery_partners p left join delivery_partner_ledger l on l.partner_id = p.id and l.branch_id in (:branches)
                   and l.occurred_at >= :from and l.occurred_at < :to
                 where 1=1""" + partnerFilter(s) + " group by p.id, p.code, p.name, p.debt order by p.code", p,
                 (rs, n) -> new CashflowRow(rs.getObject("id", UUID.class), rs.getString("code"), rs.getString("name"),
-                        rs.getBigDecimal("cod"), rs.getBigDecimal("fee"), rs.getBigDecimal("s_in"), rs.getBigDecimal("s_out"),
-                        rs.getBigDecimal("debt")));
+                        rs.getBigDecimal("cod"), rs.getBigDecimal("fee"), rs.getBigDecimal("settled"), rs.getBigDecimal("debt")));
         return new Cashflow(rows, sum(rows, CashflowRow::codCollected), sum(rows, CashflowRow::feeCharged),
-                sum(rows, CashflowRow::settledIn), sum(rows, CashflowRow::settledOut), sum(rows, CashflowRow::balance));
+                sum(rows, CashflowRow::settled), sum(rows, CashflowRow::balance));
     }
 
     private static MapSqlParameterSource params(Scope s) {

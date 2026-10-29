@@ -48,6 +48,13 @@ public class DeliveryPartnerController {
         return service.list(q, active, debt, page, size);
     }
 
+    /** Lịch sử đối soát của mọi đối tác (tab "Lịch sử đối soát"). */
+    @GetMapping("/settlements")
+    public List<DeliveryPartnerDtos.SettlementListRow> allSettlements(@RequestParam(defaultValue = "0") int page,
+                                                                      @RequestParam(defaultValue = "50") int size) {
+        return service.allSettlements(page, size);
+    }
+
     @GetMapping("/{id}")
     public PartnerRow get(@PathVariable UUID id) {
         return service.get(id);

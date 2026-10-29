@@ -36,6 +36,10 @@ public class DeliveryPartnerManageService {
         return query.list(q, active, debt, Math.max(page, 0), Math.min(Math.max(size, 1), 200));
     }
 
+    public List<DeliveryPartnerDtos.SettlementListRow> allSettlements(int page, int size) {
+        return query.allSettlements(Math.max(page, 0), Math.min(Math.max(size, 1), 200));
+    }
+
     public PartnerRow get(UUID id) {
         return query.get(id);
     }

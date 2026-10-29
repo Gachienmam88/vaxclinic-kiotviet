@@ -27,8 +27,9 @@ final class InvoiceFilterSql {
      * còn lại (bán thường / giao thành công) → Hoàn thành.
      */
     static final String STATE = "(case when i.status = 'CANCELLED' then 'CANCELLED'"
-            + " when s.status in ('RETURNING','RETURNED') then 'FAILED_DELIVERY'"
-            + " when s.status in ('PENDING','PICKING','DELIVERING') then 'PROCESSING' else 'COMPLETED' end)";
+            + " when s.status in ('WAIT_RETURN','RETURNING','WAIT_RERETURN','RETURNED') then 'FAILED_DELIVERY'"
+            + " when s.status in ('PENDING','PICKING','PICKED','WAIT_REPICK','DELIVERING','WAIT_REDELIVER') then 'PROCESSING'"
+            + " else 'COMPLETED' end)";
 
     static final String HAS_RETURN = "exists (select 1 from sales_returns r where r.invoice_id = i.id and r.status = 'COMPLETED')";
 

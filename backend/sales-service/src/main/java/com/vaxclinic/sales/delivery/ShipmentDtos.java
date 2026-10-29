@@ -68,7 +68,8 @@ public final class ShipmentDtos {
                                    String customerName, String receiverName, String receiverPhone, String receiverAddress,
                                    String area, UUID partnerId, String partnerName, BigDecimal shippingFee, String feePayer,
                                    BigDecimal codAmount, String status, boolean reconciled, UUID branchId,
-                                   String provinceCode, String wardCode) {
+                                   String provinceCode, String wardCode, UUID customerId, String customerCode, String waybillCode,
+                                   Instant expectedDeliveryAt, Instant deliveredAt, String serviceType) {
     }
 
     public record ShipmentListResponse(List<ShipmentListItem> items, long total, int page, int size, BigDecimal sumFee,
@@ -77,7 +78,33 @@ public final class ShipmentDtos {
 
     public record ShipmentDetail(ShipmentListItem item, Integer weightGram, String note, Instant deliveredAt, UUID returnId,
                                  String returnCode, String settlementCode, String createdByName, BigDecimal invoiceTotal,
-                                 BigDecimal invoicePaid, BigDecimal feePosted, BigDecimal returnFee, List<StatusLog> logs) {
+                                 BigDecimal invoicePaid, BigDecimal feePosted, BigDecimal returnFee, List<StatusLog> logs,
+                                 BigDecimal itemQuantity, String invoiceNote, int packageCount, Integer lengthCm, Integer widthCm,
+                                 Integer heightCm, BigDecimal codOpen, BigDecimal partnerFee, BigDecimal partnerFeeOpen) {
+        // codOpen: thu hộ còn cần thu (chưa đối soát); partnerFee: phí trả ĐTGH (đã ghi sổ; chưa ghi thì phí giao nếu cửa hàng
+        // trả); partnerFeeOpen: phí còn cần trả ĐTGH (chưa đối soát)
+    }
+
+    /** Quản lý giao hàng → Thống kê: theo trạng thái (số đơn, thu hộ, cước phí). */
+    public record StatusStat(String status, long count, BigDecimal cod, BigDecimal fee) {
+    }
+
+    /** waitRedeliver: giao thất bại (Chờ giao lại); waitReturn: Chờ chuyển hoàn; overdue: quá thời gian giao dự kiến. */
+    public record Dashboard(long waitRedeliver, long waitReturn, long overdue, long total, BigDecimal totalCod, BigDecimal totalFee,
+                            List<StatusStat> byStatus) {
+    }
+
+    /**
+     * Quản lý giao hàng → Dòng tiền (sổ công nợ đối tác): codCollected = thu hộ đối tác đã thu (giao thành công) trong kỳ;
+     * feeCharged = phí giao / chuyển hoàn cửa hàng phải trả trong kỳ; settled = đối soát / thanh toán ròng trong kỳ (> 0: đối tác
+     * đã trả cửa hàng, < 0: cửa hàng đã trả đối tác, đã trừ phiếu hủy); balance = còn lại hiện tại (> 0: đối tác còn nợ cửa hàng).
+     */
+    public record CashflowRow(UUID partnerId, String partnerCode, String partnerName, BigDecimal codCollected, BigDecimal feeCharged,
+                              BigDecimal settled, BigDecimal balance) {
+    }
+
+    public record Cashflow(List<CashflowRow> rows, BigDecimal codCollected, BigDecimal feeCharged, BigDecimal settled,
+                           BigDecimal balance) {
     }
 
     /** Sửa thông tin giao (chỉ khi Chờ xử lý / Đang lấy hàng). */

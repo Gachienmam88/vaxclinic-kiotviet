@@ -45,11 +45,21 @@ public final class DeliveryPartnerDtos {
     public record PartnerRow(UUID id, String code, String name, String phone, String email, String address, String note,
                              String partnerType, boolean active, long shipmentCount, BigDecimal totalFee, BigDecimal totalCod,
                              BigDecimal debt, Instant createdAt, String province, String ward, String provinceCode,
-                             String wardCode, String partnerKind, UUID groupId, String groupName) {
+                             String wardCode, String partnerKind, UUID groupId, String groupName, long shipmentTotal,
+                             BigDecimal codOpen, BigDecimal feeOpen) {
+        // shipmentTotal: tổng đơn (gồm cả đã hủy); codOpen: thu hộ đã ghi sổ chưa đối soát (Còn cần thu COD);
+        // feeOpen: phí đã ghi sổ chưa đối soát (Còn cần trả ĐTGH)
     }
 
     public record PartnerListResponse(List<PartnerRow> items, long total, int page, int size, BigDecimal sumFee,
-                                      BigDecimal sumCod, BigDecimal sumDebt) {
+                                      BigDecimal sumCod, BigDecimal sumDebt, long sumShipments, BigDecimal sumCodOpen,
+                                      BigDecimal sumFeeOpen) {
+    }
+
+    /** Lịch sử đối soát / thanh toán của mọi đối tác (trang Đối tác giao hàng). */
+    public record SettlementListRow(UUID id, String code, String kind, UUID partnerId, String partnerCode, String partnerName,
+                                    BigDecimal codTotal, BigDecimal feeTotal, BigDecimal amount, int shipmentCount,
+                                    String voucherCode, String status, String createdByName, java.time.Instant createdAt) {
     }
 
     public record LedgerRow(UUID id, String docType, UUID docId, String docCode, BigDecimal amount, BigDecimal balanceAfter,

@@ -57,9 +57,28 @@ public class ShipmentController {
                                      @RequestParam(required = false) Instant from, @RequestParam(required = false) Instant to,
                                      @RequestParam(required = false) UUID branchId, @RequestParam(required = false) Boolean reconciled,
                                      @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "15") int size,
+                                     @RequestParam(required = false) Instant completedFrom,
+                                     @RequestParam(required = false) Instant completedTo,
+                                     @RequestParam(required = false) Boolean cod, @RequestParam(required = false) String connection,
                                      @AuthenticationPrincipal Jwt jwt) {
         return service.list(new ShipmentManageService.ListRequest(q, statuses, partnerId, area, provinceCode, from, to, branchId,
-                reconciled, page, size), Actor.of(jwt));
+                reconciled, page, size, completedFrom, completedTo, cod, connection), Actor.of(jwt));
+    }
+
+    /** Quản lý giao hàng → Thống kê. connection: MANUAL = tự giao hàng. */
+    @GetMapping("/dashboard")
+    public ShipmentDtos.Dashboard dashboard(@RequestParam Instant from, @RequestParam Instant to,
+                                            @RequestParam(required = false) UUID partnerId,
+                                            @RequestParam(required = false) String connection, @AuthenticationPrincipal Jwt jwt) {
+        return service.dashboard(from, to, partnerId, connection, Actor.of(jwt));
+    }
+
+    /** Quản lý giao hàng → Dòng tiền. */
+    @GetMapping("/cashflow")
+    public ShipmentDtos.Cashflow cashflow(@RequestParam Instant from, @RequestParam Instant to,
+                                          @RequestParam(required = false) UUID partnerId,
+                                          @RequestParam(required = false) String connection, @AuthenticationPrincipal Jwt jwt) {
+        return service.cashflow(from, to, partnerId, connection, Actor.of(jwt));
     }
 
     /** Tỷ lệ giao thành công của người nhận (theo SĐT) trên các vận đơn đã kết thúc. */

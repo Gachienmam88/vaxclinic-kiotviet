@@ -24,7 +24,8 @@ public class ShipmentManageService {
 
     /** Bộ lọc danh sách từ query string (chưa giới hạn chi nhánh / trang). */
     public record ListRequest(String q, List<String> statuses, UUID partnerId, String area, String provinceCode, Instant from,
-                              Instant to, UUID branchId, Boolean reconciled, int page, int size) {
+                              Instant to, UUID branchId, Boolean reconciled, int page, int size, Instant completedFrom,
+                              Instant completedTo, Boolean cod, String connection) {
     }
 
     private final ShipmentQueryRepository query;
@@ -33,9 +34,12 @@ public class ShipmentManageService {
     private final ShipmentCreateService creator;
     private final AuditLogger audit;
     private final ShipmentInvoiceHooks hooks;
+    private final ShipmentDashboardRepository dashboards;
 
     public ShipmentManageService(ShipmentQueryRepository query, ShipmentStatusService status, ShipmentEditService edit,
-                                 ShipmentCreateService creator, AuditLogger audit, ShipmentInvoiceHooks hooks) {
+                                 ShipmentCreateService creator, AuditLogger audit, ShipmentInvoiceHooks hooks,
+                                 ShipmentDashboardRepository dashboards) {
+        this.dashboards = dashboards;
         this.hooks = hooks;
         this.query = query;
         this.status = status;
@@ -55,7 +59,18 @@ public class ShipmentManageService {
 
     public ShipmentListResponse list(ListRequest r, Actor actor) {
         return query.search(new ShipmentQueryRepository.Filter(r.q(), r.statuses(), r.partnerId(), r.area(), r.provinceCode(), r.from(), r.to(),
-                branches(actor, r.branchId()), r.reconciled(), Math.max(r.page(), 0), Math.min(Math.max(r.size(), 1), 200)));
+                branches(actor, r.branchId()), r.reconciled(), Math.max(r.page(), 0), Math.min(Math.max(r.size(), 1), 200),
+                r.completedFrom(), r.completedTo(), r.cod(), r.connection()));
+    }
+
+    /** Quản lý giao hàng → Thống kê (vận đơn tạo trong [from, to)). */
+    public ShipmentDtos.Dashboard dashboard(Instant from, Instant to, UUID partnerId, String connection, Actor actor) {
+        return dashboards.dashboard(new ShipmentDashboardRepository.Scope(branches(actor, null), from, to, partnerId, connection));
+    }
+
+    /** Quản lý giao hàng → Dòng tiền (sổ công nợ đối tác trong [from, to) + còn lại hiện tại). */
+    public ShipmentDtos.Cashflow cashflow(Instant from, Instant to, UUID partnerId, String connection, Actor actor) {
+        return dashboards.cashflow(new ShipmentDashboardRepository.Scope(branches(actor, null), from, to, partnerId, connection));
     }
 
     public ShipmentDetail get(UUID id, Actor actor) {

@@ -28,9 +28,14 @@ public class DeliveryPartnerRepository {
     /** Tổng theo vận đơn của đối tác: đơn chưa hủy; thu hộ chỉ tính đơn không chuyển hoàn. */
     private static final String STATS = """
             (select count(*) from shipments s where s.partner_id = p.id and s.status <> 'CANCELLED') cnt,
+            (select count(*) from shipments s where s.partner_id = p.id) cnt_all,
             (select coalesce(sum(s.shipping_fee), 0) from shipments s where s.partner_id = p.id and s.status <> 'CANCELLED') fee,
             (select coalesce(sum(s.cod_amount), 0) from shipments s where s.partner_id = p.id
-                and s.status not in ('CANCELLED', 'RETURNING', 'RETURNED')) cod,
+                and s.status not in ('CANCELLED', 'WAIT_RETURN', 'RETURNING', 'WAIT_RERETURN', 'RETURNED')) cod,
+            (select coalesce(sum(s.cod_posted), 0) from shipments s where s.partner_id = p.id and s.settlement_id is null
+                and s.cod_posted is not null) cod_open,
+            (select coalesce(sum(s.fee_posted), 0) from shipments s where s.partner_id = p.id and s.settlement_id is null
+                and s.fee_posted is not null) fee_open,
             (select g.name from delivery_partner_groups g where g.id = p.group_id) group_name""";
 
     private static final RowMapper<PartnerRow> ROW = (rs, n) -> new PartnerRow(rs.getObject("id", UUID.class),
@@ -38,7 +43,8 @@ public class DeliveryPartnerRepository {
             rs.getString("note"), rs.getString("partner_type"), rs.getBoolean("active"), rs.getLong("cnt"),
             rs.getBigDecimal("fee"), rs.getBigDecimal("cod"), rs.getBigDecimal("debt"), rs.getTimestamp("created_at").toInstant(),
             rs.getString("province"), rs.getString("ward"), rs.getString("province_code"), rs.getString("ward_code"),
-            rs.getString("partner_kind"), rs.getObject("group_id", UUID.class), rs.getString("group_name"));
+            rs.getString("partner_kind"), rs.getObject("group_id", UUID.class), rs.getString("group_name"), rs.getLong("cnt_all"),
+            rs.getBigDecimal("cod_open"), rs.getBigDecimal("fee_open"));
 
     private final NamedParameterJdbcTemplate jdbc;
 
@@ -61,11 +67,27 @@ public class DeliveryPartnerRepository {
         if ("OWING".equals(debt)) w.append(" and p.debt > 0");
         if ("PAYABLE".equals(debt)) w.append(" and p.debt < 0");
         var agg = jdbc.queryForMap("select count(*) n, coalesce(sum(x.fee), 0) fee, coalesce(sum(x.cod), 0) cod,"
-                + " coalesce(sum(x.debt), 0) debt from (select p.debt, " + STATS + w + ") x", p);
+                + " coalesce(sum(x.debt), 0) debt, coalesce(sum(x.cnt_all), 0) cnt_all, coalesce(sum(x.cod_open), 0) cod_open,"
+                + " coalesce(sum(x.fee_open), 0) fee_open from (select p.debt, " + STATS + w + ") x", p);
         p.addValue("limit", size).addValue("offset", (long) page * size);
         var items = jdbc.query("select p.*, " + STATS + w + " order by p.created_at desc limit :limit offset :offset", p, ROW);
         return new PartnerListResponse(items, ((Number) agg.get("n")).longValue(), page, size, (BigDecimal) agg.get("fee"),
-                (BigDecimal) agg.get("cod"), (BigDecimal) agg.get("debt"));
+                (BigDecimal) agg.get("cod"), (BigDecimal) agg.get("debt"), ((Number) agg.get("cnt_all")).longValue(),
+                (BigDecimal) agg.get("cod_open"), (BigDecimal) agg.get("fee_open"));
+    }
+
+    /** Mọi phiếu đối soát / thanh toán của các đối tác, mới nhất trước. */
+    public List<DeliveryPartnerDtos.SettlementListRow> allSettlements(int page, int size) {
+        return jdbc.query("""
+                select d.*, p.code partner_code, p.name partner_name, v.code voucher_code from delivery_settlements d
+                join delivery_partners p on p.id = d.partner_id left join cash_vouchers v on v.id = d.voucher_id
+                order by d.created_at desc limit :limit offset :offset""",
+                new MapSqlParameterSource("limit", size).addValue("offset", (long) page * size),
+                (rs, n) -> new DeliveryPartnerDtos.SettlementListRow(rs.getObject("id", UUID.class), rs.getString("code"),
+                        rs.getString("kind"), rs.getObject("partner_id", UUID.class), rs.getString("partner_code"),
+                        rs.getString("partner_name"), rs.getBigDecimal("cod_total"), rs.getBigDecimal("fee_total"),
+                        rs.getBigDecimal("amount"), rs.getInt("shipment_count"), rs.getString("voucher_code"), rs.getString("status"),
+                        rs.getString("created_by_name"), rs.getTimestamp("created_at").toInstant()));
     }
 
     public PartnerRow get(UUID id) {
