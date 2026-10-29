@@ -1,7 +1,6 @@
 package com.vaxclinic.sales.invoice;
 
 import com.vaxclinic.common.error.BusinessException;
-import com.vaxclinic.sales.cashbook.CashVoucherRepository;
 import com.vaxclinic.sales.common.Actor;
 import com.vaxclinic.sales.common.SalesRules;
 import com.vaxclinic.sales.customer.Customer;
@@ -11,7 +10,6 @@ import com.vaxclinic.sales.delivery.ShipmentInvoiceHooks;
 import com.vaxclinic.sales.invoice.InvoiceDtos.InvoiceRequest;
 import com.vaxclinic.sales.invoice.checkout.CheckoutAttemptService;
 import com.vaxclinic.sales.order.OrderDepositLedger;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -31,38 +29,34 @@ public class InvoiceService {
 
     private final InvoiceRepository invoices;
     private final CustomerRepository customers;
-    private final CashVoucherRepository vouchers;
     private final InvoiceWriter writer;
     private final InvoiceEditWriter editWriter;
     private final ProductStockClient stock;
-    private final JdbcTemplate jdbc;
     private final SalesRules rules;
     private final com.vaxclinic.common.audit.AuditLogger audit;
     private final OrderDepositLedger orderDeposits;
     private final ShipmentInvoiceHooks shipments;
     private final SalesChannels channels;
-    private final InvoiceExtraPayments extraPayments;
     private final CheckoutAttemptService checkouts;
+    private final InvoiceChangeGuard guard;
 
-    public InvoiceService(InvoiceRepository invoices, CustomerRepository customers, CashVoucherRepository vouchers,
-                          InvoiceWriter writer, InvoiceEditWriter editWriter, ProductStockClient stock, JdbcTemplate jdbc,
-                          SalesRules rules, com.vaxclinic.common.audit.AuditLogger audit, OrderDepositLedger orderDeposits,
-                          ShipmentInvoiceHooks shipments, SalesChannels channels, InvoiceExtraPayments extraPayments,
-                          CheckoutAttemptService checkouts) {
+    public InvoiceService(InvoiceRepository invoices, CustomerRepository customers, InvoiceWriter writer,
+                          InvoiceEditWriter editWriter, ProductStockClient stock, SalesRules rules,
+                          com.vaxclinic.common.audit.AuditLogger audit, OrderDepositLedger orderDeposits,
+                          ShipmentInvoiceHooks shipments, SalesChannels channels, CheckoutAttemptService checkouts,
+                          InvoiceChangeGuard guard) {
         this.checkouts = checkouts;
-        this.extraPayments = extraPayments;
         this.orderDeposits = orderDeposits;
         this.shipments = shipments;
         this.channels = channels;
         this.invoices = invoices;
         this.customers = customers;
-        this.vouchers = vouchers;
         this.writer = writer;
         this.editWriter = editWriter;
         this.stock = stock;
-        this.jdbc = jdbc;
         this.rules = rules;
         this.audit = audit;
+        this.guard = guard;
     }
 
     public UUID create(InvoiceRequest req, Actor actor) {
@@ -123,47 +117,10 @@ public class InvoiceService {
      */
     public UUID update(UUID id, int expectedRevision, InvoiceRequest req, Actor actor) {
         Invoice inv = find(id);
-        if (!"COMPLETED".equals(inv.getStatus())) {
-            throw BusinessException.badRequest("INVOICE_NOT_EDITABLE", "Hóa đơn đã hủy, không sửa được");
-        }
-        if (inv.getRevision() != expectedRevision) {
-            throw BusinessException.conflict("INVOICE_CHANGED", "Hóa đơn vừa được người khác sửa, hãy mở lại để sửa tiếp");
-        }
-        if (hasReturns(id)) {
-            throw BusinessException.badRequest("INVOICE_HAS_RETURNS", "Hóa đơn đã có phiếu trả hàng, không sửa được");
-        }
-        actor.checkBranch(inv.getBranchId());
-        rules.checkNotLocked(inv.getBranchId(), inv.getSoldAt());
-        rules.checkEInvoiceNotPublished(id, "chỉnh sửa");
-        shipments.checkNotPickedUp(id, "sửa");
-        if (req.delivery() != null) shipments.validate(req.saleMode(), req.delivery());
-        channels.resolve(req.salesChannel(), inv.getSalesChannel());
+        guard.checkEditable(inv, expectedRevision, req, actor);
         Customer customer = customerOf(req.customerId());
         var totals = InvoiceMath.totals(req.lines(), req.discount());
-        BigDecimal paid = paidOf(req, totals);
-        boolean delivery = req.delivery() != null || "DELIVERY".equals(inv.getSaleMode());
-        if (customer == null && paid.compareTo(totals.total()) < 0 && !delivery) {
-            throw BusinessException.badRequest("WALK_IN_DEBT", "Khách lẻ phải thanh toán đủ — chọn khách hàng để ghi nợ");
-        }
-        // Thanh toán nhiều phương thức: phiếu thu thêm giữ nguyên; paidAmount = tổng khách đã trả → TT{mã} = phần còn lại
-        BigDecimal extras = extraPayments.activeTotal(id);
-        if (extras.signum() > 0) {
-            if (paid.compareTo(extras) < 0) {
-                throw BusinessException.badRequest("INVOICE_EXTRA_PAYMENTS", "Hóa đơn thanh toán nhiều phương thức: số tiền "
-                        + "khách đã trả không được nhỏ hơn " + Actor.money(extras) + " (các phương thức thanh toán thêm)");
-            }
-            if (!java.util.Objects.equals(inv.getCustomerId(), req.customerId())) {
-                throw BusinessException.badRequest("INVOICE_EXTRA_PAYMENTS",
-                        "Hóa đơn thanh toán nhiều phương thức: không đổi khách hàng được");
-            }
-            paid = paid.subtract(extras);
-        }
-        BigDecimal debtPayments = inv.getPaid().subtract(autoPaid(id)).subtract(extras); // phiếu thu nợ (PT) + tiền cọc đơn đặt hàng
-        if (debtPayments.signum() > 0 && (!java.util.Objects.equals(inv.getCustomerId(), req.customerId())
-                || totals.total().compareTo(debtPayments.add(extras).add(paid)) < 0)) {
-            throw BusinessException.badRequest("INVOICE_HAS_PAYMENTS",
-                    "Hóa đơn đã có phiếu thu nợ " + debtPayments + "đ: không đổi khách / không giảm tổng dưới số đã thu");
-        }
+        BigDecimal paid = guard.autoReceiptAmount(inv, req, customer, totals, paidOf(req, totals));
         int revision = expectedRevision + 1;
         UUID docId = UUID.nameUUIDFromBytes((id + ":" + revision).getBytes(StandardCharsets.UTF_8));
         List<UUID> lineIds = IntStream.range(0, req.lines().size())
@@ -179,18 +136,8 @@ public class InvoiceService {
         if ("CANCELLED".equals(inv.getStatus())) {
             return;
         }
-        actor.checkBranch(inv.getBranchId());
-        rules.checkNotLocked(inv.getBranchId(), inv.getSoldAt());
-        rules.checkEInvoiceNotPublished(id, "hủy");
-        shipments.checkNotPickedUp(id, "hủy");
         // Kiểm tra TRƯỚC khi hoàn kho: còn phiếu thu nợ / phiếu trả hàng thì không cho hủy.
-        if (inv.getPaid().compareTo(autoPaid(id).add(extraPayments.activeTotal(id)).add(orderDeposits.allocatedTo(id))) > 0) { // tiền cọc đơn gỡ ra khi hủy
-            throw BusinessException.badRequest("INVOICE_HAS_PAYMENTS",
-                    "Hóa đơn đã có phiếu thu nợ phân bổ, hãy hủy các phiếu thu đó trước");
-        }
-        if (hasReturns(id)) {
-            throw BusinessException.badRequest("INVOICE_HAS_RETURNS", "Hóa đơn đã có phiếu trả hàng, hãy hủy phiếu trả trước");
-        }
+        guard.checkCancellable(inv, actor);
         stock.apply(new ProductStockClient.Request(inv.getStockDocId(), "SALE_CANCEL", inv.getCode(), inv.getBranchId(),
                 inv.getCustomerName(), actor.id(), null, List.of()));
         writer.markCancelled(id, actor);
@@ -232,17 +179,6 @@ public class InvoiceService {
 
     private static BigDecimal paidOf(InvoiceRequest req, InvoiceMath.Totals totals) {
         return InvoiceMath.money(req.paidAmount() == null ? totals.total() : req.paidAmount()).min(totals.total());
-    }
-
-    private BigDecimal autoPaid(UUID invoiceId) {
-        return vouchers.findBySourceTypeAndSourceId("INVOICE", invoiceId)
-                .filter(v -> "PAID".equals(v.getStatus())).map(v -> v.getAmount()).orElse(BigDecimal.ZERO);
-    }
-
-    private boolean hasReturns(UUID invoiceId) {
-        Integer n = jdbc.queryForObject("select count(*) from sales_returns where invoice_id = ? and status = 'COMPLETED'",
-                Integer.class, invoiceId);
-        return n != null && n > 0;
     }
 
     private static List<ProductStockClient.Line> stockLines(InvoiceRequest req, List<UUID> lineIds) {

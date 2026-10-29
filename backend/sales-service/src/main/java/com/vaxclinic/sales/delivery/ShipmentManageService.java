@@ -27,13 +27,13 @@ public class ShipmentManageService {
                               Instant to, UUID branchId, Boolean reconciled, int page, int size) {
     }
 
-    private final ShipmentQuery query;
+    private final ShipmentQueryRepository query;
     private final ShipmentStatusService status;
     private final ShipmentEditService edit;
     private final ShipmentCreateService creator;
     private final AuditLogger audit;
 
-    public ShipmentManageService(ShipmentQuery query, ShipmentStatusService status, ShipmentEditService edit,
+    public ShipmentManageService(ShipmentQueryRepository query, ShipmentStatusService status, ShipmentEditService edit,
                                  ShipmentCreateService creator, AuditLogger audit) {
         this.query = query;
         this.status = status;
@@ -52,7 +52,7 @@ public class ShipmentManageService {
     }
 
     public ShipmentListResponse list(ListRequest r, Actor actor) {
-        return query.search(new ShipmentQuery.Filter(r.q(), r.statuses(), r.partnerId(), r.area(), r.provinceCode(), r.from(), r.to(),
+        return query.search(new ShipmentQueryRepository.Filter(r.q(), r.statuses(), r.partnerId(), r.area(), r.provinceCode(), r.from(), r.to(),
                 branches(actor, r.branchId()), r.reconciled(), Math.max(r.page(), 0), Math.min(Math.max(r.size(), 1), 200)));
     }
 

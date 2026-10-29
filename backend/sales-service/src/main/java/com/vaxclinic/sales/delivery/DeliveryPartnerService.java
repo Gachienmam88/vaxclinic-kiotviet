@@ -1,11 +1,9 @@
 package com.vaxclinic.sales.delivery;
 
-import com.vaxclinic.common.address.AdminUnitCodes;
 import com.vaxclinic.common.error.BusinessException;
 import com.vaxclinic.sales.common.Actor;
 import com.vaxclinic.sales.delivery.DeliveryPartnerDtos.PartnerRequest;
 import org.springframework.dao.DuplicateKeyException;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,25 +13,19 @@ import java.util.UUID;
 @Service
 public class DeliveryPartnerService {
 
-    private final JdbcTemplate jdbc;
+    private final DeliveryPartnerRepository partners;
 
-    public DeliveryPartnerService(JdbcTemplate jdbc) {
-        this.jdbc = jdbc;
+    public DeliveryPartnerService(DeliveryPartnerRepository partners) {
+        this.partners = partners;
     }
 
     @Transactional
     public UUID create(PartnerRequest r, Actor actor) {
         UUID id = UUID.randomUUID();
         String code = Actor.blankToNull(r.code()) != null ? r.code().trim().toUpperCase()
-                : "DT%06d".formatted(jdbc.queryForObject("select nextval('delivery_partner_code_seq')", Long.class));
+                : "DT%06d".formatted(partners.nextCodeNumber());
         try {
-            jdbc.update("""
-                    insert into delivery_partners(id, code, name, phone, email, address, note, partner_type, active, created_by,
-                        province, ward, province_code, ward_code)
-                    values (?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", id, code, r.name().trim(), Actor.blankToNull(r.phone()),
-                    Actor.blankToNull(r.email()), Actor.blankToNull(r.address()), Actor.blankToNull(r.note()), type(r),
-                    r.active() == null || r.active(), actor.id(), Actor.blankToNull(r.province()), Actor.blankToNull(r.ward()),
-                    AdminUnitCodes.clean(r.provinceCode()), AdminUnitCodes.clean(r.wardCode()));
+            partners.insert(id, code, r, type(r), actor.id());
         } catch (DuplicateKeyException e) {
             throw duplicate(code);
         }
@@ -42,18 +34,13 @@ public class DeliveryPartnerService {
 
     @Transactional
     public void update(UUID id, PartnerRequest r) {
-        String code = jdbc.query("select code from delivery_partners where id = ?", rs -> rs.next() ? rs.getString(1) : null, id);
+        String code = partners.codeOf(id);
         if (code == null) {
             throw notFound();
         }
         String newCode = Actor.blankToNull(r.code()) == null ? code : r.code().trim().toUpperCase();
         try {
-            jdbc.update("""
-                    update delivery_partners set code = ?, name = ?, phone = ?, email = ?, address = ?, note = ?, partner_type = ?,
-                        active = ?, province = ?, ward = ?, province_code = ?, ward_code = ? where id = ?""", newCode, r.name().trim(),
-                    Actor.blankToNull(r.phone()), Actor.blankToNull(r.email()), Actor.blankToNull(r.address()),
-                    Actor.blankToNull(r.note()), type(r), r.active() == null || r.active(), Actor.blankToNull(r.province()),
-                    Actor.blankToNull(r.ward()), AdminUnitCodes.clean(r.provinceCode()), AdminUnitCodes.clean(r.wardCode()), id);
+            partners.update(id, newCode, r, type(r));
         } catch (DuplicateKeyException e) {
             throw duplicate(newCode);
         }
@@ -62,17 +49,16 @@ public class DeliveryPartnerService {
     /** Trả về mã đối tác đã xóa (ghi lịch sử thao tác). */
     @Transactional
     public String delete(UUID id) {
-        var rows = jdbc.queryForList("select code, debt from delivery_partners where id = ? for update", id);
+        var rows = partners.lockForDelete(id);
         if (rows.isEmpty()) {
             throw notFound();
         }
-        Integer used = jdbc.queryForObject("select (select count(*) from shipments where partner_id = ?)"
-                + " + (select count(*) from delivery_partner_ledger where partner_id = ?)", Integer.class, id, id);
+        Integer used = partners.countUsage(id);
         if (used != null && used > 0) {
             throw BusinessException.conflict("PARTNER_IN_USE",
                     "Đối tác đã có vận đơn / công nợ, không xóa được — hãy chuyển sang ngừng hoạt động");
         }
-        jdbc.update("delete from delivery_partners where id = ?", id);
+        partners.delete(id);
         return (String) rows.get(0).get("code");
     }
 

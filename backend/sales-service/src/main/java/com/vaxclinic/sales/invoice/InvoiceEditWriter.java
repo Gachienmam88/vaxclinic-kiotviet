@@ -9,7 +9,6 @@ import com.vaxclinic.sales.customer.CustomerRepository;
 import com.vaxclinic.sales.debt.DebtLedger;
 import com.vaxclinic.sales.delivery.ShipmentInvoiceHooks;
 import com.vaxclinic.sales.invoice.InvoiceDtos.InvoiceRequest;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,12 +32,12 @@ public class InvoiceEditWriter {
     private final CashbookWriter cashbook;
     private final DebtLedger debt;
     private final InvoiceLineBuilder lineBuilder;
-    private final JdbcTemplate jdbc;
+    private final InvoicePaymentRepository payments;
     private final ShipmentInvoiceHooks shipments;
     private final InvoiceExtraPayments extraPayments;
 
     public InvoiceEditWriter(InvoiceRepository invoices, CustomerRepository customers, CashVoucherRepository vouchers,
-                             CashbookWriter cashbook, DebtLedger debt, InvoiceLineBuilder lineBuilder, JdbcTemplate jdbc,
+                             CashbookWriter cashbook, DebtLedger debt, InvoiceLineBuilder lineBuilder, InvoicePaymentRepository payments,
                              ShipmentInvoiceHooks shipments, InvoiceExtraPayments extraPayments) {
         this.extraPayments = extraPayments;
         this.shipments = shipments;
@@ -48,7 +47,7 @@ public class InvoiceEditWriter {
         this.cashbook = cashbook;
         this.debt = debt;
         this.lineBuilder = lineBuilder;
-        this.jdbc = jdbc;
+        this.payments = payments;
     }
 
     @Transactional
@@ -95,8 +94,7 @@ public class InvoiceEditWriter {
 
         // Phiếu thu tự động TT{mã}: hủy cũ (trả lại phân bổ), tạo lại theo số tiền mới
         auto.filter(v -> "PAID".equals(v.getStatus())).ifPresent(cashbook::cancel);
-        jdbc.update("delete from voucher_allocations where invoice_id = ? and voucher_id in "
-                + "(select id from cash_vouchers where source_type = 'INVOICE' and source_id = ?)", id, id);
+        payments.deleteAutoAllocations(id);
         if (paid.signum() > 0) {
             var v = auto.orElseGet(() -> CashbookWriter.newVoucher("TT" + inv.getCode(), "RECEIPT", "CASH", "Thu Tiền khách trả", paid));
             v.setStatus("PAID");

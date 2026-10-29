@@ -3,7 +3,10 @@ package com.vaxclinic.sales.channel;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
-/** Ghi bảng sales_channels (thêm / sửa / xóa) và đếm chứng từ đang dùng kênh. Đọc danh sách ở {@link SalesChannels}. */
+import java.util.List;
+import java.util.Map;
+
+/** Bảng sales_channels: danh sách, trạng thái 1 kênh, thêm / sửa / xóa và đếm chứng từ đang dùng kênh. */
 @Repository
 public class SalesChannelRepository {
 
@@ -11,6 +14,18 @@ public class SalesChannelRepository {
 
     public SalesChannelRepository(JdbcTemplate jdbc) {
         this.jdbc = jdbc;
+    }
+
+    /** all = false: chỉ kênh đang hoạt động. */
+    public List<SalesChannels.Channel> list(boolean all) {
+        return jdbc.query("select * from sales_channels" + (all ? "" : " where active") + " order by sort_order, name",
+                (rs, n) -> new SalesChannels.Channel(rs.getString("code"), rs.getString("name"), rs.getBoolean("active"),
+                        rs.getBoolean("builtin"), rs.getInt("sort_order")));
+    }
+
+    /** Cột active của kênh (rỗng = không có kênh). */
+    public List<Map<String, Object>> activeRows(String code) {
+        return jdbc.queryForList("select active from sales_channels where code = ?", code);
     }
 
     /** Số tiếp theo của sequence mã kênh (CH001, CH002...). */

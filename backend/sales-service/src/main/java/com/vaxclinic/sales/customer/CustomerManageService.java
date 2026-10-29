@@ -21,13 +21,13 @@ import java.util.UUID;
 public class CustomerManageService {
 
     private final CustomerService service;
-    private final CustomerListQuery listQuery;
+    private final CustomerListRepository listQuery;
     private final CustomerRepository customers;
     private final CustomerDebtRepository debts;
     private final DebtService debt;
     private final AuditLogger audit;
 
-    public CustomerManageService(CustomerService service, CustomerListQuery listQuery, CustomerRepository customers,
+    public CustomerManageService(CustomerService service, CustomerListRepository listQuery, CustomerRepository customers,
                                  CustomerDebtRepository debts, DebtService debt, AuditLogger audit) {
         this.service = service;
         this.listQuery = listQuery;
@@ -37,7 +37,7 @@ public class CustomerManageService {
         this.audit = audit;
     }
 
-    public CustomerListResponse list(CustomerListQuery.Filter filter) {
+    public CustomerListResponse list(CustomerListRepository.Filter filter) {
         return listQuery.search(filter);
     }
 

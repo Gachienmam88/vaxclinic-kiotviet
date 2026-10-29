@@ -17,19 +17,19 @@ import java.util.UUID;
 @Service
 public class CashbookManageService {
 
-    private final CashbookQuery query;
+    private final CashbookRepository query;
     private final CashbookService service;
     private final CashVoucherRepository vouchers;
     private final AuditLogger audit;
 
-    public CashbookManageService(CashbookQuery query, CashbookService service, CashVoucherRepository vouchers, AuditLogger audit) {
+    public CashbookManageService(CashbookRepository query, CashbookService service, CashVoucherRepository vouchers, AuditLogger audit) {
         this.query = query;
         this.service = service;
         this.vouchers = vouchers;
         this.audit = audit;
     }
 
-    public CashbookQuery.Page list(CashbookQuery.Filter filter) {
+    public CashbookRepository.Page list(CashbookRepository.Filter filter) {
         return query.search(filter);
     }
 

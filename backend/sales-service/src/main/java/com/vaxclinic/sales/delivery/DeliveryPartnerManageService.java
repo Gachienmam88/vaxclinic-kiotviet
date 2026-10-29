@@ -15,7 +15,7 @@ import java.util.UUID;
 
 /**
  * Đối tác giao hàng cho màn hình: danh sách / chi tiết / sổ công nợ / lịch sử thanh toán / vận đơn chờ đối soát
- * ({@link DeliveryPartnerQuery}), thêm / sửa / xóa ({@link DeliveryPartnerService}) kèm ghi lịch sử thao tác sau commit.
+ * ({@link DeliveryPartnerRepository}), thêm / sửa / xóa ({@link DeliveryPartnerService}) kèm ghi lịch sử thao tác sau commit.
  */
 @Service
 public class DeliveryPartnerManageService {
@@ -23,10 +23,10 @@ public class DeliveryPartnerManageService {
     private static final String FEATURE = "Đối tác giao hàng";
 
     private final DeliveryPartnerService service;
-    private final DeliveryPartnerQuery query;
+    private final DeliveryPartnerRepository query;
     private final AuditLogger audit;
 
-    public DeliveryPartnerManageService(DeliveryPartnerService service, DeliveryPartnerQuery query, AuditLogger audit) {
+    public DeliveryPartnerManageService(DeliveryPartnerService service, DeliveryPartnerRepository query, AuditLogger audit) {
         this.service = service;
         this.query = query;
         this.audit = audit;

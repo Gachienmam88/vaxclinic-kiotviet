@@ -6,7 +6,7 @@ import com.vaxclinic.sales.common.SalesRules;
 import com.vaxclinic.sales.delivery.ShipmentDtos.CreateRequest;
 import com.vaxclinic.sales.invoice.Invoice;
 import com.vaxclinic.sales.invoice.InvoiceRepository;
-import org.springframework.jdbc.core.JdbcTemplate;
+import com.vaxclinic.sales.salesreturn.SalesReturnRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,13 +21,14 @@ import java.util.UUID;
 @Service
 public class ShipmentCreateService {
 
-    private final JdbcTemplate jdbc;
+    private final SalesReturnRepository returns;
     private final InvoiceRepository invoices;
     private final ShipmentInvoiceHooks hooks;
     private final SalesRules rules;
 
-    public ShipmentCreateService(JdbcTemplate jdbc, InvoiceRepository invoices, ShipmentInvoiceHooks hooks, SalesRules rules) {
-        this.jdbc = jdbc;
+    public ShipmentCreateService(SalesReturnRepository returns, InvoiceRepository invoices, ShipmentInvoiceHooks hooks,
+                                 SalesRules rules) {
+        this.returns = returns;
         this.invoices = invoices;
         this.hooks = hooks;
         this.rules = rules;
@@ -46,8 +47,7 @@ public class ShipmentCreateService {
             throw BusinessException.badRequest("SHIPMENT_EXISTS", "Hóa đơn " + inv.getCode()
                     + " đang có vận đơn chưa hủy — hủy vận đơn đó trước khi tạo vận đơn mới");
         }
-        Integer returned = jdbc.queryForObject("select count(*) from sales_returns where invoice_id = ? and status = 'COMPLETED'",
-                Integer.class, inv.getId());
+        Integer returned = returns.countCompletedByInvoice(inv.getId());
         if (returned != null && returned > 0) {
             throw BusinessException.badRequest("INVOICE_HAS_RETURNS", "Hóa đơn " + inv.getCode() + " đã có phiếu trả hàng, không tạo vận đơn được");
         }

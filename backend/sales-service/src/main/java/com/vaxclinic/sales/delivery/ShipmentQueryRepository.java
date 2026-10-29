@@ -7,7 +7,7 @@ import com.vaxclinic.sales.delivery.ShipmentDtos.ShipmentListResponse;
 import com.vaxclinic.sales.delivery.ShipmentDtos.StatusLog;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.sql.ResultSet;
@@ -19,8 +19,8 @@ import java.util.List;
 import java.util.UUID;
 
 /** Danh sách vận đơn (Quản lý giao hàng / Vận đơn): bộ lọc, dòng tổng, số vận đơn theo trạng thái; chi tiết + lịch sử. */
-@Component
-public class ShipmentQuery {
+@Repository
+public class ShipmentQueryRepository {
 
     /** branches: đã giao với chi nhánh người dùng; from/to theo thời gian tạo vận đơn. */
     /** provinceCode: lọc theo mã tỉnh; vận đơn cũ chưa có mã thì khớp theo tên (area). */
@@ -33,7 +33,7 @@ public class ShipmentQuery {
 
     private final NamedParameterJdbcTemplate jdbc;
 
-    public ShipmentQuery(NamedParameterJdbcTemplate jdbc) {
+    public ShipmentQueryRepository(NamedParameterJdbcTemplate jdbc) {
         this.jdbc = jdbc;
     }
 

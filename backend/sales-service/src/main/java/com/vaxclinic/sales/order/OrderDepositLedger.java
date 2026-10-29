@@ -1,12 +1,12 @@
 package com.vaxclinic.sales.order;
 
 import com.vaxclinic.common.error.BusinessException;
+import com.vaxclinic.sales.cashbook.CashbookRepository;
 import com.vaxclinic.sales.cashbook.CashbookWriter;
 import com.vaxclinic.sales.common.Actor;
 import com.vaxclinic.sales.customer.Customer;
 import com.vaxclinic.sales.debt.DebtLedger;
 import com.vaxclinic.sales.invoice.Invoice;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,13 +29,16 @@ import java.util.UUID;
 @Component
 public class OrderDepositLedger {
 
-    private final JdbcTemplate jdbc;
+    private final OrderDepositRepository deposits;
+    private final CashbookRepository allocations;
     private final CashbookWriter cashbook;
     private final DebtLedger debt;
     private final CustomerOrderRepository orders;
 
-    public OrderDepositLedger(JdbcTemplate jdbc, CashbookWriter cashbook, DebtLedger debt, CustomerOrderRepository orders) {
-        this.jdbc = jdbc;
+    public OrderDepositLedger(OrderDepositRepository deposits, CashbookRepository allocations, CashbookWriter cashbook,
+                              DebtLedger debt, CustomerOrderRepository orders) {
+        this.deposits = deposits;
+        this.allocations = allocations;
         this.cashbook = cashbook;
         this.debt = debt;
         this.orders = orders;
@@ -43,8 +46,7 @@ public class OrderDepositLedger {
 
     @Transactional(propagation = Propagation.MANDATORY)
     public void receive(CustomerOrder o, Customer c, BigDecimal amount, String method, UUID bankAccountId, Actor actor) {
-        Integer n = jdbc.queryForObject("select count(*) from cash_vouchers where source_type = 'ORDER' and source_id = ?"
-                + " and voucher_type = 'RECEIPT'", Integer.class, o.getId());
+        Integer n = deposits.countReceipts(o.getId());
         String code = "TT" + o.getCode() + (n == null || n == 0 ? "" : "-" + (n + 1));
         Instant now = Instant.now();
         var v = CashbookWriter.newVoucher(code, "RECEIPT", fundOf(method), "Thu Tiền khách trả", amount);
@@ -78,11 +80,7 @@ public class OrderDepositLedger {
         CustomerOrder o = orders.findById(orderId)
                 .orElseThrow(() -> BusinessException.badRequest("ORDER_NOT_FOUND", "Không tìm thấy đơn đặt hàng"));
         checkInvoiceable(o, customerId, branchId);
-        int claimed = jdbc.update("""
-                update customer_orders set invoicing_id = ?, invoicing_at = now()
-                where id = ? and status in ('DRAFT', 'CONFIRMED')
-                  and (invoicing_id is null or invoicing_id = ? or invoicing_at < now() - interval '2 minutes')""",
-                invoiceId, orderId, invoiceId);
+        int claimed = deposits.claimForInvoicing(orderId, invoiceId);
         if (claimed == 0) {
             throw BusinessException.conflict("ORDER_BUSY", "Đơn " + o.getCode() + " đang được lập hóa đơn ở máy khác");
         }
@@ -91,7 +89,7 @@ public class OrderDepositLedger {
 
     /** Lập hóa đơn thất bại → bỏ giữ chỗ để lập lại được ngay. */
     public void releaseClaim(UUID orderId, UUID invoiceId) {
-        jdbc.update("update customer_orders set invoicing_id = null where id = ? and invoicing_id = ?", orderId, invoiceId);
+        deposits.releaseClaim(orderId, invoiceId);
     }
 
     /** Trong transaction ghi hóa đơn (hóa đơn đã lưu, đã có phiếu thu TT nếu khách trả thêm). */
@@ -99,15 +97,12 @@ public class OrderDepositLedger {
     public void attach(UUID orderId, Invoice inv) {
         CustomerOrder o = orders.findForUpdate(orderId).orElseThrow();
         checkInvoiceable(o, inv.getCustomerId(), inv.getBranchId());
-        for (Map<String, Object> row : jdbc.queryForList("""
-                select v.id, v.amount - coalesce((select sum(a.amount) from voucher_allocations a where a.voucher_id = v.id), 0) remaining
-                from cash_vouchers v where v.source_type = 'ORDER' and v.source_id = ? and v.voucher_type = 'RECEIPT'
-                  and v.status = 'PAID' order by v.occurred_at""", orderId)) {
+        for (Map<String, Object> row : deposits.receiptRemainders(orderId)) {
             BigDecimal take = ((BigDecimal) row.get("remaining")).min(inv.getTotal().subtract(inv.getPaid()));
             if (take.signum() <= 0) {
                 continue;
             }
-            jdbc.update("insert into voucher_allocations(voucher_id, invoice_id, amount) values (?,?,?)", row.get("id"), inv.getId(), take);
+            allocations.insertAllocation((UUID) row.get("id"), inv.getId(), take);
             inv.setPaid(inv.getPaid().add(take));
         }
         o.setStatus("COMPLETED");
@@ -118,17 +113,14 @@ public class OrderDepositLedger {
     @Transactional(propagation = Propagation.MANDATORY)
     public void detach(Invoice inv) {
         BigDecimal allocated = allocatedTo(inv.getId());
-        jdbc.update("delete from voucher_allocations where invoice_id = ? and voucher_id in "
-                + "(select id from cash_vouchers where source_type = 'ORDER')", inv.getId());
+        deposits.deleteAllocations(inv.getId());
         inv.setPaid(inv.getPaid().subtract(allocated));
-        jdbc.update("update customer_orders set status = 'CONFIRMED', invoice_id = null, invoicing_id = null where invoice_id = ?", inv.getId());
+        deposits.reopenByInvoice(inv.getId());
     }
 
     /** Tiền cọc đơn đặt hàng đang phân bổ vào hóa đơn. */
     public BigDecimal allocatedTo(UUID invoiceId) {
-        return jdbc.queryForObject("""
-                select coalesce(sum(a.amount), 0) from voucher_allocations a join cash_vouchers v on v.id = a.voucher_id
-                where a.invoice_id = ? and v.source_type = 'ORDER'""", BigDecimal.class, invoiceId);
+        return deposits.allocatedTo(invoiceId);
     }
 
     private static void checkInvoiceable(CustomerOrder o, UUID customerId, UUID branchId) {

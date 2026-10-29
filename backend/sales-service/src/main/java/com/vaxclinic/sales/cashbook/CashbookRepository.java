@@ -2,20 +2,21 @@ package com.vaxclinic.sales.cashbook;
 
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
  * Sổ quỹ: danh sách phiếu + 4 số tổng (Quỹ đầu kỳ, Tổng thu, Tổng chi, Tồn quỹ) theo quỹ và khoảng thời gian.
  * Quỹ đầu kỳ = Σ(thu − chi) các phiếu đã thanh toán TRƯỚC thời điểm bắt đầu; Tồn quỹ = đầu kỳ + thu − chi.
  */
-@Component
-public class CashbookQuery {
+@Repository
+public class CashbookRepository {
 
     public record Filter(String fund, Instant from, Instant to, List<String> voucherTypes, String category,
                          List<String> statuses, Boolean accounting, UUID createdBy, UUID collectorId,
@@ -39,7 +40,7 @@ public class CashbookQuery {
 
     private final NamedParameterJdbcTemplate jdbc;
 
-    public CashbookQuery(NamedParameterJdbcTemplate jdbc) {
+    public CashbookRepository(NamedParameterJdbcTemplate jdbc) {
         this.jdbc = jdbc;
     }
 
@@ -101,5 +102,17 @@ public class CashbookQuery {
 
     public List<String> categories() {
         return jdbc.getJdbcTemplate().queryForList("select distinct category from cash_vouchers order by category", String.class);
+    }
+
+    /** Ghi 1 dòng phân bổ phiếu thu vào hóa đơn. */
+    public void insertAllocation(UUID voucherId, UUID invoiceId, BigDecimal amount) {
+        jdbc.getJdbcTemplate().update("insert into voucher_allocations(voucher_id, invoice_id, amount) values (?,?,?)",
+                voucherId, invoiceId, amount);
+    }
+
+    /** Các dòng phân bổ của phiếu (invoice_id, amount). */
+    public List<Map<String, Object>> allocationRows(UUID voucherId) {
+        return jdbc.getJdbcTemplate().queryForList(
+                "select invoice_id, amount from voucher_allocations where voucher_id = ?", voucherId);
     }
 }

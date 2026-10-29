@@ -5,12 +5,10 @@ import com.vaxclinic.sales.common.Actor;
 import com.vaxclinic.sales.debt.DebtLedger;
 import com.vaxclinic.sales.invoice.Invoice;
 import com.vaxclinic.sales.invoice.InvoiceRepository;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
@@ -27,15 +25,15 @@ import java.util.UUID;
 @Component
 public class ShipmentStatusWriter {
 
-    private final JdbcTemplate jdbc;
+    private final ShipmentRepository shipments;
     private final InvoiceRepository invoices;
     private final DebtLedger debt;
     private final PartnerLedger ledger;
     private final ShipmentInvoiceHooks hooks;
 
-    public ShipmentStatusWriter(JdbcTemplate jdbc, InvoiceRepository invoices, DebtLedger debt, PartnerLedger ledger,
+    public ShipmentStatusWriter(ShipmentRepository shipments, InvoiceRepository invoices, DebtLedger debt, PartnerLedger ledger,
                                 ShipmentInvoiceHooks hooks) {
-        this.jdbc = jdbc;
+        this.shipments = shipments;
         this.invoices = invoices;
         this.debt = debt;
         this.ledger = ledger;
@@ -44,7 +42,7 @@ public class ShipmentStatusWriter {
 
     @Transactional
     public void apply(UUID id, String from, String to, UUID returnId, ShipmentDtos.ReturnOptions opts, String note, Actor actor) {
-        Map<String, Object> s = jdbc.queryForMap("select * from shipments where id = ? for update", id);
+        Map<String, Object> s = shipments.lockForUpdate(id);
         if (!from.equals(s.get("status"))) {
             throw BusinessException.conflict("SHIPMENT_CHANGED", "Vận đơn " + s.get("code") + " vừa được cập nhật, hãy tải lại");
         }
@@ -76,10 +74,7 @@ public class ShipmentStatusWriter {
             ledger.post(partnerId, branchId, PartnerLedger.DocType.FEE, id, code, returnFee.negate(), "Phí chuyển hoàn " + code, now);
         }
         boolean finished = ShipmentStatus.DELIVERED.equals(to) || ShipmentStatus.RETURNED.equals(to);
-        jdbc.update("""
-                update shipments set status = ?, return_id = coalesce(?, return_id), cod_posted = ?, fee_posted = ?, return_fee = ?,
-                    delivered_at = case when ? then ? else delivered_at end, updated_at = now() where id = ?""",
-                to, returnId, codPosted, feePosted, returnFee, finished, Timestamp.from(now), id);
+        shipments.updateStatus(id, to, returnId, codPosted, feePosted, returnFee, finished, now);
         hooks.log(id, from, to, note, actor);
     }
 

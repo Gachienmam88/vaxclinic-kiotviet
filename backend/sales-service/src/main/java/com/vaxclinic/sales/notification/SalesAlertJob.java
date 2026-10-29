@@ -6,7 +6,6 @@ import com.vaxclinic.common.settings.ShopSettings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 
@@ -16,7 +15,6 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * Cảnh báo bán hàng cho Hộp thư đến (mỗi 15 phút + sau khi khởi động), theo chi nhánh, quyền sales.perform:
@@ -34,11 +32,11 @@ public class SalesAlertJob {
     private static final DateTimeFormatter DATE_TIME = DateTimeFormatter.ofPattern("HH:mm dd/MM/yyyy");
     private static final Logger log = LoggerFactory.getLogger(SalesAlertJob.class);
 
-    private final JdbcTemplate jdbc;
+    private final SalesAlertRepository alerts;
     private final NotificationClient notifications;
 
-    public SalesAlertJob(JdbcTemplate jdbc, NotificationClient notifications) {
-        this.jdbc = jdbc;
+    public SalesAlertJob(SalesAlertRepository alerts, NotificationClient notifications) {
+        this.alerts = alerts;
         this.notifications = notifications;
     }
 
@@ -62,31 +60,25 @@ public class SalesAlertJob {
     private List<Item> dueOrders(LocalDate today) {
         Timestamp tomorrow = Timestamp.from(today.plusDays(1).atStartOfDay(ShopSettings.ZONE).toInstant());
         Timestamp startOfToday = Timestamp.from(today.atStartOfDay(ShopSettings.ZONE).toInstant());
-        return jdbc.query("""
-                select id, code, branch_id, customer_name, expected_delivery_at from customer_orders
-                where status in ('DRAFT', 'CONFIRMED') and expected_delivery_at < ?
-                order by expected_delivery_at""", (rs, i) -> {
-            ZonedDateTime due = rs.getTimestamp("expected_delivery_at").toInstant().atZone(ShopSettings.ZONE);
-            boolean overdue = rs.getTimestamp("expected_delivery_at").before(startOfToday);
-            String code = rs.getString("code");
-            String title = "Đơn đặt hàng " + code + " - " + rs.getString("customer_name")
+        return alerts.dueOrders(tomorrow).stream().map(o -> {
+            ZonedDateTime due = o.expectedDeliveryAt().toInstant().atZone(ShopSettings.ZONE);
+            boolean overdue = o.expectedDeliveryAt().before(startOfToday);
+            String code = o.code();
+            String title = "Đơn đặt hàng " + code + " - " + o.customerName()
                     + (overdue ? " đã quá hạn giao" : " đến hạn giao hôm nay lúc " + due.format(TIME));
             String body = "Thời gian giao hàng " + due.format(DATE_TIME) + ". Tạo hóa đơn giao hàng hoặc cập nhật lại thời gian giao.";
-            return new Item("ORDER_DUE", "order_due:" + rs.getObject("id", UUID.class), title, body, code, null,
-                    rs.getObject("branch_id", UUID.class), PERMISSION);
-        }, tomorrow);
+            return new Item("ORDER_DUE", "order_due:" + o.id(), title, body, code, null, o.branchId(), PERMISSION);
+        }).toList();
     }
 
     private List<Item> returningShipments() {
-        return jdbc.query("""
-                select id, code, branch_id, receiver_name, receiver_phone from shipments where status = 'RETURNING'
-                order by updated_at""", (rs, i) -> {
-            String code = rs.getString("code");
-            String title = "Vận đơn " + code + " - " + rs.getString("receiver_name") + " đang chuyển hoàn";
-            String body = "Người nhận " + rs.getString("receiver_name") + " (" + rs.getString("receiver_phone")
+        return alerts.returningShipments().stream().map(s -> {
+            String code = s.code();
+            String title = "Vận đơn " + code + " - " + s.receiverName() + " đang chuyển hoàn";
+            String body = "Người nhận " + s.receiverName() + " (" + s.receiverPhone()
                     + "). Nhận lại hàng và cập nhật trạng thái \"Đã chuyển hoàn\" khi hàng về kho.";
-            return new Item("SHIPMENT_RETURNING", "shipment_returning:" + rs.getObject("id", UUID.class), title, body, code,
-                    null, rs.getObject("branch_id", UUID.class), PERMISSION);
-        });
+            return new Item("SHIPMENT_RETURNING", "shipment_returning:" + s.id(), title, body, code,
+                    null, s.branchId(), PERMISSION);
+        }).toList();
     }
 }

@@ -1,22 +1,29 @@
 package com.vaxclinic.sales.delivery;
 
+import com.vaxclinic.common.address.AdminUnitCodes;
+import com.vaxclinic.sales.common.Actor;
 import com.vaxclinic.sales.delivery.DeliveryPartnerDtos.LedgerRow;
 import com.vaxclinic.sales.delivery.DeliveryPartnerDtos.PartnerListResponse;
+import com.vaxclinic.sales.delivery.DeliveryPartnerDtos.PartnerRequest;
 import com.vaxclinic.sales.delivery.DeliveryPartnerDtos.PartnerRow;
 import com.vaxclinic.sales.delivery.DeliveryPartnerDtos.ReconcileRow;
 import com.vaxclinic.sales.delivery.DeliveryPartnerDtos.SettlementRow;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
-/** Danh sách đối tác giao hàng (bộ lọc + dòng tổng), sổ công nợ, lịch sử thanh toán, vận đơn chờ đối soát. */
-@Component
-public class DeliveryPartnerQuery {
+/**
+ * Đối tác giao hàng: danh sách (bộ lọc + dòng tổng), sổ công nợ, lịch sử thanh toán, vận đơn chờ đối soát;
+ * thêm / sửa / xóa dòng delivery_partners (kiểm tra nghiệp vụ ở {@link DeliveryPartnerService}).
+ */
+@Repository
+public class DeliveryPartnerRepository {
 
     /** Tổng theo vận đơn của đối tác: đơn chưa hủy; thu hộ chỉ tính đơn không chuyển hoàn. */
     private static final String STATS = """
@@ -33,7 +40,7 @@ public class DeliveryPartnerQuery {
 
     private final NamedParameterJdbcTemplate jdbc;
 
-    public DeliveryPartnerQuery(NamedParameterJdbcTemplate jdbc) {
+    public DeliveryPartnerRepository(NamedParameterJdbcTemplate jdbc) {
         this.jdbc = jdbc;
     }
 
@@ -101,6 +108,63 @@ public class DeliveryPartnerQuery {
                             rs.getString("receiver_name"), rs.getString("status"), rs.getObject("branch_id", UUID.class), cod, fee,
                             cod.subtract(fee), rs.getTimestamp("delivered_at") == null ? null : rs.getTimestamp("delivered_at").toInstant());
                 });
+    }
+
+    public Long nextCodeNumber() {
+        return jdbc.getJdbcTemplate().queryForObject("select nextval('delivery_partner_code_seq')", Long.class);
+    }
+
+    /** Ném DuplicateKeyException khi trùng mã. */
+    public void insert(UUID id, String code, PartnerRequest r, String type, UUID createdBy) {
+        jdbc.getJdbcTemplate().update("""
+                insert into delivery_partners(id, code, name, phone, email, address, note, partner_type, active, created_by,
+                    province, ward, province_code, ward_code)
+                values (?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", id, code, r.name().trim(), Actor.blankToNull(r.phone()),
+                Actor.blankToNull(r.email()), Actor.blankToNull(r.address()), Actor.blankToNull(r.note()), type,
+                r.active() == null || r.active(), createdBy, Actor.blankToNull(r.province()), Actor.blankToNull(r.ward()),
+                AdminUnitCodes.clean(r.provinceCode()), AdminUnitCodes.clean(r.wardCode()));
+    }
+
+    /** Mã hiện tại của đối tác (null = không có). */
+    public String codeOf(UUID id) {
+        return jdbc.getJdbcTemplate().query("select code from delivery_partners where id = ?",
+                rs -> rs.next() ? rs.getString(1) : null, id);
+    }
+
+    /** Ném DuplicateKeyException khi trùng mã. */
+    public void update(UUID id, String code, PartnerRequest r, String type) {
+        jdbc.getJdbcTemplate().update("""
+                update delivery_partners set code = ?, name = ?, phone = ?, email = ?, address = ?, note = ?, partner_type = ?,
+                    active = ?, province = ?, ward = ?, province_code = ?, ward_code = ? where id = ?""", code, r.name().trim(),
+                Actor.blankToNull(r.phone()), Actor.blankToNull(r.email()), Actor.blankToNull(r.address()),
+                Actor.blankToNull(r.note()), type, r.active() == null || r.active(), Actor.blankToNull(r.province()),
+                Actor.blankToNull(r.ward()), AdminUnitCodes.clean(r.provinceCode()), AdminUnitCodes.clean(r.wardCode()), id);
+    }
+
+    /** Khóa dòng đối tác trước khi xóa (code, debt; rỗng = không có). */
+    public List<Map<String, Object>> lockForDelete(UUID id) {
+        return jdbc.getJdbcTemplate().queryForList("select code, debt from delivery_partners where id = ? for update", id);
+    }
+
+    /** Số vận đơn + dòng sổ công nợ của đối tác. */
+    public Integer countUsage(UUID id) {
+        return jdbc.getJdbcTemplate().queryForObject("select (select count(*) from shipments where partner_id = ?)"
+                + " + (select count(*) from delivery_partner_ledger where partner_id = ?)", Integer.class, id, id);
+    }
+
+    public void delete(UUID id) {
+        jdbc.getJdbcTemplate().update("delete from delivery_partners where id = ?", id);
+    }
+
+    /** Tên + điện thoại đối tác cho phiếu Sổ quỹ (rỗng = không có). */
+    public List<Map<String, Object>> contact(UUID id) {
+        return jdbc.queryForList("select name, phone from delivery_partners where id = :id", new MapSqlParameterSource("id", id));
+    }
+
+    /** Trạng thái hoạt động của đối tác (null = không có). */
+    public Boolean activeOf(UUID id) {
+        return jdbc.getJdbcTemplate().query("select active from delivery_partners where id = ?",
+                rs -> rs.next() ? rs.getBoolean(1) : null, id);
     }
 
     static BigDecimal nz(BigDecimal v) {

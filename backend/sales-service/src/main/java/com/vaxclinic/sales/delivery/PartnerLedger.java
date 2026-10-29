@@ -1,13 +1,11 @@
 package com.vaxclinic.sales.delivery;
 
 import com.vaxclinic.common.error.BusinessException;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -22,10 +20,10 @@ public class PartnerLedger {
 
     public enum DocType { COD, FEE, SETTLEMENT, SETTLEMENT_CANCEL }
 
-    private final JdbcTemplate jdbc;
+    private final PartnerLedgerRepository entries;
 
-    public PartnerLedger(JdbcTemplate jdbc) {
-        this.jdbc = jdbc;
+    public PartnerLedger(PartnerLedgerRepository entries) {
+        this.entries = entries;
     }
 
     @Transactional(propagation = Propagation.MANDATORY)
@@ -34,16 +32,12 @@ public class PartnerLedger {
         if (amount.signum() == 0) {
             return;
         }
-        BigDecimal debt = jdbc.query("select debt from delivery_partners where id = ? for update",
-                rs -> rs.next() ? rs.getBigDecimal(1) : null, partnerId);
+        BigDecimal debt = entries.lockDebt(partnerId);
         if (debt == null) {
             throw BusinessException.notFound("PARTNER_NOT_FOUND", "Không tìm thấy đối tác giao hàng");
         }
         BigDecimal after = debt.add(amount);
-        jdbc.update("update delivery_partners set debt = ? where id = ?", after, partnerId);
-        jdbc.update("""
-                insert into delivery_partner_ledger(id, partner_id, branch_id, doc_type, doc_id, doc_code, amount, balance_after,
-                    note, occurred_at) values (?,?,?,?,?,?,?,?,?,?)""", UUID.randomUUID(), partnerId, branchId, type.name(), docId,
-                docCode, amount, after, note, Timestamp.from(at));
+        entries.updateDebt(partnerId, after);
+        entries.insert(partnerId, branchId, type.name(), docId, docCode, amount, after, note, at);
     }
 }

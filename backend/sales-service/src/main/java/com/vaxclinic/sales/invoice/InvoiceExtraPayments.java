@@ -6,7 +6,6 @@ import com.vaxclinic.sales.cashbook.CashbookWriter;
 import com.vaxclinic.sales.common.Actor;
 import com.vaxclinic.sales.customer.Customer;
 import com.vaxclinic.sales.invoice.InvoiceDtos.ExtraPayment;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,12 +27,12 @@ public class InvoiceExtraPayments {
 
     private final CashVoucherRepository vouchers;
     private final CashbookWriter cashbook;
-    private final JdbcTemplate jdbc;
+    private final InvoicePaymentRepository payments;
 
-    public InvoiceExtraPayments(CashVoucherRepository vouchers, CashbookWriter cashbook, JdbcTemplate jdbc) {
+    public InvoiceExtraPayments(CashVoucherRepository vouchers, CashbookWriter cashbook, InvoicePaymentRepository payments) {
         this.vouchers = vouchers;
         this.cashbook = cashbook;
-        this.jdbc = jdbc;
+        this.payments = payments;
     }
 
     /** Tổng các khoản thanh toán thêm của request (làm tròn đồng). */
@@ -77,8 +76,7 @@ public class InvoiceExtraPayments {
 
     /** Tổng các phiếu thu thêm còn hiệu lực của hóa đơn. */
     public BigDecimal activeTotal(UUID invoiceId) {
-        return jdbc.queryForObject("select coalesce(sum(amount), 0) from cash_vouchers where source_type = ? and source_id = ?"
-                + " and status = 'PAID'", BigDecimal.class, SOURCE, invoiceId);
+        return payments.activeTotal(SOURCE, invoiceId);
     }
 
     /** Hủy hóa đơn: hủy mọi phiếu thu thêm còn hiệu lực (trả lại phân bổ). Trả về các phiếu vừa hủy. */

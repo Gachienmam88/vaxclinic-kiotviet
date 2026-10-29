@@ -38,7 +38,7 @@ public class CashbookController {
 
     @GetMapping("/api/cashbook")
     @PreAuthorize("hasAuthority('cashbook.manage') or hasAuthority('report.view')")
-    public CashbookQuery.Page list(@RequestParam(defaultValue = "CASH") String fund,
+    public CashbookRepository.Page list(@RequestParam(defaultValue = "CASH") String fund,
                                    @RequestParam(required = false) Instant from, @RequestParam(required = false) Instant to,
                                    @RequestParam(required = false) List<String> voucherTypes,
                                    @RequestParam(required = false) String category,
@@ -50,7 +50,7 @@ public class CashbookController {
                                    @RequestParam(required = false) String partner, @RequestParam(required = false) String q,
                                    @RequestParam(required = false) UUID branchId,
                                    @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "15") int size) {
-        return cashbook.list(new CashbookQuery.Filter(fund, from, to, voucherTypes, category, statuses, accounting, createdBy,
+        return cashbook.list(new CashbookRepository.Filter(fund, from, to, voucherTypes, category, statuses, accounting, createdBy,
                 collectorId, partnerType, partner, q, branchId, Math.max(page, 0), Math.min(Math.max(size, 1), 100)));
     }
 

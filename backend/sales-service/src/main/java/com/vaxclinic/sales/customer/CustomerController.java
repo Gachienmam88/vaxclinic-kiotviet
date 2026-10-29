@@ -48,7 +48,7 @@ public class CustomerController {
                                      @RequestParam(required = false) String customerType,
                                      @RequestParam(required = false) String gender,
                                      @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "15") int size) {
-        return service.list(new CustomerListQuery.Filter(q, groupId, groupName, createdFrom, createdTo, createdBy, customerType,
+        return service.list(new CustomerListRepository.Filter(q, groupId, groupName, createdFrom, createdTo, createdBy, customerType,
                 gender, Math.max(page, 0), Math.min(Math.max(size, 1), 100)));
     }
 

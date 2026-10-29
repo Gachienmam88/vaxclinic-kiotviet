@@ -8,13 +8,11 @@ import com.vaxclinic.sales.customer.CustomerRepository;
 import com.vaxclinic.sales.debt.DebtLedger;
 import com.vaxclinic.sales.invoice.Invoice;
 import com.vaxclinic.sales.salesreturn.SalesReturnDtos.ReturnRequest;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -28,15 +26,15 @@ import java.util.stream.Collectors;
 @Component
 public class SalesReturnWriter {
 
-    private final JdbcTemplate jdbc;
+    private final SalesReturnRepository returns;
     private final CashVoucherRepository vouchers;
     private final CashbookWriter cashbook;
     private final DebtLedger debt;
     private final CustomerRepository customers;
 
-    public SalesReturnWriter(JdbcTemplate jdbc, CashVoucherRepository vouchers, CashbookWriter cashbook, DebtLedger debt,
+    public SalesReturnWriter(SalesReturnRepository returns, CashVoucherRepository vouchers, CashbookWriter cashbook, DebtLedger debt,
                              CustomerRepository customers) {
-        this.jdbc = jdbc;
+        this.returns = returns;
         this.vouchers = vouchers;
         this.cashbook = cashbook;
         this.debt = debt;
@@ -44,12 +42,11 @@ public class SalesReturnWriter {
     }
 
     public boolean exists(UUID id) {
-        Integer n = jdbc.queryForObject("select count(*) from sales_returns where id = ?", Integer.class, id);
-        return n != null && n > 0;
+        return returns.exists(id);
     }
 
     public Map<String, Object> find(UUID id) {
-        var rows = jdbc.queryForList("select * from sales_returns where id = ?", id);
+        var rows = returns.find(id);
         if (rows.isEmpty()) {
             throw BusinessException.notFound("RETURN_NOT_FOUND", "Không tìm thấy phiếu trả hàng");
         }
@@ -85,24 +82,15 @@ public class SalesReturnWriter {
             return;
         }
         Instant at = req.returnedAt() == null ? Instant.now() : req.returnedAt();
-        jdbc.update("""
-                insert into sales_returns(id, code, invoice_id, branch_id, customer_id, customer_name, created_by, created_by_name,
-                    returned_at, status, subtotal, discount, fee, total, refunded, payment_method, note)
-                values (?,?,?,?,?,?,?,?,?, 'COMPLETED', ?,?,?,?,?,?,?)""",
-                req.id(), code, h.invoiceId(), h.branchId(), h.customerId(), h.customerName(), actor.id(),
-                actor.name(), Timestamp.from(at), subtotal, discount, fee, total, refund,
+        returns.insert(req.id(), code, h.invoiceId(), h.branchId(), h.customerId(), h.customerName(), actor.id(),
+                actor.name(), at, subtotal, discount, fee, total, refund,
                 refund.signum() > 0 ? (req.paymentMethod() == null ? "CASH" : req.paymentMethod()) : null, req.note());
         for (var l : rows) {
             String lots = l.lots().entrySet().stream().filter(e -> !e.getKey().isEmpty())
                     .map(e -> e.getKey() + ":" + e.getValue().setScale(0, RoundingMode.DOWN).toPlainString())
                     .collect(Collectors.joining(", "));
-            jdbc.update("""
-                    insert into sales_return_lines(id, return_id, invoice_line_id, product_id, product_code, product_name,
-                        unit_name, quantity, unit_price, lots, cost) values (?,?,?,?,?,?,?,?,?,?,?)""",
-                    l.lineId(), req.id(), l.invoiceLineId(), l.productId(), l.productCode(), l.productName(),
-                    l.unitName(), l.quantity(), l.unitPrice(), lots.isEmpty() ? null : lots, l.cost());
-            l.lots().forEach((lot, qty) -> jdbc.update(
-                    "insert into sales_return_line_lots(return_line_id, lot_number, base_qty) values (?,?,?)", l.lineId(), lot, qty));
+            returns.insertLine(req.id(), l, lots.isEmpty() ? null : lots);
+            l.lots().forEach((lot, qty) -> returns.insertLineLot(l.lineId(), lot, qty));
         }
         String docNote = h.invoiceId() == null ? "Trả nhanh " + code : "Trả hàng " + code + " / " + h.invoiceCode();
         if (refund.signum() > 0) {
@@ -138,11 +126,11 @@ public class SalesReturnWriter {
 
     @Transactional
     public void markCancelled(UUID id) {
-        var r = jdbc.queryForMap("select * from sales_returns where id = ? for update", id);
+        var r = returns.lockForCancel(id);
         if ("CANCELLED".equals(r.get("status"))) {
             return;
         }
-        jdbc.update("update sales_returns set status = 'CANCELLED', cancelled_at = now() where id = ?", id);
+        returns.markCancelled(id);
         vouchers.findBySourceTypeAndSourceId("RETURN", id).ifPresent(cashbook::cancel);
         UUID customerId = (UUID) r.get("customer_id");
         if (customerId != null) {

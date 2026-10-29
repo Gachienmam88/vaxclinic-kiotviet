@@ -6,7 +6,6 @@ import com.vaxclinic.sales.common.Actor;
 import com.vaxclinic.sales.common.SalesRules;
 import com.vaxclinic.sales.delivery.ShipmentDtos.ReturnOptions;
 import com.vaxclinic.sales.delivery.ShipmentDtos.StatusResult;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -24,15 +23,15 @@ import java.util.UUID;
 @Service
 public class ShipmentStatusService {
 
-    private final JdbcTemplate jdbc;
+    private final ShipmentRepository shipments;
     private final ShipmentStatusWriter writer;
     private final ShipmentReturnService returns;
     private final SalesRules rules;
     private final AuditLogger audit;
 
-    public ShipmentStatusService(JdbcTemplate jdbc, ShipmentStatusWriter writer, ShipmentReturnService returns, SalesRules rules,
-                                 AuditLogger audit) {
-        this.jdbc = jdbc;
+    public ShipmentStatusService(ShipmentRepository shipments, ShipmentStatusWriter writer, ShipmentReturnService returns,
+                                 SalesRules rules, AuditLogger audit) {
+        this.shipments = shipments;
         this.writer = writer;
         this.returns = returns;
         this.rules = rules;
@@ -57,7 +56,7 @@ public class ShipmentStatusService {
     }
 
     public StatusResult change(UUID id, String to, String note, ReturnOptions opts, Actor actor) {
-        var rows = jdbc.queryForList("select * from shipments where id = ?", id);
+        var rows = shipments.find(id);
         if (rows.isEmpty()) {
             throw BusinessException.notFound("SHIPMENT_NOT_FOUND", "Không tìm thấy vận đơn");
         }
@@ -102,6 +101,6 @@ public class ShipmentStatusService {
     }
 
     private String codeOf(UUID id) {
-        return jdbc.query("select code from shipments where id = ?", rs -> rs.next() ? rs.getString(1) : null, id);
+        return shipments.codeOf(id);
     }
 }

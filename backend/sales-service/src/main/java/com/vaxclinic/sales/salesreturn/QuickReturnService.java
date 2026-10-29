@@ -7,7 +7,6 @@ import com.vaxclinic.sales.customer.Customer;
 import com.vaxclinic.sales.customer.CustomerRepository;
 import com.vaxclinic.sales.invoice.ProductStockClient;
 import com.vaxclinic.sales.salesreturn.SalesReturnDtos.ReturnRequest;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -31,16 +30,16 @@ import java.util.stream.Collectors;
 @Service
 public class QuickReturnService {
 
-    private final JdbcTemplate jdbc;
+    private final SalesReturnRepository returns;
     private final ProductStockClient stock;
     private final ProductCatalogClient catalog;
     private final SalesReturnWriter writer;
     private final SalesRules rules;
     private final CustomerRepository customers;
 
-    public QuickReturnService(JdbcTemplate jdbc, ProductStockClient stock, ProductCatalogClient catalog,
+    public QuickReturnService(SalesReturnRepository returns, ProductStockClient stock, ProductCatalogClient catalog,
                               SalesReturnWriter writer, SalesRules rules, CustomerRepository customers) {
-        this.jdbc = jdbc;
+        this.returns = returns;
         this.stock = stock;
         this.catalog = catalog;
         this.writer = writer;
@@ -100,7 +99,7 @@ public class QuickReturnService {
         if (customer == null && refund.compareTo(total) < 0) {
             throw BusinessException.badRequest("WALK_IN_REFUND", "Khách lẻ: phải trả đủ tiền cho khách");
         }
-        String code = "TH%06d".formatted(jdbc.queryForObject("select nextval('sales_return_code_seq')", Long.class));
+        String code = "TH%06d".formatted(returns.nextCodeNumber());
         ProductStockClient.Result result;
         try {
             result = stock.apply(new ProductStockClient.Request(req.id(), "SALE_RETURN", code, req.branchId(), customerName,

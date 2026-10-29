@@ -5,7 +5,7 @@ import com.vaxclinic.sales.customer.CustomerDtos.CustomerListItem;
 import com.vaxclinic.sales.customer.CustomerDtos.CustomerListResponse;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
@@ -13,8 +13,8 @@ import java.time.Instant;
 import java.util.UUID;
 
 /** Danh sách khách hàng + bộ lọc trái (nhóm, ngày tạo, người tạo, loại khách, giới tính) + dòng tổng. */
-@Component
-public class CustomerListQuery {
+@Repository
+public class CustomerListRepository {
 
     public record Filter(String q, UUID groupId, String groupName, Instant createdFrom, Instant createdTo, UUID createdBy,
                          String customerType, String gender, int page, int size) {
@@ -22,7 +22,7 @@ public class CustomerListQuery {
 
     private final NamedParameterJdbcTemplate jdbc;
 
-    public CustomerListQuery(NamedParameterJdbcTemplate jdbc) {
+    public CustomerListRepository(NamedParameterJdbcTemplate jdbc) {
         this.jdbc = jdbc;
     }
 

@@ -45,11 +45,11 @@ public class DebtService {
     private final CashVoucherRepository vouchers;
     private final CashbookWriter cashbook;
     private final DebtLedger ledger;
-    private final org.springframework.jdbc.core.JdbcTemplate jdbc;
+    private final DebtLedgerRepository entries;
     private final com.vaxclinic.sales.common.SalesRules rules;
 
     public DebtService(CustomerRepository customers, InvoiceRepository invoices, CashVoucherRepository vouchers,
-                       CashbookWriter cashbook, DebtLedger ledger, org.springframework.jdbc.core.JdbcTemplate jdbc,
+                       CashbookWriter cashbook, DebtLedger ledger, DebtLedgerRepository entries,
                        com.vaxclinic.sales.common.SalesRules rules) {
         this.rules = rules;
         this.customers = customers;
@@ -57,7 +57,7 @@ public class DebtService {
         this.vouchers = vouchers;
         this.cashbook = cashbook;
         this.ledger = ledger;
-        this.jdbc = jdbc;
+        this.entries = entries;
     }
 
     @Transactional
@@ -93,7 +93,7 @@ public class DebtService {
     public String discount(UUID customerId, PaymentRequest req, Actor actor) {
         Customer c = customer(customerId);
         Instant at = req.occurredAt() == null ? Instant.now() : req.occurredAt();
-        String code = "CKTT%06d".formatted(jdbc.queryForObject("select nextval('debt_discount_seq')", Long.class));
+        String code = "CKTT%06d".formatted(entries.nextDiscountNumber());
         if (req.allocate()) { // chiết khấu cũng có thể "trả" cho hóa đơn (không có phiếu thu → ghi thẳng paid)
             for (var a : allocations(c.getId(), req.amount(), req.allocations())) {
                 var inv = invoices.findForUpdate(a.invoiceId()).orElseThrow();
@@ -107,7 +107,7 @@ public class DebtService {
     @Transactional
     public String adjust(UUID customerId, AdjustRequest req) {
         Customer c = customers.findForUpdate(customerId).orElseThrow();
-        String code = "DC%06d".formatted(jdbc.queryForObject("select nextval('debt_adjust_seq')", Long.class));
+        String code = "DC%06d".formatted(entries.nextAdjustNumber());
         ledger.post(c.getId(), DebtLedger.DocType.ADJUST, null, code, req.newDebt().subtract(c.getDebt()), req.note(),
                 req.occurredAt() == null ? Instant.now() : req.occurredAt());
         return code;

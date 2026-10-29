@@ -3,7 +3,6 @@ package com.vaxclinic.sales.cashbook;
 import com.vaxclinic.common.error.BusinessException;
 import com.vaxclinic.sales.invoice.Invoice;
 import com.vaxclinic.sales.invoice.InvoiceRepository;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,12 +24,12 @@ public class CashbookWriter {
 
     private final CashVoucherRepository vouchers;
     private final InvoiceRepository invoices;
-    private final JdbcTemplate jdbc;
+    private final CashbookRepository cashbook;
 
-    public CashbookWriter(CashVoucherRepository vouchers, InvoiceRepository invoices, JdbcTemplate jdbc) {
+    public CashbookWriter(CashVoucherRepository vouchers, InvoiceRepository invoices, CashbookRepository cashbook) {
         this.vouchers = vouchers;
         this.invoices = invoices;
-        this.jdbc = jdbc;
+        this.cashbook = cashbook;
     }
 
     @Transactional(propagation = Propagation.MANDATORY)
@@ -53,8 +52,7 @@ public class CashbookWriter {
                 throw BusinessException.badRequest("ALLOCATION_INVALID", "Hóa đơn " + inv.getCode() + " không cần thu số tiền này");
             }
             inv.setPaid(inv.getPaid().add(a.amount()));
-            jdbc.update("insert into voucher_allocations(voucher_id, invoice_id, amount) values (?,?,?)",
-                    v.getId(), inv.getId(), a.amount());
+            cashbook.insertAllocation(v.getId(), inv.getId(), a.amount());
         }
         return v;
     }
@@ -66,8 +64,7 @@ public class CashbookWriter {
             return;
         }
         v.setStatus("CANCELLED");
-        for (Map<String, Object> row : jdbc.queryForList(
-                "select invoice_id, amount from voucher_allocations where voucher_id = ?", v.getId())) {
+        for (Map<String, Object> row : cashbook.allocationRows(v.getId())) {
             invoices.findForUpdate((UUID) row.get("invoice_id"))
                     .ifPresent(inv -> inv.setPaid(inv.getPaid().subtract((BigDecimal) row.get("amount"))));
         }

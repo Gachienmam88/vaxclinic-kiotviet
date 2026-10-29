@@ -5,10 +5,10 @@ import com.vaxclinic.sales.common.Actor;
 import com.vaxclinic.sales.common.SalesRules;
 import com.vaxclinic.sales.invoice.Invoice;
 import com.vaxclinic.sales.invoice.InvoiceLine;
+import com.vaxclinic.sales.invoice.InvoiceLineLotRepository;
 import com.vaxclinic.sales.invoice.InvoiceRepository;
 import com.vaxclinic.sales.invoice.ProductStockClient;
 import com.vaxclinic.sales.salesreturn.SalesReturnDtos.ReturnRequest;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -34,18 +34,20 @@ public class SalesReturnService {
     }
 
     private final InvoiceRepository invoices;
-    private final JdbcTemplate jdbc;
+    private final SalesReturnRepository returns;
+    private final InvoiceLineLotRepository lineLots;
     private final ProductStockClient stock;
     private final SalesReturnWriter writer;
 
     private final SalesRules rules;
     private final QuickReturnService quick;
 
-    public SalesReturnService(InvoiceRepository invoices, JdbcTemplate jdbc, ProductStockClient stock, SalesReturnWriter writer,
-                              SalesRules rules, QuickReturnService quick) {
+    public SalesReturnService(InvoiceRepository invoices, SalesReturnRepository returns, InvoiceLineLotRepository lineLots,
+                              ProductStockClient stock, SalesReturnWriter writer, SalesRules rules, QuickReturnService quick) {
         this.quick = quick;
         this.invoices = invoices;
-        this.jdbc = jdbc;
+        this.returns = returns;
+        this.lineLots = lineLots;
         this.stock = stock;
         this.writer = writer;
         this.rules = rules;
@@ -98,7 +100,7 @@ public class SalesReturnService {
         if (inv.getCustomerId() == null && refund.compareTo(total.subtract(unpaid)) < 0) {
             throw BusinessException.badRequest("WALK_IN_REFUND", "Khách lẻ: phải trả đủ tiền cho khách");
         }
-        String code = "TH%06d".formatted(jdbc.queryForObject("select nextval('sales_return_code_seq')", Long.class));
+        String code = "TH%06d".formatted(returns.nextCodeNumber());
         var stockLines = new ArrayList<ProductStockClient.Line>();
         planned.forEach(p -> p.lots().forEach((lot, qty) -> stockLines.add(new ProductStockClient.Line(p.lineId(),
                 p.invoiceLine().getProductId(), null, null, lot.isEmpty() ? null : lot, qty))));
@@ -121,22 +123,13 @@ public class SalesReturnService {
     }
 
     private BigDecimal returnedQty(UUID invoiceLineId) {
-        return jdbc.queryForObject("""
-                select coalesce(sum(rl.quantity), 0) from sales_return_lines rl join sales_returns r on r.id = rl.return_id
-                where rl.invoice_line_id = ? and r.status = 'COMPLETED'""", BigDecimal.class, invoiceLineId);
+        return returns.returnedQuantity(invoiceLineId);
     }
 
     /** Lô nhập lại = các lô đã xuất cho dòng này trừ phần đã trả, theo tỷ lệ quy đổi đơn vị của dòng. */
     private Map<String, BigDecimal> pickLots(InvoiceLine line, BigDecimal quantity) {
-        Map<String, BigDecimal> available = new LinkedHashMap<>();
-        jdbc.query("""
-                select l.lot_number, l.base_qty - coalesce((select sum(x.base_qty) from sales_return_line_lots x
-                    join sales_return_lines rl on rl.id = x.return_line_id join sales_returns r on r.id = rl.return_id
-                    where rl.invoice_line_id = l.line_id and x.lot_number = l.lot_number and r.status = 'COMPLETED'), 0) left_qty
-                from invoice_line_lots l where l.line_id = ? order by l.lot_number""",
-                rs -> { available.put(rs.getString(1), rs.getBigDecimal(2)); }, line.getId());
-        BigDecimal soldBase = jdbc.queryForObject("select coalesce(sum(base_qty), 0) from invoice_line_lots where line_id = ?",
-                BigDecimal.class, line.getId());
+        Map<String, BigDecimal> available = lineLots.returnableLots(line.getId());
+        BigDecimal soldBase = lineLots.soldBaseQuantity(line.getId());
         if (soldBase.signum() == 0) {
             throw BusinessException.badRequest("LINE_LOTS_MISSING", line.getProductName() + ": không có dữ liệu xuất kho để trả");
         }

@@ -1,7 +1,6 @@
 package com.vaxclinic.sales.invoice;
 
 import com.vaxclinic.sales.invoice.InvoiceDtos.LineInput;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -17,10 +16,10 @@ import java.util.stream.Collectors;
 @Component
 public class InvoiceLineBuilder {
 
-    private final JdbcTemplate jdbc;
+    private final InvoiceLineLotRepository lineLots;
 
-    public InvoiceLineBuilder(JdbcTemplate jdbc) {
-        this.jdbc = jdbc;
+    public InvoiceLineBuilder(InvoiceLineLotRepository lineLots) {
+        this.lineLots = lineLots;
     }
 
     public void addLines(Invoice inv, List<LineInput> inputs, List<UUID> lineIds, ProductStockClient.Result stockResult) {
@@ -54,10 +53,7 @@ public class InvoiceLineBuilder {
     public void saveLots(ProductStockClient.Result stockResult) {
         for (var r : stockResult.lines()) {
             for (var a : r.allocations()) {
-                jdbc.update("""
-                        insert into invoice_line_lots(line_id, lot_number, base_qty) values (?,?,?)
-                        on conflict (line_id, lot_number) do update set base_qty = invoice_line_lots.base_qty + excluded.base_qty""",
-                        r.lineId(), a.lotNumber() == null ? "" : a.lotNumber(), a.baseQuantity());
+                lineLots.add(r.lineId(), a.lotNumber() == null ? "" : a.lotNumber(), a.baseQuantity());
             }
         }
     }

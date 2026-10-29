@@ -5,13 +5,11 @@ import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -36,19 +34,15 @@ public class CustomerGroupService {
     }
 
     private final CustomerGroupRepository groups;
-    private final JdbcTemplate jdbc;
+    private final CustomerGroupMemberRepository members;
 
-    public CustomerGroupService(CustomerGroupRepository groups, JdbcTemplate jdbc) {
+    public CustomerGroupService(CustomerGroupRepository groups, CustomerGroupMemberRepository members) {
         this.groups = groups;
-        this.jdbc = jdbc;
+        this.members = members;
     }
 
     public List<GroupResponse> list() {
-        Map<UUID, Long> counts = new HashMap<>();
-        jdbc.query("select group_id, count(*) from customers where group_id is not null and active group by group_id",
-                rs -> {
-                    counts.put(rs.getObject(1, UUID.class), rs.getLong(2));
-                });
+        Map<UUID, Long> counts = members.activeCounts();
         return groups.findAllByOrderByNameAsc().stream().map(g -> response(g, counts.getOrDefault(g.getId(), 0L))).toList();
     }
 
@@ -72,7 +66,7 @@ public class CustomerGroupService {
             throw BusinessException.conflict("GROUP_NAME_EXISTS", "Tên nhóm khách hàng đã tồn tại");
         }
         apply(g, req, name);
-        jdbc.update("update customers set group_name = ? where group_id = ?", name, id);
+        members.renameGroup(id, name);
         return response(g, count(id));
     }
 
@@ -80,7 +74,7 @@ public class CustomerGroupService {
     @Transactional
     public int delete(UUID id) {
         var g = find(id);
-        int unlinked = jdbc.update("update customers set group_id = null, group_name = null where group_id = ?", id);
+        int unlinked = members.unlinkGroup(id);
         groups.delete(g);
         return unlinked;
     }
@@ -91,7 +85,7 @@ public class CustomerGroupService {
     }
 
     private long count(UUID id) {
-        Long n = jdbc.queryForObject("select count(*) from customers where group_id = ? and active", Long.class, id);
+        Long n = members.activeCount(id);
         return n == null ? 0 : n;
     }
 

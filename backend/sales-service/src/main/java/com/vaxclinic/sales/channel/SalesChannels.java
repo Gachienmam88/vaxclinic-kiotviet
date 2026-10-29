@@ -1,7 +1,6 @@
 package com.vaxclinic.sales.channel;
 
 import com.vaxclinic.common.error.BusinessException;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -16,16 +15,14 @@ public class SalesChannels {
     public record Channel(String code, String name, boolean active, boolean builtin, int sortOrder) {
     }
 
-    private final JdbcTemplate jdbc;
+    private final SalesChannelRepository repository;
 
-    public SalesChannels(JdbcTemplate jdbc) {
-        this.jdbc = jdbc;
+    public SalesChannels(SalesChannelRepository repository) {
+        this.repository = repository;
     }
 
     public List<Channel> list(boolean all) {
-        return jdbc.query("select * from sales_channels" + (all ? "" : " where active") + " order by sort_order, name",
-                (rs, n) -> new Channel(rs.getString("code"), rs.getString("name"), rs.getBoolean("active"),
-                        rs.getBoolean("builtin"), rs.getInt("sort_order")));
+        return repository.list(all);
     }
 
     /**
@@ -37,7 +34,7 @@ public class SalesChannels {
         if (c.equals(current)) {
             return c;
         }
-        List<Map<String, Object>> rows = jdbc.queryForList("select active from sales_channels where code = ?", c);
+        List<Map<String, Object>> rows = repository.activeRows(c);
         if (rows.isEmpty() || !Boolean.TRUE.equals(rows.get(0).get("active"))) {
             throw BusinessException.badRequest("CHANNEL_NOT_FOUND", "Kênh bán không tồn tại hoặc đã ngừng hoạt động");
         }

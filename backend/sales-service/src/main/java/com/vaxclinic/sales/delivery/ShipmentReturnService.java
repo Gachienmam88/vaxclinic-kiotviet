@@ -6,8 +6,8 @@ import com.vaxclinic.sales.delivery.ShipmentDtos.ReturnOptions;
 import com.vaxclinic.sales.invoice.Invoice;
 import com.vaxclinic.sales.invoice.InvoiceRepository;
 import com.vaxclinic.sales.salesreturn.SalesReturnDtos;
+import com.vaxclinic.sales.salesreturn.SalesReturnRepository;
 import com.vaxclinic.sales.salesreturn.SalesReturnService;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -24,12 +24,15 @@ import java.util.UUID;
 @Service
 public class ShipmentReturnService {
 
-    private final JdbcTemplate jdbc;
+    private final ShipmentInvoiceRepository byInvoice;
+    private final SalesReturnRepository returnLines;
     private final InvoiceRepository invoices;
     private final SalesReturnService returns;
 
-    public ShipmentReturnService(JdbcTemplate jdbc, InvoiceRepository invoices, SalesReturnService returns) {
-        this.jdbc = jdbc;
+    public ShipmentReturnService(ShipmentInvoiceRepository byInvoice, SalesReturnRepository returnLines, InvoiceRepository invoices,
+                                 SalesReturnService returns) {
+        this.byInvoice = byInvoice;
+        this.returnLines = returnLines;
         this.invoices = invoices;
         this.returns = returns;
     }
@@ -41,8 +44,7 @@ public class ShipmentReturnService {
                     code + ": chọn cách hoàn tiền khách đã trả (tiền mặt / chuyển khoản / giữ làm công nợ)");
         }
         if ("CREDIT".equals(opts.refundMethod())) {
-            UUID customerId = jdbc.query("select customer_id from invoices where id = ?",
-                    rs -> rs.next() ? rs.getObject(1, UUID.class) : null, invoiceId);
+            UUID customerId = byInvoice.invoiceCustomerId(invoiceId);
             if (customerId == null) {
                 throw BusinessException.badRequest("WALK_IN_CREDIT", code + ": khách lẻ không giữ tiền làm công nợ được, hãy hoàn tiền");
             }
@@ -55,9 +57,7 @@ public class ShipmentReturnService {
         var lines = new ArrayList<SalesReturnDtos.LineInput>();
         BigDecimal subtotal = BigDecimal.ZERO;
         for (var l : inv.getLines()) {
-            BigDecimal left = l.getQuantity().subtract(jdbc.queryForObject("""
-                    select coalesce(sum(rl.quantity), 0) from sales_return_lines rl join sales_returns r on r.id = rl.return_id
-                    where rl.invoice_line_id = ? and r.status = 'COMPLETED'""", BigDecimal.class, l.getId()));
+            BigDecimal left = l.getQuantity().subtract(returnLines.returnedQuantity(l.getId()));
             if (left.signum() > 0) {
                 lines.add(new SalesReturnDtos.LineInput(l.getId(), left, null));
                 subtotal = subtotal.add(left.multiply(l.getUnitPrice().subtract(l.getDiscount())).setScale(0, RoundingMode.HALF_UP));
