@@ -8,41 +8,40 @@ import { useCurrentUser } from "@/lib/use-current-user";
 import { useT } from "@/lib/i18n";
 import { commonNs } from "@/messages/common";
 import { PurchaseEditor } from "@/features/purchases/purchase-editor";
-import { editorFromReceipt, emptyEditor, type EditorState } from "@/features/purchases/purchase-editor-state";
+import { editorFromReceipt, emptyEditor, linesFromDoc, type EditorState } from "@/features/purchases/purchase-editor-state";
 import type { Receipt } from "@/features/purchases/purchase-types";
-import type { InputInvoice } from "@/features/integrations/integration-queries";
-import { receiptEditorFromInputInvoice } from "@/features/integrations/receipt-from-input-invoice";
+import { loadInputInvoiceReceiptDraft } from "@/features/integrations/input-invoice-receipt-draft";
 
-/** /purchases/receipts/new — phiếu mới; ?copyFrom=<id> = sao chép; ?edit=<id> = mở phiếu tạm để sửa. */
+/**
+ * /purchases/receipts/new — phiếu mới; ?copyFrom=<id> = sao chép; ?edit=<id> = mở phiếu tạm (sửa) hoặc phiếu đã nhập
+ * (chỉ Lưu); ?source=inputInvoice&id=<hóa đơn đầu vào> = phiếu nhập từ màn "Xác nhận dữ liệu từ hóa đơn điện tử".
+ */
+async function fromInputInvoice(invoiceId: string, branchId: string, personId: string): Promise<EditorState> {
+  const d = await loadInputInvoiceReceiptDraft(invoiceId);
+  const lines = await linesFromDoc(d.lines.map((l) => ({ ...l, lotNumber: null })));
+  return { ...emptyEditor(branchId, personId), supplier: d.supplier, inputInvoiceNo: d.inputInvoiceNo, inputInvoiceId: invoiceId,
+    note: d.note, lines };
+}
+
 function NewReceipt() {
   const params = useSearchParams();
   const { data: me } = useCurrentUser();
   const tc = useT(commonNs);
   const [initial, setInitial] = useState<EditorState | null>(null);
-  const [reference, setReference] = useState<InputInvoice | undefined>();
   const source = params.get("edit") ?? params.get("copyFrom");
-  const fromInputInvoice = params.get("fromInputInvoice");
+  const invoiceId = params.get("source") === "inputInvoice" ? params.get("id") : null;
 
   useEffect(() => {
     if (!me) return;
-    if (fromInputInvoice) {
-      receiptEditorFromInputInvoice(fromInputInvoice, me.user.branches[0]?.id ?? "", me.user.id)
-        .then((r) => { setReference(r.reference); setInitial(r.state); })
-        .catch((e) => toast.error(errorMessage(e)));
-      return;
-    }
-    if (!source) {
-      setInitial(emptyEditor(me.user.branches[0]?.id ?? "", me.user.id));
-      return;
-    }
-    api<Receipt>(`/purchase-receipts/${source}`)
-      .then((r) => editorFromReceipt(r, !params.get("edit")))
-      .then(setInitial)
-      .catch((e) => toast.error(errorMessage(e)));
-  }, [me, source, params, fromInputInvoice]);
+    const branchId = me.user.branches[0]?.id ?? "";
+    const load = invoiceId ? fromInputInvoice(invoiceId, branchId, me.user.id)
+      : source ? api<Receipt>(`/purchase-receipts/${source}`).then((r) => editorFromReceipt(r, !params.get("edit")))
+        : Promise.resolve(emptyEditor(branchId, me.user.id));
+    load.then(setInitial).catch((e) => toast.error(errorMessage(e)));
+  }, [me, source, params, invoiceId]);
 
   if (!initial) return <div className="p-6 text-sm text-muted-foreground">{tc("status.loading")}</div>;
-  return <PurchaseEditor mode="receipt" initial={initial} reference={reference} />;
+  return <PurchaseEditor mode="receipt" initial={initial} />;
 }
 
 export default function NewReceiptPage() {
