@@ -547,7 +547,9 @@ Nguồn: `PS/purchase/PurchaseController.java:35-102`.
   - có `receiptId`: phiếu nhập không tồn tại → 400 `RECEIPT_NOT_FOUND`; phiếu không COMPLETED hoặc khác chi nhánh → 400 `RECEIPT_NOT_RETURNABLE` "Chỉ trả theo phiếu đã nhập tại cùng chi nhánh";
   - NCC luôn lấy theo phiếu nhập (bỏ qua `supplierId` gửi lên);
   - **không chặn NCC ngừng hoạt động** (khác phiếu nhập).
-- **Dòng** (`PS/purchase/PurchaseReturnService.java:108-147`): hoàn thành mà rỗng → `RETURN_EMPTY`; hàng lô thiếu lô → `LOT_REQUIRED` "… chọn lô trả"; tiền theo `PurchaseMath` (giảm/dòng = 0); `refund > total` → 400 `REFUND_TOO_MUCH`.
+- **Dòng** (`PS/purchase/PurchaseReturnService.java`): hoàn thành mà rỗng → `RETURN_EMPTY`; hàng lô thiếu lô → `LOT_REQUIRED` "… chọn lô trả"; tiền theo `PurchaseMath` (giảm/dòng = 0) với VAT theo dòng / nhập tay như phiếu nhập; `refund > total` → 400 `REFUND_TOO_MUCH`.
+  - Ví dụ (ảnh 309, e2e I1–I3): trả 1 × 195,180 VAT 5% → VAT hoàn lại 9,759, NCC cần trả 204,939; NCC trả 0 → không phiếu thu, nợ NCC giảm 204,939 ("Tính vào công nợ" hiển thị −204,939 = trả − cần trả); NCC trả 100,000 → phiếu thu 100,000 + nợ giảm 104,939.
+- **Còn trả được** `GET /api/purchase-receipts/{id}/returnable`: theo từng dòng phiếu nhập = SL nhập − Σ SL ở các phiếu trả COMPLETED, so theo (hàng, lô) bằng đơn vị cơ bản (nhiều dòng cùng hàng + lô trừ lần lượt từ dòng đầu), quy về đơn vị của dòng (`PurchaseReturnService.returnable`).
 - **Hoàn thành**:
   - kiểm khóa sổ theo `returned_at`;
   - trả theo phiếu: Σ đã trả (các phiếu COMPLETED khác + phiếu này) ≤ đã nhập, so theo (hàng, lô) bằng đơn vị cơ bản, nếu vượt → 400 `RETURN_EXCEEDS_RECEIPT` (`PS/purchase/PurchaseReturnService.java:149-165`);
