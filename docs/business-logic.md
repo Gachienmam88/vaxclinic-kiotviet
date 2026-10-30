@@ -524,7 +524,8 @@ Nguồn: `PS/purchase/PurchaseController.java:35-102`.
   - Hủy (xác nhận riêng cho DRAFT / COMPLETED); Sao chép; Xuất file;
   - Mở phiếu (DRAFT); Trả hàng nhập (COMPLETED).
 
-- Chi tiết phiếu nhập (parity 30/10): link "Thiết lập giá" ở đầu bảng + nhãn trên từng dòng → `/products/price-books?code=` (`FE/features/purchases/receipt-lines-table.tsx`); Sao chép chuyển vào menu "…" (`FE/features/purchases/receipt-detail-panel.tsx`).
+- Chi tiết phiếu nhập (parity 30/10): link "Thiết lập giá" ở đầu bảng + nhãn trên từng dòng → `/products/price-books?code=` (`FE/features/purchases/receipt-lines-table.tsx`).
+- Chân chi tiết (ảnh 293): Hủy, Sao chép, Xuất file | Mở phiếu (phiếu tạm → soạn; phiếu đã nhập → sửa, chỉ Lưu), Lưu (thông tin), Trả hàng nhập, In tem mã, In, "…"; dưới bảng liệt kê các phiếu trả theo phiếu nhập này (`FE/features/purchases/receipt-detail-panel.tsx`).
 
 ---
 
