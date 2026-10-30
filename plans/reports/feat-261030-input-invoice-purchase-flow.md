@@ -49,3 +49,10 @@
 - Sửa phát hiện khi duyệt: `api()` lỗi với endpoint void trả 200 thân rỗng (PUT ánh xạ, PATCH gắn phiếu) → client coi thân rỗng là không có nội dung; cột Tên hàng màn nhập hàng bị ép hẹp → nới bảng.
 - Phiên admin chưa đồng ý "Điều khoản sử dụng" → khi chụp chỉ gỡ lớp phủ trên trình duyệt headless (không ghi nhận đồng ý). Cần người dùng tự đồng ý.
 - Demo còn nguyên: SP000001–010 + SP000020, NCC000001–3/5, PN000001–3, 35 hóa đơn bán (đề bài ghi 31 — số hiện có trước khi chạy). `e2e_purchasing` (sẵn có) để lại 2 hàng "(test nhập)" mỗi lần chạy — hành vi cũ của script, không xóa.
+
+## Bổ sung sau trả lời câu hỏi mở (30/10)
+- (1) Giữ gắn "Đã lập phiếu" từ lúc Lưu tạm — không đổi.
+- (2) Trả hàng theo phiếu nhập VAT nhập tay: `/returnable` trả `defaultVatRate` = mức gần nhất 0/5/8/10% với VAT ÷ (tiền hàng − giảm giá); VAT tay 0 → KCT; phiếu VAT theo dòng → VAT% dòng. FE dùng làm mặc định. E2E I0, I8.
+- (3) Hủy phiếu nhập / phiếu chi NCC (PCN) / phiếu chi Sổ quỹ lập từ hóa đơn → gọi integration `DELETE /internal/input-invoices/links/{docId}` sau commit (best-effort) → hóa đơn về "Chưa lập phiếu", lập lại được. E2E G2, G3.
+- `e2e_purchasing.py` gắn tag vào tên hàng / NCC / nhóm NCC và xóa hẳn dữ liệu của lượt chạy khi kết thúc (phiếu, chứng từ công nợ, phiếu Sổ quỹ, thẻ kho, hàng, NCC). Dữ liệu sót của các lượt chạy TRƯỚC (hàng "(test nhập)", NCC "NGỌC BÍCH" NCC000052 / NCC000063) không tự xóa.
+- Hồi quy: input_invoice_flow 29/29, purchasing 21/21 (còn 0 hàng test), suppliers 59/59, integration 16/16, inventory_docs 50/50, audit_backdate 5/5, audit_purchase_refund 5/5.
