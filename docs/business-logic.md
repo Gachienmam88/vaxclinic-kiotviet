@@ -563,12 +563,13 @@ Nguồn: `PS/purchase/PurchaseController.java:35-102`.
   - Chứng từ REFUND không sửa / hủy riêng được: `PATCH` / `cancel` → 400 `SUPPLIER_DOC_AUTO` "…hãy hủy phiếu trả hàng nhập để hủy phiếu thu"; FE chỉ xem (`FE/features/purchases/supplier-debt-doc-dialog.tsx`).
   - Migration `MIG/V11__purchase_return_refund_receipt.sql`: cột `return_id`, tạo bù REFUND + outbox phiếu thu cho phiếu trả cũ có tiền hoàn.
 - Lịch sử thao tác chức năng "Trả hàng nhập": Lưu tạm / Trả hàng / Hủy.
-- FE trả theo phiếu nhập: điền sẵn dòng, giá trả = đơn giá nhập − giảm giá, cùng VAT; khóa chi nhánh và NCC (`FE/features/purchases/purchase-editor-state.ts:144-149`, `FE/features/purchases/purchase-editor-panel.tsx:60-66`).
+- **FE màn trả hàng nhập** (ảnh 307/308, dùng chung màn nhập hàng ở chế độ trả): theo phiếu nhập (nút "Trả hàng nhập" ở chi tiết phiếu nhập COMPLETED) → mọi dòng của phiếu, SL trả 0 kèm "/N" (còn trả được, nhập vượt bị kẹp), Giá nhập (= đơn giá − giảm của phiếu nhập, chỉ đọc), Giá trả lại (mặc định = giá nhập), VAT (%) (mặc định = VAT% dòng nhập), Giá trả có VAT, Thành tiền; NCC + chi nhánh khóa; dòng SL 0 không gửi lên; không còn dòng SL > 0 → chặn. Cột phải: người tạo + thời gian, NCC, Mã trả hàng nhập, trạng thái, Tổng tiền hàng ⓘ, Giảm giá, VAT hoàn lại, NCC cần trả, Tiền NCC trả (F8) + hình thức, Tính vào công nợ = trả − cần trả, ghi chú, Lưu tạm / Hoàn thành. Trả nhanh (`/purchases/returns/new` không tham số): chọn NCC rồi tìm hàng bất kỳ, chọn lô. `?copyFrom=` sao chép phiếu trả (ngày hiện tại, tiền NCC trả 0) (`FE/features/purchases/purchase-editor-state.ts`, `FE/app/(admin)/purchases/returns/new/page.tsx`).
 
-**4. Danh sách**
-- Lọc như 1.9 (người trả thay người nhập, không có số HĐ), thời gian theo `returned_at`.
-- Dòng tổng gồm Σ `refund_amount`.
-- CSV `tra-hang-nhap-YYYY-MM-DD.csv`: Mã, Thời gian, NCC, Tổng tiền hàng, Giảm giá, VAT, NCC cần trả, NCC đã trả, Theo phiếu nhập, Người trả, Trạng thái (`FE/features/purchases/purchase-csv-export.ts:29-37`).
+**4. Danh sách** (`FE/app/(admin)/purchases/returns/page.tsx`, menu Mua hàng → Trả hàng nhập)
+- Lọc như 1.9 (người trả thay người nhập, không có số HĐ), thời gian theo `returned_at`; trạng thái mặc định Phiếu tạm + Đã trả hàng (Đã hủy bỏ chọn). Link sâu `?code=THN…` lọc đúng mã mọi trạng thái + mở sẵn.
+- Cột: ☐, Mã trả hàng nhập, Thời gian, NCC, Tổng tiền hàng, Giảm giá, VAT hoàn lại, NCC cần trả, NCC đã trả, Trạng thái; nút chọn cột thêm Mã phiếu nhập, Người tạo, Chi nhánh, Ghi chú (localStorage). Dòng tổng gồm Σ `refund_amount`. API danh sách trả thêm `receiptId, createdByName, branchId, note, supplierCode`.
+- Chi tiết (`FE/features/purchases/return-detail-panel.tsx`): tab Thông tin (người tạo, người trả, ngày trả, NCC link, mã phiếu nhập; bảng Mã hàng, Tên hàng, SL, Giá nhập, Giá trả lại, Giá trả có VAT, Thành tiền; tổng Tổng tiền hàng, Giảm giá, VAT hoàn lại, NCC cần trả, NCC đã trả; ghi chú) và tab Lịch sử thanh toán (phiếu thu `PT{mã THN}` nếu NCC có trả). Chân: Hủy, Sao chép, Xuất file | Mở phiếu (phiếu tạm), In, "…".
+- CSV `tra-hang-nhap-YYYY-MM-DD.csv`: Mã, Thời gian, NCC, Tổng tiền hàng, Giảm giá, VAT, NCC cần trả, NCC đã trả, Theo phiếu nhập, Người trả, Trạng thái (`FE/features/purchases/purchase-csv-export.ts`); chi tiết `<mã THN>.csv`.
 
 ---
 
