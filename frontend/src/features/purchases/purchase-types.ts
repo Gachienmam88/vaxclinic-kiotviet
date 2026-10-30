@@ -45,7 +45,9 @@ export type VatMode = "LINE" | "MANUAL";
 export type ReturnRef = { id: string; code: string; status: DocStatus; returnedAt: string; total: number };
 
 /** Số còn trả được của 1 dòng phiếu nhập (GET /purchase-receipts/{id}/returnable). */
-export type ReturnableLine = { lineId: string; productId: string; lotNumber: string | null; received: number; returnable: number };
+export type ReturnableLine = { lineId: string; productId: string; lotNumber: string | null; received: number; returnable: number;
+  /** VAT% mặc định của dòng trả (phiếu nhập VAT tay → mức 0/5/8/10% gần nhất; không VAT → null = KCT). */
+  defaultVatRate: number | null };
 
 export type Receipt = {
   id: string; code: string; branchId: string; status: DocStatus; receivedAt: string; supplierId: string | null;

@@ -76,13 +76,16 @@ export async function editorFromReceipt(r: Receipt, copy: boolean): Promise<Edit
  * giá trả lại mặc định = giá nhập, VAT% = VAT% của dòng nhập.
  */
 export async function returnEditorFromReceipt(r: Receipt, personId: string): Promise<EditorState> {
-  const left = new Map((await api<ReturnableLine[]>(`/purchase-receipts/${r.id}/returnable`)).map((x) => [x.lineId, Number(x.returnable)]));
+  const rows = await api<ReturnableLine[]>(`/purchase-receipts/${r.id}/returnable`);
+  const left = new Map(rows.map((x) => [x.lineId, Number(x.returnable)]));
+  const vat = new Map(rows.map((x) => [x.lineId, x.defaultVatRate == null ? null : Number(x.defaultVatRate)]));
   const lines = await linesFromDoc(r.lines.map((l) => ({ ...l, unitPrice: Number(l.unitPrice) - Number(l.discount), discount: 0, id: undefined })));
   r.lines.forEach((l, i) => {
     lines[i].quantity = 0;
     lines[i].maxQty = left.get(l.id) ?? 0;
     lines[i].purchasePrice = Number(l.unitPrice) - Number(l.discount);
     lines[i].note = "";
+    lines[i].vatRate = vat.has(l.id) ? vat.get(l.id) ?? null : lines[i].vatRate;
   });
   return { ...emptyEditor(r.branchId, personId), supplier: r.supplierId ? { id: r.supplierId, name: r.supplierName ?? "" } : null,
     vatRate: r.vatRate == null ? null : Number(r.vatRate), receiptId: r.id, receiptCode: r.code, lines };
