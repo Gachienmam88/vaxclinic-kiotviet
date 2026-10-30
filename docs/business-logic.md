@@ -238,7 +238,7 @@ Nguồn: `PS/product/ProductController.java:37-115`, `PS/internal/InternalProduc
   - `cost` của dòng lùi ngày là giá vốn tại lúc ghi (không tính lại giá vốn lịch sử); kiểm âm kho theo tồn hiện tại, không theo tồn tại ngày lùi.
 - **Sổ S2d-HKD** `GET /api/accounting/stock/summary?from=&to=&branchIds=` (report.view hoặc inventory.view):
   - ngày [from, to] giờ VN → `[from 00:00, to+1 00:00)` (`PS/stock/StockBookService.java:28-30`);
-  - tồn đầu / nhập (qty>0) / xuất (qty<0) / tồn cuối theo hàng; giá trị = `round(qty × unit_price)` với OPENING / PURCHASE* (giá giao dịch), các loại khác `round(qty × cost)`; `branchIds` rỗng = mọi chi nhánh; bỏ hàng không phát sinh (`PS/stock/StockBookRepository.java:37-71`);
+  - tồn đầu / nhập (qty>0) / xuất (qty<0) / tồn cuối theo hàng; giá trị = `round(qty × unit_price)` với OPENING / PURCHASE* (giá giao dịch, gồm PURCHASE_ADJUST), các loại khác `round(qty × cost)`; `branchIds` rỗng = mọi chi nhánh; bỏ hàng không phát sinh (`PS/stock/StockBookRepository.java:37-71`);
   - giới hạn theo claim `branches` (`BranchScope.resolve`, ngoài phạm vi → 403) (`PS/stock/StockBookController.java`).
 
 ---
