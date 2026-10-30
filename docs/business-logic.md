@@ -420,14 +420,16 @@ Nguồn: `PS/pricebook/PriceBookController.java:42-146`.
 ### 1.9 Nhập hàng (phiếu nhập)
 
 **1. Mục đích / màn hình / API**
-- Route `/purchases/receipts`; `/purchases/receipts/new` với `?edit=` (sửa phiếu tạm), `?copyFrom=` (sao chép thành phiếu mới), `?fromInputInvoice=` (lập từ hóa đơn đầu vào) (`FE/app/(admin)/purchases/receipts/new/page.tsx:16-42`).
+- Route `/purchases/receipts`; `/purchases/receipts/new` với `?edit=` (mở phiếu tạm; phiếu ĐÃ NHẬP thì mở chế độ sửa chỉ có nút Lưu), `?copyFrom=` (sao chép thành phiếu mới), `?source=inputInvoice&id=` (lập từ hóa đơn đầu vào sau màn "Xác nhận dữ liệu từ hóa đơn điện tử", 5.4) (`FE/app/(admin)/purchases/receipts/new/page.tsx`).
 
 | Method | Path | Quyền |
 |---|---|---|
 | GET | `/api/purchase-receipts?q=&statuses=&from=&to=&createdBy=&receiverId=&inputInvoiceNo=&supplierId=&branchId=` | inventory.view |
-| GET | `/api/purchase-receipts/{id}` | inventory.view |
+| GET | `/api/purchase-receipts/{id}` (kèm `returns[]` = phiếu trả theo phiếu này, mọi trạng thái) | inventory.view |
+| GET | `/api/purchase-receipts/{id}/returnable` (còn trả được từng dòng) | inventory.view |
 | POST | `/api/purchase-receipts?complete=` | inventory.manage |
-| PUT | `/api/purchase-receipts/{id}?complete=` | inventory.manage |
+| PUT | `/api/purchase-receipts/{id}?complete=` (chỉ phiếu tạm) | inventory.manage |
+| PUT | `/api/purchase-receipts/{id}/adjust` (sửa phiếu đã nhập) | inventory.manage |
 | PATCH | `/api/purchase-receipts/{id}/info` | inventory.manage |
 | POST | `/api/purchase-receipts/{id}/cancel` | inventory.manage |
 
