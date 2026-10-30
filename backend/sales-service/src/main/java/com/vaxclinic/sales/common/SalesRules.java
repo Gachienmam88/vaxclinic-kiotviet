@@ -44,6 +44,25 @@ public class SalesRules {
         if (!settings().sales().blockEditPublishedEInvoice()) {
             return;
         }
+        if (published(invoiceId)) {
+            throw BusinessException.badRequest("EINVOICE_PUBLISHED",
+                    "Hóa đơn đã phát hành hóa đơn điện tử, không được " + action + " (Thiết lập → Đơn hàng)");
+        }
+    }
+
+    /**
+     * Luôn chặn (bỏ qua thiết lập) khi hóa đơn đã phát hành HĐĐT (PUBLISHED / CQT chấp nhận): thuế suất đã gửi cơ quan thuế,
+     * sửa phải qua hóa đơn điện tử điều chỉnh / thay thế. Dùng cho sửa thuế suất dòng hàng.
+     */
+    public void checkEInvoiceNeverPublished(UUID invoiceId, String action) {
+        if (published(invoiceId)) {
+            throw BusinessException.badRequest("EINVOICE_PUBLISHED", "Hóa đơn đã phát hành hóa đơn điện tử, không được " + action
+                    + " — lập hóa đơn điện tử điều chỉnh / thay thế nếu cần");
+        }
+    }
+
+    /** Không hỏi được integration-service → 503 (an toàn: không cho thao tác). */
+    private boolean published(UUID invoiceId) {
         Map<?, ?> res;
         try {
             res = integration.get().uri("/internal/einvoices/{id}/published", invoiceId)
@@ -52,10 +71,7 @@ public class SalesRules {
             throw new BusinessException(HttpStatus.SERVICE_UNAVAILABLE, "EINVOICE_SERVICE_DOWN",
                     "Không kiểm tra được trạng thái hóa đơn điện tử, vui lòng thử lại");
         }
-        if (res != null && Boolean.TRUE.equals(res.get("published"))) {
-            throw BusinessException.badRequest("EINVOICE_PUBLISHED",
-                    "Hóa đơn đã phát hành hóa đơn điện tử, không được " + action + " (Thiết lập → Đơn hàng)");
-        }
+        return res != null && Boolean.TRUE.equals(res.get("published"));
     }
 
     /** Thiết lập "Giới hạn thời gian trả hàng": chỉ nhận trả trong N ngày kể từ ngày bán. */

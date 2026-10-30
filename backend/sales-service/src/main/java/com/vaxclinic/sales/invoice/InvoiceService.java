@@ -182,7 +182,7 @@ public class InvoiceService {
 
     /**
      * Sửa tỷ lệ thuế từng dòng (popup "Thuế" ở chi tiết hóa đơn): như sửa hóa đơn — hóa đơn còn hiệu lực, đúng chi nhánh, ngoài kỳ
-     * khóa sổ, chưa phát hành HĐĐT (khi bật chặn sửa HĐ đã phát hành).
+     * khóa sổ, chưa phát hành HĐĐT (luôn chặn, bất kể thiết lập "chặn sửa HĐ đã phát hành").
      */
     public void updateTaxCodes(UUID id, List<InvoiceDtos.TaxCodeChange> changes, Actor actor) {
         Invoice inv = find(id);
@@ -191,7 +191,7 @@ public class InvoiceService {
         }
         actor.checkBranch(inv.getBranchId());
         rules.checkNotLocked(inv.getBranchId(), inv.getSoldAt());
-        rules.checkEInvoiceNotPublished(id, "sửa thuế");
+        rules.checkEInvoiceNeverPublished(id, "sửa thuế suất");
         writer.updateTaxCodes(id, changes);
     }
 

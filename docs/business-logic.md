@@ -1213,7 +1213,7 @@ Thực hiện sửa:
 - Không kiểm tra chi nhánh của người thao tác (không gọi `checkBranch`).
 
 **Sửa mã thuế** (`PATCH /tax-codes`, `InvoiceService.updateTaxCodes` → `InvoiceWriter.updateTaxCodes`)
-- Kiểm tra như sửa HĐ (audit #3): HĐ không `COMPLETED` → 400 `INVOICE_NOT_EDITABLE`; `checkBranch` → `BRANCH_NOT_ALLOWED`; khóa sổ theo `sold_at` → `BOOK_LOCKED`; đã phát hành HĐĐT (khi bật "chặn sửa HĐ đã phát hành") → chặn như sửa / hủy (`SalesRules.checkEInvoiceNotPublished`).
+- Kiểm tra như sửa HĐ (audit #3): HĐ không `COMPLETED` → 400 `INVOICE_NOT_EDITABLE`; `checkBranch` → `BRANCH_NOT_ALLOWED`; khóa sổ theo `sold_at` → `BOOK_LOCKED`; đã phát hành HĐĐT (PUBLISHED, kể cả CQT đã cấp mã) → **luôn** 400 `EINVOICE_PUBLISHED` "…không được sửa thuế suất — lập hóa đơn điện tử điều chỉnh / thay thế nếu cần", bất kể thiết lập "chặn sửa HĐ đã phát hành" (`SalesRules.checkEInvoiceNeverPublished`); sửa / hủy HĐ vẫn theo thiết lập (`checkEInvoiceNotPublished`).
 - Dòng không thuộc HĐ → `LINE_NOT_FOUND`.
 - Client vô hiệu hóa mục này khi HĐĐT đã `PUBLISHED` (`invoice-detail-footer.tsx:44`).
 
