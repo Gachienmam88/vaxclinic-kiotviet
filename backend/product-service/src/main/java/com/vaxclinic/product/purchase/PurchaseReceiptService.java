@@ -15,13 +15,16 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
  * Vòng đời phiếu nhập:
- * - Lưu tạm (DRAFT): sửa thoải mái, chưa ảnh hưởng kho.
+ * - Lưu tạm (DRAFT): sửa thoải mái, chưa ảnh hưởng kho. Có tiền trả NCC + payNow → lập phiếu chi PC{mã} ngay
+ *   (phiếu chi + chứng từ công nợ NCC), sau đó tiền trả bị khóa; Hoàn thành không lập phiếu chi lần 2.
  * - Hoàn thành (COMPLETED): cộng kho theo đơn vị cơ bản (+ lô), cập nhật giá vốn bình quân, ghi thẻ kho.
- * - Hủy (CANCELLED): phiếu tạm hủy luôn; phiếu đã nhập thì trừ lại kho (không đủ tồn → không cho hủy).
+ * - Hủy (CANCELLED): phiếu tạm hủy luôn (đã lập phiếu chi thì hủy phiếu chi); phiếu đã nhập thì trừ lại kho.
+ * Sửa phiếu đã nhập: {@link PurchaseReceiptAdjustService}.
  */
 @Service
 public class PurchaseReceiptService {
@@ -29,16 +32,18 @@ public class PurchaseReceiptService {
     private final PurchaseReceiptRepository receipts;
     private final PurchaseReturnRepository returns;
     private final PurchaseLineSupport support;
+    private final PurchaseReceiptLines lines;
     private final StockMovementService stock;
     private final CashflowOutbox cashflows;
     private final SupplierDebtService debts;
 
     public PurchaseReceiptService(PurchaseReceiptRepository receipts, PurchaseReturnRepository returns,
-                                  PurchaseLineSupport support, StockMovementService stock, CashflowOutbox cashflows,
-                                  SupplierDebtService debts) {
+                                  PurchaseLineSupport support, PurchaseReceiptLines lines, StockMovementService stock,
+                                  CashflowOutbox cashflows, SupplierDebtService debts) {
         this.receipts = receipts;
         this.returns = returns;
         this.support = support;
+        this.lines = lines;
         this.stock = stock;
         this.cashflows = cashflows;
         this.debts = debts;
@@ -52,27 +57,54 @@ public class PurchaseReceiptService {
             throw BusinessException.badRequest("RECEIPT_NOT_DRAFT", "Chỉ sửa được phiếu tạm");
         }
         support.checkBranch(actor, req.branchId());
+        boolean posted = r.isPaymentPosted();
+        UUID oldSupplier = r.getSupplierId();
+        Instant oldAt = r.getReceivedAt();
         Supplier supplier = support.supplierOrNull(req.supplierId());
-        if (supplier != null && !supplier.isActive() && !supplier.getId().equals(r.getSupplierId())) {
+        if (supplier != null && !supplier.isActive() && !supplier.getId().equals(oldSupplier)) {
             throw BusinessException.badRequest("SUPPLIER_INACTIVE", "Nhà cung cấp " + supplier.getName() + " đã ngừng hoạt động");
+        }
+        if (posted) {
+            checkPaidSupplierChange(oldSupplier, req.supplierId());
+            if (req.branchId() != null && !req.branchId().equals(r.getBranchId())) {
+                throw BusinessException.badRequest("BRANCH_LOCKED_PAID", "Phiếu đã lập phiếu chi: không đổi chi nhánh");
+            }
         }
         r.setBranchId(req.branchId());
         r.setSupplierId(req.supplierId());
         r.setReceivedAt(req.receivedAt() == null ? Instant.now() : req.receivedAt());
-        if (complete) {
+        BigDecimal paid = posted ? r.getPaidAmount()
+                : req.paidAmount() == null ? BigDecimal.ZERO : PurchaseMath.money(req.paidAmount());
+        boolean payNow = !posted && !complete && Boolean.TRUE.equals(req.payNow()) && paid.signum() > 0;
+        if (complete || payNow || posted) {
             support.checkNotLocked(req.branchId(), r.getReceivedAt());
+        }
+        if (posted && oldAt != null) {
+            support.checkNotLocked(r.getBranchId(), oldAt);
         }
         r.setReceiverId(req.receiverId() == null ? actor.id() : req.receiverId());
         r.setReceiverName(req.receiverId() == null ? actor.name() : req.receiverName());
         r.setInputInvoiceNo(PurchaseLineSupport.blankToNull(req.inputInvoiceNo()));
-        r.setVatRate(req.vatRate());
-        r.setPaymentMethod(PurchaseLineSupport.blankToNull(req.paymentMethod()));
+        if (!posted) {
+            r.setPaymentMethod(PurchaseLineSupport.blankToNull(req.paymentMethod()));
+        }
         r.setNote(req.note());
-        applyLines(r, req, complete);
+        lines.replaceLines(r, req, complete);
+        lines.applyTotals(r, req);
+        if (paid.compareTo(r.getTotal()) > 0) {
+            throw BusinessException.badRequest("PAID_TOO_MUCH", "Tiền trả NCC lớn hơn tổng cộng");
+        }
+        r.setPaidAmount(paid);
         r.setUpdatedAt(Instant.now());
         // New entity with assigned UUID → Spring Data merges and returns a managed COPY; keep using that copy,
         // otherwise later changes (status COMPLETED) are made on a detached object and silently lost.
         r = receipts.saveAndFlush(r);
+        if (posted) {
+            voucherFollows(r, oldSupplier, oldAt, supplier);
+        }
+        if (payNow) {
+            postPayment(r);
+        }
         if (complete) {
             complete(r);
         }
@@ -85,7 +117,7 @@ public class PurchaseReceiptService {
         if (r.getStatus() == DocStatus.CANCELLED) {
             throw BusinessException.badRequest("RECEIPT_CANCELLED", "Phiếu đã hủy");
         }
-        if (r.getStatus() == DocStatus.COMPLETED) {
+        if (r.getStatus() == DocStatus.COMPLETED || r.isPaymentPosted()) {
             support.checkNotLocked(r.getBranchId(), r.getReceivedAt());
             if (req.receivedAt() != null) {
                 support.checkNotLocked(r.getBranchId(), req.receivedAt());
@@ -100,8 +132,10 @@ public class PurchaseReceiptService {
             r.setReceiverName(req.receiverName());
         }
         if (redated && r.getStatus() == DocStatus.COMPLETED) {
-            // Thẻ kho + phiếu chi PC{mã PN} (công nợ NCC và Sổ quỹ) đi theo ngày nhập mới
-            stock.redate(r.getId(), r.getReceivedAt());
+            stock.redate(r.getId(), r.getReceivedAt()); // thẻ kho đi theo ngày nhập mới
+        }
+        if (redated && r.isPaymentPosted()) {
+            // phiếu chi PC{mã PN} (công nợ NCC và Sổ quỹ) đi theo ngày nhập mới
             debts.receiptRedated(r);
             cashflows.receiptRedated(r);
         }
@@ -127,9 +161,15 @@ public class PurchaseReceiptService {
                 Product p = support.product(cache, line.getProductId());
                 BigDecimal baseQty = line.getQuantity().multiply(line.getConversionRate());
                 stock.apply(p, new Movement(r.getBranchId(), baseQty.negate(), line.getLotNumber(), null,
-                        DocType.PURCHASE_CANCEL, r.getId(), r.getCode(), lineCost(r, line), supplierName(r), actor.id(),
-                        r.getReceivedAt())); // cùng ngày phiếu nhập → phiếu hủy triệt tiêu đúng ngày đó trên thẻ kho / S2d
+                        DocType.PURCHASE_CANCEL, r.getId(), r.getCode(), PurchaseReceiptLines.lineCost(r, line), supplierName(r),
+                        actor.id(), r.getReceivedAt())); // cùng ngày phiếu nhập → phiếu hủy triệt tiêu đúng ngày đó trên thẻ kho / S2d
             }
+        } else if (r.isPaymentPosted()) {
+            // phiếu tạm đã lập phiếu chi lúc Lưu tạm → hủy phiếu chi theo (kiểm chi nhánh + khóa sổ theo ngày phiếu chi)
+            support.checkBranch(actor, r.getBranchId());
+            support.checkNotLocked(r.getBranchId(), r.getReceivedAt());
+        }
+        if (r.getStatus() == DocStatus.COMPLETED || r.isPaymentPosted()) {
             debts.receiptCancelled(r); // phiếu chi lúc nhập hủy theo; phân bổ khác thành "chưa phân bổ"
             cashflows.receiptCancelled(r);
         }
@@ -143,6 +183,26 @@ public class PurchaseReceiptService {
                 .orElseThrow(() -> BusinessException.notFound("RECEIPT_NOT_FOUND", "Không tìm thấy phiếu nhập"));
     }
 
+    /** Phiếu đã lập phiếu chi: chỉ được đổi sang NCC khác, không bỏ / thêm NCC (phiếu chi + công nợ đi theo NCC). */
+    static void checkPaidSupplierChange(UUID oldSupplier, UUID newSupplier) {
+        if (!Objects.equals(oldSupplier, newSupplier) && (oldSupplier == null || newSupplier == null)) {
+            throw BusinessException.badRequest("SUPPLIER_LOCKED_PAID",
+                    "Phiếu đã lập phiếu chi trả nhà cung cấp: chỉ được đổi sang nhà cung cấp khác, không bỏ / thêm nhà cung cấp");
+        }
+    }
+
+    /** Phiếu chi PC{mã} đã lập: đổi NCC / ngày / người nhập của phiếu → chứng từ công nợ và phiếu Sổ quỹ đổi theo. */
+    void voucherFollows(PurchaseReceipt r, UUID oldSupplier, Instant oldAt, Supplier supplier) {
+        boolean supplierChanged = !Objects.equals(oldSupplier, r.getSupplierId());
+        if (supplierChanged) {
+            debts.receiptSupplierChanged(r);
+        }
+        if (!Objects.equals(oldAt, r.getReceivedAt())) {
+            debts.receiptRedated(r);
+        }
+        cashflows.receiptVoucherUpdated(r, supplier);
+    }
+
     private PurchaseReceipt newReceipt(Actor actor) {
         var r = new PurchaseReceipt();
         r.setId(UUID.randomUUID());
@@ -152,51 +212,11 @@ public class PurchaseReceiptService {
         return r;
     }
 
-    private void applyLines(PurchaseReceipt r, ReceiptRequest req, boolean strict) {
-        var inputs = req.lines() == null ? java.util.List.<PurchaseDtos.ReceiptLineInput>of() : req.lines();
-        if (strict && inputs.isEmpty()) {
-            throw BusinessException.badRequest("RECEIPT_EMPTY", "Phiếu nhập chưa có hàng hóa");
-        }
-        Map<UUID, Product> cache = support.newCache();
-        r.getLines().clear();
-        var amounts = new java.util.ArrayList<BigDecimal>();
-        int no = 1;
-        for (var in : inputs) {
-            Product p = support.product(cache, in.productId());
-            var unit = support.unit(p, in.unitId());
-            BigDecimal disc = in.discount() == null ? BigDecimal.ZERO : in.discount();
-            if (disc.compareTo(in.unitPrice()) > 0) {
-                throw BusinessException.badRequest("DISCOUNT_TOO_LARGE", p.getName() + ": giảm giá lớn hơn đơn giá");
-            }
-            String lot = PurchaseLineSupport.blankToNull(in.lotNumber());
-            if (strict && p.isLotManaged() && (lot == null || in.expiryDate() == null)) {
-                throw BusinessException.badRequest("LOT_REQUIRED", p.getName() + " quản lý theo lô: nhập số lô và hạn sử dụng");
-            }
-            var line = new PurchaseReceiptLine();
-            line.setId(UUID.randomUUID());
-            line.setReceipt(r);
-            line.setLineNo(no++);
-            line.setProductId(p.getId());
-            line.setUnitId(unit.getId());
-            line.setConversionRate(unit.getConversionRate());
-            line.setQuantity(in.quantity());
-            line.setUnitPrice(in.unitPrice());
-            line.setDiscount(disc);
-            line.setLotNumber(p.isLotManaged() ? lot : null);
-            line.setExpiryDate(p.isLotManaged() ? in.expiryDate() : null);
-            r.getLines().add(line);
-            amounts.add(PurchaseMath.lineAmount(in.quantity(), in.unitPrice(), disc));
-        }
-        var t = PurchaseMath.totals(amounts, req.discount() == null ? BigDecimal.ZERO : req.discount(), req.vatRate());
-        r.setSubtotal(t.subtotal());
-        r.setDiscount(t.discount());
-        r.setVatAmount(t.vatAmount());
-        r.setTotal(t.total());
-        BigDecimal paid = req.paidAmount() == null ? BigDecimal.ZERO : PurchaseMath.money(req.paidAmount());
-        if (paid.compareTo(t.total()) > 0) {
-            throw BusinessException.badRequest("PAID_TOO_MUCH", "Tiền trả NCC lớn hơn tổng cộng");
-        }
-        r.setPaidAmount(paid);
+    /** Phiếu chi trả NCC PC{mã PN} → Sổ quỹ (outbox) + chứng từ công nợ NCC phân bổ vào chính phiếu này. */
+    private void postPayment(PurchaseReceipt r) {
+        cashflows.receiptPaid(r, support.supplierOrNull(r.getSupplierId()));
+        debts.receiptPaid(r);
+        r.setPaymentPosted(true);
     }
 
     private void complete(PurchaseReceipt r) {
@@ -205,19 +225,15 @@ public class PurchaseReceiptService {
             Product p = support.product(cache, line.getProductId());
             BigDecimal baseQty = line.getQuantity().multiply(line.getConversionRate());
             stock.apply(p, new Movement(r.getBranchId(), baseQty, line.getLotNumber(), line.getExpiryDate(),
-                    DocType.PURCHASE, r.getId(), r.getCode(), lineCost(r, line), supplierName(r), r.getReceiverId(),
-                    r.getReceivedAt()));
+                    DocType.PURCHASE, r.getId(), r.getCode(), PurchaseReceiptLines.lineCost(r, line), supplierName(r),
+                    r.getReceiverId(), r.getReceivedAt()));
         }
         r.setStatus(DocStatus.COMPLETED);
         r.setCompletedAt(Instant.now());
-        cashflows.receiptPaid(r, support.supplierOrNull(r.getSupplierId())); // phiếu chi trả NCC → Sổ quỹ
-        debts.receiptPaid(r); // + sổ công nợ NCC (PC{mã PN} phân bổ vào chính phiếu này)
-    }
-
-    private static BigDecimal lineCost(PurchaseReceipt r, PurchaseReceiptLine line) {
-        var totals = new PurchaseMath.Totals(r.getSubtotal(), r.getDiscount(), r.getVatAmount(), r.getTotal());
-        return PurchaseMath.baseUnitCost(line.getUnitPrice(), line.getDiscount(), line.getConversionRate(), totals,
-                r.getVatRate());
+        if (!r.isPaymentPosted()) {
+            postPayment(r); // phiếu tạm đã lập phiếu chi lúc Lưu tạm → không lập lần 2
+        }
+        r.setPaymentPosted(true);
     }
 
     private String supplierName(PurchaseReceipt r) {
