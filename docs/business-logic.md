@@ -553,7 +553,7 @@ Nguồn: `PS/purchase/PurchaseController.java:35-102`.
 - **Hoàn thành**:
   - kiểm khóa sổ theo `returned_at`;
   - trả theo phiếu: Σ đã trả (các phiếu COMPLETED khác + phiếu này) ≤ đã nhập, so theo (hàng, lô) bằng đơn vị cơ bản, nếu vượt → 400 `RETURN_EXCEEDS_RECEIPT` (`PS/purchase/PurchaseReturnService.java:149-165`);
-  - ghi `PURCHASE_RETURN` âm, đơn giá = giá trả gồm VAT, phân bổ giảm giá phiếu, / quy đổi → **tính lại giá vốn bình quân theo giá trả** (`PS/purchase/PurchaseReturnService.java:171-185`);
+  - ghi `PURCHASE_RETURN` âm theo lô của dòng (trả theo phiếu: lô của phiếu nhập; trả nhanh: lô người dùng chọn, FE gợi ý FEFO), theo ngày trả, đơn giá = giá trả gồm VAT (tỷ lệ VAT của dòng / VAT nhập tay chia đều), phân bổ giảm giá phiếu, / quy đổi → **tính lại giá vốn bình quân theo giá trả** — giữ nguyên quy tắc cũ (`PS/purchase/PurchaseReturnService.java` `move`);
   - được âm kho nếu bật thiết lập và hàng không theo lô.
 - **Hủy** (`PS/purchase/PurchaseReturnService.java:81-92`): COMPLETED → kiểm chi nhánh + khóa sổ, nhập lại `PURCHASE_RETURN_CANCEL` (đổi giá vốn); DRAFT → hủy luôn; gọi lại trên phiếu đã hủy không báo lỗi (ghi đè `cancelled_at`).
 - **Công nợ + Sổ quỹ khi NCC hoàn tiền (audit #9)** (`PS/purchase/PurchaseReturnService.java:70-100`):
