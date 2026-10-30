@@ -12,6 +12,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -72,7 +75,14 @@ public class TaxConnectionController {
     }
 
     @PostMapping("/api/tax-connections/{id}/sync")
-    public Map<String, Integer> sync(@PathVariable UUID id, @Valid @RequestBody SyncRequest req) {
-        return service.sync(id, req);
+    public Map<String, Integer> sync(@PathVariable UUID id, @Valid @RequestBody SyncRequest req,
+                                     @AuthenticationPrincipal Jwt jwt) {
+        return service.sync(id, req, UUID.fromString(jwt.getSubject()), jwt.getClaimAsString("name"));
+    }
+
+    /** Lịch sử đồng bộ (mới nhất trước). */
+    @GetMapping("/api/tax-connections/sync-logs")
+    public List<InputInvoiceSyncLogRepository.SyncLog> syncLogs(@RequestParam(defaultValue = "50") int limit) {
+        return service.syncLogs(limit);
     }
 }

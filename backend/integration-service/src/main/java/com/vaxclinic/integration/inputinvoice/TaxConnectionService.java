@@ -25,13 +25,20 @@ public class TaxConnectionService {
     private final SecretCipher cipher;
     private final GdtPortalClient portal;
     private final InputInvoiceWriteRepository store;
+    private final InputInvoiceSyncLogRepository logs;
 
     public TaxConnectionService(TaxConnectionRepository connections, SecretCipher cipher, GdtPortalClient portal,
-                                InputInvoiceWriteRepository store) {
+                                InputInvoiceWriteRepository store, InputInvoiceSyncLogRepository logs) {
         this.connections = connections;
         this.cipher = cipher;
         this.portal = portal;
         this.store = store;
+        this.logs = logs;
+    }
+
+    /** Lịch sử đồng bộ (tab "Lịch sử đồng bộ"), mới nhất trước. */
+    public List<InputInvoiceSyncLogRepository.SyncLog> syncLogs(int limit) {
+        return logs.latest(Math.min(Math.max(limit, 1), 200));
     }
 
     public List<ConnectionResponse> list() {
@@ -68,12 +75,16 @@ public class TaxConnectionService {
         return portal.captcha();
     }
 
-    /** Mỗi lần tối đa 1 tháng; lỗi cổng thuế được ghi vào last_error của kết nối rồi ném lại. */
-    public Map<String, Integer> sync(UUID id, SyncRequest req) {
+    /**
+     * Mỗi lần tối đa 1 tháng (31 ngày); lỗi cổng thuế được ghi vào last_error của kết nối rồi ném lại.
+     * Mọi lần đồng bộ (thành công / lỗi) ghi 1 dòng lịch sử đồng bộ kèm người chạy.
+     */
+    public Map<String, Integer> sync(UUID id, SyncRequest req, UUID userId, String userName) {
         if (req.to().isBefore(req.from()) || ChronoUnit.DAYS.between(req.from(), req.to()) > 31) {
-            throw BusinessException.badRequest("RANGE_INVALID", "Mỗi lần đồng bộ tối đa 1 tháng");
+            throw BusinessException.badRequest("RANGE_INVALID", "Mỗi lần đồng bộ tối đa 1 tháng (31 ngày)");
         }
         Map<String, Object> c = connection(id);
+        String taxCode = (String) c.get("tax_code");
         try {
             String token = portal.login((String) c.get("username"), cipher.decrypt((String) c.get("password_enc")),
                     req.captchaKey(), req.captchaValue().trim());
@@ -87,10 +98,17 @@ public class TaxConnectionService {
                 }
             }
             connections.markSynced(id, Instant.now());
+            logs.insert(id, taxCode, req.from(), req.to(), true, invoices.size(), added, null, userId, userName);
             return Map.of("found", invoices.size(), "added", added);
         } catch (BusinessException e) {
             connections.markError(id, e.getMessage());
+            logs.insert(id, taxCode, req.from(), req.to(), false, 0, 0, e.getMessage(), userId, userName);
             throw e;
+        } catch (RuntimeException e) { // dữ liệu cổng thuế khác định dạng dự kiến (API nội bộ, chưa kiểm chứng)
+            String msg = "Đồng bộ thất bại: dữ liệu cổng thuế không đọc được (" + e.getClass().getSimpleName() + ")";
+            connections.markError(id, msg);
+            logs.insert(id, taxCode, req.from(), req.to(), false, 0, 0, msg, userId, userName);
+            throw new BusinessException(org.springframework.http.HttpStatus.BAD_GATEWAY, "GDT_SYNC_FAILED", msg);
         }
     }
 

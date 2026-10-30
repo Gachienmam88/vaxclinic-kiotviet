@@ -45,6 +45,10 @@ class EInvoiceXmlParserTest {
         assertThat(p.lines().get(0).name()).isEqualTo("Vắc xin Thủy đậu Barycela");
         assertThat(p.lines().get(0).quantity()).isEqualByComparingTo("10");
         assertThat(p.lines().get(1).code()).isNull();
+        assertThat(p.lines().get(0).nature()).isEqualTo("1");
+        assertThat(p.details().invoiceName()).isEqualTo("Hóa đơn giá trị gia tăng");
+        assertThat(p.details().buyerName()).isEqualTo("VACXIN SỐ 1 YÊN LẠC");
+        assertThat(p.details().sellerPhone()).isNull();
     }
 
     @Test

@@ -28,25 +28,30 @@ public class InputInvoiceWriteRepository {
     /** @return true nếu là hóa đơn mới */
     public boolean upsert(EInvoiceXmlParser.Parsed p, String buyerTaxCode, String source) {
         String lines;
+        String details;
         try {
             lines = json.writeValueAsString(p.lines());
+            details = p.details() == null ? null : json.writeValueAsString(p.details());
         } catch (JsonProcessingException e) {
             throw new IllegalStateException(e);
         }
         int inserted = jdbc.update("""
                 insert into input_invoices(id, buyer_tax_code, seller_tax_code, seller_name, seller_address, template_no,
-                    series, number, issued_at, total_before_tax, vat_amount, total, nature, source, lines)
-                values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                    series, number, issued_at, total_before_tax, vat_amount, total, nature, source, lines, details)
+                values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
                 on conflict (seller_tax_code, template_no, series, number) do nothing""",
                 UUID.randomUUID(), buyerTaxCode, p.sellerTaxCode(), p.sellerName(), p.sellerAddress(),
                 p.templateNo() == null ? "" : p.templateNo(), p.series(), p.number(), Date.valueOf(p.issuedAt()),
-                p.totalBeforeTax(), p.vatAmount(), p.total(), p.nature(), source, lines);
-        if (inserted == 0) { // đã có: cập nhật số liệu (bản XML có thể đầy đủ hơn bản cổng), giữ receipt_*
+                p.totalBeforeTax(), p.vatAmount(), p.total(), p.nature(), source, lines, details);
+        if (inserted == 0) { // đã có: cập nhật số liệu (bản XML có thể đầy đủ hơn bản cổng), giữ link_* (đã lập phiếu)
             jdbc.update("""
-                    update input_invoices set seller_name = coalesce(?, seller_name), total_before_tax = coalesce(?, total_before_tax),
-                        vat_amount = coalesce(?, vat_amount), total = ?, lines = case when ? = '[]' then lines else ? end
+                    update input_invoices set seller_name = coalesce(?, seller_name), seller_address = coalesce(?, seller_address),
+                        total_before_tax = coalesce(?, total_before_tax),
+                        vat_amount = coalesce(?, vat_amount), total = ?, lines = case when ? = '[]' then lines else ? end,
+                        details = coalesce(?, details)
                     where seller_tax_code = ? and template_no = ? and series = ? and number = ?""",
-                    p.sellerName(), p.totalBeforeTax(), p.vatAmount(), p.total(), lines, lines, p.sellerTaxCode(),
+                    p.sellerName(), p.sellerAddress(), p.totalBeforeTax(), p.vatAmount(), p.total(), lines, lines, details,
+                    p.sellerTaxCode(),
                     p.templateNo() == null ? "" : p.templateNo(), p.series(), p.number());
         }
         return inserted > 0;
@@ -58,14 +63,22 @@ public class InputInvoiceWriteRepository {
         var lines = new java.util.ArrayList<EInvoiceXmlParser.Line>();
         if (detail != null) {
             detail.path("hdhhdvu").forEach(l -> lines.add(new EInvoiceXmlParser.Line(text(l, "mhhdvu"), text(l, "ten"),
-                    text(l, "dvtinh"), dec(l, "sluong"), dec(l, "dgia"), dec(l, "stckhau"), dec(l, "thtien"), text(l, "ltsuat"))));
+                    text(l, "dvtinh"), dec(l, "sluong"), dec(l, "dgia"), dec(l, "stckhau"), dec(l, "thtien"), text(l, "ltsuat"),
+                    text(l, "tchat"), null)));
         }
         String tchat = s.path("tchat").asText("");
+        var d = detail == null ? s : detail; // chi tiết đầy đủ hơn bản tóm tắt danh sách (tên trường cổng: chưa kiểm chứng)
+        var rates = new java.util.ArrayList<EInvoiceXmlParser.RateSummary>();
+        d.path("thttltsuat").forEach(x -> rates.add(new EInvoiceXmlParser.RateSummary(text(x, "tsuat"), dec(x, "thtien"), dec(x, "tthue"))));
+        var details = new EInvoiceXmlParser.Details(text(d, "thdon"), text(d, "mhdon"), text(d, "thtttoan"), null,
+                text(d, "tgtttbchu"), text(d, "nbsdthoai"), text(d, "nbstkhoan"), text(d, "nbmcuahang"), text(d, "nbtcuahang"),
+                text(d, "nmten"), text(d, "nmtnmua"), text(d, "nmdchi"), text(d, "nmsdthoai"), text(d, "nmmdvqhnsach"),
+                text(d, "nmshchieu"), text(d, "nmcccd"), text(d, "nmstkhoan"), null, text(d, "nky"), List.copyOf(rates));
         return new EInvoiceXmlParser.Parsed(s.path("khmshdon").asText(""), s.path("khhdon").asText(), s.path("shdon").asText(),
                 java.time.OffsetDateTime.parse(s.path("tdlap").asText()).toLocalDate(), s.path("nbmst").asText(),
                 text(s, "nbten"), text(s, "nbdchi"), text(s, "nmmst"), dec(s, "tgtcthue"), dec(s, "tgtthue"),
                 dec(s, "tgtttbso") == null ? BigDecimal.ZERO : dec(s, "tgtttbso"),
-                "2".equals(tchat) ? "ADJUST" : "3".equals(tchat) ? "REPLACE" : "ORIGINAL", List.copyOf(lines));
+                "2".equals(tchat) ? "ADJUST" : "3".equals(tchat) ? "REPLACE" : "ORIGINAL", List.copyOf(lines), details);
     }
 
     private static String text(com.fasterxml.jackson.databind.JsonNode n, String f) {
