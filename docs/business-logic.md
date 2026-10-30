@@ -437,8 +437,9 @@ Nguồn: `PS/purchase/PurchaseController.java:35-102`.
 
 **2. Dữ liệu** (`MIG/V2__purchasing_schema.sql:26-70`)
 - Mã `PN%06d`, sequence `purchase_receipt_code_seq`, cấp ngay khi tạo (kể cả phiếu tạm) (`PS/purchase/PurchaseReceiptService.java:138-145`).
-- `purchase_receipts`: `status`, `received_at`, `receiver_id/name`, `input_invoice_no`(50), `vat_rate` 1 mức cho cả phiếu (NULL = không VAT), `subtotal`, `discount`, `vat_amount`, `total` (= cần trả NCC), `paid_amount` (NUMERIC(18,0)), `payment_method`, `completed_at`, `cancelled_at`.
-- Dòng: `conversion_rate` chụp lại, `unit_price` (chưa VAT), `discount` / 1 đơn vị, lô + HSD.
+- `purchase_receipts`: `status`, `received_at`, `receiver_id/name`, `input_invoice_no`(50), `vat_mode` `LINE|MANUAL`, `vat_rate` = mức VAT chung (mọi dòng cùng 1 mức → mức đó; lẫn mức / MANUAL → NULL), `subtotal`, `discount`, `vat_amount`, `total` (= cần trả NCC), `paid_amount` (NUMERIC(18,0)), `payment_method`, `payment_posted` (phiếu chi `PC{mã}` đã lập), `completed_at`, `cancelled_at`.
+- Dòng: `conversion_rate` chụp lại, `unit_price` (chưa VAT), `discount` / 1 đơn vị, `vat_rate` (VAT% của dòng, NULL = KCT), `note` (ghi chú dòng), lô + HSD.
+- Migration `MIG/V12__purchase_line_vat_and_draft_payment.sql`: phiếu cũ → dòng nhận `vat_rate` của phiếu (số liệu không đổi), `vat_mode = LINE`; phiếu COMPLETED → `payment_posted = true`.
 
 **3. Quy tắc**
 - **Validation** (`PS/purchase/PurchaseDtos.java:22-41`): `branchId` NotNull; `vatRate` 0–100; `discount`, `paidAmount` ≥0; `paymentMethod` ≤20 (không giới hạn giá trị); dòng `quantity` ≥0.001 "Số lượng phải > 0", `unitPrice` ≥0, `discount` ≥0, `lotNumber` ≤50.
