@@ -148,6 +148,24 @@ public class SupplierDebtService {
         repo.cancelReturnDocs(r.getId());
     }
 
+    /** Σ đã thanh toán + chiết khấu (phân bổ còn hiệu lực) vào phiếu nhập — tổng cộng mới không được nhỏ hơn số này. */
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.MANDATORY)
+    public BigDecimal receiptSettled(UUID receiptId) {
+        return repo.settled(receiptId);
+    }
+
+    /**
+     * Đổi NCC của phiếu nhập (đã nhập / phiếu tạm đã lập phiếu chi): phiếu chi PC{mã PN} chuyển sang NCC mới; tiền của
+     * phiếu chi / chiết khấu khác của NCC cũ đã phân bổ vào phiếu thành "chưa phân bổ" của NCC cũ (paid_amount trừ phần đó).
+     */
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.MANDATORY)
+    public void receiptSupplierChanged(PurchaseReceipt r) {
+        repo.moveReceiptPayment(r.getId(), r.getSupplierId());
+        BigDecimal released = repo.foreignPaymentAllocated(r.getId());
+        repo.deleteForeignAllocations(r.getId());
+        r.setPaidAmount(r.getPaidAmount().subtract(released));
+    }
+
     /** Đổi ngày nhập của phiếu đã hoàn thành → phiếu chi PC{mã PN} (tạo lúc nhập) đổi ngày theo. */
     @Transactional(propagation = org.springframework.transaction.annotation.Propagation.MANDATORY)
     public void receiptRedated(PurchaseReceipt r) {

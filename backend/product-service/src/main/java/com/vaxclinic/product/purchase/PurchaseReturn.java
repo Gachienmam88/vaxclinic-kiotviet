@@ -70,6 +70,13 @@ public class PurchaseReturn {
     @Column(name = "vat_rate")
     private BigDecimal vatRate;
 
+    @Column(name = "vat_mode", nullable = false)
+    private String vatMode = PurchaseMath.MODE_LINE;
+
+    /** Hình thức NCC hoàn tiền: CASH / TRANSFER (null = tiền mặt). */
+    @Column(name = "payment_method")
+    private String paymentMethod;
+
     @Column(name = "vat_amount", nullable = false)
     private BigDecimal vatAmount = BigDecimal.ZERO;
 

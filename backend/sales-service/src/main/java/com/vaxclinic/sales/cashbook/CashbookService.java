@@ -124,6 +124,11 @@ public class CashbookService {
                     v.setCollectorName(in.userName());
                 }
                 v.setNote(in.note());
+                if (in.partnerId() != null) { // phiếu nhập đổi NCC → phiếu chi PC{mã PN} đổi người nhận theo
+                    v.setPartnerId(in.partnerId());
+                    v.setPartnerName(in.partnerName());
+                    v.setPartnerPhone(in.partnerPhone());
+                }
             });
             return;
         }

@@ -45,7 +45,7 @@ public class StockBookRepository {
         return jdbc.query("""
                 with mv as (
                   select product_id, occurred_at, quantity,
-                    round(quantity * case when doc_type in ('OPENING','PURCHASE','PURCHASE_CANCEL','PURCHASE_RETURN','PURCHASE_RETURN_CANCEL')
+                    round(quantity * case when doc_type in ('OPENING','PURCHASE','PURCHASE_CANCEL','PURCHASE_ADJUST','PURCHASE_RETURN','PURCHASE_RETURN_CANCEL')
                                           then unit_price else cost end) val
                   from stock_ledger where occurred_at < :to and (:allBranches or branch_id in (:branches))
                 ), agg as (

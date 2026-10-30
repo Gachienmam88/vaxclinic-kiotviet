@@ -61,4 +61,42 @@ class PurchaseMathTest {
         assertThat(t.discount()).isEqualByComparingTo("100000");
         assertThat(t.total()).isEqualByComparingTo("0");
     }
+
+    @Test
+    void perLineVatRatesAreRoundedPerLineAndSummed() {
+        // 5% trên 5,855,400 = 292,770; 10% trên 685,714 = 68,571.4 → 68,571; KCT (null) không thuế
+        var t = PurchaseMath.totals(List.of(new PurchaseMath.LineAmount(line("30", "195180"), bd("5")),
+                new PurchaseMath.LineAmount(line("10", "68571.4"), bd("10")),
+                new PurchaseMath.LineAmount(line("1", "1000"), null)), BigDecimal.ZERO, false, null);
+        assertThat(t.vatAmount()).isEqualByComparingTo("361341");
+        assertThat(t.total()).isEqualByComparingTo(t.subtotal().add(bd("361341")));
+    }
+
+    @Test
+    void returnOfOneDoseAt5PercentMatchesKiotVietScreenshot() {
+        // Trả 1 × 195,180, VAT 5% → VAT hoàn lại 9,759; NCC cần trả 204,939
+        var t = PurchaseMath.totals(List.of(new PurchaseMath.LineAmount(line("1", "195180"), bd("5"))), BigDecimal.ZERO, false, null);
+        assertThat(t.vatAmount()).isEqualByComparingTo("9759");
+        assertThat(t.total()).isEqualByComparingTo("204939");
+    }
+
+    @Test
+    void manualVatIsSpreadProportionallyIntoCost() {
+        // 2 dòng 1,000,000 + 3,000,000, VAT nhập tay 200,000 (= 5% tiền hàng) → giá vốn mỗi dòng × 1.05
+        var t = PurchaseMath.totals(List.of(new PurchaseMath.LineAmount(line("1", "1000000"), null),
+                new PurchaseMath.LineAmount(line("1", "3000000"), null)), BigDecimal.ZERO, true, bd("200000"));
+        assertThat(t.vatAmount()).isEqualByComparingTo("200000");
+        BigDecimal ratio = PurchaseMath.vatRatio(PurchaseMath.MODE_MANUAL, null, t);
+        assertThat(PurchaseMath.baseUnitCostWithRatio(bd("1000000"), BigDecimal.ZERO, BigDecimal.ONE, t, ratio))
+                .isEqualByComparingTo("1050000");
+    }
+
+    @Test
+    void legacyRequestWithoutModeUsesHeaderRateForEveryLine() {
+        assertThat(PurchaseMath.lineRate(null, bd("5"), bd("10"))).isEqualByComparingTo("5");
+        assertThat(PurchaseMath.lineRate("LINE", bd("5"), bd("10"))).isEqualByComparingTo("10");
+        assertThat(PurchaseMath.lineRate("MANUAL", bd("5"), bd("10"))).isNull();
+        assertThat(PurchaseMath.commonRate("LINE", List.of(bd("5"), bd("5.00")), null)).isEqualByComparingTo("5");
+        assertThat(PurchaseMath.commonRate("LINE", List.of(bd("5"), bd("10")), null)).isNull();
+    }
 }

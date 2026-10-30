@@ -11,7 +11,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -20,8 +19,6 @@ import java.util.UUID;
 @Component
 @Transactional(readOnly = true)
 public class PurchaseDetailMapper {
-
-    private static final BigDecimal HUNDRED = BigDecimal.valueOf(100);
 
     private final ProductRepository products;
     private final SupplierRepository suppliers;
@@ -40,23 +37,26 @@ public class PurchaseDetailMapper {
         PurchaseReceipt r = receipts.findById(id).orElseThrow();
         Supplier s = r.getSupplierId() == null ? null : suppliers.findById(r.getSupplierId()).orElse(null);
         Map<UUID, Product> cache = new HashMap<>();
+        var totals = new PurchaseMath.Totals(r.getSubtotal(), r.getDiscount(), r.getVatAmount(), r.getTotal());
         var lines = r.getLines().stream().map(l -> {
             Product p = cache.computeIfAbsent(l.getProductId(), k -> products.findById(k).orElseThrow());
             ProductUnit u = unit(p, l.getUnitId());
-            BigDecimal net = l.getUnitPrice().subtract(l.getDiscount());
-            BigDecimal withVat = r.getVatRate() == null ? net
-                    : net.multiply(BigDecimal.ONE.add(r.getVatRate().divide(HUNDRED, 6, RoundingMode.HALF_UP)))
-                    .setScale(2, RoundingMode.HALF_UP);
+            // Giá nhập có VAT theo VAT% của dòng (VAT nhập tay: chia đều theo tiền hàng)
+            BigDecimal withVat = PurchaseMath.priceWithVat(l.getUnitPrice(), l.getDiscount(),
+                    PurchaseMath.vatRatio(r.getVatMode(), l.getVatRate(), totals));
             return new LineResponse(l.getId(), l.getLineNo(), p.getId(), u.getCode(), p.getName(), u.getId(),
                     u.getUnitName(), l.getConversionRate(), l.getQuantity(), l.getUnitPrice(), l.getDiscount(), withVat,
                     PurchaseMath.money(PurchaseMath.lineAmount(l.getQuantity(), l.getUnitPrice(), l.getDiscount())),
-                    l.getLotNumber(), l.getExpiryDate());
+                    l.getLotNumber(), l.getExpiryDate(), l.getVatRate(), l.getNote());
         }).toList();
         return new ReceiptResponse(r.getId(), r.getCode(), r.getBranchId(), r.getStatus().name(), r.getReceivedAt(),
                 r.getSupplierId(), s == null ? null : s.getCode(), s == null ? null : s.getName(), r.getCreatedBy(),
                 r.getCreatedByName(), r.getReceiverId(), r.getReceiverName(), r.getInputInvoiceNo(), r.getVatRate(),
                 r.getSubtotal(), r.getDiscount(), r.getVatAmount(), r.getTotal(), r.getPaidAmount(),
-                r.getPaymentMethod(), r.getNote(), r.getCompletedAt(), r.getCancelledAt(), lines);
+                r.getPaymentMethod(), r.getNote(), r.getCompletedAt(), r.getCancelledAt(), lines, r.getVatMode(),
+                r.isPaymentPosted(), returns.findByReceiptIdOrderByReturnedAtDesc(r.getId()).stream()
+                .map(x -> new PurchaseDtos.ReturnRef(x.getId(), x.getCode(), x.getStatus().name(), x.getReturnedAt(), x.getTotal()))
+                .toList());
     }
 
     public ReturnResponse purchaseReturn(UUID id) {
@@ -65,17 +65,21 @@ public class PurchaseDetailMapper {
         String receiptCode = r.getReceiptId() == null ? null
                 : receipts.findById(r.getReceiptId()).map(PurchaseReceipt::getCode).orElse(null);
         Map<UUID, Product> cache = new HashMap<>();
+        var totals = new PurchaseMath.Totals(r.getSubtotal(), r.getDiscount(), r.getVatAmount(), r.getTotal());
         var lines = r.getLines().stream().map(l -> {
             Product p = cache.computeIfAbsent(l.getProductId(), k -> products.findById(k).orElseThrow());
             ProductUnit u = unit(p, l.getUnitId());
             return new ReturnLineResponse(l.getId(), l.getLineNo(), p.getId(), u.getCode(), p.getName(), u.getId(),
                     u.getUnitName(), l.getConversionRate(), l.getQuantity(), l.getUnitPrice(),
-                    PurchaseMath.money(l.getQuantity().multiply(l.getUnitPrice())), l.getLotNumber());
+                    PurchaseMath.money(l.getQuantity().multiply(l.getUnitPrice())), l.getLotNumber(), l.getVatRate(),
+                    l.getNote(), PurchaseMath.priceWithVat(l.getUnitPrice(), BigDecimal.ZERO,
+                    PurchaseMath.vatRatio(r.getVatMode(), l.getVatRate(), totals)));
         }).toList();
         return new ReturnResponse(r.getId(), r.getCode(), r.getBranchId(), r.getStatus().name(), r.getReturnedAt(),
                 r.getSupplierId(), s == null ? null : s.getCode(), s == null ? null : s.getName(), r.getReceiptId(),
                 receiptCode, r.getCreatedByName(), r.getReturnerId(), r.getReturnerName(), r.getSubtotal(),
-                r.getDiscount(), r.getVatRate(), r.getVatAmount(), r.getTotal(), r.getRefundAmount(), r.getNote(), lines);
+                r.getDiscount(), r.getVatRate(), r.getVatAmount(), r.getTotal(), r.getRefundAmount(), r.getNote(), lines,
+                r.getVatMode(), r.getPaymentMethod());
     }
 
     /** Đơn vị có thể đã bị xóa khỏi hàng hóa sau khi lập phiếu → vẫn hiển thị được. */

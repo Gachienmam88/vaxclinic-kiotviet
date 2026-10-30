@@ -14,4 +14,6 @@ public interface PurchaseReturnRepository extends JpaRepository<PurchaseReturn, 
     boolean existsByReceiptIdAndStatusNot(UUID receiptId, DocStatus status);
 
     List<PurchaseReturn> findByReceiptIdAndStatus(UUID receiptId, DocStatus status);
+
+    List<PurchaseReturn> findByReceiptIdOrderByReturnedAtDesc(UUID receiptId);
 }

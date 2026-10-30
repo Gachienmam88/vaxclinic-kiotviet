@@ -70,6 +70,14 @@ public class PurchaseReceipt {
     @Column(nullable = false)
     private BigDecimal discount = BigDecimal.ZERO;
 
+    /** LINE = VAT phiếu = Σ VAT từng dòng; MANUAL = VAT nhập tay. */
+    @Column(name = "vat_mode", nullable = false)
+    private String vatMode = PurchaseMath.MODE_LINE;
+
+    /** Phiếu chi PC{mã} đã lập (lúc Hoàn thành, hoặc lúc Lưu tạm khi chọn lưu phiếu chi ngay) → không lập lần 2. */
+    @Column(name = "payment_posted", nullable = false)
+    private boolean paymentPosted;
+
     @Column(name = "vat_amount", nullable = false)
     private BigDecimal vatAmount = BigDecimal.ZERO;
 

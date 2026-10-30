@@ -35,7 +35,7 @@ public class InventoryReportRepository {
         return jdbc.query("""
                 select s.product_id, u.code, p.name, u.unit_name,
                   case when s.occurred_at < :from then 'BEFORE' else s.doc_type end dt, sum(s.quantity) qty,
-                  sum(round(s.quantity * case when s.doc_type in ('OPENING','PURCHASE','PURCHASE_CANCEL','PURCHASE_RETURN','PURCHASE_RETURN_CANCEL')
+                  sum(round(s.quantity * case when s.doc_type in ('OPENING','PURCHASE','PURCHASE_CANCEL','PURCHASE_ADJUST','PURCHASE_RETURN','PURCHASE_RETURN_CANCEL')
                                               then s.unit_price else s.cost end)) val
                 from stock_ledger s join products p on p.id = s.product_id
                 left join product_units u on u.product_id = p.id and u.is_base

@@ -26,13 +26,15 @@ public class StockLedgerEntry {
 
     /** Loại giao dịch kho; tên hiển thị ở frontend. */
     public enum DocType {
-        OPENING, PURCHASE, PURCHASE_CANCEL, PURCHASE_RETURN, PURCHASE_RETURN_CANCEL,
+        OPENING, PURCHASE, PURCHASE_CANCEL, PURCHASE_ADJUST, PURCHASE_RETURN, PURCHASE_RETURN_CANCEL,
         SALE, SALE_CANCEL, SALE_RETURN, SALE_RETURN_CANCEL_OUT, ADJUSTMENT, TRANSFER_OUT, TRANSFER_IN, DAMAGE,
         DAMAGE_CANCEL, INTERNAL_USE, INTERNAL_USE_CANCEL;
 
-        /** Giao dịch với NCC làm thay đổi giá vốn bình quân (nhập, hủy nhập, trả hàng nhập và hủy trả). */
+        /**
+         * Giao dịch với NCC làm thay đổi giá vốn bình quân (nhập, hủy nhập, sửa phiếu đã nhập ±, trả hàng nhập và hủy trả).
+         */
         public boolean affectsCost() {
-            return this == OPENING || this == PURCHASE || this == PURCHASE_CANCEL
+            return this == OPENING || this == PURCHASE || this == PURCHASE_CANCEL || this == PURCHASE_ADJUST
                     || this == PURCHASE_RETURN || this == PURCHASE_RETURN_CANCEL;
         }
     }

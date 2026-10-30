@@ -90,6 +90,31 @@ public class CashflowOutbox {
     }
 
     /**
+     * Sửa phiếu nhập đã có phiếu chi PC{mã PN} (đổi ngày / người nhập / NCC) → phiếu chi Sổ quỹ đổi theo, gồm cả người nhận
+     * (partner*: Sổ quỹ chỉ đổi khi có partnerId). Sổ quỹ bỏ qua nếu không có phiếu.
+     */
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void receiptVoucherUpdated(PurchaseReceipt r, Supplier s) {
+        if (r.getPaidAmount().signum() <= 0) {
+            return;
+        }
+        var p = new LinkedHashMap<String, Object>();
+        p.put("action", "UPDATE");
+        p.put("sourceType", "PURCHASE");
+        p.put("sourceId", r.getId());
+        p.put("occurredAt", r.getReceivedAt());
+        p.put("userId", r.getReceiverId() == null ? r.getCreatedBy() : r.getReceiverId());
+        p.put("userName", r.getReceiverName() == null ? r.getCreatedByName() : r.getReceiverName());
+        p.put("note", "Thanh toán phiếu nhập " + r.getCode());
+        if (s != null) {
+            p.put("partnerId", s.getId());
+            p.put("partnerName", s.getName());
+            p.put("partnerPhone", s.getPhone());
+        }
+        insert(p);
+    }
+
+    /**
      * Trả hàng nhập hoàn thành có tiền NCC hoàn lại → phiếu thu PT{mã THN} ở Sổ quỹ (sourceType PURCHASE + sourceId = id phiếu
      * trả: chống trùng theo nguồn; Sổ quỹ lưu accounting = false như mọi phiếu từ product-service). Quỹ tiền mặt.
      */
@@ -101,7 +126,7 @@ public class CashflowOutbox {
         p.put("sourceId", r.getId());
         p.put("code", "PT" + r.getCode());
         p.put("voucherType", "RECEIPT");
-        p.put("fund", "CASH");
+        p.put("fund", "TRANSFER".equals(r.getPaymentMethod()) ? "BANK" : "CASH");
         p.put("category", "Thu Tiền NCC hoàn trả");
         p.put("amount", r.getRefundAmount());
         p.put("occurredAt", r.getReturnedAt());

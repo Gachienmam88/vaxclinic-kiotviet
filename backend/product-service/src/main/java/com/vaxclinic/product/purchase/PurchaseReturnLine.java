@@ -47,6 +47,12 @@ public class PurchaseReturnLine {
     @Column(name = "unit_price", nullable = false)
     private BigDecimal unitPrice;
 
+    /** VAT% của dòng (null = không chịu thuế / KCT, hoặc phiếu VAT nhập tay). */
+    @Column(name = "vat_rate")
+    private BigDecimal vatRate;
+
+    private String note;
+
     @Column(name = "lot_number")
     private String lotNumber;
 }

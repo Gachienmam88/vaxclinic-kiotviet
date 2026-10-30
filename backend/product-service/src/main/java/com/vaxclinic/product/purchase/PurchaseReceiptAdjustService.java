@@ -128,7 +128,7 @@ public class PurchaseReceiptAdjustService {
             move(saved, l, p, old.baseQty().negate(), old.cost(), partner, actor, at);
         }
         if (saved.isPaymentPosted()) {
-            receiptService.voucherFollows(saved, oldSupplier, oldAt, supplier);
+            receiptService.voucherFollows(saved, saved.getSupplierId(), oldAt, supplier); // NCC đã chuyển ở trên
         }
         return saved.getId();
     }

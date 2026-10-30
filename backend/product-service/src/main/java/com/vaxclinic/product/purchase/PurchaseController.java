@@ -90,6 +90,20 @@ public class PurchaseController {
         return service.saveReceipt(id, req, complete, Actor.of(jwt));
     }
 
+    /** Mở phiếu → Lưu trên phiếu ĐÃ NHẬP (dòng phải giữ nguyên id; xem PurchaseReceiptAdjustService). */
+    @PutMapping("/api/purchase-receipts/{id}/adjust")
+    @PreAuthorize("hasAuthority('inventory.manage')")
+    public ReceiptResponse adjustReceipt(@PathVariable UUID id, @Valid @RequestBody ReceiptRequest req,
+                                         @AuthenticationPrincipal Jwt jwt) {
+        return service.adjustReceipt(id, req, Actor.of(jwt));
+    }
+
+    /** Số còn trả được của từng dòng phiếu nhập (màn Trả hàng nhập theo phiếu nhập: "0 / 30"). */
+    @GetMapping("/api/purchase-receipts/{id}/returnable")
+    public List<PurchaseDtos.ReturnableLine> returnable(@PathVariable UUID id) {
+        return service.returnable(id);
+    }
+
     @PatchMapping("/api/purchase-receipts/{id}/info")
     @PreAuthorize("hasAuthority('inventory.manage')")
     public ReceiptResponse updateReceiptInfo(@PathVariable UUID id, @Valid @RequestBody ReceiptInfoRequest req,

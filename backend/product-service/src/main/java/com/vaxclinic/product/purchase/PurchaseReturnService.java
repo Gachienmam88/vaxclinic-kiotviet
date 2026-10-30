@@ -57,7 +57,7 @@ public class PurchaseReturnService {
         if (req.receiptId() != null) {
             var receipt = receipts.findById(req.receiptId())
                     .orElseThrow(() -> BusinessException.badRequest("RECEIPT_NOT_FOUND", "Phiếu nhập không tồn tại"));
-            if (receipt.getStatus() != DocStatus.COMPLETED || !receipt.getBranchId().equals(req.branchId())) {
+            if (receipt.getStatus() != DocStatus.COMPLETED || !receipt.getBranchId().equals(req.branchId())) { // phiếu hủy / tạm: chặn
                 throw BusinessException.badRequest("RECEIPT_NOT_RETURNABLE", "Chỉ trả theo phiếu đã nhập tại cùng chi nhánh");
             }
             supplierId = receipt.getSupplierId();
@@ -69,8 +69,8 @@ public class PurchaseReturnService {
         r.setReturnedAt(req.returnedAt() == null ? Instant.now() : req.returnedAt());
         r.setReturnerId(req.returnerId() == null ? actor.id() : req.returnerId());
         r.setReturnerName(req.returnerId() == null ? actor.name() : req.returnerName());
-        r.setVatRate(req.vatRate());
         r.setNote(req.note());
+        r.setPaymentMethod("TRANSFER".equals(req.paymentMethod()) ? "TRANSFER" : null);
         applyLines(r, req, complete);
         r.setUpdatedAt(Instant.now());
         r = returns.saveAndFlush(r); // keep the managed copy (see PurchaseReceiptService.save)
@@ -129,7 +129,8 @@ public class PurchaseReturnService {
         }
         Map<UUID, Product> cache = support.newCache();
         r.getLines().clear();
-        var amounts = new java.util.ArrayList<BigDecimal>();
+        var amounts = new java.util.ArrayList<PurchaseMath.LineAmount>();
+        var rates = new java.util.ArrayList<BigDecimal>();
         int no = 1;
         for (var in : inputs) {
             Product p = support.product(cache, in.productId());
@@ -148,10 +149,18 @@ public class PurchaseReturnService {
             line.setQuantity(in.quantity());
             line.setUnitPrice(in.unitPrice());
             line.setLotNumber(p.isLotManaged() ? lot : null);
+            line.setVatRate(PurchaseMath.lineRate(req.vatMode(), req.vatRate(), in.vatRate()));
+            line.setNote(PurchaseLineSupport.blankToNull(in.note()));
             r.getLines().add(line);
-            amounts.add(PurchaseMath.lineAmount(in.quantity(), in.unitPrice(), BigDecimal.ZERO));
+            amounts.add(new PurchaseMath.LineAmount(PurchaseMath.lineAmount(in.quantity(), in.unitPrice(), BigDecimal.ZERO),
+                    line.getVatRate()));
+            rates.add(line.getVatRate());
         }
-        var t = PurchaseMath.totals(amounts, req.discount() == null ? BigDecimal.ZERO : req.discount(), req.vatRate());
+        String mode = PurchaseMath.mode(req.vatMode());
+        var t = PurchaseMath.totals(amounts, req.discount() == null ? BigDecimal.ZERO : req.discount(),
+                PurchaseMath.MODE_MANUAL.equals(mode), req.vatAmount());
+        r.setVatMode(mode);
+        r.setVatRate(PurchaseMath.commonRate(mode, rates, req.vatRate()));
         r.setSubtotal(t.subtotal());
         r.setDiscount(t.discount());
         r.setVatAmount(t.vatAmount());
@@ -161,6 +170,27 @@ public class PurchaseReturnService {
             throw BusinessException.badRequest("REFUND_TOO_MUCH", "Tiền NCC trả lớn hơn tổng cộng");
         }
         r.setRefundAmount(refund);
+    }
+
+    /**
+     * Số còn trả được của từng dòng phiếu nhập (đơn vị của dòng) = đã nhập − Σ đã trả ở các phiếu trả HOÀN THÀNH, so theo
+     * (hàng, lô) bằng đơn vị cơ bản; nhiều dòng cùng (hàng, lô) thì trừ lần lượt từ dòng đầu.
+     */
+    @Transactional(readOnly = true)
+    public List<PurchaseDtos.ReturnableLine> returnable(UUID receiptId) {
+        PurchaseReceipt receipt = receipts.findById(receiptId)
+                .orElseThrow(() -> BusinessException.notFound("RECEIPT_NOT_FOUND", "Không tìm thấy phiếu nhập"));
+        Map<String, BigDecimal> returned = new HashMap<>();
+        returns.findByReceiptIdAndStatus(receiptId, DocStatus.COMPLETED).stream().flatMap(x -> x.getLines().stream())
+                .forEach(l -> returned.merge(key(l.getProductId(), l.getLotNumber()), l.getQuantity().multiply(l.getConversionRate()), BigDecimal::add));
+        return receipt.getLines().stream().map(l -> {
+            String k = key(l.getProductId(), l.getLotNumber());
+            BigDecimal base = l.getQuantity().multiply(l.getConversionRate());
+            BigDecimal used = returned.getOrDefault(k, BigDecimal.ZERO).min(base);
+            returned.put(k, returned.getOrDefault(k, BigDecimal.ZERO).subtract(used));
+            BigDecimal left = base.subtract(used).divide(l.getConversionRate(), 3, java.math.RoundingMode.DOWN).stripTrailingZeros();
+            return new PurchaseDtos.ReturnableLine(l.getId(), l.getProductId(), l.getLotNumber(), l.getQuantity(), left);
+        }).toList();
     }
 
     /** Σ đã trả (các phiếu hoàn thành khác + phiếu này) ≤ đã nhập, theo (hàng, lô), tính bằng đơn vị cơ bản. */
@@ -193,8 +223,8 @@ public class PurchaseReturnService {
         for (var line : r.getLines()) {
             Product p = support.product(cache, line.getProductId());
             BigDecimal baseQty = line.getQuantity().multiply(line.getConversionRate());
-            BigDecimal cost = PurchaseMath.baseUnitCost(line.getUnitPrice(), BigDecimal.ZERO, line.getConversionRate(),
-                    totals, r.getVatRate());
+            BigDecimal cost = PurchaseMath.baseUnitCostWithRatio(line.getUnitPrice(), BigDecimal.ZERO, line.getConversionRate(),
+                    totals, PurchaseMath.vatRatio(r.getVatMode(), line.getVatRate(), totals));
             stock.apply(p, new Movement(r.getBranchId(), reverse ? baseQty : baseQty.negate(), line.getLotNumber(), null,
                     reverse ? DocType.PURCHASE_RETURN_CANCEL : DocType.PURCHASE_RETURN, r.getId(), r.getCode(), cost,
                     s == null ? null : s.getName(), actor.id(), r.getReturnedAt())); // thẻ kho theo ngày trả (lùi ngày được)

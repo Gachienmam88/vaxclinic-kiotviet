@@ -53,8 +53,9 @@ public class SupplierDebtRepository {
         jdbc.update("""
                 insert into supplier_debt_docs(id, code, supplier_id, kind, occurred_at, amount, branch_id, payment_method,
                   staff_id, staff_name, created_by, created_by_name, note, return_id, cash_source_id)
-                values (?, ?, ?, 'REFUND', ?, ?, ?, 'CASH', ?, ?, ?, ?, ?, ?, ?)""", id, "PT" + r.getCode(), r.getSupplierId(),
+                values (?, ?, ?, 'REFUND', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", id, "PT" + r.getCode(), r.getSupplierId(),
                 Timestamp.from(r.getReturnedAt()), r.getRefundAmount(), r.getBranchId(),
+                "TRANSFER".equals(r.getPaymentMethod()) ? "TRANSFER" : "CASH",
                 r.getReturnerId() == null ? r.getCreatedBy() : r.getReturnerId(),
                 r.getReturnerName() == null ? r.getCreatedByName() : r.getReturnerName(), r.getCreatedBy(), r.getCreatedByName(),
                 "NCC hoàn tiền trả hàng nhập " + r.getCode(), r.getId(), r.getId());
@@ -71,6 +72,30 @@ public class SupplierDebtRepository {
                 update supplier_debt_docs set occurred_at = ?
                 where receipt_id = ? and cash_source_id = ? and kind = 'PAYMENT' and status = 'ACTIVE'""",
                 Timestamp.from(at), receiptId, receiptId);
+    }
+
+    /** Đổi NCC của phiếu nhập → phiếu chi PC{mã PN} (lập từ chính phiếu) chuyển sang NCC mới. */
+    public void moveReceiptPayment(UUID receiptId, UUID supplierId) {
+        jdbc.update("""
+                update supplier_debt_docs set supplier_id = ?
+                where receipt_id = ? and cash_source_id = ? and kind = 'PAYMENT' and status = 'ACTIVE'""",
+                supplierId, receiptId, receiptId);
+    }
+
+    /** Σ phân bổ từ phiếu chi KHÁC (không phải PC{mã PN} của chính phiếu) còn hiệu lực vào phiếu nhập. */
+    public BigDecimal foreignPaymentAllocated(UUID receiptId) {
+        return jdbc.queryForObject("""
+                select coalesce(sum(a.amount), 0) from supplier_debt_allocations a join supplier_debt_docs d on d.id = a.doc_id
+                where a.receipt_id = ? and d.status = 'ACTIVE' and d.kind = 'PAYMENT'
+                  and d.cash_source_id is distinct from a.receipt_id""", BigDecimal.class, receiptId);
+    }
+
+    /** Bỏ phân bổ của phiếu chi / chiết khấu khác vào phiếu nhập (tiền đó thành "chưa phân bổ" của NCC cũ). */
+    public void deleteForeignAllocations(UUID receiptId) {
+        jdbc.update("""
+                delete from supplier_debt_allocations a using supplier_debt_docs d
+                where d.id = a.doc_id and a.receipt_id = ? and d.status = 'ACTIVE'
+                  and d.cash_source_id is distinct from a.receipt_id""", receiptId);
     }
 
     /** select * ... for update; rỗng nếu không có. */

@@ -58,12 +58,14 @@ public class PurchaseListRepository {
                 + " coalesce(sum(r.discount),0) disc, coalesce(sum(r.vat_amount),0) vat, coalesce(sum(r.total),0) tot,"
                 + " coalesce(sum(r.refund_amount),0) paid" + from, p);
         page(f, p);
-        var items = jdbc.query("select r.*, s.name supplier_name, pr.code receipt_code" + from
+        var items = jdbc.query("select r.*, s.name supplier_name, s.code supplier_code, pr.code receipt_code" + from
                 + " order by r.returned_at desc limit :limit offset :offset", p, (rs, i) -> new ReturnListItem(
                 rs.getObject("id", UUID.class), rs.getString("code"), rs.getString("status"),
                 rs.getTimestamp("returned_at").toInstant(), rs.getString("supplier_name"), rs.getString("receipt_code"),
                 rs.getString("returner_name"), rs.getBigDecimal("subtotal"), rs.getBigDecimal("discount"),
-                rs.getBigDecimal("vat_amount"), rs.getBigDecimal("total"), rs.getBigDecimal("refund_amount")));
+                rs.getBigDecimal("vat_amount"), rs.getBigDecimal("total"), rs.getBigDecimal("refund_amount"),
+                rs.getObject("receipt_id", UUID.class), rs.getString("created_by_name"), rs.getObject("branch_id", UUID.class),
+                rs.getString("note"), rs.getString("supplier_code")));
         return new ReturnListResponse(items, count(agg), f.page(), f.size(), sums(agg));
     }
 

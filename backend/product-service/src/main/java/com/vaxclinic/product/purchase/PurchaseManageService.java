@@ -22,14 +22,17 @@ import java.util.UUID;
 public class PurchaseManageService {
 
     private final PurchaseReceiptService receiptService;
+    private final PurchaseReceiptAdjustService adjustService;
     private final PurchaseReturnService returnService;
     private final PurchaseListRepository listQuery;
     private final PurchaseDetailMapper mapper;
     private final AuditLogger audit;
 
-    public PurchaseManageService(PurchaseReceiptService receiptService, PurchaseReturnService returnService,
-                                 PurchaseListRepository listQuery, PurchaseDetailMapper mapper, AuditLogger audit) {
+    public PurchaseManageService(PurchaseReceiptService receiptService, PurchaseReceiptAdjustService adjustService,
+                                 PurchaseReturnService returnService, PurchaseListRepository listQuery,
+                                 PurchaseDetailMapper mapper, AuditLogger audit) {
         this.receiptService = receiptService;
+        this.adjustService = adjustService;
         this.returnService = returnService;
         this.listQuery = listQuery;
         this.mapper = mapper;
@@ -50,6 +53,20 @@ public class PurchaseManageService {
     /** id null = tạo mới. */
     public ReceiptResponse saveReceipt(UUID id, ReceiptRequest req, boolean complete, Actor actor) {
         return logReceipt(actor, mapper.receipt(receiptService.save(id, req, complete, actor)), complete);
+    }
+
+    /** Sửa phiếu đã nhập (Mở phiếu → Lưu): ghi lại kho / giá vốn / công nợ NCC. */
+    public ReceiptResponse adjustReceipt(UUID id, ReceiptRequest req, Actor actor) {
+        ReceiptResponse before = mapper.receipt(receiptService.find(id).getId());
+        ReceiptResponse r = mapper.receipt(adjustService.adjust(id, req, actor));
+        log(actor, r.branchId(), "Nhập hàng", "Sửa", r.code(), "Sửa phiếu đã nhập " + r.code() + ", NCC "
+                + (r.supplierName() == null ? "(không có)" : r.supplierName()) + ", cần trả NCC " + money(before.total())
+                + " → " + money(r.total()));
+        return r;
+    }
+
+    public java.util.List<PurchaseDtos.ReturnableLine> returnable(UUID receiptId) {
+        return returnService.returnable(receiptId);
     }
 
     public ReceiptResponse updateReceiptInfo(UUID id, ReceiptInfoRequest req, Actor actor) {
