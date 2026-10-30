@@ -212,6 +212,7 @@ Nguồn: `PS/product/ProductController.java:37-115`, `PS/internal/InternalProduc
 | OPENING | + | tồn đầu khi tạo hàng | có |
 | PURCHASE | + | hoàn thành phiếu nhập | có |
 | PURCHASE_CANCEL | − | hủy phiếu nhập đã hoàn thành | có |
+| PURCHASE_ADJUST | ± | sửa phiếu nhập đã hoàn thành ("Mở phiếu" → Lưu, mục 1.9): +SL mới theo giá vốn mới, −SL cũ theo giá vốn cũ | có |
 | PURCHASE_RETURN | − | hoàn thành trả hàng nhập | có |
 | PURCHASE_RETURN_CANCEL | + | hủy trả hàng nhập đã hoàn thành | có |
 | SALE | − | sales-service: SALE / SALE_REPLACE / SALE_MERGE | không |
