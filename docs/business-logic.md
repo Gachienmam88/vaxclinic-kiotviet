@@ -3156,14 +3156,22 @@ Quy ước chung (đọc từ code):
 
 | API | Quyền | Nguồn |
 |---|---|---|
-| GET `/api/input-invoices` (from,to,q,buyerTaxCode,seller,receiptStatus,page,size) | `inventory.view` | `IS/inputinvoice/InputInvoiceController.java:27,36-42` |
-| GET `/api/input-invoices/{id}`, `/buyer-tax-codes` | `inventory.view` | :44-52 |
-| POST `/api/input-invoices/import` (multipart `files`) | `inventory.manage` | :55-59 |
-| PATCH `/api/input-invoices/{id}/receipt` | `inventory.manage` | :62-66 |
-| GET/POST/PUT/DELETE `/api/tax-connections[/{id}]` | `inventory.manage` | `TaxConnectionController.java:29,46-67` |
-| POST `/api/tax-connections/{id}/captcha`, `/sync` | `inventory.manage` | :69-77 |
+| GET `/api/input-invoices` (from,to,q,buyerTaxCode,seller,sellerTaxCode,natures[],receiptStatus,page,size) | `inventory.view` | `IS/inputinvoice/InputInvoiceController.java` |
+| GET `/api/input-invoices/export` (cùng bộ lọc, không phân trang, ≤ 5.000) | `inventory.view` | |
+| GET `/api/input-invoices/{id}` (+ `details`, `totalInWords`), `/buyer-tax-codes`, `/sellers` | `inventory.view` | |
+| POST `/api/input-invoices/import` (multipart `files`) | `inventory.manage` | |
+| PATCH `/api/input-invoices/{id}/link` `{type, id, code}` | `inventory.manage` hoặc `cashbook.manage` | |
+| PATCH `/api/input-invoices/{id}/receipt` (client cũ = link RECEIPT) | `inventory.manage` | |
+| DELETE `/api/input-invoices/links/{docId}` (chứng từ đã hủy → bỏ liên kết) | `inventory.manage` hoặc `cashbook.manage` | |
+| GET `/api/input-invoices/item-mappings?sellerTaxCode=`; PUT `/item-mappings` | `inventory.view`; `inventory.manage` | |
+| GET/POST/PUT/DELETE `/api/tax-connections[/{id}]` | `inventory.manage` | `TaxConnectionController.java` |
+| POST `/api/tax-connections/{id}/captcha`, `/sync`; GET `/api/tax-connections/sync-logs?limit=` | `inventory.manage` | |
 
-2. **Dữ liệu**: `tax_connections` (tax_code UNIQUE, username, password_enc, active, last_synced_at, last_error); `input_invoices` UNIQUE `(seller_tax_code, template_no, series, number)`, nature `ORIGINAL|REPLACE|ADJUST`, source `PORTAL|XML`, `lines` JSON, `receipt_id/receipt_code` (`V1__init_integration_schema.sql:2-35`).
+2. **Dữ liệu** (`V1__init_integration_schema.sql:2-35`, `IS-res/db/migration/V4__input_invoice_links_mappings_sync_logs.sql`):
+   - `tax_connections` (tax_code UNIQUE, username, password_enc, active, last_synced_at, last_error);
+   - `input_invoices` UNIQUE `(seller_tax_code, template_no, series, number)`, nature `ORIGINAL|REPLACE|ADJUST`, source `PORTAL|XML`, `lines` JSON (thêm `nature` = TChat, `other` = TTKhac), `details` JSON (tên loại HĐ, mã CQT, hình thức thanh toán, SĐT / STK / mã + tên cửa hàng người bán, tên / họ tên người mua hàng / địa chỉ / SĐT / mã ĐVQHNS / hộ chiếu / CCCD / STK người mua, DVKy / NVKy, tổng theo thuế suất), `link_type` `RECEIPT|SUPPLIER_PAYMENT|CASH_VOUCHER` + `link_id` + `link_code` (V4 đổi tên từ `receipt_id/receipt_code`, dữ liệu cũ → RECEIPT);
+   - `input_invoice_item_mappings` PK `(seller_tax_code, item_key)`, `item_key` = tên + "|" + ĐVT (chữ thường, gộp khoảng trắng) → `product_id`, `unit_id`;
+   - `input_invoice_sync_logs`: MST, kết nối, từ–đến, `SUCCESS|FAILED`, tìm thấy / thêm mới, lỗi, người chạy, thời điểm.
 3. **Quy tắc**
    - Kết nối: tạo bắt buộc mật khẩu (400 `PASSWORD_REQUIRED`); MST trùng → 409 `TAX_CONNECTION_EXISTS`; sửa để trống mật khẩu = giữ; không thấy → 404 (`IS/inputinvoice/TaxConnectionService.java:41-60`). Xóa không báo 404 (:62-64).
    - Đồng bộ 2 bước: (1) POST captcha → GET `<GDT_PORTAL_URL>/captcha` trả `{key, svg}`; (2) sync gửi `captchaKey, captchaValue, from, to` (`TaxConnectionController.java:32-38`, `GdtPortalClient.java:44-47`). Người dùng tự nhập captcha (:27).
