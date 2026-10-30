@@ -498,18 +498,15 @@ Nguồn: `PS/purchase/PurchaseController.java:35-102`.
     - hủy phiếu `PC{mã}`; phân bổ của các phiếu chi khác thành "chưa phân bổ"; `paid_amount` trừ phần đó (`PS/purchase/SupplierDebtService.java:134-144`);
     - outbox `CANCEL` nếu còn `paid > 0`.
 - Lịch sử thao tác chức năng "Nhập hàng": Lưu tạm / Nhập kho / Sửa / Hủy (`PS/purchase/PurchaseManageService.java:51-108`).
-- **FE** (`FE/features/purchases/purchase-editor.tsx:43-70`, `FE/features/purchases/purchase-editor-panel.tsx:22,60-104`, `FE/features/purchases/purchase-editor-state.ts:131-142`):
-  - VAT chọn: không VAT / 0 / 5 / 8 / 10%;
-  - phương thức trả chỉ Tiền mặt / Chuyển khoản (hiện khi `paid > 0`);
-  - "Tính vào công nợ" = `max(total − paid, 0)`;
-  - hoàn thành mà hàng lô thiếu lô / HSD → chặn;
-  - sao chép: bỏ id / mã, ngày = now, xóa số HĐ, tiền trả, ghi chú;
-  - ô chọn NCC chỉ NCC đang hoạt động (`FE/features/purchases/purchase-queries.ts:78-84`);
-  - ô tìm hàng: hàng đang kinh doanh, 10 kết quả, phím F3 (`FE/features/purchases/search-pickers.tsx:23-30`).
-- **Lập từ hóa đơn đầu vào** (`FE/features/integrations/receipt-from-input-invoice.ts:6-26`, `FE/features/purchases/purchase-editor.tsx:52-56`):
-  - tìm NCC theo MST người bán; chưa có → `POST /api/suppliers` tạo mới;
-  - điền số HĐ, VAT đoán từ HĐ, ghi chú "Lập từ hóa đơn đầu vào …"; dòng hàng do người dùng tự chọn;
-  - lưu xong `PATCH /input-invoices/{id}/receipt` (integration-service) gắn mã phiếu; lỗi chỉ báo toast, không rollback phiếu.
+- **FE màn nhập hàng** (`FE/features/purchases/purchase-editor.tsx`, `purchase-editor-panel.tsx`, `purchase-line-table.tsx`, `purchase-editor-toolbar.tsx`, `purchase-editor-options.ts`, `purchase-editor-shortcuts.ts`):
+  - cột: STT, Mã hàng (link), Tên hàng + "Ghi chú… ✎", ĐVT, Số lượng, Đơn giá, Giảm giá, VAT (%) (KCT / 0 / 5 / 8 / 10%), Giá nhập (có VAT), Thành tiền, 🗑;
+  - thanh công cụ: công tắc VAT theo dòng ↔ nhập tay tổng VAT; Cài đặt in ("Tự động in khi phiếu hoàn thành" + số liên 1–5, lưu localStorage, in bằng mẫu `PURCHASE_RECEIPT` / `PURCHASE_RETURN`); "Tùy chọn hiển thị": tab Hiển thị (ẩn / hiện Mã hàng, ĐVT, Giảm giá, VAT, Giá có VAT, Thành tiền), tab Khác (Thiết lập giá = nhãn giá trên dòng → `/products/price-books?code=`, Chỉnh sửa thành tiền = sửa thành tiền thì tính lại đơn giá, Giảm giá VND / %, Mặc định trả nhà cung cấp = tiền trả theo cần trả tới khi tự sửa); phím tắt F3 tìm hàng, F4 tìm NCC, F8 ô tiền trả, F9 Hoàn thành (Lưu khi sửa phiếu đã nhập), ↑ / ↓ tăng / giảm SL, Enter / Shift xuống / lên ô SL. Không làm: Thêm dòng, Chọn nhiều hàng hóa, Giá nhập là giá vốn, Xem hàng cùng loại, Tự động điền SL theo phiếu đặt, F2 / F6 / F10 / Home;
+  - cột phải: người nhập + thời gian, NCC (chip; bấm mở "Sửa nhà cung cấp" có tab Thông tin / Dư nợ; × để chọn NCC khác), "Nợ: x", mã phiếu ("Mã phiếu tự động"), trạng thái, số HĐ đầu vào (×), Tổng tiền hàng (badge SL), Giảm giá, VAT nhập hàng (tự tính ở chế độ dòng, nhập tay ở chế độ tổng), Cần trả NCC, Tiền trả NCC (F8) + hình thức (bấm đổi Tiền mặt / Chuyển khoản), "Tính vào công nợ" = `paid − total` (âm như KiotViet), ghi chú, Lưu tạm / Hoàn thành;
+  - phiếu tạm đã lập phiếu chi: hiện "Đã trả nhà cung cấp" (khóa) và "Cần trả nhà cung cấp" = total − đã trả; phiếu đã nhập mở lại: chỉ nút Lưu, tiền trả xám, số HĐ đầu vào chỉ đọc, không thêm / xóa dòng;
+  - lưu xong mở danh sách lọc đúng mã (`?code=`);
+  - hoàn thành mà hàng lô thiếu lô / HSD → chặn; sao chép: bỏ id / mã, ngày = now, xóa số HĐ, tiền trả, ghi chú;
+  - ô chọn NCC chỉ NCC đang hoạt động; ô tìm hàng "Tìm hàng hóa theo mã hoặc tên (F3)": tên / tên viết tắt chứa (không dấu) hoặc mã / mã vạch chứa, hàng đang kinh doanh, 10 kết quả.
+- **Lập từ hóa đơn đầu vào** (5.4): màn xác nhận lưu bản nháp vào sessionStorage `input-invoice-receipt:{id}` rồi mở `?source=inputInvoice&id=`; mất bản nháp (mở tab mới) → dựng lại từ hóa đơn + ánh xạ đã nhớ (dòng chưa ánh xạ bị bỏ) + NCC khớp MST (`FE/features/integrations/input-invoice-receipt-draft.ts`). Điền NCC, số HĐ, ghi chú "Lập từ hóa đơn đầu vào …", dòng đã ánh xạ với SL / đơn giá / giảm giá (= chiết khấu dòng / SL) / VAT% theo hóa đơn. Lưu (tạm hoặc hoàn thành) xong `PATCH /input-invoices/{id}/link {type: RECEIPT}`; lỗi chỉ báo toast, không rollback phiếu. Hủy phiếu nhập → `DELETE /input-invoices/links/{id}` (hóa đơn về "Chưa lập phiếu").
 
 **4. Danh sách**
 - Lọc (`FE/features/purchases/purchase-filter-sidebar.tsx:27-77`, `PS/purchase/PurchaseListRepository.java:33-106`):
