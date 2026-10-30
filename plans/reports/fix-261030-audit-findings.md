@@ -1,6 +1,6 @@
 # Fix audit findings: report (261030)
 
-**Status: DONE_WITH_CONCERNS.** All 13 findings are fixed and committed on `feature/phase-01-foundation` (not pushed). The final full e2e run was cut short when Claude Code stopped it for low system memory; per its instruction it was not restarted (see Tests).
+**Status: DONE.** All 13 findings plus the 3 approved follow-ups are fixed and committed on `feature/phase-01-foundation` (not pushed). The full e2e/smoke run is complete and green (see Tests).
 
 E2E scripts live in `C:\Users\chipc\AppData\Local\Temp\claude\C--Users-chipc-Desktop-kiot-viet-clone\a238b785-acf8-44ef-bf0d-f8ed0a62f4a4\scratchpad\`, as `e2e_audit_*.py` plus the shared cleanup helper `e2e_audit_kit.py`. Each script cleans up only its own rows and ends with "remaining test rows = 0".
 
@@ -31,15 +31,30 @@ Other commits:
 ## Tests
 
 - **Per item:** each audit e2e above passed after its fix. Regressions also passed: login_flow, offline_sync, purchasing 21/21, inventory_docs 50/50, suppliers 59/59, sales 22/22, invoice_tools 27/27, delivery 71/71, orders_groups 34/34, hr 85/85, reports 39/39, smoke_product 63/63, smoke_sales 49/49.
-- **Final full run:** stopped by the system at script 14 of ~50 (during the Playwright security e2e). Results so far:
-  - 13/13 passed: e2e_2fa_reset, then e2e_audit_backdate through e2e_audit_roles alphabetically.
-  - e2e_audit_security had passed 9/9 just before the run.
-  - Not re-run, per the stop instruction. Re-run with `python -X utf8 run_all_e2e.py <repo>` from the scratchpad when memory allows.
+- **Full run (after the coordinator's DB cleanup):** every `e2e_*.py` / `smoke_*.py` ran one at a time. All passed, including e2e_products 16/16 now that the DB is clean. Per-script results are in scratchpad `full_run.txt`.
+  - `e2e_reports_checks.py` and `e2e_reports_supplier_discount.py` exit with NameError when run alone. They are exec'd by `e2e_reports.py` (39/39), not standalone suites.
+- **Incidents during the run:**
+  - `e2e_audit_security` failed once on a terms-of-use dialog: the clean DB has admin terms un-accepted. Fixed by having the test accept the terms temporarily and restore them; then 9/9.
+  - My batch timeout killed `e2e_store_profile` mid-run, which left admin 2FA on and the store settings changed. I restored them by hand from `backups/261030-before-selective-test-cleanup`, then re-ran it in full: 66/66, settings restored.
 - **Test updates:** these changed because the spec changed, not to weaken them:
   - e2e_reports E25 and F3: an out-of-scope branch now gives 403.
   - e2e_reports E9 and E18: the fee is now separate from net revenue.
   - smoke_product: added the `productCount` key.
-- **Not my regression:** e2e_products assumes an empty DB (expects codes SP000001…), so it fails on the current demo data.
+- e2e_products (expects an empty DB, codes from SP000001) failed on the old dirty data; after the coordinator's cleanup it passes 16/16.
+
+## Approved follow-ups
+
+| Follow-up | Commit | What changed | E2E |
+|---|---|---|---|
+| Published e-invoice blocks tax-code edits | 6a9291e | `SalesRules.checkEInvoiceNeverPublished`: PATCH /tax-codes always → 400 `EINVOICE_PUBLISHED` when the e-invoice is published, regardless of the setting. Edit/cancel still follow the setting. | taxcode_einvoice 2/2 |
+| paymentDiscount branch-scoped | fe93a23 | `customer_debt_ledger.branch_id` (sales `V23`, NOT NULL, indexed). Backfill order: source doc (invoice / return / voucher / order / shipment), then customer branch, then CN001. Dev backfill: 49/49 rows came from the source doc; 0 used the customer or default branch. `DebtLedger.post` now takes the branch at every call site. The finance report filters paymentDiscount by branch. | debt_branch 2/2 |
+| Login lockout by real client IP | d019622 | Identity `ClientIpResolver` uses the first XFF entry only from a loopback/private peer, otherwise the TCP address (same rule as the gateway). The gateway overwrites XFF for untrusted peers. Unit tests added; the old "last entry" test was updated to the approved rule. | login_ip 2/2 (5 bad logins from A lock A, not B), hardening 25/25 |
+
+| Customer-debt writes branch-scoped | 3f2a93f | `DebtService.checkBranchScope`: payment / discount use the request `branchId`; adjustment uses the customer's branch (null → CN001). Outside the JWT branches → 403 `BRANCH_FORBIDDEN` (payment used to return 400 BRANCH_NOT_ALLOWED; discount and adjustment were unchecked). | debt_write_scope 2/2, e2e_sales 22/22, debt_branch 2/2 |
+
+Also:
+- `e2e_sales.py` now tags its data and deletes it at exit. It creates a category itself when none exists.
+- The remaining Typhim / Thorman rows are SP000020 / NCC000005, which the coordinator kept.
 
 ## Decisions
 
@@ -55,6 +70,5 @@ Other commits:
 
 ## Unresolved questions
 
-- Should a published e-invoice always block tax-code edits, regardless of the setting?
-- Should `paymentDiscount` in the finance report also be branch-scoped? The customer debt ledger has no branch.
-- Gateway → BFF: should the identity login limiter key by the forwarded client IP? Today it sees the gateway-appended BFF IP.
+- (Answered and done: the 3 follow-ups above.)
+- (Answered and done: customer-debt writes are now branch-scoped — see below.)
