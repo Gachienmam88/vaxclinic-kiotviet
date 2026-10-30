@@ -59,9 +59,8 @@ Viết tắt đường dẫn trích dẫn:
 |---|---|---|
 | `FE/features/accounting/tax-calc.ts:97-102` | Thiết lập giá, kiểm kho, xuất hủy/nội bộ, nhập hàng, trả hàng nhập | Có, chỉ với giá trị kiểu chuỗi (thêm `'`) |
 | `FE/features/sales/customer-csv-export.tsx:13` | danh sách NCC, sổ nợ NCC, lịch sử nhập/trả NCC, file mẫu import NCC | **Không** (chỉ bọc ngoặc kép) |
-| `FE/features/sales/invoice-list-pager.tsx:41` | hóa đơn đầu vào | **Không** |
 
-  Tất cả UTF-8 có BOM.
+  Tất cả UTF-8 có BOM. Hóa đơn đầu vào xuất **xlsx** (mọi dòng khớp lọc, `FE/features/integrations/input-invoice-export.ts`), không còn CSV.
 
 ---
 
