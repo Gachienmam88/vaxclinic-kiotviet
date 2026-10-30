@@ -786,7 +786,9 @@ Nguồn: `PS/purchase/SupplierController.java:33-107`, `PS/purchase/SupplierGrou
 - ~~"Dự kiến hết hàng" lọc `doc_type in ('SALE','RETURN')`~~ — đã sửa (audit #6): dùng `SALE`, `SALE_CANCEL`, `SALE_RETURN`, `SALE_RETURN_CANCEL_OUT` (mục 1.1).
 - FE phiếu nhập chỉ có CASH / TRANSFER; backend nhận `payment_method` tự do ≤20 ký tự.
 - Payment / discount / adjust NCC trên FE luôn lấy chi nhánh đầu tiên của user.
-- CSV danh sách NCC, sổ nợ NCC và hóa đơn đầu vào không chặn công thức Excel.
+- CSV danh sách NCC và sổ nợ NCC không chặn công thức Excel.
+- Trả hàng nhập theo phiếu nhập có VAT nhập tay (MANUAL): dòng trả mặc định không có VAT% (người dùng tự chọn).
+- Sửa phiếu đã nhập: không thêm / bớt dòng, không đổi lô / đơn vị; phiếu đã có phiếu trả chưa hủy không sửa được.
 - `LocalDate.now()` (múi giờ JVM) dùng để xét lô hết hạn khi bán, trong khi job cảnh báo dùng giờ VN (`PS/internal/InternalStockService.java:148,231` và `PS/notification/StockAlertJob.java:55`).
 
 **Câu hỏi chưa giải quyết**
