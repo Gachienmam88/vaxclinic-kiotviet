@@ -456,18 +456,33 @@ Nguồn: `PS/purchase/PurchaseController.java:35-102`.
   - khi hoàn thành: phiếu rỗng → `RECEIPT_EMPTY`; hàng lô thiếu số lô hoặc HSD → `LOT_REQUIRED` "… nhập số lô và hạn sử dụng";
   - hàng không theo lô thì bỏ lô / HSD;
   - `paid` làm tròn đồng; `paid > total` → 400 `PAID_TOO_MUCH`.
-- **Công thức tiền** (VNĐ, HALF_UP) (`PS/purchase/PurchaseMath.java:7-66`):
+- **VAT theo dòng / nhập tay** (`PS/purchase/PurchaseMath.java`, `PS/purchase/PurchaseReceiptLines.java`):
+  - request `vatMode`: `null` = client cũ → mọi dòng nhận `vatRate` của phiếu; `LINE` → VAT% từng dòng (`lines[].vatRate`, null = KCT, 0–100); `MANUAL` → dòng không mang VAT%, VAT phiếu = `vatAmount` nhập tay (≥0, làm tròn đồng).
+- **Công thức tiền** (VNĐ, HALF_UP) (`PS/purchase/PurchaseMath.java`):
   - thành tiền dòng = SL × (đơn giá − giảm/đv);
   - `subtotal = round(Σ thành tiền dòng)`; giảm giá phiếu `= round(min(discount, subtotal))`;
-  - `VAT = Σ_dòng round(thành tiền × (1 − giảm phiếu / Σ thô) × VAT%)`, tức làm tròn **từng dòng** rồi cộng;
+  - LINE: `VAT = Σ_dòng round(thành tiền × (1 − giảm phiếu / Σ thô) × VAT% của dòng)`, làm tròn **từng dòng** rồi cộng (VD 5% 292,770 + 10% 68,571 = 361,341); MANUAL: `VAT = vatAmount`;
   - `total = subtotal − giảm phiếu + VAT`.
-  - FE có bản sao để tạm tính (`FE/features/purchases/purchase-math.ts:63-75`).
-- **Giá vốn mỗi dòng** (/đơn vị cơ bản, 4 lẻ) = `(đơn giá − giảm/đv) × (1 − giảm phiếu / subtotal) × (1 + VAT%) / quy đổi`, tức **gồm VAT** vì đơn vị không khấu trừ VAT đầu vào (`PS/purchase/PurchaseMath.java:16-19,50-62`).
-- **Hoàn thành** (`PS/purchase/PurchaseReceiptService.java:194-206`):
+  - FE có bản sao để tạm tính (`FE/features/purchases/purchase-math.ts`).
+- **Giá vốn mỗi dòng** (/đơn vị cơ bản, 4 lẻ) = `(đơn giá − giảm/đv) × (1 − giảm phiếu / subtotal) × (1 + tỷ lệ VAT) / quy đổi`, tức **gồm VAT** vì đơn vị không khấu trừ VAT đầu vào — giữ nguyên quy tắc cũ. Tỷ lệ VAT: LINE = VAT% của dòng / 100; MANUAL = `vat_amount / (subtotal − giảm phiếu)` (VAT nhập tay chia đều theo tiền hàng) (`PurchaseMath.vatRatio`).
+- "Giá nhập có VAT" trên chi tiết = `(đơn giá − giảm) × (1 + tỷ lệ VAT của dòng)`, 2 lẻ (không phân bổ giảm giá phiếu). Khối tổng: mọi dòng cùng 1 mức → "VAT x%"; lẫn mức / nhập tay → "VAT" + số tiền.
+- **Lưu tạm có tiền trả NCC** (`PS/purchase/PurchaseReceiptService.java`): FE hỏi "Bạn có muốn lưu phiếu chi cho nhà cung cấp không?":
+  - Có (`payNow=true`): lập ngay phiếu chi `PC{mã PN}` (outbox Sổ quỹ + chứng từ PAYMENT công nợ NCC phân bổ vào phiếu tạm), `payment_posted = true`, kiểm khóa sổ theo ngày phiếu; kho / giá vốn **không đổi**. Nợ NCC giảm ngay (sổ nợ chỉ cộng `+total` khi phiếu COMPLETED → nợ có thể âm = trả trước).
+  - Không: tiền trả chỉ lưu trên phiếu tạm, phiếu chi lập lúc Hoàn thành.
+  - Phiếu tạm đã lập phiếu chi: tiền trả + hình thức trả **khóa** (lưu lại giữ số cũ), không đổi chi nhánh, không bỏ / thêm NCC (`SUPPLIER_LOCKED_PAID`; đổi sang NCC khác được — phiếu chi đi theo); đổi ngày → phiếu chi đổi ngày; tổng < đã trả → `PAID_TOO_MUCH`. Hủy phiếu tạm → hủy phiếu chi (kiểm chi nhánh + khóa sổ).
+- **Hoàn thành** (`PS/purchase/PurchaseReceiptService.java` `complete`):
   - mỗi dòng ghi `PURCHASE` +SL cơ bản (tạo lô nếu cần), đơn giá = giá vốn dòng, partner = tên NCC; tính lại bình quân;
   - status `COMPLETED`;
-  - **Sổ quỹ**: nếu `paid > 0` → outbox `CREATE` phiếu chi `PC{mã PN}` (xem 1.12), kể cả khi phiếu **không có NCC** (`PS/internal/CashflowOutbox.java:45-70`);
-  - **Công nợ NCC**: nếu có NCC và `paid > 0` → tạo chứng từ PAYMENT `PC{mã PN}` + phân bổ đúng phiếu này (`PS/purchase/SupplierDebtService.java:121-132`, `PS/purchase/SupplierDebtRepository.java:40-49`).
+  - **Sổ quỹ**: nếu `paid > 0` và chưa `payment_posted` → outbox `CREATE` phiếu chi `PC{mã PN}` (xem 1.12), kể cả khi phiếu **không có NCC** (`PS/internal/CashflowOutbox.java`); đã lập lúc Lưu tạm → **không lập lần 2**;
+  - **Công nợ NCC**: nếu có NCC và `paid > 0` (chưa lập) → chứng từ PAYMENT `PC{mã PN}` + phân bổ đúng phiếu này; phần chưa trả = `total − paid` nằm trong sổ nợ (`+total` phiếu − PAYMENT).
+- **Sửa phiếu ĐÃ NHẬP** — "Mở phiếu" → Lưu, `PUT /{id}/adjust` (`PS/purchase/PurchaseReceiptAdjustService.java`):
+  - chỉ COMPLETED (`RECEIPT_NOT_COMPLETED`); còn phiếu trả chưa hủy → `RECEIPT_HAS_RETURNS`; kiểm chi nhánh + khóa sổ ngày cũ và ngày mới;
+  - sửa được: NCC (đổi NCC khác; đã trả tiền thì không bỏ / thêm NCC), giảm giá, VAT (chế độ + VAT% dòng / VAT nhập tay), ghi chú, người nhập, ngày nhập, SL / đơn giá / giảm giá / VAT% / ghi chú từng dòng; **không** thêm / bớt dòng (`ADJUST_LINES_MISMATCH`, dòng phải gửi đúng `id`), không đổi hàng / đơn vị / lô; số HĐ đầu vào giữ nguyên; tiền trả khóa;
+  - tổng cộng mới < Σ đã thanh toán + chiết khấu phân bổ vào phiếu → `ADJUST_BELOW_PAID`;
+  - kho: đổi ngày → `stock.redate`; mỗi dòng giá vốn không đổi mà SL đổi → 1 dòng thẻ kho `PURCHASE_ADJUST` chênh lệch; giá vốn đổi → `PURCHASE_ADJUST` +SL mới theo giá mới rồi −SL cũ theo giá cũ (cùng ngày phiếu, lùi ngày được; tồn sau giao dịch tính lại) → bình quân = (giá trị tồn + giá trị mới − giá trị cũ) / tồn sau; không đủ tồn để bớt → `INSUFFICIENT_STOCK`;
+  - công nợ: sổ nợ đọc `total` của phiếu nên tự đổi; đổi NCC → chứng từ `PC{mã}` chuyển sang NCC mới, phân bổ của phiếu chi / chiết khấu khác (của NCC cũ) thành "chưa phân bổ" (`paid_amount` trừ phần đó) (`SupplierDebtService.receiptSupplierChanged`);
+  - Sổ quỹ: số tiền không đổi; outbox `UPDATE` ngày / người / người nhận (Sổ quỹ đổi `partner*` khi payload có `partnerId`, `SS/cashbook/CashbookService.java` `inbound`);
+  - lịch sử thao tác "Nhập hàng – Sửa" ghi cần trả cũ → mới.
 - **Sửa thông tin** `PATCH /info` (không đụng hàng / tiền) (`PS/purchase/PurchaseReceiptService.java:82-104`):
   - phiếu hủy → 400 `RECEIPT_CANCELLED`;
   - phiếu COMPLETED kiểm khóa sổ cả ngày cũ lẫn ngày mới;
