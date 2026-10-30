@@ -537,8 +537,8 @@ Nguồn: `PS/purchase/PurchaseController.java:35-102`.
 
 **2. Dữ liệu**
 - Mã `THN%06d`, sequence `purchase_return_code_seq` (`PS/purchase/PurchaseReturnService.java:99-106`).
-- `purchase_returns`: `receipt_id` (NULL = trả nhanh), `returned_at`, `returner_id/name`, `subtotal`, `discount`, `vat_rate`, `vat_amount`, `total` (= NCC cần trả lại), `refund_amount` (= NCC đã trả lại).
-- Dòng: `unit_price` = giá trả chưa VAT, lô; không có giảm giá dòng (`MIG/V2__purchasing_schema.sql:72-109`).
+- `purchase_returns`: `receipt_id` (NULL = trả nhanh), `returned_at`, `returner_id/name`, `subtotal`, `discount`, `vat_mode` `LINE|MANUAL`, `vat_rate` (mức chung, như phiếu nhập), `vat_amount` (= VAT hoàn lại), `total` (= NCC cần trả lại), `refund_amount` (= NCC đã trả lại), `payment_method` (CASH / TRANSFER của tiền NCC hoàn; NULL = tiền mặt).
+- Dòng: `unit_price` = giá trả chưa VAT, `vat_rate` (VAT% dòng), `note`, lô; không có giảm giá dòng (`MIG/V2__purchasing_schema.sql:72-109`, `MIG/V12`).
 
 **3. Quy tắc**
 - Validation: như 1.9; `refundAmount` ≥0 (`PS/purchase/PurchaseDtos.java:72-82`).
