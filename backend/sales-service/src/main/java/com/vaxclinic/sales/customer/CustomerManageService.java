@@ -82,7 +82,7 @@ public class CustomerManageService {
     }
 
     public Map<String, String> adjust(UUID id, DebtService.AdjustRequest req, Actor actor) {
-        String code = debt.adjust(id, req);
+        String code = debt.adjust(id, req, actor);
         actor.audit(audit, null, "Khách hàng", "Điều chỉnh nợ", code,
                 "Điều chỉnh công nợ khách " + service.find(id).getName() + " thành " + Actor.money(req.newDebt()));
         return Map.of("code", code);

@@ -60,9 +60,19 @@ public class DebtService {
         this.entries = entries;
     }
 
+    /**
+     * Ghi sổ nợ khách (thu nợ, chiết khấu, điều chỉnh) chỉ tại chi nhánh người dùng được gán (phạm vi chi nhánh audit #2):
+     * ngoài phạm vi → 403 BRANCH_FORBIDDEN.
+     */
+    private static void checkBranchScope(Actor actor, UUID branchId) {
+        // null (khách cũ không có chi nhánh) = chi nhánh mặc định CN001, như khi ghi sổ (DebtLedgerRepository.insert)
+        UUID branch = branchId != null ? branchId : UUID.fromString("00000000-0000-0000-0000-000000000001");
+        com.vaxclinic.common.security.BranchScope.resolve(actor.branchIds(), List.of(branch));
+    }
+
     @Transactional
     public String pay(UUID customerId, PaymentRequest req, Actor actor) {
-        actor.checkBranch(req.branchId());
+        checkBranchScope(actor, req.branchId());
         Customer c = customer(customerId);
         Instant at = req.occurredAt() == null ? Instant.now() : req.occurredAt();
         rules.checkNotLocked(req.branchId(), at);
@@ -91,6 +101,7 @@ public class DebtService {
 
     @Transactional
     public String discount(UUID customerId, PaymentRequest req, Actor actor) {
+        checkBranchScope(actor, req.branchId());
         Customer c = customer(customerId);
         Instant at = req.occurredAt() == null ? Instant.now() : req.occurredAt();
         String code = "CKTT%06d".formatted(entries.nextDiscountNumber());
@@ -105,8 +116,11 @@ public class DebtService {
     }
 
     @Transactional
-    public String adjust(UUID customerId, AdjustRequest req) {
-        Customer c = customers.findForUpdate(customerId).orElseThrow();
+    /** Điều chỉnh nợ không chọn chi nhánh: ghi theo chi nhánh tạo khách → người dùng phải được gán chi nhánh đó. */
+    public String adjust(UUID customerId, AdjustRequest req, Actor actor) {
+        Customer c = customers.findForUpdate(customerId)
+                .orElseThrow(() -> BusinessException.notFound("CUSTOMER_NOT_FOUND", "Không tìm thấy khách hàng"));
+        checkBranchScope(actor, c.getBranchId());
         String code = "DC%06d".formatted(entries.nextAdjustNumber());
         ledger.post(c.getId(), null, DebtLedger.DocType.ADJUST, null, code, req.newDebt().subtract(c.getDebt()), req.note(),
                 req.occurredAt() == null ? Instant.now() : req.occurredAt());

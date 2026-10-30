@@ -1809,6 +1809,7 @@ Quy tắc dùng chung:
 - Đọc sổ: mới nhất trước (`occurred_at desc, balance_after`), **tối đa 200 dòng** (`BE/customer/CustomerDebtRepository.java:26-28`).
 
 **3. Quy tắc**
+- **Phạm vi chi nhánh khi ghi sổ nợ** (follow-up audit #2, `DebtService.checkBranchScope`): thu nợ và chiết khấu theo `branchId` của request, điều chỉnh nợ theo chi nhánh tạo khách (null → CN001) — chi nhánh không thuộc claim `branches` → **403 `BRANCH_FORBIDDEN`** (trước đây thu nợ trả 400 `BRANCH_NOT_ALLOWED`, chiết khấu / điều chỉnh không kiểm).
 - **Thanh toán nợ** (`DebtService.pay`, `DebtService.java:63-90`):
   - Request: `branchId` bắt buộc, `amount ≥ 1` ("Số tiền phải lớn hơn 0"), `occurredAt` null thì lấy now (`DebtService.java:34-38,67`).
   - Kiểm tra chi nhánh và khóa sổ theo `occurredAt` (`DebtService.java:65,68`).
