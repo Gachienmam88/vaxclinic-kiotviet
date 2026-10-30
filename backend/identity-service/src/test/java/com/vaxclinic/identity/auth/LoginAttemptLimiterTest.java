@@ -100,12 +100,15 @@ class LoginAttemptLimiterTest {
         assertThat(limiter.size()).isZero();
     }
 
+    /** Quy tắc tin cậy như gateway: bên gọi nội bộ → phần tử đầu X-Forwarded-For (IP trình duyệt do BFF ghi); bên ngoài → địa chỉ TCP. */
     @Test
-    void clientIpIsLastForwardedEntryAddedByGateway() {
+    void clientIpIsFirstForwardedEntryOnlyFromTrustedPeer() {
         var req = new MockHttpServletRequest();
         req.setRemoteAddr("127.0.0.1");
         assertThat(ClientIpResolver.resolve(req)).isEqualTo("127.0.0.1");
         req.addHeader("X-Forwarded-For", "6.6.6.6, 10.0.0.5");
-        assertThat(ClientIpResolver.resolve(req)).isEqualTo("10.0.0.5");
+        assertThat(ClientIpResolver.resolve(req)).isEqualTo("6.6.6.6");
+        req.setRemoteAddr("198.51.100.9");
+        assertThat(ClientIpResolver.resolve(req)).isEqualTo("198.51.100.9");
     }
 }

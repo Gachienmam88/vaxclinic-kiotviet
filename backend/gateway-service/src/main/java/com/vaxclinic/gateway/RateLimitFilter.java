@@ -64,9 +64,13 @@ public class RateLimitFilter implements GlobalFilter, Ordered {
                 ? exchange.getPrincipal().map(p -> p instanceof JwtAuthenticationToken t ? "u:" + t.getName() : "ip:" + clientIp(req))
                     .defaultIfEmpty("ip:" + clientIp(req))
                 : Mono.just("ip:" + clientIp(req));
+        // Request tới từ ngoài (không qua BFF / mạng nội bộ): X-Forwarded-For do client tự gửi → ghi đè bằng địa chỉ TCP, để
+        // service phía sau (identity: giới hạn đăng nhập sai) chỉ thấy IP thật. Gateway tự nối thêm IP bên gọi khi chuyển tiếp.
+        ServerWebExchange forwarded = trusted(req) ? exchange
+                : exchange.mutate().request(req.mutate().headers(h -> h.set("X-Forwarded-For", clientIp(req))).build()).build();
         return key.flatMap(k -> {
             long waitSeconds = take(group + "|" + k, limitOf(group));
-            return waitSeconds == 0 ? chain.filter(exchange) : reject(exchange, waitSeconds);
+            return waitSeconds == 0 ? chain.filter(forwarded) : reject(exchange, waitSeconds);
         });
     }
 
@@ -88,12 +92,18 @@ public class RateLimitFilter implements GlobalFilter, Ordered {
         };
     }
 
+    /** Bên gọi trực tiếp là loopback / mạng nội bộ (BFF) → tin X-Forwarded-For. */
+    static boolean trusted(ServerHttpRequest req) {
+        InetSocketAddress remote = req.getRemoteAddress();
+        InetAddress addr = remote == null ? null : remote.getAddress();
+        return addr != null && (addr.isLoopbackAddress() || addr.isSiteLocalAddress());
+    }
+
     static String clientIp(ServerHttpRequest req) {
         InetSocketAddress remote = req.getRemoteAddress();
         InetAddress addr = remote == null ? null : remote.getAddress();
         String forwarded = req.getHeaders().getFirst("X-Forwarded-For");
-        boolean trusted = addr != null && (addr.isLoopbackAddress() || addr.isSiteLocalAddress());
-        if (trusted && forwarded != null && !forwarded.isBlank()) {
+        if (trusted(req) && forwarded != null && !forwarded.isBlank()) {
             return forwarded.split(",")[0].trim();
         }
         return addr == null ? "unknown" : addr.getHostAddress();
