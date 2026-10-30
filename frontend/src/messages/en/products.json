@@ -112,6 +112,7 @@
     "SALE_RETURN": "Customer return",
     "SALE_RETURN_CANCEL_OUT": "Customer return cancelled",
     "PURCHASE_CANCEL": "Goods receipt cancelled",
+    "PURCHASE_ADJUST": "Goods receipt edited",
     "PURCHASE_RETURN_CANCEL": "Purchase return cancelled",
     "ADJUSTMENT": "Stock take",
     "TRANSFER_OUT": "Transfer out",

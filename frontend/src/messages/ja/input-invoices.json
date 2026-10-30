@@ -1,0 +1,136 @@
+{
+  "page": {
+    "title": "仕入請求書",
+    "subtitle": "仕入請求書を管理し、入荷伝票・支払伝票の入力を効率化します。",
+    "tabConnections": "接続一覧（{n}）",
+    "tabInvoices": "請求書一覧（{n}）",
+    "sync": "請求書を同期",
+    "needConnection": "同期の前に税務ポータル接続を追加してください",
+    "importXml": "XML をインポート",
+    "export": "ファイル出力",
+    "exportEmpty": "条件に一致する請求書はありません",
+    "addConnection": "接続を追加",
+    "search": "請求書番号で検索...",
+    "unit": "件の請求書",
+    "importFailed": "インポートに失敗しました",
+    "toastImported": "{files} ファイルをインポート、新規 {added} 件"
+  },
+  "filter": {
+    "taxCode": "税番号",
+    "pickTaxCode": "税番号を選択",
+    "supplier": "仕入先",
+    "allSuppliers": "すべての仕入先",
+    "nature": "区分",
+    "pickNature": "区分を選択",
+    "receiptStatus": "伝票作成状況",
+    "notCreated": "未作成",
+    "created": "作成済み"
+  },
+  "nature": {
+    "original": "原本",
+    "replace": "差替",
+    "adjust": "訂正"
+  },
+  "table": {
+    "number": "請求書番号",
+    "date": "請求書日付",
+    "total": "合計",
+    "actions": "操作",
+    "selectAll": "すべて選択",
+    "selectRow": "請求書 {number} を選択",
+    "view": "請求書 {number} を表示",
+    "create": "伝票作成",
+    "openDoc": "伝票 {code} を開く"
+  },
+  "create": {
+    "receipt": "入荷伝票",
+    "service": "サービス購入伝票",
+    "cash": "現金支払伝票",
+    "transfer": "振込支払伝票",
+    "ewallet": "電子ウォレット支払伝票",
+    "noSupplierConfirm": "仕入先 {name}（税番号 {taxCode}）が未登録です。請求書の情報から作成しますか？",
+    "linkFailed": "伝票は作成しましたが請求書に紐付けできませんでした：{error}"
+  },
+  "service": {
+    "title": "サービス購入伝票",
+    "fund": "資金",
+    "fundCash": "現金",
+    "category": "支出区分",
+    "partner": "受取人",
+    "amount": "金額",
+    "note": "メモ",
+    "submit": "支払伝票を作成",
+    "toast": "支払伝票 {code} を作成しました"
+  },
+  "common": {
+    "skip": "キャンセル",
+    "loading": "読み込み中..."
+  },
+  "sync": {
+    "title": "税務当局から同期",
+    "tabTime": "同期期間",
+    "tabHistory": "同期履歴",
+    "taxCode": "税番号",
+    "required": "必須",
+    "from": "開始日",
+    "to": "終了日",
+    "rangeInvalid": "終了日は開始日以降にしてください",
+    "rangeTooLong": "1 回の同期は最大 31 日です",
+    "captcha": "税務ポータルのキャプチャ",
+    "captchaPlaceholder": "画像のコードを入力",
+    "captchaRequired": "キャプチャを入力してください",
+    "refreshCaptcha": "別のコード",
+    "back": "戻る",
+    "submit": "同期",
+    "syncing": "同期中...",
+    "toastDone": "同期完了！新しい請求書 {n} 件"
+  },
+  "history": {
+    "time": "日時",
+    "taxCode": "税番号",
+    "range": "期間",
+    "foundAdded": "検出 / 新規",
+    "result": "結果",
+    "user": "実行者",
+    "success": "成功",
+    "failed": "失敗",
+    "empty": "同期履歴はありません"
+  },
+  "confirm": {
+    "title": "電子請求書データの確認",
+    "sellerOnInvoice": "電子請求書の仕入先",
+    "supplierOnSystem": "システムの仕入先",
+    "matched": "税番号で一致",
+    "clearSupplier": "仕入先をクリア",
+    "noSupplierMatch": "同じ税番号の仕入先がありません。",
+    "createSupplier": "請求書から仕入先を作成",
+    "toastSupplierCreated": "仕入先 {code} を作成しました",
+    "colInvoiceItem": "請求書の品目",
+    "colSystemItem": "システムの商品",
+    "colUnit": "単位",
+    "colQty": "数量",
+    "colPrice": "単価",
+    "colDiscount": "値引き",
+    "colAmount": "金額",
+    "removeLine": "行を削除",
+    "searchProduct": "コードまたは名前で検索",
+    "noProduct": "商品が見つかりません",
+    "addProduct": "新規追加",
+    "clearProduct": "商品をクリア",
+    "unmappedError": "すべての行に対応する商品を選択してください",
+    "noLines": "伝票を作成する行がありません",
+    "submit": "入荷伝票を作成"
+  },
+  "detail": {
+    "title": "電子請求書の詳細",
+    "close": "閉じる",
+    "print": "印刷"
+  },
+  "help": {
+    "title": "仕入請求書の使い方",
+    "step1": "税務ポータル接続を追加（接続一覧）するか、請求書 XML をインポートします。",
+    "step2": "同期：税番号と期間（最大 31 日）を選び、ポータルのキャプチャを入力します。",
+    "step3": "伝票作成 ▾：入荷伝票（請求書の品目を在庫商品に対応付け、次回のために記憶）または支払伝票。",
+    "step4": "作成済みの請求書は「作成済み ↗」と表示され、クリックで伝票を開きます。"
+  }
+}

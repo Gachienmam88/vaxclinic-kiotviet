@@ -34,9 +34,11 @@ export function PurchaseListLayout({ title, toolbar, sidebar, children }: {
 }
 
 /** Ô tìm kiếm 400px + nút tạo mới viền xanh + "Xuất file" (CSV của trang đang xem). */
-export function PurchaseListToolbar({ search, onSearch, placeholder, createLabel, createHref, onCreate, onExport }: {
+export function PurchaseListToolbar({ search, onSearch, placeholder, createLabel, createHref, onCreate, onExport, extra }: {
   search: string; onSearch: (v: string) => void; placeholder: string;
   createLabel?: string; createHref?: string; onCreate?: () => void; onExport?: () => void;
+  /** Nút thêm cuối thanh (VD chọn cột). */
+  extra?: React.ReactNode;
 }) {
   const tc = useT(commonNs);
   return (
@@ -58,6 +60,7 @@ export function PurchaseListToolbar({ search, onSearch, placeholder, createLabel
         {onExport && (
           <Button variant="outline" className={OUTLINE_GRAY_BTN} onClick={onExport}><FileOutput className="size-4" /> {tc("actions.export")}</Button>
         )}
+        {extra}
       </div>
     </div>
   );

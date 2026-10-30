@@ -2,7 +2,7 @@
 
 import { useMemo, useRef, useState } from "react";
 import { Popover as PopoverPrimitive } from "@base-ui/react/popover";
-import { Eye, FileText, Printer, SlidersHorizontal } from "lucide-react";
+import { Eye, FileText, Printer } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { zoomAwarePositioning } from "@/lib/zoom-aware-floating-anchor";
@@ -98,10 +98,9 @@ export function PurchaseEditorToolbar({ vatOn, onVat, opts, setOpts, print, setP
       <ToolPopover label={t("kv.shortcuts")} icon={<span className="text-[13px] font-bold text-primary">!</span>} width={300}>
         <div className="mb-2 font-bold">{t("kv.shortcuts")}</div>
         <dl className="grid grid-cols-[64px_1fr] gap-y-1.5">
-          {keys.map(([k, l]) => <div key={k} className="contents"><dt className="font-semibold">{k}:</dt><dd>{t(l)}</dd></div>)}
+          {keys.map(([k, l]) => <div key={k} className="contents"><dt className="font-semibold">{k}:</dt><dd>{t(l as "kv.keys.f3")}</dd></div>)}
         </dl>
       </ToolPopover>
-      <SlidersHorizontal className="hidden" aria-hidden />
     </div>
   );
 }

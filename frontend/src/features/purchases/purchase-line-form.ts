@@ -14,6 +14,15 @@ export type LineForm = {
   discount: number;
   lotNumber: string;
   expiryDate: string; // yyyy-mm-dd
+  /** Phiếu nhập / trả: VAT% của dòng (null = KCT). */
+  vatRate?: number | null;
+  /** Ghi chú dòng ("Ghi chú… ✎"). */
+  note?: string;
+  /** Id dòng đã lưu (sửa phiếu đã nhập: backend yêu cầu giữ nguyên dòng). */
+  lineId?: string;
+  /** Trả theo phiếu nhập: số còn trả được ("/N") và giá nhập (đơn giá − giảm giá) trên phiếu nhập. */
+  maxQty?: number;
+  purchasePrice?: number;
 };
 
 /** Dòng mới từ hàng vừa chọn: đơn vị cơ bản, giá đề xuất = giá vốn hiện tại. */
@@ -31,6 +40,8 @@ export function lineFromProduct(p: ProductDetail): LineForm {
     discount: 0,
     lotNumber: "",
     expiryDate: "",
+    vatRate: null,
+    note: "",
   };
 }
 

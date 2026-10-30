@@ -7,7 +7,7 @@ import { formatDateTime } from "@/lib/format";
 import type { TFunction } from "@/lib/i18n";
 import type { commonNs } from "@/messages/common";
 import {
-  receiptStatusLabels, returnStatusLabels, type PurchasesT, type Receipt, type ReceiptListItem, type ReturnListItem,
+  receiptStatusLabels, returnStatusLabels, type PurchaseReturn, type PurchasesT, type Receipt, type ReceiptListItem, type ReturnListItem,
 } from "./purchase-types";
 
 type CommonT = TFunction<(typeof commonNs)["vi"]>;
@@ -43,4 +43,13 @@ export function exportReceiptLinesCsv(r: Receipt, t: PurchasesT) {
       t("lines.quantity"), t("lines.unitPrice"), t("lines.discount"), t("lines.priceWithVat"), t("lines.amount")],
     r.lines.map((l) => [l.productCode, l.productName, l.unitName, l.lotNumber ?? "", l.expiryDate ?? "", num(l.quantity),
       num(l.unitPrice), num(l.discount), num(l.priceWithVat), num(l.amount)]));
+}
+
+/** Chi tiết 1 phiếu trả hàng nhập (nút "Xuất file" trong dòng mở rộng). */
+export function exportReturnLinesCsv(r: PurchaseReturn, t: PurchasesT) {
+  downloadCsv(`${r.code}.csv`,
+    [t("lines.productCode"), t("lines.productName"), t("lines.unit"), t("lines.lotNumber"), t("lines.quantity"),
+      t("lines.returnPrice"), "VAT (%)", t("kv.returnPriceWithVat"), t("lines.amount")],
+    r.lines.map((l) => [l.productCode, l.productName, l.unitName, l.lotNumber ?? "", num(l.quantity), num(l.unitPrice),
+      l.vatRate == null ? "" : num(l.vatRate), num(l.priceWithVat), num(l.amount)]));
 }

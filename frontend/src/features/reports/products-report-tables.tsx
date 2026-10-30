@@ -51,7 +51,7 @@ export const fromStock = (s: StockLine): PAgg => agg(s.productCode, s.productNam
 
 /** Thẻ kho theo loại chứng từ → cột XNT chi tiết (xuất ghi số dương). */
 const BUCKET: Record<string, [string, number]> = {
-  BEFORE: ["before", 1], PURCHASE: ["purchase", 1], PURCHASE_CANCEL: ["purchase", 1], SALE_RETURN: ["custReturn", 1], SALE_RETURN_CANCEL_OUT: ["custReturn", 1],
+  BEFORE: ["before", 1], PURCHASE: ["purchase", 1], PURCHASE_CANCEL: ["purchase", 1], PURCHASE_ADJUST: ["purchase", 1], SALE_RETURN: ["custReturn", 1], SALE_RETURN_CANCEL_OUT: ["custReturn", 1],
   ADJUSTMENT: ["adjust", 1], OPENING: ["otherIn", 1], TRANSFER_IN: ["otherIn", 1], SALE: ["sale", -1], SALE_CANCEL: ["sale", -1],
   PURCHASE_RETURN: ["supReturn", -1], PURCHASE_RETURN_CANCEL: ["supReturn", -1], DAMAGE: ["damage", -1], DAMAGE_CANCEL: ["damage", -1],
   INTERNAL_USE: ["internal", -1], INTERNAL_USE_CANCEL: ["internal", -1], TRANSFER_OUT: ["otherOut", -1],

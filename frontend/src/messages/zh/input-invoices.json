@@ -1,0 +1,136 @@
+{
+  "page": {
+    "title": "进项发票",
+    "subtitle": "管理进项发票，优化创建进货单、付款单时的录入。",
+    "tabConnections": "连接列表（{n}）",
+    "tabInvoices": "发票列表（{n}）",
+    "sync": "同步发票",
+    "needConnection": "同步前请先添加税务门户连接",
+    "importXml": "导入 XML",
+    "export": "导出文件",
+    "exportEmpty": "没有符合筛选条件的发票",
+    "addConnection": "添加连接",
+    "search": "按发票号搜索...",
+    "unit": "张发票",
+    "importFailed": "导入失败",
+    "toastImported": "已导入 {files} 个文件，新增 {added} 张发票"
+  },
+  "filter": {
+    "taxCode": "税号",
+    "pickTaxCode": "选择税号",
+    "supplier": "供应商",
+    "allSuppliers": "全部供应商",
+    "nature": "性质",
+    "pickNature": "选择性质",
+    "receiptStatus": "开单状态",
+    "notCreated": "未开单",
+    "created": "已开单"
+  },
+  "nature": {
+    "original": "原始发票",
+    "replace": "替代发票",
+    "adjust": "调整发票"
+  },
+  "table": {
+    "number": "发票号",
+    "date": "发票日期",
+    "total": "总金额",
+    "actions": "操作",
+    "selectAll": "全选",
+    "selectRow": "选择发票 {number}",
+    "view": "查看发票 {number}",
+    "create": "开单",
+    "openDoc": "打开单据 {code}"
+  },
+  "create": {
+    "receipt": "进货单",
+    "service": "服务采购单",
+    "cash": "现金付款单",
+    "transfer": "转账付款单",
+    "ewallet": "电子钱包付款单",
+    "noSupplierConfirm": "尚无供应商 {name}（税号 {taxCode}）。是否根据发票信息新建？",
+    "linkFailed": "单据已创建，但未能关联到发票：{error}"
+  },
+  "service": {
+    "title": "服务采购单",
+    "fund": "资金",
+    "fundCash": "现金",
+    "category": "支出类别",
+    "partner": "收款人",
+    "amount": "金额",
+    "note": "备注",
+    "submit": "创建付款单",
+    "toast": "已创建付款单 {code}"
+  },
+  "common": {
+    "skip": "取消",
+    "loading": "加载中..."
+  },
+  "sync": {
+    "title": "从税务机关同步",
+    "tabTime": "同步时间",
+    "tabHistory": "同步历史",
+    "taxCode": "税号",
+    "required": "必填",
+    "from": "开始日期",
+    "to": "结束日期",
+    "rangeInvalid": "结束日期必须不早于开始日期",
+    "rangeTooLong": "每次最多同步 31 天",
+    "captcha": "税务门户验证码",
+    "captchaPlaceholder": "输入图中的验证码",
+    "captchaRequired": "请输入验证码",
+    "refreshCaptcha": "换一个",
+    "back": "返回",
+    "submit": "同步",
+    "syncing": "同步中...",
+    "toastDone": "同步完成！发现 {n} 张新发票"
+  },
+  "history": {
+    "time": "时间",
+    "taxCode": "税号",
+    "range": "日期范围",
+    "foundAdded": "找到 / 新增",
+    "result": "结果",
+    "user": "同步人",
+    "success": "成功",
+    "failed": "失败",
+    "empty": "暂无同步记录"
+  },
+  "confirm": {
+    "title": "确认电子发票数据",
+    "sellerOnInvoice": "电子发票上的供应商",
+    "supplierOnSystem": "系统中的供应商",
+    "matched": "已按税号匹配",
+    "clearSupplier": "清除供应商",
+    "noSupplierMatch": "没有相同税号的供应商。",
+    "createSupplier": "根据发票创建供应商",
+    "toastSupplierCreated": "已创建供应商 {code}",
+    "colInvoiceItem": "发票上的商品",
+    "colSystemItem": "系统中的商品",
+    "colUnit": "单位",
+    "colQty": "数量",
+    "colPrice": "单价",
+    "colDiscount": "折扣",
+    "colAmount": "金额",
+    "removeLine": "删除行",
+    "searchProduct": "按编码或名称搜索",
+    "noProduct": "未找到商品",
+    "addProduct": "新增",
+    "clearProduct": "清除商品",
+    "unmappedError": "请为所有行选择对应的商品",
+    "noLines": "没有可开单的商品行",
+    "submit": "创建进货单"
+  },
+  "detail": {
+    "title": "电子发票详情",
+    "close": "关闭",
+    "print": "打印"
+  },
+  "help": {
+    "title": "进项发票说明",
+    "step1": "添加税务门户连接（连接列表）或导入发票 XML 文件。",
+    "step2": "同步：选择税号和日期范围（最多 31 天），输入税务门户验证码。",
+    "step3": "开单 ▾：进货单（将发票商品与库存商品对应，系统会记住）或付款单。",
+    "step4": "已开单的发票显示“已开单 ↗”——点击打开单据。"
+  }
+}

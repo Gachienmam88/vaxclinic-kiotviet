@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Tag } from "lucide-react";
 import { formatDate, formatMoney, formatNumber } from "@/lib/format";
 import type { Receipt } from "./purchase-types";
+import { commonVatRate } from "./purchase-math";
 import { DocCodeLink } from "@/components/ui/doc-code-link";
 import { ListEmptyRow } from "@/components/ui/list-empty-state";
 import { useT } from "@/lib/i18n";
@@ -66,11 +67,14 @@ export function ReceiptLinesTable({ r }: { r: Receipt }) {
 export function ReceiptSummary({ r }: { r: Receipt }) {
   const t = useT(purchasesNs);
   const qty = r.lines.reduce((s, l) => s + Number(l.quantity), 0);
+  const common = commonVatRate(r.vatMode ?? "LINE", r.lines.map((l) => (l.vatRate == null ? null : Number(l.vatRate))));
   const rows: [string, string][] = [
     [t("summary.itemCount"), String(r.lines.length)],
     [t("summary.subtotalQty", { qty: formatNumber(qty) }), formatMoney(r.subtotal)],
     [t("lines.discount"), formatMoney(r.discount)],
-    ...(r.vatRate != null ? [[t("summary.vatRate", { rate: formatNumber(r.vatRate) }), formatMoney(r.vatAmount)] as [string, string]] : []),
+    // Mọi dòng cùng 1 mức VAT → "VAT x%"; lẫn mức / VAT nhập tay → "VAT" kèm số tiền (ẩn khi không có VAT)
+    ...(common != null ? [[t("summary.vatRate", { rate: formatNumber(common) }), formatMoney(r.vatAmount)] as [string, string]]
+      : Number(r.vatAmount) ? [["VAT", formatMoney(r.vatAmount)] as [string, string]] : []),
     [t("summary.total"), formatMoney(r.total)],
     [t("receipts.cols.paid"), formatMoney(r.paidAmount)],
   ];

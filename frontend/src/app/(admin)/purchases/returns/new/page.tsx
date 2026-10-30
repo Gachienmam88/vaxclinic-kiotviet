@@ -13,7 +13,10 @@ import {
 } from "@/features/purchases/purchase-editor-state";
 import type { PurchaseReturn, Receipt } from "@/features/purchases/purchase-types";
 
-/** /purchases/returns/new — trả nhanh; ?receiptId=<id> = trả theo phiếu nhập; ?edit=<id> = sửa phiếu trả tạm. */
+/**
+ * /purchases/returns/new — trả nhanh (chọn NCC rồi tìm hàng); ?receiptId=<id> = trả theo phiếu nhập; ?edit=<id> = mở phiếu
+ * trả tạm; ?copyFrom=<id> = sao chép thành phiếu mới (ngày hiện tại, NCC chưa trả).
+ */
 function NewReturn() {
   const params = useSearchParams();
   const { data: me } = useCurrentUser();
@@ -21,16 +24,19 @@ function NewReturn() {
   const [initial, setInitial] = useState<EditorState | null>(null);
   const receiptId = params.get("receiptId");
   const editId = params.get("edit");
+  const copyId = params.get("copyFrom");
 
   useEffect(() => {
     if (!me) return;
     const load = editId
       ? api<PurchaseReturn>(`/purchase-returns/${editId}`).then(editorFromReturn)
+      : copyId ? api<PurchaseReturn>(`/purchase-returns/${copyId}`).then(editorFromReturn).then((s) => ({
+        ...s, id: null, code: null, status: null, paid: 0, personId: me.user.id, at: emptyEditor(s.branchId, me.user.id).at }))
       : receiptId
         ? api<Receipt>(`/purchase-receipts/${receiptId}`).then((r) => returnEditorFromReceipt(r, me.user.id))
         : Promise.resolve(emptyEditor(me.user.branches[0]?.id ?? "", me.user.id));
     load.then(setInitial).catch((e) => toast.error(errorMessage(e)));
-  }, [me, receiptId, editId]);
+  }, [me, receiptId, editId, copyId]);
 
   if (!initial) return <div className="p-6 text-sm text-muted-foreground">{tc("status.loading")}</div>;
   return <PurchaseEditor mode="return" initial={initial} />;

@@ -14,10 +14,12 @@ export function usePrinter() {
   const { data: templates } = usePrintTemplates();
   const { data: shop } = useShopSettings();
   const { data: branches = [] } = useBranches();
-  return (type: PrintType, data: PrintData, branchId?: string | null) => {
+  /** copies > 1: in nhiều liên trong 1 lần in (mỗi liên 1 trang). */
+  return (type: PrintType, data: PrintData, branchId?: string | null, copies = 1) => {
     const branchName = branches.find((b) => b.id === branchId)?.name ?? "";
     const template = templates?.[type] ?? PRINT_DEFS[type].template;
-    printHtml(renderTemplate(template, { ...storeFields(shop?.store ?? null, branchName), ...data }));
+    const html = renderTemplate(template, { ...storeFields(shop?.store ?? null, branchName), ...data });
+    printHtml(Array.from({ length: Math.max(1, Math.min(copies, 5)) }, () => html).join('<div style="page-break-after:always"></div>'));
   };
 }
 

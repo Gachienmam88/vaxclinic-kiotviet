@@ -419,5 +419,83 @@
       "toastPublished": "已开具电子发票 {no} 号",
       "toastFailed": "开具失败：{error}"
     }
+  },
+  "kv": {
+    "amount": "金额",
+    "autoPrint": "单据完成时自动打印",
+    "columns": "选择显示列",
+    "copies": "打印份数（联）",
+    "currentDebt": "当前欠款：",
+    "debt": "欠款：{amount}",
+    "defaultPayAll": "默认全额付款给供应商",
+    "defaultRefundAll": "默认供应商全额退款",
+    "displayOptions": "显示选项",
+    "editAmount": "修改金额",
+    "editSupplier": "编辑供应商",
+    "lineNote": "行备注",
+    "lineNotePlaceholder": "备注...",
+    "noPayments": "暂无收付款单",
+    "noReturnQty": "请至少为一行输入退货数量",
+    "paid": "已付款",
+    "paidAlready": "已付供应商",
+    "payNowTitle": "保存付款单",
+    "payNowQuestion": "是否现在保存给供应商的付款单？（付款金额：{amount}）",
+    "payToSupplier": "付给供应商 (F8)",
+    "priceSetup": "价格设置",
+    "priceWithVat": "进价（含增值税）",
+    "printSettings": "打印设置",
+    "purchasePrice": "进价",
+    "receiptReturns": "进货退货单：",
+    "returnCode": "退货单号",
+    "returnPriceWithVat": "含税退货价",
+    "shortcuts": "快捷键",
+    "subtotal": "商品总额",
+    "subtotalHint": "退货商品总额 = Σ 数量 × 退货价",
+    "supplier": "供应商",
+    "supplierPays": "供应商付款 (F8)",
+    "tabInfo": "信息",
+    "tabPayments": "付款记录",
+    "toastAdjusted": "已保存 {code}",
+    "vatAutoHint": "增值税 = 各行增值税合计（关闭按行计税可手动输入）",
+    "vatIn": "进货增值税",
+    "vatRefund": "退回增值税",
+    "vatToggle": "按行计增值税",
+    "vatLineOn": "正按行计算增值税（点击改为手动输入总额）",
+    "vatLineOff": "正手动输入增值税总额（点击改为按行计算）",
+    "viewReceipt": "查看进货单",
+    "voucherCode": "单号",
+    "keys": {
+      "f3": "搜索商品",
+      "f4": "搜索供应商",
+      "f8": "付给供应商金额",
+      "f8Return": "供应商付款金额",
+      "f9": "完成",
+      "up": "增加数量",
+      "down": "减少数量",
+      "enter": "移到下一行的数量",
+      "shift": "移到上一行的数量"
+    },
+    "col": {
+      "code": "编码",
+      "unit": "单位",
+      "discount": "折扣",
+      "vat": "增值税 (%)",
+      "priceWithVat": "含税价",
+      "amount": "金额"
+    },
+    "tab": {
+      "show": "显示",
+      "other": "其他"
+    },
+    "supplierTab": {
+      "info": "信息",
+      "debt": "欠款"
+    },
+    "returnCol": {
+      "receiptCode": "进货单号",
+      "createdBy": "创建人",
+      "branch": "分店",
+      "note": "备注"
+    }
   }
 }

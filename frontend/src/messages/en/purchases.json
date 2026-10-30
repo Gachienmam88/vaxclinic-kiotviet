@@ -420,5 +420,83 @@
       "toastPublished": "E-invoice no. {no} issued",
       "toastFailed": "Issue failed: {error}"
     }
+  },
+  "kv": {
+    "amount": "Amount",
+    "autoPrint": "Print automatically when completed",
+    "columns": "Choose columns",
+    "copies": "Copies",
+    "currentDebt": "Current debt:",
+    "debt": "Debt: {amount}",
+    "defaultPayAll": "Pay supplier in full by default",
+    "defaultRefundAll": "Supplier refunds in full by default",
+    "displayOptions": "Display options",
+    "editAmount": "Edit line amount",
+    "editSupplier": "Edit supplier",
+    "lineNote": "Line note",
+    "lineNotePlaceholder": "Note...",
+    "noPayments": "No receipts / payments yet",
+    "noReturnQty": "Enter a return quantity on at least one line",
+    "paid": "Paid",
+    "paidAlready": "Paid to supplier",
+    "payNowTitle": "Save payment voucher",
+    "payNowQuestion": "Do you want to save the payment voucher for the supplier now? (Amount paid: {amount})",
+    "payToSupplier": "Pay supplier (F8)",
+    "priceSetup": "Price setup",
+    "priceWithVat": "Cost (incl. VAT)",
+    "printSettings": "Print settings",
+    "purchasePrice": "Purchase price",
+    "receiptReturns": "Purchase returns:",
+    "returnCode": "Return code",
+    "returnPriceWithVat": "Return price incl. VAT",
+    "shortcuts": "Keyboard shortcuts",
+    "subtotal": "Goods total",
+    "subtotalHint": "Goods total = Σ quantity × return price",
+    "supplier": "Supplier",
+    "supplierPays": "Supplier pays (F8)",
+    "tabInfo": "Info",
+    "tabPayments": "Payment history",
+    "toastAdjusted": "Saved {code}",
+    "vatAutoHint": "VAT = sum of line VAT (turn off per-line VAT to type it)",
+    "vatIn": "Input VAT",
+    "vatRefund": "VAT refunded",
+    "vatToggle": "Per-line VAT",
+    "vatLineOn": "VAT is computed per line (click to type the total VAT)",
+    "vatLineOff": "Total VAT is typed manually (click to compute per line)",
+    "viewReceipt": "View goods receipt",
+    "voucherCode": "Voucher",
+    "keys": {
+      "f3": "Search products",
+      "f4": "Search suppliers",
+      "f8": "Amount paid to supplier",
+      "f8Return": "Amount the supplier pays",
+      "f9": "Complete",
+      "up": "Increase quantity",
+      "down": "Decrease quantity",
+      "enter": "Move to the next line's quantity",
+      "shift": "Move to the previous line's quantity"
+    },
+    "col": {
+      "code": "Code",
+      "unit": "Unit",
+      "discount": "Discount",
+      "vat": "VAT (%)",
+      "priceWithVat": "Price incl. VAT",
+      "amount": "Amount"
+    },
+    "tab": {
+      "show": "Display",
+      "other": "Other"
+    },
+    "supplierTab": {
+      "info": "Info",
+      "debt": "Balance"
+    },
+    "returnCol": {
+      "receiptCode": "Receipt code",
+      "createdBy": "Created by",
+      "branch": "Branch",
+      "note": "Note"
+    }
   }
 }

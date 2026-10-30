@@ -29,7 +29,10 @@ export async function api<T>(path: string, init?: { method?: string; body?: unkn
     const err = await res.json().catch(() => ({}));
     throw new ApiRequestError(res.status, err.code ?? "UNKNOWN", err.message ?? "Có lỗi xảy ra", err.details);
   }
-  return (res.status === 204 ? undefined : await res.json()) as T;
+  if (res.status === 204) return undefined as T;
+  // Endpoint void của Spring trả 200 với thân rỗng (VD PUT ánh xạ hàng, PATCH gắn phiếu) → không parse JSON
+  const text = await res.text();
+  return (text ? JSON.parse(text) : undefined) as T;
 }
 
 /** Câu lỗi để hiện toast: giao diện khác tiếng Việt thì dịch theo error.code (namespace "errors"), không có thì giữ message server. */

@@ -35,7 +35,17 @@ export type ReceiptLine = {
   id: string; lineNo: number; productId: string; productCode: string; productName: string; unitId: string;
   unitName: string; conversionRate: number; quantity: number; unitPrice: number; discount: number;
   priceWithVat: number; amount: number; lotNumber: string | null; expiryDate: string | null;
+  /** VAT% của dòng (null = KCT / phiếu VAT nhập tay). */
+  vatRate: number | null; note: string | null;
 };
+
+/** LINE = VAT phiếu = Σ VAT từng dòng; MANUAL = VAT nhập tay. */
+export type VatMode = "LINE" | "MANUAL";
+
+export type ReturnRef = { id: string; code: string; status: DocStatus; returnedAt: string; total: number };
+
+/** Số còn trả được của 1 dòng phiếu nhập (GET /purchase-receipts/{id}/returnable). */
+export type ReturnableLine = { lineId: string; productId: string; lotNumber: string | null; received: number; returnable: number };
 
 export type Receipt = {
   id: string; code: string; branchId: string; status: DocStatus; receivedAt: string; supplierId: string | null;
@@ -43,12 +53,14 @@ export type Receipt = {
   receiverId: string | null; receiverName: string | null; inputInvoiceNo: string | null; vatRate: number | null;
   subtotal: number; discount: number; vatAmount: number; total: number; paidAmount: number;
   paymentMethod: string | null; note: string | null; lines: ReceiptLine[];
+  vatMode: VatMode; paymentPosted: boolean; returns: ReturnRef[];
 };
 
 export type ReturnListItem = {
   id: string; code: string; status: DocStatus; returnedAt: string; supplierName: string | null;
   receiptCode: string | null; returnerName: string | null; subtotal: number; discount: number;
   vatAmount: number; total: number; refundAmount: number;
+  receiptId: string | null; createdByName: string; branchId: string; note: string | null; supplierCode: string | null;
 };
 
 export type PurchaseReturn = {
@@ -56,9 +68,11 @@ export type PurchaseReturn = {
   supplierCode: string | null; supplierName: string | null; receiptId: string | null; receiptCode: string | null;
   createdByName: string; returnerId: string | null; returnerName: string | null; subtotal: number; discount: number;
   vatRate: number | null; vatAmount: number; total: number; refundAmount: number; note: string | null;
+  vatMode: VatMode; paymentMethod: string | null;
   lines: {
     id: string; lineNo: number; productId: string; productCode: string; productName: string; unitId: string;
     unitName: string; conversionRate: number; quantity: number; unitPrice: number; amount: number; lotNumber: string | null;
+    vatRate: number | null; note: string | null; priceWithVat: number;
   }[];
 };
 

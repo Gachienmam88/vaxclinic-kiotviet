@@ -112,6 +112,7 @@
     "SALE_RETURN": "顧客返品",
     "SALE_RETURN_CANCEL_OUT": "顧客返品取消",
     "PURCHASE_CANCEL": "仕入伝票取消",
+    "PURCHASE_ADJUST": "仕入伝票修正",
     "PURCHASE_RETURN_CANCEL": "仕入返品取消",
     "ADJUSTMENT": "棚卸",
     "TRANSFER_OUT": "移動出庫",

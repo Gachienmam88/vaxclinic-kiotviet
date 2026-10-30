@@ -13,19 +13,24 @@ import { FormSection, NativeSelect } from "@/features/products/product-form-sect
 import { api, errorMessage } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 import type { Supplier } from "./purchase-types";
+import { formatMoney } from "@/lib/format";
+import { SupplierDetailDebtTab } from "./supplier-detail-debt-tab";
+import type { SupplierRow } from "./supplier-types";
 import { useInvalidateSuppliers, useSupplierGroups } from "./supplier-queries";
 import { useT } from "@/lib/i18n";
 import { commonNs } from "@/messages/common";
 import { purchasesNs } from "@/messages/purchases";
 
-type Props = { supplier?: Supplier; onClose: () => void; onSaved?: (s: Supplier) => void };
+/** debt: mở dạng "Sửa nhà cung cấp" từ màn nhập hàng (ảnh 295) — đầu popup có Nợ hiện tại + tab Thông tin / Dư nợ. */
+type Props = { supplier?: Supplier; onClose: () => void; onSaved?: (s: Supplier) => void; debt?: SupplierRow };
 
 const FIELDS = ["name", "code", "phone", "email", "groupId", "note",
   "companyName", "taxCode", "idNumber"] as const;
 type Form = Record<(typeof FIELDS)[number], string>;
 
 /** Tạo / sửa nhà cung cấp (KiotViet): thông tin chính, Địa chỉ, Nhóm NCC + ghi chú, Thông tin xuất hóa đơn (khối thu gọn được). */
-export function SupplierFormDialog({ supplier, onClose, onSaved }: Props) {
+export function SupplierFormDialog({ supplier, onClose, onSaved, debt }: Props) {
+  const [tab, setTab] = useState<"info" | "debt">("info");
   const invalidate = useInvalidateSuppliers();
   const { data: groups = [] } = useSupplierGroups();
   const t = useT(purchasesNs);
@@ -66,8 +71,18 @@ export function SupplierFormDialog({ supplier, onClose, onSaved }: Props) {
       <DialogContent className="flex max-h-[92vh] flex-col gap-0 rounded-lg p-0 sm:max-w-[870px]">
         <DialogHeader className="px-4 pt-4 pb-3">
           <DialogTitle className="text-base font-bold">{supplier ? t("suppliers.form.titleEdit") : t("suppliers.form.titleCreate")}</DialogTitle>
+          {debt && <p className="text-[13px]">{debt.name} <span className="ml-1 text-xs">{t("kv.currentDebt")}</span> {formatMoney(debt.debt)}</p>}
         </DialogHeader>
-        <form id="supplier-form" className="space-y-3 overflow-y-auto px-4 pb-4"
+        {debt && (
+          <div className="flex gap-6 border-b px-4 text-[13px]">
+            {(["info", "debt"] as const).map((x) => (
+              <button key={x} type="button" onClick={() => setTab(x)}
+                className={cn("pb-2", tab === x ? "border-b-2 border-primary font-semibold text-primary" : "text-foreground/70")}>{t(`kv.supplierTab.${x}`)}</button>
+            ))}
+          </div>
+        )}
+        {debt && tab === "debt" && <div className="overflow-y-auto p-4"><SupplierDetailDebtTab s={debt} /></div>}
+        <form id="supplier-form" hidden={!!debt && tab === "debt"} className="space-y-3 overflow-y-auto px-4 pb-4 pt-3"
           onSubmit={(e) => { e.preventDefault(); save.mutate(); }}>
           <div className="grid grid-cols-1 gap-x-5 gap-y-2.5 md:grid-cols-2">
             {field("name", t("suppliers.cols.name"), { required: true, placeholder: tc("status.required") })}

@@ -16,11 +16,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { useBranches, useShopSettings } from "@/features/settings/settings-queries";
 import { api, errorMessage } from "@/lib/api-client";
 import { useCurrentUser } from "@/lib/use-current-user";
+import { formatMoney } from "@/lib/format";
 import { exportReceiptLinesCsv } from "./purchase-csv-export";
 import { fromLocalInput, toLocalInput } from "./purchase-line-form";
 import { DocStatusBadge, OUTLINE_GRAY_BTN } from "./purchase-list-chrome";
 import { useReceipt, useUserLookup } from "./purchase-queries";
-import { receiptStatusLabels } from "./purchase-types";
+import { receiptStatusLabels, returnStatusLabels } from "./purchase-types";
 import { ReceiptLinesTable, ReceiptSummary } from "./receipt-lines-table";
 import { receiptData } from "@/features/print/print-data";
 import { PrintButton } from "@/features/print/print-button";
@@ -66,8 +67,15 @@ export function ReceiptDetailPanel({ id, onClose }: { id: string; onClose?: () =
     onError: (e) => toast.error(errorMessage(e)),
   });
   const cancel = useMutation({
-    mutationFn: () => api(`/purchase-receipts/${id}/cancel`, { method: "POST" }),
-    onSuccess: () => { toast.success(t("detail.toastCancelled")); refresh(); qc.invalidateQueries({ queryKey: ["products"] }); },
+    mutationFn: async () => {
+      await api(`/purchase-receipts/${id}/cancel`, { method: "POST" });
+      // hóa đơn đầu vào đã lập phiếu này → về "Chưa lập phiếu" (lỗi không chặn việc hủy)
+      await api(`/input-invoices/links/${id}`, { method: "DELETE" }).catch(() => undefined);
+    },
+    onSuccess: () => {
+      toast.success(t("detail.toastCancelled")); refresh(); qc.invalidateQueries({ queryKey: ["products"] });
+      qc.invalidateQueries({ queryKey: ["input-invoices"] });
+    },
     onError: (e) => toast.error(errorMessage(e)),
   });
 
@@ -123,6 +131,12 @@ export function ReceiptDetailPanel({ id, onClose }: { id: string; onClose?: () =
             <Tag className="size-4" /> {t("detail.priceSetup")}</Link>
         </div>
         <ReceiptLinesTable r={r} />
+        {!!r.returns?.length && (
+          <p className="text-[13px]">{t("kv.receiptReturns")}{" "}
+            {r.returns.map((x, i) => <span key={x.id}>{i > 0 && ", "}<DocCodeLink code={x.code} className={x.status === "CANCELLED" ? "line-through" : undefined} />
+              {" "}({x.status === "COMPLETED" ? formatMoney(x.total) : returnStatusLabels(t)[x.status]})</span>)}
+          </p>
+        )}
         <div className="flex items-end gap-6">
           <Textarea className="h-[95px] max-w-[720px] resize-none rounded-md" placeholder={t("detail.notePlaceholder")} value={f.note} disabled={!editable}
             onChange={(e) => setF({ note: e.target.value })} />
@@ -135,9 +149,10 @@ export function ReceiptDetailPanel({ id, onClose }: { id: string; onClose?: () =
             onClick={() => confirm(t(r.status === "COMPLETED" ? "detail.confirmCancelCompleted" : "detail.confirmCancelDraft", { code: r.code })) && cancel.mutate()}>
             <Trash2 className="size-4" /> {tc("actions.cancel")}</Button>
         )}
+        <Button variant="ghost" onClick={() => router.push(`/purchases/receipts/new?copyFrom=${r.id}`)}><Copy className="size-4" /> {tc("actions.copy")}</Button>
         <Button variant="ghost" onClick={() => exportReceiptLinesCsv(r, t)}><FileOutput className="size-4" /> {tc("actions.export")}</Button>
         <div className="ml-auto flex flex-wrap gap-2">
-          {r.status === "DRAFT" && (
+          {r.status !== "CANCELLED" && (
             <Button className="h-[30px] rounded-md px-3" onClick={() => router.push(`/purchases/receipts/new?edit=${r.id}`)}>
               <ExternalLink className="size-4" /> {t("detail.openDoc")}</Button>
           )}
@@ -157,6 +172,9 @@ export function ReceiptDetailPanel({ id, onClose }: { id: string; onClose?: () =
               <Ellipsis className="size-4" /></DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => router.push(`/purchases/receipts/new?copyFrom=${r.id}`)}><Copy className="size-4" /> {tc("actions.copy")}</DropdownMenuItem>
+              {r.status === "COMPLETED" && (
+                <DropdownMenuItem onClick={() => router.push(`/purchases/returns/new?receiptId=${r.id}`)}><Undo2 className="size-4" /> {t("returns.create")}</DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

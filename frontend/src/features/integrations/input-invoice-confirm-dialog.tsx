@@ -51,7 +51,9 @@ export function InputInvoiceConfirmDialog({ invoice, onClose }: { invoice: Input
       if (s) { setSupplier({ id: s.id, name: s.name, taxCode: s.taxCode }); setMatched(true); }
     })().catch((e) => { toast.error(errorMessage(e)); onClose(); });
     return () => { alive = false; };
-  }, [invoice.id, onClose]);
+    // chỉ tải 1 lần theo hóa đơn (onClose là hàm mới mỗi lần render của trang cha)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [invoice.id]);
 
   const createSupplier = useMutation({
     mutationFn: () => createSupplierFromSeller(inv ?? invoice),
@@ -109,7 +111,7 @@ export function InputInvoiceConfirmDialog({ invoice, onClose }: { invoice: Input
                       <td className="max-w-[200px]">{r.line.name}{r.line.unit ? ` (${r.line.unit})` : ""}</td>
                       <td><InputInvoiceProductPicker value={r.product} unitId={r.unitId} invalid={bad}
                         onPick={(p) => update(r.key, { product: p, unitId: baseUnit(p) })} onClear={() => update(r.key, { product: null, unitId: "" })} /></td>
-                      <td><NativeSelect aria-label={t("confirm.colUnit")} className="w-[110px]" value={r.unitId} disabled={!r.product}
+                      <td className="min-w-[120px]"><NativeSelect aria-label={t("confirm.colUnit")} value={r.unitId} disabled={!r.product}
                         onChange={(e) => update(r.key, { unitId: e.target.value })}>
                         {r.product?.units.map((u) => <option key={u.id} value={u.id}>{u.unitName}</option>)}</NativeSelect></td>
                       <td><NumberInput aria-label={t("confirm.colQty")} className={NUM} value={r.quantity} onValueChange={(quantity) => update(r.key, { quantity })} /></td>

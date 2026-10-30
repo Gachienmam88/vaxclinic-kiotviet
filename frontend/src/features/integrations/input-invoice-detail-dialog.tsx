@@ -23,7 +23,7 @@ export function InputInvoiceDetailDialog({ id, onClose }: { id: string; onClose:
         <DialogHeader className={kvDialogHeader}><DialogTitle className={kvDialogTitle}>{t("detail.title")}</DialogTitle></DialogHeader>
         <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-4">
           {inv
-            ? <div className="rounded border border-[#e5e7eb] bg-[#fffdf8] p-4" dangerouslySetInnerHTML={{ __html: sanitizeHtml(html) }} />
+            ? <div className="rounded border border-[#e5e7eb] bg-white p-4" dangerouslySetInnerHTML={{ __html: sanitizeHtml(html) }} />
             : <div className="py-10 text-center text-[13px] text-muted-foreground">{t("common.loading")}</div>}
         </div>
         <DialogFooter className={kvDialogFooter}>

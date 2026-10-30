@@ -36,7 +36,11 @@ const select = "h-8 w-full rounded-md border border-[#d9dbe0] bg-white px-2.5 te
  * Popup "Thanh toán" (phiếu chi trả NCC) và "Chiết khấu thanh toán". Gõ "Số tiền" → tự phân bổ phiếu cũ trước;
  * gõ từng dòng → mỗi dòng tối đa "Còn cần trả", ô "Số tiền" = tổng các dòng. Dư so với tổng nợ phiếu = chưa phân bổ.
  */
-export function SupplierPaymentDialog({ kind, supplier, onClose }: { kind: "payment" | "discount"; supplier: SupplierRow; onClose: () => void }) {
+export function SupplierPaymentDialog({ kind, supplier, onClose, initialMethod, initialAmount, initialNote, onSaved }: {
+  kind: "payment" | "discount"; supplier: SupplierRow; onClose: () => void;
+  /** Điền sẵn (VD lập phiếu chi từ hóa đơn đầu vào): hình thức, số tiền, ghi chú; onSaved nhận phiếu vừa tạo. */
+  initialMethod?: "CASH" | "TRANSFER" | "EWALLET"; initialAmount?: number; initialNote?: string; onSaved?: (doc: SupplierDebtDoc) => void;
+}) {
   const pay = kind === "payment";
   const invalidate = useInvalidateSuppliers();
   const printVoucher = useSupplierPaymentPrinter();
@@ -48,10 +52,10 @@ export function SupplierPaymentDialog({ kind, supplier, onClose }: { kind: "paym
   const { data: receipts } = useUnpaidReceipts(supplier.id);
   const [at, setAt] = useState(toLocalInput(new Date().toISOString()));
   const [staffId, setStaffId] = useState(me?.user.id ?? "");
-  const [method, setMethod] = useState("CASH");
+  const [method, setMethod] = useState<string>(initialMethod ?? "CASH");
   const [accountId, setAccountId] = useState("");
-  const [amount, setAmount] = useState(0);
-  const [note, setNote] = useState("");
+  const [amount, setAmount] = useState(initialAmount ?? 0);
+  const [note, setNote] = useState(initialNote ?? "");
   const [allocate, setAllocate] = useState(pay);
   const [manual, setManual] = useState<Allocation | null>(null);
   const [viewReceipt, setViewReceipt] = useState<string | null>(null);
@@ -72,6 +76,7 @@ export function SupplierPaymentDialog({ kind, supplier, onClose }: { kind: "paym
       toast.success(t(pay ? "suppliers.payment.toastPayment" : "suppliers.payment.toastDiscount", { code: doc.code }));
       invalidate();
       if (print) printVoucher(doc, supplier.phone);
+      onSaved?.(doc);
       onClose();
     },
     onError: (e) => toast.error(errorMessage(e)),

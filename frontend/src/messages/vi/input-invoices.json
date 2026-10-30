@@ -1,0 +1,136 @@
+{
+  "page": {
+    "title": "Hóa đơn đầu vào",
+    "subtitle": "Quản lý hóa đơn đầu vào, tối ưu việc nhập liệu khi tạo phiếu nhập, phiếu chi.",
+    "tabConnections": "Danh sách kết nối ({n})",
+    "tabInvoices": "Danh sách hóa đơn ({n})",
+    "sync": "Đồng bộ hóa đơn",
+    "needConnection": "Thêm kết nối cổng thuế trước khi đồng bộ",
+    "importXml": "Nhập file XML",
+    "export": "Xuất file",
+    "exportEmpty": "Không có hóa đơn nào khớp bộ lọc",
+    "addConnection": "Thêm kết nối",
+    "search": "Tìm theo số hóa đơn...",
+    "unit": "hóa đơn",
+    "importFailed": "Nhập file thất bại",
+    "toastImported": "Đã nhập {files} file, {added} hóa đơn mới"
+  },
+  "filter": {
+    "taxCode": "Mã số thuế",
+    "pickTaxCode": "Chọn mã số thuế",
+    "supplier": "Nhà cung cấp",
+    "allSuppliers": "Tất cả nhà cung cấp",
+    "nature": "Tính chất",
+    "pickNature": "Chọn tính chất",
+    "receiptStatus": "Trạng thái lập phiếu",
+    "notCreated": "Chưa lập phiếu",
+    "created": "Đã lập phiếu"
+  },
+  "nature": {
+    "original": "Hóa đơn gốc",
+    "replace": "Hóa đơn thay thế",
+    "adjust": "Hóa đơn điều chỉnh"
+  },
+  "table": {
+    "number": "Số hóa đơn",
+    "date": "Ngày hóa đơn",
+    "total": "Tổng tiền",
+    "actions": "Thao tác",
+    "selectAll": "Chọn tất cả",
+    "selectRow": "Chọn hóa đơn {number}",
+    "view": "Xem chi tiết hóa đơn {number}",
+    "create": "Lập phiếu",
+    "openDoc": "Mở chứng từ {code}"
+  },
+  "create": {
+    "receipt": "Phiếu nhập hàng",
+    "service": "Phiếu mua dịch vụ",
+    "cash": "Phiếu chi tiền mặt",
+    "transfer": "Phiếu chi chuyển khoản",
+    "ewallet": "Phiếu chi ví điện tử",
+    "noSupplierConfirm": "Chưa có nhà cung cấp {name} (MST {taxCode}). Tạo nhà cung cấp mới từ thông tin trên hóa đơn?",
+    "linkFailed": "Đã lập chứng từ nhưng chưa gắn được vào hóa đơn: {error}"
+  },
+  "service": {
+    "title": "Phiếu mua dịch vụ",
+    "fund": "Quỹ",
+    "fundCash": "Tiền mặt",
+    "category": "Loại chi",
+    "partner": "Người nhận",
+    "amount": "Số tiền",
+    "note": "Ghi chú",
+    "submit": "Tạo phiếu chi",
+    "toast": "Đã tạo phiếu chi {code}"
+  },
+  "common": {
+    "skip": "Bỏ qua",
+    "loading": "Đang tải..."
+  },
+  "sync": {
+    "title": "Đồng bộ từ Cơ quan Thuế",
+    "tabTime": "Thời gian đồng bộ",
+    "tabHistory": "Lịch sử đồng bộ",
+    "taxCode": "Mã số thuế",
+    "required": "Bắt buộc",
+    "from": "Từ ngày",
+    "to": "Đến ngày",
+    "rangeInvalid": "Đến ngày phải sau hoặc bằng Từ ngày",
+    "rangeTooLong": "Mỗi lần đồng bộ tối đa 31 ngày",
+    "captcha": "Mã xác thực (captcha) của cổng thuế",
+    "captchaPlaceholder": "Nhập mã trong ảnh",
+    "captchaRequired": "Nhập mã captcha",
+    "refreshCaptcha": "Lấy mã khác",
+    "back": "Quay lại",
+    "submit": "Đồng bộ",
+    "syncing": "Đang đồng bộ...",
+    "toastDone": "Đồng bộ hoàn thành! Tìm thấy {n} hóa đơn mới"
+  },
+  "history": {
+    "time": "Thời gian",
+    "taxCode": "Mã số thuế",
+    "range": "Khoảng ngày",
+    "foundAdded": "Tìm thấy / Thêm mới",
+    "result": "Kết quả",
+    "user": "Người đồng bộ",
+    "success": "Thành công",
+    "failed": "Thất bại",
+    "empty": "Chưa có lần đồng bộ nào"
+  },
+  "confirm": {
+    "title": "Xác nhận dữ liệu từ hóa đơn điện tử",
+    "sellerOnInvoice": "Nhà cung cấp trên hóa đơn điện tử",
+    "supplierOnSystem": "Nhà cung cấp trên hệ thống",
+    "matched": "Đã khớp theo mã số thuế",
+    "clearSupplier": "Bỏ chọn nhà cung cấp",
+    "noSupplierMatch": "Chưa có nhà cung cấp trùng mã số thuế.",
+    "createSupplier": "Tạo nhà cung cấp từ hóa đơn",
+    "toastSupplierCreated": "Đã tạo nhà cung cấp {code}",
+    "colInvoiceItem": "Hàng hóa trên hóa đơn",
+    "colSystemItem": "Hàng hóa trên hệ thống",
+    "colUnit": "Đơn vị tính",
+    "colQty": "Số lượng",
+    "colPrice": "Đơn giá",
+    "colDiscount": "Giảm giá",
+    "colAmount": "Thành tiền",
+    "removeLine": "Bỏ dòng",
+    "searchProduct": "Tìm theo mã hoặc tên hàng",
+    "noProduct": "Không tìm thấy hàng hóa",
+    "addProduct": "Thêm mới",
+    "clearProduct": "Bỏ chọn hàng hóa",
+    "unmappedError": "Vui lòng chọn hàng hóa tương ứng cho tất cả các dòng",
+    "noLines": "Không còn dòng hàng nào để lập phiếu",
+    "submit": "Tạo phiếu nhập"
+  },
+  "detail": {
+    "title": "Chi tiết hóa đơn điện tử",
+    "close": "Đóng",
+    "print": "In"
+  },
+  "help": {
+    "title": "Hướng dẫn hóa đơn đầu vào",
+    "step1": "Thêm kết nối cổng thuế (tab Danh sách kết nối) hoặc nhập file XML hóa đơn.",
+    "step2": "Đồng bộ hóa đơn: chọn MST, khoảng ngày (tối đa 31 ngày), nhập mã captcha của cổng thuế.",
+    "step3": "Lập phiếu ▾: phiếu nhập hàng (ghép hàng trên hóa đơn với hàng hóa trong kho, hệ thống nhớ cho lần sau) hoặc phiếu chi.",
+    "step4": "Hóa đơn đã lập phiếu hiện \"Đã lập phiếu ↗\" — bấm để mở chứng từ."
+  }
+}

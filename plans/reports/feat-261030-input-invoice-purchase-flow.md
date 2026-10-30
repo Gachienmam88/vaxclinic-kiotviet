@@ -42,3 +42,10 @@
 - Trả hàng theo phiếu nhập VAT nhập tay: dòng trả nên lấy VAT% nào?
 - Có muốn bỏ liên kết hóa đơn khi hủy phiếu chi PCN / phiếu chi Sổ quỹ (cần sự kiện từ product / sales sang integration)?
 - Gộp ~60 commit "auto: update" thành vài commit conventional (cần đồng ý vì viết lại lịch sử)?
+
+## Kết quả hồi quy (30/10 13:10–13:35)
+- e2e_input_invoice_flow 27/27, e2e_purchasing 21/21, e2e_suppliers 59/59, e2e_integration 16/16, e2e_inventory_docs 50/50, e2e_audit_backdate 5/5, e2e_audit_purchase_refund 5/5.
+- Duyệt màn hình bằng Playwright trên :3010 (`scratchpad/shot_input_invoice_flow.py`, ảnh `scratchpad/shots_ii/01–27`): danh sách HĐ, menu Lập phiếu, xác nhận (chưa / đã ánh xạ, lỗi), màn nhập hàng + 3 popover, hỏi phiếu chi, phiếu tạm, mở lại phiếu tạm đã trả, hoàn thành, sửa phiếu đã nhập + Sửa NCC (Thông tin / Dư nợ), trả hàng nhập "1 / 20" (VAT hoàn lại 9,759, cần trả 204,939, công nợ −204,939), chi tiết trả hàng, "Đã lập phiếu ↗", chi tiết HĐĐT, popup đồng bộ + lịch sử, danh sách trả hàng. Không lỗi JS. Dữ liệu tạm đã dọn.
+- Sửa phát hiện khi duyệt: `api()` lỗi với endpoint void trả 200 thân rỗng (PUT ánh xạ, PATCH gắn phiếu) → client coi thân rỗng là không có nội dung; cột Tên hàng màn nhập hàng bị ép hẹp → nới bảng.
+- Phiên admin chưa đồng ý "Điều khoản sử dụng" → khi chụp chỉ gỡ lớp phủ trên trình duyệt headless (không ghi nhận đồng ý). Cần người dùng tự đồng ý.
+- Demo còn nguyên: SP000001–010 + SP000020, NCC000001–3/5, PN000001–3, 35 hóa đơn bán (đề bài ghi 31 — số hiện có trước khi chạy). `e2e_purchasing` (sẵn có) để lại 2 hàng "(test nhập)" mỗi lần chạy — hành vi cũ của script, không xóa.

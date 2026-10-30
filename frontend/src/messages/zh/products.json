@@ -112,6 +112,7 @@
     "SALE_RETURN": "客户退货",
     "SALE_RETURN_CANCEL_OUT": "客户退货单作废",
     "PURCHASE_CANCEL": "进货单作废",
+    "PURCHASE_ADJUST": "进货单修改",
     "PURCHASE_RETURN_CANCEL": "进货退货作废",
     "ADJUSTMENT": "盘点",
     "TRANSFER_OUT": "调出",

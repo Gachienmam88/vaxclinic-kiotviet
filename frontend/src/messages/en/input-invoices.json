@@ -1,0 +1,136 @@
+{
+  "page": {
+    "title": "Input invoices",
+    "subtitle": "Manage input invoices and speed up data entry for goods receipts and payment vouchers.",
+    "tabConnections": "Connections ({n})",
+    "tabInvoices": "Invoices ({n})",
+    "sync": "Sync invoices",
+    "needConnection": "Add a tax portal connection before syncing",
+    "importXml": "Import XML",
+    "export": "Export",
+    "exportEmpty": "No invoices match the filters",
+    "addConnection": "Add connection",
+    "search": "Search by invoice number...",
+    "unit": "invoices",
+    "importFailed": "Import failed",
+    "toastImported": "Imported {files} file(s), {added} new invoice(s)"
+  },
+  "filter": {
+    "taxCode": "Tax code",
+    "pickTaxCode": "Select tax code",
+    "supplier": "Supplier",
+    "allSuppliers": "All suppliers",
+    "nature": "Type",
+    "pickNature": "Select type",
+    "receiptStatus": "Voucher status",
+    "notCreated": "Not created",
+    "created": "Created"
+  },
+  "nature": {
+    "original": "Original",
+    "replace": "Replacement",
+    "adjust": "Adjustment"
+  },
+  "table": {
+    "number": "Invoice no.",
+    "date": "Invoice date",
+    "total": "Total",
+    "actions": "Actions",
+    "selectAll": "Select all",
+    "selectRow": "Select invoice {number}",
+    "view": "View invoice {number}",
+    "create": "Create",
+    "openDoc": "Open document {code}"
+  },
+  "create": {
+    "receipt": "Goods receipt",
+    "service": "Service purchase voucher",
+    "cash": "Cash payment voucher",
+    "transfer": "Bank transfer payment voucher",
+    "ewallet": "E-wallet payment voucher",
+    "noSupplierConfirm": "Supplier {name} (tax code {taxCode}) does not exist. Create it from the invoice data?",
+    "linkFailed": "Document created but could not be linked to the invoice: {error}"
+  },
+  "service": {
+    "title": "Service purchase voucher",
+    "fund": "Fund",
+    "fundCash": "Cash",
+    "category": "Category",
+    "partner": "Payee",
+    "amount": "Amount",
+    "note": "Note",
+    "submit": "Create voucher",
+    "toast": "Payment voucher {code} created"
+  },
+  "common": {
+    "skip": "Cancel",
+    "loading": "Loading..."
+  },
+  "sync": {
+    "title": "Sync from the Tax Authority",
+    "tabTime": "Sync period",
+    "tabHistory": "Sync history",
+    "taxCode": "Tax code",
+    "required": "Required",
+    "from": "From",
+    "to": "To",
+    "rangeInvalid": "The end date must be on or after the start date",
+    "rangeTooLong": "Each sync covers at most 31 days",
+    "captcha": "Tax portal captcha",
+    "captchaPlaceholder": "Enter the code in the image",
+    "captchaRequired": "Enter the captcha",
+    "refreshCaptcha": "New code",
+    "back": "Back",
+    "submit": "Sync",
+    "syncing": "Syncing...",
+    "toastDone": "Sync complete! Found {n} new invoice(s)"
+  },
+  "history": {
+    "time": "Time",
+    "taxCode": "Tax code",
+    "range": "Period",
+    "foundAdded": "Found / New",
+    "result": "Result",
+    "user": "Synced by",
+    "success": "Success",
+    "failed": "Failed",
+    "empty": "No syncs yet"
+  },
+  "confirm": {
+    "title": "Confirm e-invoice data",
+    "sellerOnInvoice": "Supplier on the e-invoice",
+    "supplierOnSystem": "Supplier in the system",
+    "matched": "Matched by tax code",
+    "clearSupplier": "Clear supplier",
+    "noSupplierMatch": "No supplier with this tax code.",
+    "createSupplier": "Create supplier from invoice",
+    "toastSupplierCreated": "Supplier {code} created",
+    "colInvoiceItem": "Item on invoice",
+    "colSystemItem": "Product in the system",
+    "colUnit": "Unit",
+    "colQty": "Quantity",
+    "colPrice": "Unit price",
+    "colDiscount": "Discount",
+    "colAmount": "Amount",
+    "removeLine": "Remove line",
+    "searchProduct": "Search by code or name",
+    "noProduct": "No products found",
+    "addProduct": "Add new",
+    "clearProduct": "Clear product",
+    "unmappedError": "Please choose the matching product for every line",
+    "noLines": "No lines left to create a receipt",
+    "submit": "Create goods receipt"
+  },
+  "detail": {
+    "title": "E-invoice details",
+    "close": "Close",
+    "print": "Print"
+  },
+  "help": {
+    "title": "Input invoice guide",
+    "step1": "Add a tax portal connection (Connections tab) or import invoice XML files.",
+    "step2": "Sync: choose the tax code and a period (max 31 days), then type the portal captcha.",
+    "step3": "Create ▾: a goods receipt (match invoice items to products; remembered for next time) or a payment voucher.",
+    "step4": "Linked invoices show \"Created ↗\" — click to open the document."
+  }
+}

@@ -4,6 +4,6 @@
  * cũng không nháy tiếng Việt / lệch hydrate. Thêm namespace mới → thêm tên vào đây (test i18n-keys kiểm tra).
  */
 export const ALL_NAMESPACES = [
-  "accounting", "auth", "cashbook", "common", "customers", "dashboard", "delivery", "errors", "hr", "inventory", "nav",
+  "accounting", "auth", "cashbook", "common", "customers", "dashboard", "delivery", "errors", "hr", "input-invoices", "inventory", "nav",
   "notifications", "orders", "print", "products", "purchases", "reports", "sale", "sales", "settings", "store-profile",
 ] as const;

@@ -419,5 +419,83 @@
       "toastPublished": "電子請求書 No.{no} を発行しました",
       "toastFailed": "発行に失敗しました：{error}"
     }
+  },
+  "kv": {
+    "amount": "金額",
+    "autoPrint": "完了時に自動印刷",
+    "columns": "表示列の選択",
+    "copies": "印刷部数",
+    "currentDebt": "現在の買掛金：",
+    "debt": "買掛金：{amount}",
+    "defaultPayAll": "既定で仕入先へ全額支払い",
+    "defaultRefundAll": "既定で仕入先から全額返金",
+    "displayOptions": "表示オプション",
+    "editAmount": "金額を編集",
+    "editSupplier": "仕入先を編集",
+    "lineNote": "明細メモ",
+    "lineNotePlaceholder": "メモ...",
+    "noPayments": "入出金伝票はまだありません",
+    "noReturnQty": "少なくとも1行に返品数量を入力してください",
+    "paid": "支払済み",
+    "paidAlready": "仕入先へ支払済み",
+    "payNowTitle": "支払伝票を保存",
+    "payNowQuestion": "仕入先への支払伝票を今保存しますか？（支払額：{amount}）",
+    "payToSupplier": "仕入先へ支払い (F8)",
+    "priceSetup": "価格設定",
+    "priceWithVat": "仕入価格（税込）",
+    "printSettings": "印刷設定",
+    "purchasePrice": "仕入価格",
+    "receiptReturns": "仕入返品：",
+    "returnCode": "返品番号",
+    "returnPriceWithVat": "税込返品価格",
+    "shortcuts": "ショートカット",
+    "subtotal": "商品合計",
+    "subtotalHint": "返品商品合計 = Σ 数量 × 返品価格",
+    "supplier": "仕入先",
+    "supplierPays": "仕入先からの支払い (F8)",
+    "tabInfo": "情報",
+    "tabPayments": "支払履歴",
+    "toastAdjusted": "{code} を保存しました",
+    "vatAutoHint": "VAT = 各明細のVAT合計（明細別VATをオフにすると手入力）",
+    "vatIn": "仕入VAT",
+    "vatRefund": "返還VAT",
+    "vatToggle": "明細別VAT",
+    "vatLineOn": "VATを明細ごとに計算中（クリックで合計を手入力）",
+    "vatLineOff": "VAT合計を手入力中（クリックで明細ごとに計算）",
+    "viewReceipt": "仕入伝票を見る",
+    "voucherCode": "伝票番号",
+    "keys": {
+      "f3": "商品検索",
+      "f4": "仕入先検索",
+      "f8": "仕入先への支払額",
+      "f8Return": "仕入先からの支払額",
+      "f9": "完了",
+      "up": "数量を増やす",
+      "down": "数量を減らす",
+      "enter": "次の明細の数量へ移動",
+      "shift": "前の明細の数量へ移動"
+    },
+    "col": {
+      "code": "コード",
+      "unit": "単位",
+      "discount": "値引き",
+      "vat": "VAT (%)",
+      "priceWithVat": "税込価格",
+      "amount": "金額"
+    },
+    "tab": {
+      "show": "表示",
+      "other": "その他"
+    },
+    "supplierTab": {
+      "info": "情報",
+      "debt": "残高"
+    },
+    "returnCol": {
+      "receiptCode": "仕入伝票番号",
+      "createdBy": "作成者",
+      "branch": "支店",
+      "note": "メモ"
+    }
   }
 }

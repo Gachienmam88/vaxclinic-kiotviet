@@ -41,7 +41,7 @@ export const useSupplierList = (query: string) =>
   useQuery({ queryKey: ["suppliers", "list", query], queryFn: () => api<SupplierPage>(`/suppliers?${query}`), placeholderData: (prev) => prev });
 
 export const useSupplier = (id: string) =>
-  useQuery({ queryKey: ["supplier", id], queryFn: () => api<SupplierRow>(`/suppliers/${id}`) });
+  useQuery({ queryKey: ["supplier", id], queryFn: () => api<SupplierRow>(`/suppliers/${id}`), enabled: !!id });
 
 export const useSupplierGroups = () =>
   useQuery({ queryKey: ["supplier-groups"], queryFn: () => api<SupplierGroup[]>("/suppliers/groups") });

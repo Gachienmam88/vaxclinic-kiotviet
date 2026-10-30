@@ -112,6 +112,7 @@
     "SALE_RETURN": "Khách trả hàng",
     "SALE_RETURN_CANCEL_OUT": "Hủy phiếu khách trả",
     "PURCHASE_CANCEL": "Hủy phiếu nhập",
+    "PURCHASE_ADJUST": "Sửa phiếu nhập",
     "PURCHASE_RETURN_CANCEL": "Hủy trả hàng nhập",
     "ADJUSTMENT": "Kiểm kho",
     "TRANSFER_OUT": "Chuyển hàng đi",

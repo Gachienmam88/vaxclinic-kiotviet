@@ -18,7 +18,8 @@ const row = (label: string, value: string) =>
   `<tr><td style="width:150px;padding:3px 0;vertical-align:top">${label}:</td><td style="padding:3px 0">${value}</td></tr>`;
 
 function rateSummary(inv: InputInvoice) {
-  const rates = inv.details?.rates?.length ? inv.details.rates : computeRates(inv.lines);
+  const rates: { rate: string | null; beforeTax: number | null; tax: number | null }[] =
+    inv.details?.rates?.length ? inv.details.rates : computeRates(inv.lines);
   return rates.map((r) => `<tr><td style="${CELL};text-align:center">${dash(r.rate)}</td><td style="${CELL};text-align:right">${money(r.beforeTax)}</td>`
     + `<td style="${CELL};text-align:right">${money(r.tax)}</td></tr>`).join("");
 }

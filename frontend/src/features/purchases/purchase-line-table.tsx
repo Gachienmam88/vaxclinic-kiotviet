@@ -63,12 +63,12 @@ export function PurchaseLineTable({ mode, lines, branchId, onChange, readOnly, l
   const byReceipt = lines.some((l) => l.purchasePrice != null);
 
   return (
-    <table className="w-full min-w-[980px] text-[13px]">
+    <table className="w-full min-w-[1120px] text-[13px]">
       <thead className="sticky top-0 z-10 bg-primary-tint text-left text-xs font-bold">
         <tr className="h-[30px]">
           <th className="w-9 px-2" /><th className="w-12 px-2">{t("lines.index")}</th>
           {show("code") && <th className="w-28 px-2">{t("lines.productCode")}</th>}
-          <th className="px-2">{t("lines.productName")}</th>
+          <th className="min-w-[220px] px-2">{t("lines.productName")}</th>
           {show("unit") && <th className="w-24 px-2">{t("lines.unit")}</th>}
           <th className="w-28 px-2 text-right">{t("lines.quantity")}</th>
           {byReceipt && <th className="w-28 px-2 text-right">{t("kv.purchasePrice")}</th>}

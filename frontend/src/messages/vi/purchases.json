@@ -419,5 +419,83 @@
       "toastPublished": "Đã phát hành hóa đơn điện tử số {no}",
       "toastFailed": "Phát hành thất bại: {error}"
     }
+  },
+  "kv": {
+    "amount": "Số tiền",
+    "autoPrint": "Tự động in khi phiếu hoàn thành",
+    "columns": "Chọn cột hiển thị",
+    "copies": "Số bản in (Liên)",
+    "currentDebt": "Nợ hiện tại:",
+    "debt": "Nợ: {amount}",
+    "defaultPayAll": "Mặc định trả nhà cung cấp",
+    "defaultRefundAll": "Mặc định nhà cung cấp trả đủ",
+    "displayOptions": "Tùy chọn hiển thị",
+    "editAmount": "Chỉnh sửa thành tiền",
+    "editSupplier": "Sửa nhà cung cấp",
+    "lineNote": "Ghi chú dòng",
+    "lineNotePlaceholder": "Ghi chú...",
+    "noPayments": "Chưa có phiếu thu / chi nào",
+    "noReturnQty": "Nhập số lượng trả cho ít nhất 1 dòng",
+    "paid": "Đã thanh toán",
+    "paidAlready": "Đã trả nhà cung cấp",
+    "payNowTitle": "Lưu phiếu chi",
+    "payNowQuestion": "Bạn có muốn lưu phiếu chi cho nhà cung cấp không? (Tiền trả nhà cung cấp: {amount})",
+    "payToSupplier": "Tiền trả nhà cung cấp (F8)",
+    "priceSetup": "Thiết lập giá",
+    "priceWithVat": "Giá nhập (có VAT)",
+    "printSettings": "Cài đặt in",
+    "purchasePrice": "Giá nhập",
+    "receiptReturns": "Phiếu trả hàng nhập:",
+    "returnCode": "Mã trả hàng nhập",
+    "returnPriceWithVat": "Giá trả có VAT",
+    "shortcuts": "Phím tắt chức năng",
+    "subtotal": "Tổng tiền hàng",
+    "subtotalHint": "Tổng tiền hàng trả = Σ số lượng × giá trả lại",
+    "supplier": "Nhà cung cấp",
+    "supplierPays": "Tiền nhà cung cấp trả (F8)",
+    "tabInfo": "Thông tin",
+    "tabPayments": "Lịch sử thanh toán",
+    "toastAdjusted": "Đã lưu phiếu {code}",
+    "vatAutoHint": "VAT = tổng VAT các dòng (tắt chế độ VAT theo dòng để nhập tay)",
+    "vatIn": "VAT nhập hàng",
+    "vatRefund": "VAT hoàn lại",
+    "vatToggle": "VAT theo từng dòng",
+    "vatLineOn": "Đang tính VAT theo từng dòng (bấm để nhập tay tổng VAT)",
+    "vatLineOff": "Đang nhập tay tổng VAT (bấm để tính VAT theo từng dòng)",
+    "viewReceipt": "Xem phiếu nhập",
+    "voucherCode": "Mã phiếu",
+    "keys": {
+      "f3": "Tìm hàng hóa",
+      "f4": "Tìm nhà cung cấp",
+      "f8": "Tiền trả nhà cung cấp",
+      "f8Return": "Tiền nhà cung cấp trả",
+      "f9": "Hoàn thành",
+      "up": "Tăng số lượng sản phẩm",
+      "down": "Giảm số lượng sản phẩm",
+      "enter": "Di chuyển xuống ô Số lượng của sản phẩm tiếp theo",
+      "shift": "Di chuyển lên ô Số lượng của sản phẩm phía trên"
+    },
+    "col": {
+      "code": "Mã hàng",
+      "unit": "ĐVT",
+      "discount": "Giảm giá",
+      "vat": "VAT (%)",
+      "priceWithVat": "Giá có VAT",
+      "amount": "Thành tiền"
+    },
+    "tab": {
+      "show": "Hiển thị",
+      "other": "Khác"
+    },
+    "supplierTab": {
+      "info": "Thông tin",
+      "debt": "Dư nợ"
+    },
+    "returnCol": {
+      "receiptCode": "Mã phiếu nhập",
+      "createdBy": "Người tạo",
+      "branch": "Chi nhánh",
+      "note": "Ghi chú"
+    }
   }
 }
