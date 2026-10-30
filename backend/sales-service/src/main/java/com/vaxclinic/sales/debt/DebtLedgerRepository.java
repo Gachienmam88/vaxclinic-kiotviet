@@ -18,12 +18,13 @@ public class DebtLedgerRepository {
         this.jdbc = jdbc;
     }
 
-    public void insert(UUID customerId, String docType, UUID docId, String docCode, BigDecimal amount, BigDecimal balanceAfter,
-                       String note, Instant at) {
+    /** branchId null → chi nhánh mặc định (seed CN001), như dữ liệu cũ không suy ra được chi nhánh (migration V23). */
+    public void insert(UUID customerId, UUID branchId, String docType, UUID docId, String docCode, BigDecimal amount,
+                       BigDecimal balanceAfter, String note, Instant at) {
         jdbc.update("""
-                insert into customer_debt_ledger(id, customer_id, doc_type, doc_id, doc_code, amount, balance_after, note, occurred_at)
-                values (?,?,?,?,?,?,?,?,?)""", UUID.randomUUID(), customerId, docType, docId, docCode, amount, balanceAfter,
-                note, Timestamp.from(at));
+                insert into customer_debt_ledger(id, customer_id, branch_id, doc_type, doc_id, doc_code, amount, balance_after, note, occurred_at)
+                values (?,?,coalesce(?, '00000000-0000-0000-0000-000000000001'::uuid),?,?,?,?,?,?,?)""", UUID.randomUUID(), customerId,
+                branchId, docType, docId, docCode, amount, balanceAfter, note, Timestamp.from(at));
     }
 
     /** Số tiếp theo của mã chiết khấu thanh toán CKTTxxxxxx. */

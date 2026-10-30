@@ -91,7 +91,7 @@ public class ShipmentStatusWriter {
         }
         inv.setPaid(inv.getPaid().add(cod)); // khách đã trả qua đối tác (chưa về quỹ: chờ đối soát)
         if (inv.getCustomerId() != null) {
-            debt.post(inv.getCustomerId(), DebtLedger.DocType.PAYMENT, (UUID) s.get("id"), code, cod.negate(),
+            debt.post(inv.getCustomerId(), inv.getBranchId(), DebtLedger.DocType.PAYMENT, (UUID) s.get("id"), code, cod.negate(),
                     "Thu hộ qua đối tác giao hàng", now);
         }
         ledger.post((UUID) s.get("partner_id"), (UUID) s.get("branch_id"), PartnerLedger.DocType.COD, (UUID) s.get("id"), code,

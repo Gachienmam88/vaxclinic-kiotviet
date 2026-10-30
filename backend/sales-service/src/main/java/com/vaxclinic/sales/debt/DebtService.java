@@ -85,7 +85,7 @@ public class DebtService {
         v.setSourceId(c.getId());
         v.setNote(req.note());
         cashbook.save(v, req.allocate() ? allocations(c.getId(), req.amount(), req.allocations()) : List.of());
-        ledger.post(c.getId(), DebtLedger.DocType.PAYMENT, v.getId(), code, req.amount().negate(), req.note(), at);
+        ledger.post(c.getId(), req.branchId(), DebtLedger.DocType.PAYMENT, v.getId(), code, req.amount().negate(), req.note(), at);
         return code;
     }
 
@@ -100,7 +100,7 @@ public class DebtService {
                 inv.setPaid(inv.getPaid().add(a.amount()));
             }
         }
-        ledger.post(c.getId(), DebtLedger.DocType.DISCOUNT, null, code, req.amount().negate(), req.note(), at);
+        ledger.post(c.getId(), req.branchId(), DebtLedger.DocType.DISCOUNT, null, code, req.amount().negate(), req.note(), at);
         return code;
     }
 
@@ -108,7 +108,7 @@ public class DebtService {
     public String adjust(UUID customerId, AdjustRequest req) {
         Customer c = customers.findForUpdate(customerId).orElseThrow();
         String code = "DC%06d".formatted(entries.nextAdjustNumber());
-        ledger.post(c.getId(), DebtLedger.DocType.ADJUST, null, code, req.newDebt().subtract(c.getDebt()), req.note(),
+        ledger.post(c.getId(), null, DebtLedger.DocType.ADJUST, null, code, req.newDebt().subtract(c.getDebt()), req.note(),
                 req.occurredAt() == null ? Instant.now() : req.occurredAt());
         return code;
     }

@@ -121,12 +121,12 @@ public class InvoiceWriter {
         }
         shipments.createForInvoice(inv, req.delivery(), actor); // sau phiếu thu + cọc: thu hộ = tổng − đã trả
         if (customer != null) {
-            debt.post(customer.getId(), DebtLedger.DocType.SALE, inv.getId(), code, inv.getTotal(), null, inv.getSoldAt());
+            debt.post(customer.getId(), inv.getBranchId(), DebtLedger.DocType.SALE, inv.getId(), code, inv.getTotal(), null, inv.getSoldAt());
             if (paid.signum() > 0) {
-                debt.post(customer.getId(), DebtLedger.DocType.PAYMENT, inv.getId(), "TT" + code, paid.negate(), null, inv.getSoldAt());
+                debt.post(customer.getId(), inv.getBranchId(), DebtLedger.DocType.PAYMENT, inv.getId(), "TT" + code, paid.negate(), null, inv.getSoldAt());
             }
             for (var x : extras) {
-                debt.post(customer.getId(), DebtLedger.DocType.PAYMENT, inv.getId(), x.getCode(), x.getAmount().negate(), null, inv.getSoldAt());
+                debt.post(customer.getId(), inv.getBranchId(), DebtLedger.DocType.PAYMENT, inv.getId(), x.getCode(), x.getAmount().negate(), null, inv.getSoldAt());
             }
             Customer c = customers.findById(customer.getId()).orElseThrow();
             c.setTotalSales(c.getTotalSales().add(inv.getTotal()));
@@ -159,12 +159,12 @@ public class InvoiceWriter {
         shipments.onInvoiceCancelled(inv, actor);
         if (inv.getCustomerId() != null) {
             Instant now = Instant.now();
-            debt.post(inv.getCustomerId(), DebtLedger.DocType.SALE_CANCEL, id, inv.getCode(), inv.getTotal().negate(), "Hủy hóa đơn", now);
+            debt.post(inv.getCustomerId(), inv.getBranchId(), DebtLedger.DocType.SALE_CANCEL, id, inv.getCode(), inv.getTotal().negate(), "Hủy hóa đơn", now);
             if (autoPaid.signum() > 0) {
-                debt.post(inv.getCustomerId(), DebtLedger.DocType.PAYMENT_CANCEL, id, "TT" + inv.getCode(), autoPaid, "Hủy phiếu thu", now);
+                debt.post(inv.getCustomerId(), inv.getBranchId(), DebtLedger.DocType.PAYMENT_CANCEL, id, "TT" + inv.getCode(), autoPaid, "Hủy phiếu thu", now);
             }
             for (var x : extras) {
-                debt.post(inv.getCustomerId(), DebtLedger.DocType.PAYMENT_CANCEL, id, x.getCode(), x.getAmount(), "Hủy phiếu thu", now);
+                debt.post(inv.getCustomerId(), inv.getBranchId(), DebtLedger.DocType.PAYMENT_CANCEL, id, x.getCode(), x.getAmount(), "Hủy phiếu thu", now);
             }
             Customer c = customers.findById(inv.getCustomerId()).orElseThrow();
             c.setTotalSales(c.getTotalSales().subtract(inv.getTotal()));

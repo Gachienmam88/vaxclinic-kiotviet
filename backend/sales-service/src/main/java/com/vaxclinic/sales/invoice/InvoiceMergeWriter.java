@@ -135,10 +135,10 @@ public class InvoiceMergeWriter {
         merges.markMerged(fromIds, id);
         if (inv.getCustomerId() != null) {
             for (Invoice o : locked) {
-                debt.post(o.getCustomerId(), DebtLedger.DocType.SALE_CANCEL, o.getId(), o.getCode(), o.getTotal().negate(),
+                debt.post(o.getCustomerId(), o.getBranchId(), DebtLedger.DocType.SALE_CANCEL, o.getId(), o.getCode(), o.getTotal().negate(),
                         "Gộp vào hóa đơn " + code, now);
             }
-            debt.post(inv.getCustomerId(), DebtLedger.DocType.SALE, id, code, inv.getTotal(), inv.getNote(), now);
+            debt.post(inv.getCustomerId(), inv.getBranchId(), DebtLedger.DocType.SALE, id, code, inv.getTotal(), inv.getNote(), now);
         }
         return inv;
     }

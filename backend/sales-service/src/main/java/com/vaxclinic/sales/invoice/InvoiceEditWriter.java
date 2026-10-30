@@ -126,19 +126,19 @@ public class InvoiceEditWriter {
         String note = "Sửa hóa đơn " + inv.getCode();
         if (Objects.equals(oldCustomer, inv.getCustomerId())) {
             if (oldCustomer != null) {
-                debt.post(oldCustomer, DebtLedger.DocType.SALE, id, inv.getCode(), totals.total().subtract(oldTotal), note, now);
-                debt.post(oldCustomer, DebtLedger.DocType.PAYMENT, id, "TT" + inv.getCode(), oldAutoPaid.subtract(paid), note, now);
+                debt.post(oldCustomer, inv.getBranchId(), DebtLedger.DocType.SALE, id, inv.getCode(), totals.total().subtract(oldTotal), note, now);
+                debt.post(oldCustomer, inv.getBranchId(), DebtLedger.DocType.PAYMENT, id, "TT" + inv.getCode(), oldAutoPaid.subtract(paid), note, now);
                 addSales(oldCustomer, totals.total().subtract(oldTotal));
             }
         } else {
             if (oldCustomer != null) {
-                debt.post(oldCustomer, DebtLedger.DocType.SALE_CANCEL, id, inv.getCode(), oldTotal.negate(), note, now);
-                debt.post(oldCustomer, DebtLedger.DocType.PAYMENT_CANCEL, id, "TT" + inv.getCode(), oldAutoPaid, note, now);
+                debt.post(oldCustomer, inv.getBranchId(), DebtLedger.DocType.SALE_CANCEL, id, inv.getCode(), oldTotal.negate(), note, now);
+                debt.post(oldCustomer, inv.getBranchId(), DebtLedger.DocType.PAYMENT_CANCEL, id, "TT" + inv.getCode(), oldAutoPaid, note, now);
                 addSales(oldCustomer, oldTotal.negate());
             }
             if (inv.getCustomerId() != null) {
-                debt.post(inv.getCustomerId(), DebtLedger.DocType.SALE, id, inv.getCode(), totals.total(), note, now);
-                debt.post(inv.getCustomerId(), DebtLedger.DocType.PAYMENT, id, "TT" + inv.getCode(), paid.negate(), note, now);
+                debt.post(inv.getCustomerId(), inv.getBranchId(), DebtLedger.DocType.SALE, id, inv.getCode(), totals.total(), note, now);
+                debt.post(inv.getCustomerId(), inv.getBranchId(), DebtLedger.DocType.PAYMENT, id, "TT" + inv.getCode(), paid.negate(), note, now);
                 addSales(inv.getCustomerId(), totals.total());
             }
         }

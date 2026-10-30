@@ -1784,7 +1784,8 @@ Quy tắc dùng chung:
 - API: xem bảng 3.1 (`/debts`, `/payments`, `/discounts`, `/adjustments`).
 
 **2. Dữ liệu**
-- Bảng `customer_debt_ledger(id, customer_id, doc_type, doc_id, doc_code, amount, balance_after, note, occurred_at)` (`MIG/V1__init_sales_schema.sql:148-159`).
+- Bảng `customer_debt_ledger(id, customer_id, branch_id, doc_type, doc_id, doc_code, amount, balance_after, note, occurred_at)` (`MIG/V1__init_sales_schema.sql:148-159`, `branch_id` từ `MIG/V23__customer_debt_ledger_branch.sql`).
+  - `branch_id` (NOT NULL): `DebtLedger.post(customerId, branchId, …)` nhận chi nhánh của chứng từ (hóa đơn, phiếu trả, phiếu thu/chi, đơn đặt, thu hộ vận đơn, chi nhánh chọn khi thu nợ / chiết khấu); điều chỉnh nợ không có chi nhánh → chi nhánh tạo khách, không có → chi nhánh mặc định CN001. V23 điền dữ liệu cũ theo `doc_id` (hóa đơn / phiếu trả / phiếu thu-chi / đơn đặt / vận đơn → khách → CN001); lúc chạy trên dev 49/49 dòng suy ra từ chứng từ, 0 dòng phải dùng chi nhánh khách hoặc mặc định.
 - **Quy ước dấu**: `amount > 0` làm tăng nợ, `< 0` làm giảm nợ. `customers.debt` = số dư sau dòng cuối (`BE/debt/DebtLedger.java:14-18,41-43`). `amount = 0` thì không ghi dòng (`DebtLedger.java:38-40`).
 - Các loại `doc_type` (`DebtLedger.java:23`):
 
@@ -3384,7 +3385,7 @@ Quy ước chung (đọc từ code):
 | returnValue | Σ (`r.subtotal − r.discount`) |
 | cogs | giá vốn bán − giá vốn trả |
 | returnFee | Σ `r.fee` |
-| paymentDiscount | −Σ `customer_debt_ledger.amount` loại DISCOUNT (**không lọc chi nhánh**) (:42-43) |
+| paymentDiscount | −Σ `customer_debt_ledger.amount` loại DISCOUNT, lọc `branch_id` theo chi nhánh được xem / chọn (follow-up audit) (:42-43) |
 | salary | phiếu chi PAID `accounting`, trừ NCC/RETURN/PURCHASE, nguồn `PAYROLL`/`HR_ADVANCE` hoặc category chứa "lương" (`SALARY`, `SS/report/FinanceReportRepository.java:22-24`) |
 | otherExpense | phiếu chi như trên, category không chứa "lương" |
 | otherIncome | phiếu thu PAID `accounting` (:49-50) |
@@ -3448,7 +3449,7 @@ Quy ước chung (đọc từ code):
 
 ### Câu hỏi chưa giải quyết
 - ~~Dashboard và Sổ doanh thu tính phí trả hàng vào doanh thu thuần~~ — đã thống nhất (audit #11): phí trả hàng tách riêng mọi nơi; sổ S1a / tờ khai cộng phí trả hàng vào doanh thu chịu thuế.
-- ~~`/accounting/revenue/*`, `/accounting/stock/summary`, `/reports/customers/debt` không giới hạn chi nhánh~~ — đã sửa (audit #2). `paymentDiscount` (Báo cáo tài chính) vẫn không lọc chi nhánh (sổ nợ khách không có chi nhánh).
+- ~~`/accounting/revenue/*`, `/accounting/stock/summary`, `/reports/customers/debt` không giới hạn chi nhánh~~ — đã sửa (audit #2). `paymentDiscount` (Báo cáo tài chính) lọc theo `customer_debt_ledger.branch_id` (V23).
 - ~~Phiếu lương/tạm ứng từ HR outbox `accounting=false`~~ — đã sửa (audit #10): hạch toán, vào "Chi phí lương".
 - Mã tính chất hóa đơn đầu vào: XML (`TCHDon` 1=thay thế, 2=điều chỉnh) và cổng (`tchat` 2=điều chỉnh, 3=thay thế) dùng hai bảng mã khác nhau — chưa kiểm chứng với dữ liệu thật.
 

@@ -96,7 +96,7 @@ public class CashbookService {
         writer.cancel(v);
         if (v.isAffectsDebt() && v.getPartnerId() != null && "CUSTOMER".equals(v.getPartnerType())) {
             BigDecimal back = "RECEIPT".equals(v.getVoucherType()) ? v.getAmount() : v.getAmount().negate();
-            debt.post(v.getPartnerId(), DebtLedger.DocType.PAYMENT_CANCEL, v.getId(), v.getCode(), back, "Hủy phiếu " + v.getCode(), Instant.now());
+            debt.post(v.getPartnerId(), v.getBranchId(), DebtLedger.DocType.PAYMENT_CANCEL, v.getId(), v.getCode(), back, "Hủy phiếu " + v.getCode(), Instant.now());
         }
     }
 

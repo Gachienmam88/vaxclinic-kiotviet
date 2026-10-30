@@ -116,9 +116,9 @@ public class SalesReturnWriter {
             cashbook.save(v, List.of());
         }
         if (h.customerId() != null) {
-            debt.post(h.customerId(), DebtLedger.DocType.RETURN, req.id(), code, total.negate(),
+            debt.post(h.customerId(), h.branchId(), DebtLedger.DocType.RETURN, req.id(), code, total.negate(),
                     h.invoiceId() == null ? "Trả nhanh" : "Trả hàng " + h.invoiceCode(), at);
-            debt.post(h.customerId(), DebtLedger.DocType.REFUND, req.id(), "PC" + code, refund, null, at);
+            debt.post(h.customerId(), h.branchId(), DebtLedger.DocType.REFUND, req.id(), "PC" + code, refund, null, at);
             var c = customers.findById(h.customerId()).orElseThrow();
             c.setTotalReturns(c.getTotalReturns().add(total));
         }
@@ -137,8 +137,8 @@ public class SalesReturnWriter {
             BigDecimal total = (BigDecimal) r.get("total");
             BigDecimal refunded = (BigDecimal) r.get("refunded");
             Instant now = Instant.now();
-            debt.post(customerId, DebtLedger.DocType.RETURN_CANCEL, id, (String) r.get("code"), total, "Hủy phiếu trả hàng", now);
-            debt.post(customerId, DebtLedger.DocType.REFUND_CANCEL, id, "PC" + r.get("code"), refunded.negate(), null, now);
+            debt.post(customerId, (UUID) r.get("branch_id"), DebtLedger.DocType.RETURN_CANCEL, id, (String) r.get("code"), total, "Hủy phiếu trả hàng", now);
+            debt.post(customerId, (UUID) r.get("branch_id"), DebtLedger.DocType.REFUND_CANCEL, id, "PC" + r.get("code"), refunded.negate(), null, now);
             var c = customers.findById(customerId).orElseThrow();
             c.setTotalReturns(c.getTotalReturns().subtract(total));
         }

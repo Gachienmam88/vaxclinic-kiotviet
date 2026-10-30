@@ -55,7 +55,7 @@ public class OrderDepositLedger {
         v.setBankAccountId(bankAccountId);
         fill(v, o, c.getPhone(), now, actor, "Đặt cọc đơn " + o.getCode());
         cashbook.save(v, List.of());
-        debt.post(c.getId(), DebtLedger.DocType.PAYMENT, o.getId(), code, amount.negate(), "Đặt cọc đơn " + o.getCode(), now);
+        debt.post(c.getId(), o.getBranchId(), DebtLedger.DocType.PAYMENT, o.getId(), code, amount.negate(), "Đặt cọc đơn " + o.getCode(), now);
         o.setDeposit(o.getDeposit().add(amount));
     }
 
@@ -70,7 +70,7 @@ public class OrderDepositLedger {
         v.setBankAccountId("TRANSFER".equals(method) || "CARD".equals(method) ? bankAccountId : null);
         fill(v, o, null, now, actor, "Hoàn tiền đặt cọc khi hủy đơn " + o.getCode());
         cashbook.save(v, List.of());
-        debt.post(o.getCustomerId(), DebtLedger.DocType.REFUND, o.getId(), code, o.getDeposit(), "Hủy đơn " + o.getCode(), now);
+        debt.post(o.getCustomerId(), o.getBranchId(), DebtLedger.DocType.REFUND, o.getId(), code, o.getDeposit(), "Hủy đơn " + o.getCode(), now);
         o.setDeposit(BigDecimal.ZERO);
     }
 
@@ -86,7 +86,7 @@ public class OrderDepositLedger {
         for (UUID id : deposits.paidReceiptIds(o.getId())) {
             var v = vouchers.findById(id).orElseThrow();
             cashbook.cancel(v);
-            debt.post(o.getCustomerId(), DebtLedger.DocType.PAYMENT_CANCEL, v.getId(), v.getCode(), v.getAmount(),
+            debt.post(o.getCustomerId(), o.getBranchId(), DebtLedger.DocType.PAYMENT_CANCEL, v.getId(), v.getCode(), v.getAmount(),
                     "Hủy phiếu cọc " + v.getCode() + " của đơn " + o.getCode(), now);
             total = total.add(v.getAmount());
         }

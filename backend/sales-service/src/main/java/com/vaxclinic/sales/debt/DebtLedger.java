@@ -30,8 +30,12 @@ public class DebtLedger {
         this.customers = customers;
     }
 
+    /**
+     * branchId: chi nhánh của chứng từ phát sinh (hóa đơn, phiếu trả, phiếu thu/chi, đơn đặt, chiết khấu tại quầy) — để báo cáo
+     * lọc theo chi nhánh; null (VD điều chỉnh nợ không chọn chi nhánh) → chi nhánh tạo khách, không có thì chi nhánh mặc định.
+     */
     @Transactional(propagation = Propagation.MANDATORY)
-    public Customer post(UUID customerId, DocType type, UUID docId, String docCode, BigDecimal amount, String note,
+    public Customer post(UUID customerId, UUID branchId, DocType type, UUID docId, String docCode, BigDecimal amount, String note,
                          Instant at) {
         Customer c = customers.findForUpdate(customerId)
                 .orElseThrow(() -> BusinessException.notFound("CUSTOMER_NOT_FOUND", "Không tìm thấy khách hàng"));
@@ -40,7 +44,7 @@ public class DebtLedger {
         }
         BigDecimal after = c.getDebt().add(amount);
         c.setDebt(after);
-        entries.insert(customerId, type.name(), docId, docCode, amount, after, note, at);
+        entries.insert(customerId, branchId != null ? branchId : c.getBranchId(), type.name(), docId, docCode, amount, after, note, at);
         return c;
     }
 }

@@ -43,7 +43,7 @@ public class FinanceReportRepository {
                   from sales_returns r left join invoices i on i.id = r.invoice_id where %s
                   union all
                   select %s, 0, 0, 0, 0, 0, -d.amount, 0, 0, 0, 0 from customer_debt_ledger d
-                  where d.doc_type = 'DISCOUNT' and d.occurred_at >= :from and d.occurred_at < :to
+                  where d.doc_type = 'DISCOUNT' and d.occurred_at >= :from and d.occurred_at < :to and d.branch_id in (:branches)
                   union all
                   select %s, 0, 0, 0, 0, 0, 0, case when %s then v.amount else 0 end,
                     case when %s then 0 else v.amount end, 0, 0
