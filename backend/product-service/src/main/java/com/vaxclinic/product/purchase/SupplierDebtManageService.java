@@ -29,11 +29,14 @@ public class SupplierDebtManageService {
     private final SupplierDebtService service;
     private final SupplierDebtQueryRepository query;
     private final AuditLogger audit;
+    private final com.vaxclinic.product.internal.InputInvoiceUnlinkClient inputInvoices;
 
-    public SupplierDebtManageService(SupplierDebtService service, SupplierDebtQueryRepository query, AuditLogger audit) {
+    public SupplierDebtManageService(SupplierDebtService service, SupplierDebtQueryRepository query, AuditLogger audit,
+                                     com.vaxclinic.product.internal.InputInvoiceUnlinkClient inputInvoices) {
         this.service = service;
         this.query = query;
         this.audit = audit;
+        this.inputInvoices = inputInvoices;
     }
 
     public List<LedgerRow> ledger(UUID supplierId) {
@@ -71,6 +74,7 @@ public class SupplierDebtManageService {
 
     public DocDetail cancel(UUID docId, Actor actor) {
         service.cancel(docId);
+        inputInvoices.docCancelled(docId); // phiếu chi lập từ hóa đơn đầu vào → hóa đơn về "Chưa lập phiếu"
         return logged(actor, "Hủy", query.doc(docId), "Hủy");
     }
 

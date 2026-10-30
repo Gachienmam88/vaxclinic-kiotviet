@@ -99,4 +99,13 @@ class PurchaseMathTest {
         assertThat(PurchaseMath.commonRate("LINE", List.of(bd("5"), bd("5.00")), null)).isEqualByComparingTo("5");
         assertThat(PurchaseMath.commonRate("LINE", List.of(bd("5"), bd("10")), null)).isNull();
     }
+
+    @Test
+    void returnFromManualVatReceiptDefaultsToNearestStandardRate() {
+        // VAT tay 470,000 trên (10,000,000 − 0) = 4.7% → 5%; 700,000 = 7% → 8%; 0 → KCT; phiếu theo dòng → VAT% của dòng
+        assertThat(PurchaseMath.defaultReturnVatRate("MANUAL", null, bd("10000000"), BigDecimal.ZERO, bd("470000"))).isEqualByComparingTo("5");
+        assertThat(PurchaseMath.defaultReturnVatRate("MANUAL", null, bd("10000000"), bd("0"), bd("700000"))).isEqualByComparingTo("8");
+        assertThat(PurchaseMath.defaultReturnVatRate("MANUAL", null, bd("10000000"), BigDecimal.ZERO, BigDecimal.ZERO)).isNull();
+        assertThat(PurchaseMath.defaultReturnVatRate("LINE", bd("10"), bd("10000000"), BigDecimal.ZERO, bd("1"))).isEqualByComparingTo("10");
+    }
 }

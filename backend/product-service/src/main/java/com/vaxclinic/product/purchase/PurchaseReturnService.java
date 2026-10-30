@@ -189,7 +189,9 @@ public class PurchaseReturnService {
             BigDecimal used = returned.getOrDefault(k, BigDecimal.ZERO).min(base);
             returned.put(k, returned.getOrDefault(k, BigDecimal.ZERO).subtract(used));
             BigDecimal left = base.subtract(used).divide(l.getConversionRate(), 3, java.math.RoundingMode.DOWN).stripTrailingZeros();
-            return new PurchaseDtos.ReturnableLine(l.getId(), l.getProductId(), l.getLotNumber(), l.getQuantity(), left);
+            return new PurchaseDtos.ReturnableLine(l.getId(), l.getProductId(), l.getLotNumber(), l.getQuantity(), left,
+                    PurchaseMath.defaultReturnVatRate(receipt.getVatMode(), l.getVatRate(), receipt.getSubtotal(),
+                            receipt.getDiscount(), receipt.getVatAmount()));
         }).toList();
     }
 

@@ -21,8 +21,11 @@ public class CashbookManageService {
     private final CashbookService service;
     private final CashVoucherRepository vouchers;
     private final AuditLogger audit;
+    private final InputInvoiceUnlinkClient inputInvoices;
 
-    public CashbookManageService(CashbookRepository query, CashbookService service, CashVoucherRepository vouchers, AuditLogger audit) {
+    public CashbookManageService(CashbookRepository query, CashbookService service, CashVoucherRepository vouchers, AuditLogger audit,
+                                 InputInvoiceUnlinkClient inputInvoices) {
+        this.inputInvoices = inputInvoices;
         this.query = query;
         this.service = service;
         this.vouchers = vouchers;
@@ -55,6 +58,7 @@ public class CashbookManageService {
     /** Hủy phiếu; ghi lịch sử cả khi phiếu đã hủy từ trước (giữ hành vi cũ). */
     public void cancel(UUID id, Actor actor) {
         service.cancel(id);
+        inputInvoices.docCancelled(id); // phiếu chi lập từ hóa đơn đầu vào (VD "Chi mua dịch vụ") → hóa đơn về "Chưa lập phiếu"
         vouchers.findById(id).ifPresent(v -> actor.audit(audit, v.getBranchId(), voucherFeature(v), "Hủy", v.getCode(),
                 "Hủy phiếu " + v.getCode() + ": " + v.getCategory() + ", " + Actor.money(v.getAmount())));
     }

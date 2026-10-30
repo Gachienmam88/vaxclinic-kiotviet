@@ -27,10 +27,13 @@ public class PurchaseManageService {
     private final PurchaseListRepository listQuery;
     private final PurchaseDetailMapper mapper;
     private final AuditLogger audit;
+    private final com.vaxclinic.product.internal.InputInvoiceUnlinkClient inputInvoices;
 
     public PurchaseManageService(PurchaseReceiptService receiptService, PurchaseReceiptAdjustService adjustService,
                                  PurchaseReturnService returnService, PurchaseListRepository listQuery,
-                                 PurchaseDetailMapper mapper, AuditLogger audit) {
+                                 PurchaseDetailMapper mapper, AuditLogger audit,
+                                 com.vaxclinic.product.internal.InputInvoiceUnlinkClient inputInvoices) {
+        this.inputInvoices = inputInvoices;
         this.receiptService = receiptService;
         this.adjustService = adjustService;
         this.returnService = returnService;
@@ -79,6 +82,7 @@ public class PurchaseManageService {
 
     public ReceiptResponse cancelReceipt(UUID id, Actor actor) {
         receiptService.cancel(id, actor);
+        inputInvoices.docCancelled(id); // phiếu nhập lập từ hóa đơn đầu vào → hóa đơn về "Chưa lập phiếu"
         ReceiptResponse r = mapper.receipt(id);
         log(actor, r.branchId(), "Nhập hàng", "Hủy", r.code(), "Hủy phiếu nhập " + r.code() + ", tổng " + money(r.total()));
         return r;

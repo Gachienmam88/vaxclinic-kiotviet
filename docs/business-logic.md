@@ -505,7 +505,7 @@ Nguồn: `PS/purchase/PurchaseController.java:35-102`.
   - lưu xong mở danh sách lọc đúng mã (`?code=`);
   - hoàn thành mà hàng lô thiếu lô / HSD → chặn; sao chép: bỏ id / mã, ngày = now, xóa số HĐ, tiền trả, ghi chú;
   - ô chọn NCC chỉ NCC đang hoạt động; ô tìm hàng "Tìm hàng hóa theo mã hoặc tên (F3)": tên / tên viết tắt chứa (không dấu) hoặc mã / mã vạch chứa, hàng đang kinh doanh, 10 kết quả.
-- **Lập từ hóa đơn đầu vào** (5.4): màn xác nhận lưu bản nháp vào sessionStorage `input-invoice-receipt:{id}` rồi mở `?source=inputInvoice&id=`; mất bản nháp (mở tab mới) → dựng lại từ hóa đơn + ánh xạ đã nhớ (dòng chưa ánh xạ bị bỏ) + NCC khớp MST (`FE/features/integrations/input-invoice-receipt-draft.ts`). Điền NCC, số HĐ, ghi chú "Lập từ hóa đơn đầu vào …", dòng đã ánh xạ với SL / đơn giá / giảm giá (= chiết khấu dòng / SL) / VAT% theo hóa đơn. Lưu (tạm hoặc hoàn thành) xong `PATCH /input-invoices/{id}/link {type: RECEIPT}`; lỗi chỉ báo toast, không rollback phiếu. Hủy phiếu nhập → `DELETE /input-invoices/links/{id}` (hóa đơn về "Chưa lập phiếu").
+- **Lập từ hóa đơn đầu vào** (5.4): màn xác nhận lưu bản nháp vào sessionStorage `input-invoice-receipt:{id}` rồi mở `?source=inputInvoice&id=`; mất bản nháp (mở tab mới) → dựng lại từ hóa đơn + ánh xạ đã nhớ (dòng chưa ánh xạ bị bỏ) + NCC khớp MST (`FE/features/integrations/input-invoice-receipt-draft.ts`). Điền NCC, số HĐ, ghi chú "Lập từ hóa đơn đầu vào …", dòng đã ánh xạ với SL / đơn giá / giảm giá (= chiết khấu dòng / SL) / VAT% theo hóa đơn. Lưu (tạm hoặc hoàn thành) xong `PATCH /input-invoices/{id}/link {type: RECEIPT}` — gắn ngay từ lúc Lưu tạm để không lập 2 phiếu từ 1 hóa đơn; lỗi chỉ báo toast, không rollback phiếu. Hủy phiếu nhập (tạm hoặc đã nhập) → product-service gọi integration `DELETE /internal/input-invoices/links/{id}` sau khi commit (hóa đơn về "Chưa lập phiếu", lập lại được) (`PS/internal/InputInvoiceUnlinkClient.java`, `PS/purchase/PurchaseManageService.java`).
 
 **4. Danh sách**
 - Lọc (`FE/features/purchases/purchase-filter-sidebar.tsx:27-77`, `PS/purchase/PurchaseListRepository.java:33-106`):
@@ -562,7 +562,7 @@ Nguồn: `PS/purchase/PurchaseController.java:35-102`.
   - Chứng từ REFUND không sửa / hủy riêng được: `PATCH` / `cancel` → 400 `SUPPLIER_DOC_AUTO` "…hãy hủy phiếu trả hàng nhập để hủy phiếu thu"; FE chỉ xem (`FE/features/purchases/supplier-debt-doc-dialog.tsx`).
   - Migration `MIG/V11__purchase_return_refund_receipt.sql`: cột `return_id`, tạo bù REFUND + outbox phiếu thu cho phiếu trả cũ có tiền hoàn.
 - Lịch sử thao tác chức năng "Trả hàng nhập": Lưu tạm / Trả hàng / Hủy.
-- **FE màn trả hàng nhập** (ảnh 307/308, dùng chung màn nhập hàng ở chế độ trả): theo phiếu nhập (nút "Trả hàng nhập" ở chi tiết phiếu nhập COMPLETED) → mọi dòng của phiếu, SL trả 0 kèm "/N" (còn trả được, nhập vượt bị kẹp), Giá nhập (= đơn giá − giảm của phiếu nhập, chỉ đọc), Giá trả lại (mặc định = giá nhập), VAT (%) (mặc định = VAT% dòng nhập), Giá trả có VAT, Thành tiền; NCC + chi nhánh khóa; dòng SL 0 không gửi lên; không còn dòng SL > 0 → chặn. Cột phải: người tạo + thời gian, NCC, Mã trả hàng nhập, trạng thái, Tổng tiền hàng ⓘ, Giảm giá, VAT hoàn lại, NCC cần trả, Tiền NCC trả (F8) + hình thức, Tính vào công nợ = trả − cần trả, ghi chú, Lưu tạm / Hoàn thành. Trả nhanh (`/purchases/returns/new` không tham số): chọn NCC rồi tìm hàng bất kỳ, chọn lô. `?copyFrom=` sao chép phiếu trả (ngày hiện tại, tiền NCC trả 0) (`FE/features/purchases/purchase-editor-state.ts`, `FE/app/(admin)/purchases/returns/new/page.tsx`).
+- **FE màn trả hàng nhập** (ảnh 307/308, dùng chung màn nhập hàng ở chế độ trả): theo phiếu nhập (nút "Trả hàng nhập" ở chi tiết phiếu nhập COMPLETED) → mọi dòng của phiếu, SL trả 0 kèm "/N" (còn trả được, nhập vượt bị kẹp), Giá nhập (= đơn giá − giảm của phiếu nhập, chỉ đọc), Giá trả lại (mặc định = giá nhập), VAT (%) (mặc định = `defaultVatRate` của `/returnable`: phiếu nhập VAT theo dòng → VAT% dòng nhập; phiếu nhập VAT nhập tay → mức gần nhất trong 0 / 5 / 8 / 10% với VAT phiếu ÷ (tổng tiền hàng − giảm giá), bằng nhau lấy mức thấp hơn; VAT tay = 0 → KCT) (`PurchaseMath.defaultReturnVatRate`), Giá trả có VAT, Thành tiền; NCC + chi nhánh khóa; dòng SL 0 không gửi lên; không còn dòng SL > 0 → chặn. Cột phải: người tạo + thời gian, NCC, Mã trả hàng nhập, trạng thái, Tổng tiền hàng ⓘ, Giảm giá, VAT hoàn lại, NCC cần trả, Tiền NCC trả (F8) + hình thức, Tính vào công nợ = trả − cần trả, ghi chú, Lưu tạm / Hoàn thành. Trả nhanh (`/purchases/returns/new` không tham số): chọn NCC rồi tìm hàng bất kỳ, chọn lô. `?copyFrom=` sao chép phiếu trả (ngày hiện tại, tiền NCC trả 0) (`FE/features/purchases/purchase-editor-state.ts`, `FE/app/(admin)/purchases/returns/new/page.tsx`).
 
 **4. Danh sách** (`FE/app/(admin)/purchases/returns/page.tsx`, menu Mua hàng → Trả hàng nhập)
 - Lọc như 1.9 (người trả thay người nhập, không có số HĐ), thời gian theo `returned_at`; trạng thái mặc định Phiếu tạm + Đã trả hàng (Đã hủy bỏ chọn). Link sâu `?code=THN…` lọc đúng mã mọi trạng thái + mở sẵn.
@@ -682,7 +682,7 @@ Nguồn: `PS/purchase/SupplierController.java:33-107`, `PS/purchase/SupplierGrou
   - khóa dòng FOR UPDATE; không có → 404 `SUPPLIER_DOC_NOT_FOUND`; đã hủy → 400 `SUPPLIER_DOC_CANCELLED`;
   - kiểm khóa sổ cả ngày cũ lẫn mới;
   - PAYMENT có `cash_source_id` → outbox `UPDATE`.
-- **Hủy chứng từ** (`PS/purchase/SupplierDebtService.java:106-119`): kiểm khóa sổ; status CANCELLED; PAYMENT → trừ lại `paid_amount` các phiếu đã phân bổ + outbox `CANCEL`. Áp cho mọi loại, kể cả `PC{mã}` và ADJUSTMENT. Hủy lần 2 → `SUPPLIER_DOC_CANCELLED`.
+- **Hủy chứng từ** (`PS/purchase/SupplierDebtService.java:106-119`): kiểm khóa sổ; status CANCELLED; PAYMENT → trừ lại `paid_amount` các phiếu đã phân bổ + outbox `CANCEL`. Áp cho mọi loại, kể cả `PC{mã}` và ADJUSTMENT. Hủy lần 2 → `SUPPLIER_DOC_CANCELLED`. Sau khi commit, gọi integration `DELETE /internal/input-invoices/links/{docId}` → hóa đơn đầu vào đã lập phiếu chi này (Lập phiếu ▾ → Phiếu chi …) về "Chưa lập phiếu" (best-effort, `PS/purchase/SupplierDebtManageService.java`).
 - **Chi tiết chứng từ**: "Đã chi trước" = phân bổ ACTIVE của chứng từ khác lập trước `(occurred_at, created_at)`; `unallocated = amount − Σ phân bổ` (ADJUSTMENT = 0) (`PS/purchase/SupplierDebtQueryRepository.java:65-96`).
 - **Sổ quỹ (cross-service, nội bộ, outbox)** (`PS/internal/CashflowOutbox.java:22-163`):
   - payload ghi vào `outbox_cashflows` **cùng transaction** với nghiệp vụ;
@@ -787,7 +787,6 @@ Nguồn: `PS/purchase/SupplierController.java:33-107`, `PS/purchase/SupplierGrou
 - FE phiếu nhập chỉ có CASH / TRANSFER; backend nhận `payment_method` tự do ≤20 ký tự.
 - Payment / discount / adjust NCC trên FE luôn lấy chi nhánh đầu tiên của user.
 - CSV danh sách NCC và sổ nợ NCC không chặn công thức Excel.
-- Trả hàng nhập theo phiếu nhập có VAT nhập tay (MANUAL): dòng trả mặc định không có VAT% (người dùng tự chọn).
 - Sửa phiếu đã nhập: không thêm / bớt dòng, không đổi lô / đơn vị; phiếu đã có phiếu trả chưa hủy không sửa được.
 - `LocalDate.now()` (múi giờ JVM) dùng để xét lô hết hạn khi bán, trong khi job cảnh báo dùng giờ VN (`PS/internal/InternalStockService.java:148,231` và `PS/notification/StockAlertJob.java:55`).
 
@@ -1933,6 +1932,7 @@ Quy tắc dùng chung:
   - Phiếu đã hủy thì không làm gì; audit vẫn ghi (`CashbookManageService.java:55-60`).
   - Kiểm tra khóa sổ theo `occurred_at` của phiếu. Chuyển `status = CANCELLED`, trừ lại `invoices.paid` theo các dòng phân bổ, và đảo công nợ khách nếu `affectsDebt`.
   - Không có sửa phiếu; chỉ có hủy.
+  - Sau khi hủy, gọi integration-service `DELETE /internal/input-invoices/links/{id phiếu}` (best-effort): phiếu chi lập từ hóa đơn đầu vào ("Phiếu mua dịch vụ") → hóa đơn về "Chưa lập phiếu" (5.4) (`BE/cashbook/InputInvoiceUnlinkClient.java`).
 - **Nhận phiếu từ service khác** `/internal/cashflows` (`CashbookService.java:103-145`), idempotent:
   - `CANCEL`: hủy nếu có phiếu.
   - `UPDATE`: chỉ đổi `occurredAt`, người thu, `note` của phiếu chưa hủy.
@@ -3187,7 +3187,7 @@ Quy ước chung (đọc từ code):
    - Upsert idempotent theo khóa unique: mới → insert; đã có → cập nhật seller_name / seller_address / totals / details (coalesce), `lines` chỉ ghi đè khi không rỗng, **giữ `link_*`** (`InputInvoiceWriteRepository.java`). Nguồn XML: `buyer_tax_code` lấy từ XML (thiếu → ""); nguồn cổng: MST của kết nối (`InputInvoiceService.java`, `TaxConnectionService.java`).
    - Đọc thêm từ XML (chỉ hiển thị): `THDon`, `HTTToan`, `MCCQT`, `NBan/SDThoai|STKNHang|MCHang|TCHang`, `NMua/Ten|HVTNMHang|DChi|SDThoai|MDVQHNSach|SHChieu|CCCDan|STKNHang`, `TToan/TgTTTBChu`, `THTTLTSuat/LTSuat`, `TTChung/TTKhac` (DVKy, NVKy, GhiChu), `SigningTime` (thay NVKy khi thiếu), dòng `TChat` + `TTKhac` (`EInvoiceXmlParser.java`).
    - Danh sách: lọc ngày theo `issued_at`, `q` khớp số hóa đơn, `seller` khớp MST/tên, `sellerTaxCode` đúng MST bán, `natures` (nhiều), `receiptStatus` CREATED/NOT_CREATED (theo `link_id`, mọi loại chứng từ); size 1…100; sắp `issued_at desc, number desc`; trả `total` và `sumTotal`. Response giữ `receiptId/receiptCode` (= link khi là phiếu nhập) cho client cũ (`InputInvoiceRepository.java`).
-   - **Gắn chứng từ** (`InputInvoiceService.link`): khóa dòng FOR UPDATE; gắn lại đúng chứng từ cũ = không đổi (Lưu tạm rồi Hoàn thành cùng phiếu); đã gắn chứng từ KHÁC → 409 `INPUT_INVOICE_LINKED` "Hóa đơn đã lập phiếu X". Hủy phiếu nhập ở FE → `DELETE /links/{id phiếu}` → hóa đơn về "Chưa lập phiếu".
+   - **Gắn chứng từ** (`InputInvoiceService.link`): khóa dòng FOR UPDATE; gắn lại đúng chứng từ cũ = không đổi (Lưu tạm rồi Hoàn thành cùng phiếu); đã gắn chứng từ KHÁC → 409 `INPUT_INVOICE_LINKED` "Hóa đơn đã lập phiếu X". Chứng từ đã lập bị hủy → về "Chưa lập phiếu", lập phiếu lại được: hủy phiếu nhập / phiếu chi NCC (product-service) và hủy phiếu chi Sổ quỹ (sales-service, `SS/cashbook/CashbookManageService.java`) gọi `DELETE /internal/input-invoices/links/{docId}` (quyền `internal`, gateway không route) sau khi commit; FE hủy phiếu nhập cũng gọi `DELETE /api/input-invoices/links/{id}` (idempotent).
    - **Ánh xạ hàng đã nhớ**: PUT upsert theo (MST bán, khóa tên + ĐVT), người sửa + thời điểm; FE điền sẵn khi mở màn xác nhận.
 3b. **FE "Hóa đơn đầu vào"** (`FE/app/(admin)/purchases/input-invoices/page.tsx`, `FE/features/integrations/*`, namespace i18n `input-invoices`):
    - Tiêu đề + phụ đề "Quản lý hóa đơn đầu vào, tối ưu việc nhập liệu khi tạo phiếu nhập, phiếu chi."; tab "Danh sách kết nối (n)" / "Danh sách hóa đơn (n)"; nút Đồng bộ hóa đơn, Nhập file XML (giữ lại vì chưa có tài khoản cổng), Xuất file (xlsx mọi dòng khớp lọc qua `/export`), "?".
@@ -3200,7 +3200,7 @@ Quy ước chung (đọc từ code):
 4. **Giới hạn**
    - Cổng thuế không có API công khai; đường dẫn là API nội bộ, **chưa kiểm chứng** với tài khoản thật (`GdtPortalClient.java:20-27`).
    - Không có đồng bộ tự động/định kỳ.
-   - Gắn "Đã lập phiếu" do FE gọi sau khi lưu chứng từ (không cùng transaction, khác service); lỗi chỉ báo toast. Hủy phiếu chi PCN / phiếu chi Sổ quỹ không tự bỏ liên kết (chỉ hủy phiếu nhập ở FE mới gọi bỏ liên kết).
+   - Gắn "Đã lập phiếu" do FE gọi sau khi lưu chứng từ (không cùng transaction, khác service); lỗi chỉ báo toast. Bỏ liên kết khi hủy chứng từ là lời gọi HTTP best-effort sau commit (không outbox): integration-service tắt đúng lúc đó thì hóa đơn vẫn "Đã lập phiếu" (chỉ ghi log cảnh báo).
 
 ---
 

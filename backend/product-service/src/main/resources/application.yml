@@ -22,6 +22,8 @@ app:
   sales-url: ${SALES_URL:http://localhost:8086}
   # identity-service: thiết lập cửa hàng (khóa sổ, cho phép bán âm kho)
   identity-url: ${IDENTITY_URL:http://localhost:8081}
+  # integration-service: hủy phiếu nhập / phiếu chi NCC → bỏ "Đã lập phiếu" của hóa đơn đầu vào
+  integration-url: ${INTEGRATION_URL:http://localhost:8088}
 
 management:
   endpoints:

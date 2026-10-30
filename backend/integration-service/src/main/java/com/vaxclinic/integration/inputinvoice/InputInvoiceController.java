@@ -106,6 +106,13 @@ public class InputInvoiceController {
         return Map.of("unlinked", service.unlinkDoc(docId));
     }
 
+    /** Service-to-service: phiếu chi NCC (product-service) / phiếu chi Sổ quỹ (sales-service) bị hủy → bỏ liên kết. */
+    @DeleteMapping("/internal/input-invoices/links/{docId}")
+    @PreAuthorize("hasAuthority('internal')")
+    public Map<String, Integer> unlinkInternal(@PathVariable UUID docId) {
+        return Map.of("unlinked", service.unlinkDoc(docId));
+    }
+
     @GetMapping("/api/input-invoices/item-mappings")
     public List<ItemMapping> mappings(@RequestParam String sellerTaxCode) {
         return service.mappings(sellerTaxCode);

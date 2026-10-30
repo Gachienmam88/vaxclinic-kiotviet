@@ -100,8 +100,12 @@ public final class PurchaseDtos {
                                 @Pattern(regexp = "CASH|TRANSFER", message = "Hình thức thanh toán không hợp lệ") String paymentMethod) {
     }
 
-    /** Số còn trả được của 1 dòng phiếu nhập (theo đơn vị của dòng) = đã nhập − đã trả (phiếu trả hoàn thành). */
-    public record ReturnableLine(UUID lineId, UUID productId, String lotNumber, BigDecimal received, BigDecimal returnable) {
+    /**
+     * Số còn trả được của 1 dòng phiếu nhập (theo đơn vị của dòng) = đã nhập − đã trả (phiếu trả hoàn thành).
+     * defaultVatRate = VAT% mặc định của dòng trả (xem {@link PurchaseMath#defaultReturnVatRate}).
+     */
+    public record ReturnableLine(UUID lineId, UUID productId, String lotNumber, BigDecimal received, BigDecimal returnable,
+                                 BigDecimal defaultVatRate) {
     }
 
     public record ReturnLineResponse(UUID id, int lineNo, UUID productId, String productCode, String productName,

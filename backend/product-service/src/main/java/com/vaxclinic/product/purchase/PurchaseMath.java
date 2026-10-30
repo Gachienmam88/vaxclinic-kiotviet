@@ -102,6 +102,33 @@ public final class PurchaseMath {
         return vatRatio.signum() == 0 ? net : net.multiply(BigDecimal.ONE.add(vatRatio)).setScale(2, RoundingMode.HALF_UP);
     }
 
+    private static final List<BigDecimal> STANDARD_RATES = List.of(BigDecimal.ZERO, BigDecimal.valueOf(5), BigDecimal.valueOf(8),
+            BigDecimal.TEN);
+
+    /**
+     * VAT% mặc định của dòng trả hàng theo phiếu nhập: phiếu VAT theo dòng → VAT% của dòng nhập; phiếu VAT nhập tay →
+     * mức gần nhất trong 0 / 5 / 8 / 10% với VAT phiếu / (tổng tiền hàng − giảm giá) (bằng nhau thì lấy mức thấp hơn);
+     * phiếu nhập tay không có VAT → null (KCT).
+     */
+    public static BigDecimal defaultReturnVatRate(String vatMode, BigDecimal lineRate, BigDecimal subtotal, BigDecimal discount,
+                                                  BigDecimal vatAmount) {
+        if (!MODE_MANUAL.equals(vatMode)) {
+            return lineRate;
+        }
+        BigDecimal base = subtotal.subtract(discount);
+        if (vatAmount.signum() <= 0 || base.signum() <= 0) {
+            return null;
+        }
+        BigDecimal pct = vatAmount.multiply(HUNDRED).divide(base, 6, RoundingMode.HALF_UP);
+        BigDecimal best = STANDARD_RATES.get(0);
+        for (BigDecimal r : STANDARD_RATES) {
+            if (r.subtract(pct).abs().compareTo(best.subtract(pct).abs()) < 0) {
+                best = r;
+            }
+        }
+        return best;
+    }
+
     /** "LINE" | "MANUAL"; null / khác → LINE. */
     public static String mode(String vatMode) {
         return MODE_MANUAL.equals(vatMode) ? MODE_MANUAL : MODE_LINE;
