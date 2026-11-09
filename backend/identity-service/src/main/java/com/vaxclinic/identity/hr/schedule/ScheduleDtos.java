@@ -39,4 +39,12 @@ public final class ScheduleDtos {
 
     public record ImportRequest(@NotNull @Size(max = 5000) List<ImportRow> rows) {
     }
+
+    /** Kết quả xếp lịch: số ca đã thêm. */
+    public record CreateResult(int created) {
+    }
+
+    /** Kết quả import lịch: số ca đã thêm + tối đa 50 dòng lỗi. */
+    public record ImportResult(int created, List<String> errors) {
+    }
 }

@@ -24,6 +24,10 @@ public final class HrSettings {
     private HrSettings() {
     }
 
+    /** Tiến độ Khởi tạo (6 bước) — số bản ghi thật của từng bước. */
+    public record SetupOverview(long employees, long shifts, long schedules, long timekeeping, long salaries, long payrolls) {
+    }
+
     /**
      * Thiết lập chấm công. halfFrom / fullFrom: quy đổi giờ làm → nửa công / 1 công (phút).
      * late/early: chỉ tính đi muộn sau / về sớm trước N phút. otBefore/otAfter: chỉ tính làm thêm khi vào sớm / về muộn hơn N phút;

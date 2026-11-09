@@ -2,6 +2,7 @@ package com.vaxclinic.identity.hr.attendance;
 
 import com.vaxclinic.identity.hr.HrActor;
 import com.vaxclinic.identity.hr.attendance.AttendanceDtos.ApproveRequest;
+import com.vaxclinic.identity.hr.attendance.AttendanceDtos.ApproveResult;
 import com.vaxclinic.identity.hr.attendance.AttendanceDtos.ManualRequest;
 import com.vaxclinic.identity.hr.attendance.AttendanceQuery.Cell;
 import jakarta.validation.Valid;
@@ -22,7 +23,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 /** Bảng chấm công: lưới theo ca / nhân viên, sửa tay giờ vào-ra / nghỉ, Duyệt chấm công. */
@@ -56,7 +56,7 @@ public class AttendanceController {
 
     /** Duyệt các ô đã chấm đủ vào-ra hoặc nghỉ trong khoảng ngày (hoặc theo danh sách id). Chỉ ô đã duyệt được tính lương. */
     @PostMapping("/approve")
-    public Map<String, Integer> approve(@Valid @RequestBody ApproveRequest req, @AuthenticationPrincipal Jwt jwt) {
+    public ApproveResult approve(@Valid @RequestBody ApproveRequest req, @AuthenticationPrincipal Jwt jwt) {
         return service.approve(req, HrActor.of(jwt));
     }
 }

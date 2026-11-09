@@ -24,6 +24,10 @@ public final class AttendanceDtos {
     public record ApproveRequest(@NotNull LocalDate from, @NotNull LocalDate to, UUID branchId, List<UUID> ids) {
     }
 
+    /** Kết quả Duyệt chấm công: số lượt đã duyệt. */
+    public record ApproveResult(int approved) {
+    }
+
     public record ImportResult(int rows, int punches, int records, List<String> unknownCodes, int unmatched, List<String> errors) {
     }
 }

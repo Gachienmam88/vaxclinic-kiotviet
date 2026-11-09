@@ -1,7 +1,9 @@
 package com.vaxclinic.identity.hr.schedule;
 
 import com.vaxclinic.identity.hr.HrActor;
+import com.vaxclinic.identity.hr.schedule.ScheduleDtos.CreateResult;
 import com.vaxclinic.identity.hr.schedule.ScheduleDtos.ImportRequest;
+import com.vaxclinic.identity.hr.schedule.ScheduleDtos.ImportResult;
 import com.vaxclinic.identity.hr.schedule.ScheduleDtos.ScheduleRequest;
 import com.vaxclinic.identity.hr.schedule.ScheduleDtos.WeekView;
 import jakarta.validation.Valid;
@@ -20,7 +22,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
-import java.util.Map;
 import java.util.UUID;
 
 /** Lịch làm việc: xếp ca cho nhân viên theo ngày (lặp hàng tuần), lưới tuần + Lương dự kiến, import từ file. */
@@ -42,7 +43,7 @@ public class ScheduleController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Map<String, Integer> create(@Valid @RequestBody ScheduleRequest req, @AuthenticationPrincipal Jwt jwt) {
+    public CreateResult create(@Valid @RequestBody ScheduleRequest req, @AuthenticationPrincipal Jwt jwt) {
         return service.create(req, HrActor.of(jwt));
     }
 
@@ -55,7 +56,7 @@ public class ScheduleController {
 
     /** Import lịch: mỗi dòng Mã nhân viên + Ngày + Tên ca (file do màn Lịch làm việc đọc và gửi lên). */
     @PostMapping("/import")
-    public Map<String, Object> importRows(@Valid @RequestBody ImportRequest req, @AuthenticationPrincipal Jwt jwt) {
+    public ImportResult importRows(@Valid @RequestBody ImportRequest req, @AuthenticationPrincipal Jwt jwt) {
         return service.importRows(req, HrActor.of(jwt));
     }
 }

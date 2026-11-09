@@ -4,6 +4,7 @@ import com.vaxclinic.common.audit.AuditLogger;
 import com.vaxclinic.common.error.BusinessException;
 import com.vaxclinic.identity.hr.HrActor;
 import com.vaxclinic.identity.hr.attendance.AttendanceDtos.ApproveRequest;
+import com.vaxclinic.identity.hr.attendance.AttendanceDtos.ApproveResult;
 import com.vaxclinic.identity.hr.attendance.AttendanceDtos.ManualRequest;
 import com.vaxclinic.identity.hr.attendance.AttendanceQuery.Cell;
 import com.vaxclinic.identity.hr.schedule.Shift;
@@ -16,7 +17,6 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 /** Bảng chấm công: lưới theo ca / nhân viên, sửa tay giờ vào-ra / nghỉ, Duyệt chấm công. */
@@ -78,7 +78,7 @@ public class AttendanceService {
 
     /** Duyệt các ô đã chấm đủ vào-ra hoặc nghỉ trong khoảng ngày (hoặc theo danh sách id). Chỉ ô đã duyệt được tính lương. */
     @Transactional
-    public Map<String, Integer> approve(ApproveRequest req, HrActor actor) {
+    public ApproveResult approve(ApproveRequest req, HrActor actor) {
         var targets = query.cells(req.from(), req.to(), req.branchId(), null).stream()
                 .filter(c -> c.attendanceId() != null && !c.approved())
                 .filter(c -> req.ids() == null || req.ids().isEmpty() || req.ids().contains(c.attendanceId()))
@@ -86,7 +86,7 @@ public class AttendanceService {
                 .map(Cell::attendanceId).toList();
         targets.forEach(attendance::approve);
         actor.audit(audit, "Duyệt chấm công", "Duyệt " + targets.size() + " lượt chấm công từ " + req.from() + " đến " + req.to());
-        return Map.of("approved", targets.size());
+        return new ApproveResult(targets.size());
     }
 
     private static Instant at(LocalDate date, LocalTime time, boolean nextDay) {

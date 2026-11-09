@@ -16,7 +16,6 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 /** Đọc thiết lập HR (khóa chưa lưu → giá trị mặc định như KiotViet) và các phép tra cứu dùng chung (ngày lễ, ngày làm việc). */
@@ -38,7 +37,7 @@ public class HrSettingsService {
     }
 
     /** Tiến độ Khởi tạo (6 bước) — đếm dữ liệu thật. */
-    public Map<String, Object> overview() {
+    public HrSettings.SetupOverview overview() {
         return overview.overview();
     }
 

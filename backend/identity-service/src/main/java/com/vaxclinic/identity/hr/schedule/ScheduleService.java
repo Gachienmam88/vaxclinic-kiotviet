@@ -3,7 +3,9 @@ package com.vaxclinic.identity.hr.schedule;
 import com.vaxclinic.common.audit.AuditLogger;
 import com.vaxclinic.common.error.BusinessException;
 import com.vaxclinic.identity.hr.HrActor;
+import com.vaxclinic.identity.hr.schedule.ScheduleDtos.CreateResult;
 import com.vaxclinic.identity.hr.schedule.ScheduleDtos.ImportRequest;
+import com.vaxclinic.identity.hr.schedule.ScheduleDtos.ImportResult;
 import com.vaxclinic.identity.hr.schedule.ScheduleDtos.ImportRow;
 import com.vaxclinic.identity.hr.schedule.ScheduleDtos.ScheduleItem;
 import com.vaxclinic.identity.hr.schedule.ScheduleDtos.ScheduleRequest;
@@ -15,7 +17,6 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 /** Lịch làm việc: xếp ca cho nhân viên theo ngày (lặp hàng tuần), lưới tuần + Lương dự kiến, import từ file. */
@@ -41,7 +42,7 @@ public class ScheduleService {
     }
 
     @Transactional
-    public Map<String, Integer> create(ScheduleRequest req, HrActor actor) {
+    public CreateResult create(ScheduleRequest req, HrActor actor) {
         var dates = new ArrayList<LocalDate>();
         if (req.repeatWeekly()) {
             LocalDate until = req.until() == null ? req.date().plusWeeks(4) : req.until();
@@ -66,7 +67,7 @@ public class ScheduleService {
             }
         }
         actor.audit(audit, "Xếp lịch", "Xếp " + created + " ca làm việc cho " + req.employeeIds().size() + " nhân viên từ " + req.date());
-        return Map.of("created", created);
+        return new CreateResult(created);
     }
 
     /** repeat=true: xóa cả các ca cùng nhân viên, cùng ca, cùng thứ trong tuần từ ngày này trở đi. */
@@ -85,7 +86,7 @@ public class ScheduleService {
 
     /** Import lịch: mỗi dòng Mã nhân viên + Ngày + Tên ca (file do màn Lịch làm việc đọc và gửi lên). */
     @Transactional
-    public Map<String, Object> importRows(ImportRequest req, HrActor actor) {
+    public ImportResult importRows(ImportRequest req, HrActor actor) {
         var errors = new ArrayList<String>();
         int created = 0;
         int line = 1;
@@ -103,6 +104,6 @@ public class ScheduleService {
             created += schedules.insertIfAbsent(emp, shift, r.date());
         }
         actor.audit(audit, "Import", "Import lịch làm việc: " + created + " ca");
-        return Map.of("created", created, "errors", errors);
+        return new ImportResult(created, errors);
     }
 }

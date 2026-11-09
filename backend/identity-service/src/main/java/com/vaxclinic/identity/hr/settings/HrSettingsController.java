@@ -7,6 +7,7 @@ import com.vaxclinic.identity.hr.settings.HrSettings.BranchWorkdays;
 import com.vaxclinic.identity.hr.settings.HrSettings.Holiday;
 import com.vaxclinic.identity.hr.settings.HrSettings.Mobile;
 import com.vaxclinic.identity.hr.settings.HrSettings.Payroll;
+import com.vaxclinic.identity.hr.settings.HrSettings.SetupOverview;
 import com.vaxclinic.identity.hr.settings.HrSettings.Template;
 import com.vaxclinic.identity.hr.settings.HrSettings.Timekeeping;
 import jakarta.validation.Valid;
@@ -22,7 +23,6 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 /** Nhân viên → Thiết lập: chấm công, tính lương, ngày làm & nghỉ, chấm công điện thoại, mẫu lương; Khởi tạo (tiến độ). */
@@ -55,7 +55,7 @@ public class HrSettingsController {
 
     /** Tiến độ Khởi tạo (6 bước) — đếm dữ liệu thật. */
     @GetMapping("/overview")
-    public Map<String, Object> overview() {
+    public SetupOverview overview() {
         return settings.overview();
     }
 
