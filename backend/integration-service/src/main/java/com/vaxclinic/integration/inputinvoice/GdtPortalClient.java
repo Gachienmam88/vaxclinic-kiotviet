@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.vaxclinic.common.http.InternalRestClientFactory;
 import com.vaxclinic.common.error.BusinessException;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.ResourceAccessException;
@@ -105,11 +104,11 @@ public class GdtPortalClient {
         try {
             T result = fn.get();
             if (result == null) {
-                throw new BusinessException(HttpStatus.BAD_GATEWAY, "GDT_EMPTY", "Cổng thuế không trả dữ liệu");
+                throw BusinessException.upstream("GDT_EMPTY", "Cổng thuế không trả dữ liệu");
             }
             return result;
         } catch (HttpClientErrorException e) {
-            throw new BusinessException(HttpStatus.BAD_GATEWAY, "GDT_ERROR",
+            throw BusinessException.upstream("GDT_ERROR",
                     "Cổng thuế báo lỗi " + e.getStatusCode().value() + " — phiên có thể đã hết hạn, hãy đồng bộ lại");
         } catch (ResourceAccessException e) {
             throw unreachable();
@@ -117,7 +116,7 @@ public class GdtPortalClient {
     }
 
     private static BusinessException unreachable() {
-        return new BusinessException(HttpStatus.BAD_GATEWAY, "GDT_UNREACHABLE",
+        return BusinessException.upstream("GDT_UNREACHABLE",
                 "Không kết nối được cổng hóa đơn điện tử của cơ quan thuế");
     }
 }

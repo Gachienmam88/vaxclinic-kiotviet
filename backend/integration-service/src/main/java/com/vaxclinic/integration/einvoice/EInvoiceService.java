@@ -1,17 +1,12 @@
 package com.vaxclinic.integration.einvoice;
 
-import com.vaxclinic.common.http.InternalRestClientFactory;
 import com.vaxclinic.common.error.BusinessException;
-import com.vaxclinic.common.security.ServiceTokenProvider;
 import com.vaxclinic.integration.common.SecretCipher;
-import org.springframework.beans.factory.annotation.Value;
+import com.vaxclinic.integration.einvoice.SalesInvoiceClient.SalesInvoice;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestClient;
 
 import java.math.BigDecimal;
-import java.time.Instant;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -23,30 +18,16 @@ import java.util.UUID;
 @Service
 public class EInvoiceService {
 
-    public record SalesInvoice(UUID id, String code, String status, Instant soldAt, String paymentMethod,
-                               BigDecimal subtotal, BigDecimal discount, BigDecimal total, Buyer buyer, List<Line> lines) {
-        public record Buyer(String code, String fullName, String legalName, String taxCode, String address, String email,
-                            String phone, String idNumber) {
-        }
-
-        public record Line(int lineNo, String productCode, String productName, String unitName, BigDecimal quantity,
-                           BigDecimal unitPrice, BigDecimal discount, String taxCode) {
-        }
-    }
-
     private final JdbcTemplate jdbc;
     private final SecretCipher cipher;
     private final MisaClient misa;
-    private final RestClient sales;
-    private final ServiceTokenProvider tokens;
+    private final SalesInvoiceClient sales;
 
-    public EInvoiceService(InternalRestClientFactory httpFactory, JdbcTemplate jdbc, SecretCipher cipher, MisaClient misa,
-                           @Value("${app.sales-url}") String salesUrl, @Value("${app.jwt.secret}") String secret) {
+    public EInvoiceService(JdbcTemplate jdbc, SecretCipher cipher, MisaClient misa, SalesInvoiceClient sales) {
         this.jdbc = jdbc;
         this.cipher = cipher;
         this.misa = misa;
-        this.sales = httpFactory.create(salesUrl);
-        this.tokens = new ServiceTokenProvider(secret, "integration-service");
+        this.sales = sales;
     }
 
     public MisaClient.Account account() {
@@ -67,8 +48,7 @@ public class EInvoiceService {
         }
         MisaClient.Account account = account(); // trước: báo "chưa thiết lập" rõ ràng khi chưa có dòng cấu hình
         var settings = jdbc.queryForMap("select * from einvoice_settings where id = 1");
-        SalesInvoice inv = sales.get().uri("/internal/invoices/{id}", invoiceId)
-                .header("Authorization", "Bearer " + tokens.token()).retrieve().body(SalesInvoice.class);
+        SalesInvoice inv = sales.invoice(invoiceId);
         if (inv == null || !"COMPLETED".equals(inv.status())) {
             throw BusinessException.badRequest("INVOICE_NOT_PUBLISHABLE", "Chỉ phát hành được hóa đơn đã hoàn thành");
         }

@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vaxclinic.common.error.BusinessException;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
@@ -115,14 +114,14 @@ public class MisaClient {
         try {
             JsonNode n = fn.get();
             if (n == null) {
-                throw new BusinessException(HttpStatus.BAD_GATEWAY, "MISA_EMPTY", "MISA không trả dữ liệu");
+                throw BusinessException.upstream("MISA_EMPTY", "MISA không trả dữ liệu");
             }
             return n;
         } catch (RestClientResponseException e) {
-            throw new BusinessException(HttpStatus.BAD_GATEWAY, "MISA_HTTP_" + e.getStatusCode().value(),
+            throw BusinessException.upstream("MISA_HTTP_" + e.getStatusCode().value(),
                     "MISA báo lỗi " + e.getStatusCode().value() + ": " + e.getResponseBodyAsString());
         } catch (ResourceAccessException e) {
-            throw new BusinessException(HttpStatus.BAD_GATEWAY, "MISA_UNREACHABLE", "Không kết nối được MISA meInvoice");
+            throw BusinessException.upstream("MISA_UNREACHABLE", "Không kết nối được MISA meInvoice");
         }
     }
 }
