@@ -16,7 +16,7 @@ import { commonNs } from "@/messages/common";
 import { settingsNs } from "@/messages/settings";
 
 type Settings = { configured: boolean; environment: "TEST" | "PROD"; appId?: string; taxCode?: string; username?: string;
-  invSeries?: string; invoiceName: string; sendEmail?: boolean };
+  invSeries?: string; invoiceName: string; sendEmail?: boolean; autoPublish?: boolean };
 
 /** Thiết lập kết nối MISA meInvoice — hóa đơn khởi tạo từ máy tính tiền. */
 export default function EInvoiceSettingsPage() {
@@ -25,10 +25,11 @@ export default function EInvoiceSettingsPage() {
   const tc = useT(commonNs);
   const { data } = useQuery({ queryKey: ["einvoice-settings"], queryFn: () => api<Settings>("/einvoice/settings") });
   const [f, setF] = useState({ environment: "TEST", appId: "", taxCode: "", username: "", password: "", invSeries: "",
-    invoiceName: "Hóa đơn bán hàng", sendEmail: false });
+    invoiceName: "Hóa đơn bán hàng", sendEmail: false, autoPublish: false });
   useEffect(() => {
     if (data) setF((x) => ({ ...x, environment: data.environment, appId: data.appId ?? "", taxCode: data.taxCode ?? "",
-      username: data.username ?? "", invSeries: data.invSeries ?? "", invoiceName: data.invoiceName, sendEmail: !!data.sendEmail }));
+      username: data.username ?? "", invSeries: data.invSeries ?? "", invoiceName: data.invoiceName, sendEmail: !!data.sendEmail,
+      autoPublish: !!data.autoPublish }));
   }, [data]);
   const bind = (k: "appId" | "taxCode" | "username" | "password" | "invSeries" | "invoiceName") =>
     ({ value: f[k], onChange: (e: React.ChangeEvent<HTMLInputElement>) => setF({ ...f, [k]: e.target.value }) });
@@ -71,6 +72,9 @@ export default function EInvoiceSettingsPage() {
             <label className="flex items-center gap-2 md:col-span-2">
               <Checkbox checked={f.sendEmail} onCheckedChange={(v) => setF({ ...f, sendEmail: v === true })} />
               {t("einvoice.sendEmail")}</label>
+            <label className="flex items-start gap-2 md:col-span-2">
+              <Checkbox className="mt-0.5" checked={f.autoPublish} onCheckedChange={(v) => setF({ ...f, autoPublish: v === true })} />
+              <span>{t("einvoice.autoPublish")}<span className="block text-xs text-muted-foreground">{t("einvoice.autoPublishHint")}</span></span></label>
           </div>
           <div className="flex justify-end gap-2 border-t border-[#eceef1] pt-3">
             <Button variant="outline" disabled={!data?.configured || test.isPending} onClick={() => test.mutate()}><PlugZap className="size-4" /> {t("einvoice.test")}</Button>

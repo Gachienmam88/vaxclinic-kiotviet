@@ -161,6 +161,8 @@
     "seriesPlaceholder": "例：2C26MAA",
     "invoiceName": "インボイス名",
     "sendEmail": "顧客にインボイスを自動メール送信（メールがある場合）",
+    "autoPublish": "請求書完了時に電子インボイスを自動発行",
+    "autoPublishHint": "既定はオフ。完了した請求書をすぐに発行します（イベント連携が必要）。請求書の取消・編集で電子インボイスは自動取消されません。",
     "test": "接続テスト",
     "saved": "設定を保存しました",
     "testOk": "MISA meInvoice に接続しました"

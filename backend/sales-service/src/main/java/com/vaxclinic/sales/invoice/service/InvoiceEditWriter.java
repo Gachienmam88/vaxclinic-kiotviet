@@ -40,10 +40,12 @@ public class InvoiceEditWriter {
     private final JdbcTemplate jdbc;
     private final ShipmentInvoiceHooks shipments;
     private final InvoiceExtraPayments extraPayments;
+    private final InvoiceEvents events;
 
     public InvoiceEditWriter(InvoiceRepository invoices, CustomerRepository customers, CashVoucherRepository vouchers,
                              CashbookWriter cashbook, DebtLedger debt, InvoiceLineBuilder lineBuilder, JdbcTemplate jdbc,
-                             ShipmentInvoiceHooks shipments, InvoiceExtraPayments extraPayments) {
+                             ShipmentInvoiceHooks shipments, InvoiceExtraPayments extraPayments, InvoiceEvents events) {
+        this.events = events;
         this.extraPayments = extraPayments;
         this.shipments = shipments;
         this.invoices = invoices;
@@ -145,6 +147,7 @@ public class InvoiceEditWriter {
                 addSales(inv.getCustomerId(), totals.total());
             }
         }
+        events.updated(inv);
     }
 
     private void addSales(UUID customerId, BigDecimal delta) {

@@ -161,6 +161,8 @@
     "seriesPlaceholder": "VD: 2C26MAA",
     "invoiceName": "Tên hóa đơn",
     "sendEmail": "Tự gửi email hóa đơn cho khách (khi khách có email)",
+    "autoPublish": "Tự động phát hành HĐĐT khi hoàn thành hóa đơn",
+    "autoPublishHint": "Mặc định tắt. Hóa đơn hoàn thành sẽ được phát hành HĐĐT ngay (cần bật luồng sự kiện); hủy / sửa hóa đơn KHÔNG tự hủy HĐĐT.",
     "test": "Kiểm tra kết nối",
     "saved": "Đã lưu thiết lập",
     "testOk": "Kết nối MISA meInvoice thành công"

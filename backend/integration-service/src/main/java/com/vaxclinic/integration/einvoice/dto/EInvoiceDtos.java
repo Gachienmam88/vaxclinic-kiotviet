@@ -17,7 +17,8 @@ public final class EInvoiceDtos {
     public record SettingsRequest(@Pattern(regexp = "TEST|PROD") String environment, @NotBlank(message = "Nhập AppID MISA cấp") String appId,
                                   @NotBlank(message = "Nhập mã số thuế") String taxCode, @NotBlank String username, String password,
                                   @NotBlank(message = "Nhập ký hiệu hóa đơn") String invSeries, @NotBlank String invoiceName,
-                                  boolean sendEmail) {
+                                  boolean sendEmail, Boolean autoPublish) {
+        // autoPublish: "Tự động phát hành HĐĐT khi hoàn thành hóa đơn"; null (client cũ không gửi) = giữ nguyên
     }
 
     /** POST /api/einvoice/settings/test. */

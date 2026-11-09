@@ -161,6 +161,8 @@
     "seriesPlaceholder": "例如：2C26MAA",
     "invoiceName": "发票名称",
     "sendEmail": "自动将发票发送到客户邮箱（客户有邮箱时）",
+    "autoPublish": "发票完成时自动开具电子发票",
+    "autoPublishHint": "默认关闭。发票完成后立即开具（需启用事件流）；取消或修改发票不会自动作废电子发票。",
     "test": "测试连接",
     "saved": "设置已保存",
     "testOk": "已成功连接 MISA meInvoice"
