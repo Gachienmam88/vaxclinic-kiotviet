@@ -2,17 +2,13 @@ package com.vaxclinic.identity.hr;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.vaxclinic.common.http.InternalRestClientFactory;
-import com.vaxclinic.common.security.ServiceTokenProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.RestClient;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -36,15 +32,12 @@ public class HrCashflowOutbox {
 
     private final JdbcTemplate jdbc;
     private final ObjectMapper json;
-    private final RestClient http;
-    private final ServiceTokenProvider tokens;
+    private final SalesCashflowClient sales;
 
-    public HrCashflowOutbox(InternalRestClientFactory httpFactory, JdbcTemplate jdbc, ObjectMapper json, @Value("${app.sales-url}") String salesUrl,
-                            @Value("${app.jwt.secret}") String secret) {
+    public HrCashflowOutbox(JdbcTemplate jdbc, ObjectMapper json, SalesCashflowClient sales) {
         this.jdbc = jdbc;
         this.json = json;
-        this.http = httpFactory.create(salesUrl);
-        this.tokens = new ServiceTokenProvider(secret, "identity-service");
+        this.sales = sales;
     }
 
     @Transactional(propagation = Propagation.MANDATORY)
@@ -97,9 +90,7 @@ public class HrCashflowOutbox {
         for (var row : pending) {
             UUID id = (UUID) row.get("id");
             try {
-                http.post().uri("/internal/cashflows").header("Authorization", "Bearer " + tokens.token())
-                        .header("Content-Type", "application/json").body((String) row.get("payload"))
-                        .retrieve().toBodilessEntity();
+                sales.send((String) row.get("payload"));
                 jdbc.update("update outbox_cashflows set sent_at = now(), last_error = null where id = ?", id);
             } catch (Exception e) {
                 jdbc.update("update outbox_cashflows set attempts = attempts + 1, last_error = ? where id = ?", e.getMessage(), id);

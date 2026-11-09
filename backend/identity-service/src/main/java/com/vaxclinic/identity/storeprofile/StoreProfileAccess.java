@@ -3,7 +3,6 @@ package com.vaxclinic.identity.storeprofile;
 import com.vaxclinic.common.error.BusinessException;
 import com.vaxclinic.identity.user.AppUser;
 import com.vaxclinic.identity.user.AppUserRepository;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -26,7 +25,7 @@ public class StoreProfileAccess {
     public AppUser requireManager(UUID userId, List<String> permissions) {
         AppUser u = user(userId);
         if (!u.isOwner() && (permissions == null || !permissions.contains("settings.manage"))) {
-            throw new BusinessException(HttpStatus.FORBIDDEN, "FORBIDDEN",
+            throw BusinessException.forbidden("FORBIDDEN",
                     "Chỉ chủ gian hàng hoặc người có quyền thiết lập được xem hồ sơ cửa hàng");
         }
         return u;
@@ -35,7 +34,7 @@ public class StoreProfileAccess {
     public AppUser requireOwner(UUID userId) {
         AppUser u = user(userId);
         if (!u.isOwner()) {
-            throw new BusinessException(HttpStatus.FORBIDDEN, "OWNER_ONLY", "Chỉ chủ gian hàng được thực hiện thao tác này");
+            throw BusinessException.forbidden("OWNER_ONLY", "Chỉ chủ gian hàng được thực hiện thao tác này");
         }
         return u;
     }

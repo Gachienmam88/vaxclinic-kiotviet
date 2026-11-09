@@ -7,7 +7,6 @@ import com.vaxclinic.identity.auth.RefreshTokenRepository;
 import com.vaxclinic.identity.auth.twofactor.TwoFactorService;
 import com.vaxclinic.identity.notification.NotificationWriter;
 import com.vaxclinic.identity.user.UserDtos.Actor;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -55,11 +54,11 @@ public class UserTwoFactorResetService {
         AppUser target = find(targetId);
         AppUser actor = find(actorRef.id());
         if (target.isOwner()) {
-            throw new BusinessException(HttpStatus.FORBIDDEN, "OWNER_PROTECTED",
+            throw BusinessException.forbidden("OWNER_PROTECTED",
                     "Chỉ chủ gian hàng được tự đặt lại xác thực 2 lớp của mình");
         }
         if (isAdmin(target) && !isAdmin(actor)) {
-            throw new BusinessException(HttpStatus.FORBIDDEN, "ADMIN_PROTECTED",
+            throw BusinessException.forbidden("ADMIN_PROTECTED",
                     "Chỉ quản trị viên (vai trò Quản trị hệ thống) được đặt lại xác thực 2 lớp của quản trị viên khác");
         }
         if (!twoFactor.enabled(targetId)) {
