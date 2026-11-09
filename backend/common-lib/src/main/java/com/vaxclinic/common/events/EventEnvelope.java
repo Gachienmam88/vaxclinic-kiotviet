@@ -1,6 +1,7 @@
 package com.vaxclinic.common.events;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -18,7 +19,8 @@ public record EventEnvelope(UUID eventId, String type, String source, Instant oc
     public static final ObjectMapper JSON = new ObjectMapper().findAndRegisterModules()
             .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
             // giữ nguyên số thập phân (10.000 không thành 1E+1) khi chuyển data sang JsonNode
-            .configure(JsonNodeFeature.STRIP_TRAILING_BIGDECIMAL_ZEROES, false);
+            .configure(JsonNodeFeature.STRIP_TRAILING_BIGDECIMAL_ZEROES, false)
+            .enable(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS); // đọc lại cũng chính xác (không qua double)
 
     public static EventEnvelope of(String type, String source, Object data) {
         return new EventEnvelope(UUID.randomUUID(), type, source, Instant.now(), JSON.valueToTree(data));
