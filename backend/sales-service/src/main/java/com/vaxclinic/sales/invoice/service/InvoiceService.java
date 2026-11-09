@@ -4,6 +4,7 @@ import com.vaxclinic.sales.invoice.entity.Invoice;
 import com.vaxclinic.sales.invoice.dto.InvoiceDtos;
 import com.vaxclinic.sales.invoice.repository.InvoiceRepository;
 import com.vaxclinic.sales.invoice.client.ProductStockClient;
+import com.vaxclinic.sales.invoice.client.StockCommandOutbox;
 import com.vaxclinic.common.error.BusinessException;
 import com.vaxclinic.sales.cashbook.repository.CashVoucherRepository;
 import com.vaxclinic.sales.common.Actor;
@@ -47,13 +48,15 @@ public class InvoiceService {
     private final SalesChannels channels;
     private final InvoiceExtraPayments extraPayments;
     private final CheckoutAttemptService checkouts;
+    private final StockCommandOutbox stockCommands;
 
     public InvoiceService(InvoiceRepository invoices, CustomerRepository customers, CashVoucherRepository vouchers,
                           InvoiceWriter writer, InvoiceEditWriter editWriter, ProductStockClient stock, JdbcTemplate jdbc,
                           SalesRules rules, com.vaxclinic.common.audit.AuditLogger audit, OrderDepositLedger orderDeposits,
                           ShipmentInvoiceHooks shipments, SalesChannels channels, InvoiceExtraPayments extraPayments,
-                          CheckoutAttemptService checkouts) {
+                          CheckoutAttemptService checkouts, StockCommandOutbox stockCommands) {
         this.checkouts = checkouts;
+        this.stockCommands = stockCommands;
         this.extraPayments = extraPayments;
         this.orderDeposits = orderDeposits;
         this.shipments = shipments;
@@ -195,8 +198,15 @@ public class InvoiceService {
         if (hasReturns(id)) {
             throw BusinessException.badRequest("INVOICE_HAS_RETURNS", "Hóa đơn đã có phiếu trả hàng, hãy hủy phiếu trả trước");
         }
-        stock.apply(new ProductStockClient.Request(inv.getStockDocId(), "SALE_CANCEL", inv.getCode(), inv.getBranchId(),
-                inv.getCustomerName(), actor.id(), null, List.of()));
+        var stockRequest = new ProductStockClient.Request(inv.getStockDocId(), "SALE_CANCEL", inv.getCode(), inv.getBranchId(),
+                inv.getCustomerName(), actor.id(), null, List.of());
+        if (stockCommands.enabled()) {
+            // Sự kiện nghiệp vụ bật: hủy hóa đơn + yêu cầu hoàn kho (Kafka) cùng 1 transaction. Hoàn kho = nhập lại đúng các lô
+            // đã bán, kho không từ chối → không cần chờ product-service; kho cập nhật sau vài giây (kể cả khi đang tạm ngừng).
+            stockCommands.persistThenRequest(stockRequest, () -> writer.markCancelled(id, actor));
+            return;
+        }
+        stock.apply(stockRequest);
         writer.markCancelled(id, actor);
     }
 

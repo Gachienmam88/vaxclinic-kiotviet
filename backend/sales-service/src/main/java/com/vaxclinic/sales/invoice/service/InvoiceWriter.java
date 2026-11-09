@@ -136,11 +136,12 @@ public class InvoiceWriter {
     }
 
     /** Sau khi kho đã hoàn: hủy phiếu thu tự động, ghi giảm công nợ, đánh dấu hủy. */
+    /** @return true nếu vừa hủy; false nếu hóa đơn đã hủy từ trước (VD 2 người bấm hủy cùng lúc). */
     @Transactional
-    public void markCancelled(UUID id, Actor actor) {
+    public boolean markCancelled(UUID id, Actor actor) {
         Invoice inv = invoices.findForUpdate(id).orElseThrow();
         if ("CANCELLED".equals(inv.getStatus())) {
-            return;
+            return false;
         }
         var auto = vouchers.findBySourceTypeAndSourceId("INVOICE", id).filter(v -> "PAID".equals(v.getStatus()));
         BigDecimal autoPaid = auto.map(v -> v.getAmount()).orElse(BigDecimal.ZERO);
@@ -164,6 +165,7 @@ public class InvoiceWriter {
             Customer c = customers.findById(inv.getCustomerId()).orElseThrow();
             c.setTotalSales(c.getTotalSales().subtract(inv.getTotal()));
         }
+        return true;
     }
 
     @Transactional

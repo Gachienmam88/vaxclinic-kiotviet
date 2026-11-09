@@ -8,6 +8,7 @@ import com.vaxclinic.sales.invoice.entity.Invoice;
 import com.vaxclinic.sales.invoice.entity.InvoiceLine;
 import com.vaxclinic.sales.invoice.repository.InvoiceRepository;
 import com.vaxclinic.sales.invoice.client.ProductStockClient;
+import com.vaxclinic.sales.invoice.client.StockCommandOutbox;
 import com.vaxclinic.sales.salesreturn.dto.SalesReturnDtos.ReturnRequest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -34,6 +35,8 @@ public class SalesReturnService {
                               Map<String, BigDecimal> lots) {
     }
 
+    private static final String STOCK_DOC_NOT_FOUND = "STOCK_DOC_NOT_FOUND";
+
     private final InvoiceRepository invoices;
     private final JdbcTemplate jdbc;
     private final ProductStockClient stock;
@@ -41,10 +44,12 @@ public class SalesReturnService {
 
     private final SalesRules rules;
     private final QuickReturnService quick;
+    private final StockCommandOutbox stockCommands;
 
     public SalesReturnService(InvoiceRepository invoices, JdbcTemplate jdbc, ProductStockClient stock, SalesReturnWriter writer,
-                              SalesRules rules, QuickReturnService quick) {
+                              SalesRules rules, QuickReturnService quick, StockCommandOutbox stockCommands) {
         this.quick = quick;
+        this.stockCommands = stockCommands;
         this.invoices = invoices;
         this.jdbc = jdbc;
         this.stock = stock;
@@ -103,8 +108,16 @@ public class SalesReturnService {
         var stockLines = new ArrayList<ProductStockClient.Line>();
         planned.forEach(p -> p.lots().forEach((lot, qty) -> stockLines.add(new ProductStockClient.Line(p.lineId(),
                 p.invoiceLine().getProductId(), null, null, lot.isEmpty() ? null : lot, qty))));
-        stock.apply(new ProductStockClient.Request(req.id(), "SALE_RETURN", code, inv.getBranchId(), inv.getCustomerName(),
-                actor.id(), null, stockLines));
+        var stockRequest = new ProductStockClient.Request(req.id(), "SALE_RETURN", code, inv.getBranchId(), inv.getCustomerName(),
+                actor.id(), null, stockLines);
+        if (stockCommands.enabled()) {
+            // Sự kiện nghiệp vụ bật: phiếu trả + yêu cầu nhập lại kho (Kafka) cùng 1 transaction. Lô nhập lại = chính các lô
+            // đã bán tại chi nhánh của hóa đơn (đã kiểm tra ở trên) → kho không từ chối; tồn kho tăng sau vài giây.
+            stockCommands.persistThenRequest(stockRequest,
+                    () -> writer.persist(req, inv, code, planned, subtotal, discount, fee, total, refund, actor));
+            return req.id();
+        }
+        stock.apply(stockRequest);
         writer.persist(req, inv, code, planned, subtotal, discount, fee, total, refund, actor);
         return req.id();
     }
@@ -116,8 +129,24 @@ public class SalesReturnService {
         }
         actor.checkBranch((UUID) r.get("branch_id"));
         rules.checkNotLocked((UUID) r.get("branch_id"), ((java.sql.Timestamp) r.get("returned_at")).toInstant());
-        stock.apply(new ProductStockClient.Request(id, "SALE_RETURN_CANCEL", (String) r.get("code"), (UUID) r.get("branch_id"),
-                (String) r.get("customer_name"), actor.id(), null, List.of()));
+        var stockRequest = new ProductStockClient.Request(id, "SALE_RETURN_CANCEL", (String) r.get("code"), (UUID) r.get("branch_id"),
+                (String) r.get("customer_name"), actor.id(), null, List.of());
+        if (stockCommands.enabled()) {
+            // Hủy phiếu trả = XUẤT lại kho (có thể thiếu tồn) → vẫn gọi đồng bộ. Phiếu trả vừa tạo có thể chưa được kho
+            // nhập (sự kiện đang trên đường) → báo người dùng thử lại thay vì "không tìm thấy chứng từ kho".
+            try {
+                stock.apply(stockRequest);
+            } catch (BusinessException e) {
+                if (STOCK_DOC_NOT_FOUND.equals(e.getCode())) {
+                    throw BusinessException.conflict("STOCK_SYNC_PENDING", "Kho chưa ghi nhận xong hàng trả của phiếu "
+                            + r.get("code") + " (đang đồng bộ), vui lòng thử lại sau ít phút");
+                }
+                throw e;
+            }
+            writer.markCancelled(id);
+            return;
+        }
+        stock.apply(stockRequest);
         writer.markCancelled(id);
     }
 
