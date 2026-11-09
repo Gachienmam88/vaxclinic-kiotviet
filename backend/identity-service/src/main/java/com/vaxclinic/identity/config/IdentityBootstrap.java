@@ -1,10 +1,10 @@
 package com.vaxclinic.identity.config;
 
-import com.vaxclinic.identity.branch.BranchRepository;
-import com.vaxclinic.identity.role.Permissions;
-import com.vaxclinic.identity.role.RoleRepository;
-import com.vaxclinic.identity.user.AppUser;
-import com.vaxclinic.identity.user.AppUserRepository;
+import com.vaxclinic.identity.branch.repository.BranchRepository;
+import com.vaxclinic.identity.role.service.Permissions;
+import com.vaxclinic.identity.role.repository.RoleRepository;
+import com.vaxclinic.identity.user.entity.AppUser;
+import com.vaxclinic.identity.user.repository.AppUserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
