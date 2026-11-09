@@ -1,6 +1,6 @@
 package com.vaxclinic.product.report;
 
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import com.vaxclinic.product.report.InventoryReportQuery.MonthValue;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -20,22 +20,16 @@ import java.util.UUID;
 @PreAuthorize("hasAuthority('report.view')")
 public class SupplierPaymentDiscountReportController {
 
-    private final NamedParameterJdbcTemplate jdbc;
+    private final InventoryReportQuery query;
 
-    public SupplierPaymentDiscountReportController(NamedParameterJdbcTemplate jdbc) {
-        this.jdbc = jdbc;
+    public SupplierPaymentDiscountReportController(InventoryReportQuery query) {
+        this.query = query;
     }
 
     @GetMapping("/api/reports/suppliers/payment-discounts/monthly")
-    public List<InventoryReportController.MonthValue> monthly(@RequestParam Instant from, @RequestParam Instant to,
-                                                              @RequestParam(required = false) List<UUID> branchIds,
-                                                              @AuthenticationPrincipal Jwt jwt) {
-        return jdbc.query("""
-                select to_char(d.occurred_at at time zone 'Asia/Ho_Chi_Minh', 'YYYY-MM') m, sum(d.amount) val
-                from supplier_debt_docs d
-                where d.kind = 'DISCOUNT' and d.status = 'ACTIVE' and d.occurred_at >= :from and d.occurred_at < :to
-                  and d.branch_id in (:branches)
-                group by 1 order by 1""", ProductReportScope.params(from, to, branchIds, jwt),
-                (rs, n) -> new InventoryReportController.MonthValue(rs.getString("m"), rs.getBigDecimal("val")));
+    public List<MonthValue> monthly(@RequestParam Instant from, @RequestParam Instant to,
+                                    @RequestParam(required = false) List<UUID> branchIds,
+                                    @AuthenticationPrincipal Jwt jwt) {
+        return query.supplierPaymentDiscountsMonthly(ProductReportScope.params(from, to, branchIds, jwt));
     }
 }
