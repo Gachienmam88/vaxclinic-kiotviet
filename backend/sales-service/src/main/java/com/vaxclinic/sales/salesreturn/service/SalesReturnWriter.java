@@ -67,23 +67,24 @@ public class SalesReturnWriter {
                       BigDecimal cost) {
     }
 
-    /** Trả theo hóa đơn. */
+    /** Trả theo hóa đơn. @return true nếu vừa ghi; false nếu phiếu (cùng id) đã có. */
     @Transactional
-    public void persist(ReturnRequest req, Invoice inv, String code, List<SalesReturnService.PlannedLine> lines,
+    public boolean persist(ReturnRequest req, Invoice inv, String code, List<SalesReturnService.PlannedLine> lines,
                         BigDecimal subtotal, BigDecimal discount, BigDecimal fee, BigDecimal total, BigDecimal refund,
                         Actor actor) {
         var rows = lines.stream().map(l -> new Row(l.lineId(), l.invoiceLine().getId(), l.invoiceLine().getProductId(),
                 l.invoiceLine().getProductCode(), l.invoiceLine().getProductName(), l.invoiceLine().getUnitName(), l.quantity(),
                 l.unitPrice(), l.lots(), l.invoiceLine().getCost())).toList();
-        persist(req, new Header(inv.getId(), inv.getCode(), inv.getBranchId(), inv.getCustomerId(), inv.getCustomerName()),
+        return persist(req, new Header(inv.getId(), inv.getCode(), inv.getBranchId(), inv.getCustomerId(), inv.getCustomerName()),
                 code, rows, subtotal, discount, fee, total, refund, actor);
     }
 
+    /** @return true nếu vừa ghi; false nếu phiếu (cùng id) đã có. */
     @Transactional
-    public void persist(ReturnRequest req, Header h, String code, List<Row> rows, BigDecimal subtotal, BigDecimal discount,
-                        BigDecimal fee, BigDecimal total, BigDecimal refund, Actor actor) {
+    public boolean persist(ReturnRequest req, Header h, String code, List<Row> rows, BigDecimal subtotal, BigDecimal discount,
+                           BigDecimal fee, BigDecimal total, BigDecimal refund, Actor actor) {
         if (exists(req.id())) {
-            return;
+            return false;
         }
         Instant at = req.returnedAt() == null ? Instant.now() : req.returnedAt();
         jdbc.update("""
@@ -135,6 +136,7 @@ public class SalesReturnWriter {
             var c = customers.findById(h.customerId()).orElseThrow();
             c.setTotalReturns(c.getTotalReturns().add(total));
         }
+        return true;
     }
 
     @Transactional
