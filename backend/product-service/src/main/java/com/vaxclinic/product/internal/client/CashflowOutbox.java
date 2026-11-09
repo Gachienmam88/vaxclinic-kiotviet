@@ -3,13 +3,16 @@ package com.vaxclinic.product.internal.client;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vaxclinic.common.http.InternalRestClientFactory;
+import com.vaxclinic.common.kafka.KafkaProducers;
 import com.vaxclinic.common.security.ServiceTokenProvider;
 import com.vaxclinic.product.purchase.entity.PurchaseReceipt;
 import com.vaxclinic.product.purchase.entity.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
@@ -19,14 +22,21 @@ import org.springframework.web.client.RestClient;
 import java.math.BigDecimal;
 import java.util.LinkedHashMap;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Outbox pattern: ghi "phiếu chi trả NCC" vào bảng outbox CÙNG transaction với phiếu nhập,
  * rồi job nền gửi sang Sổ quỹ (sales-service /internal/cashflows) tới khi thành công.
  * Sổ quỹ nhận idempotent theo (sourceType, sourceId, action) nên gửi lặp không tạo phiếu trùng.
+ * <p>
+ * Kênh gửi (app.cashflow.transport): http = POST /internal/cashflows (mặc định);
+ * kafka = topic {@value #TOPIC}, key = sourceId (mọi bản tin của 1 chứng từ vào cùng partition → giữ thứ tự),
+ * chờ Kafka xác nhận rồi mới đánh dấu đã gửi. sales-service đọc topic và ghi Sổ quỹ.
  */
 @Component
-public class CashflowOutbox {
+public class CashflowOutbox implements DisposableBean {
+
+    public static final String TOPIC = "cashflow.events";
 
     private static final Logger log = LoggerFactory.getLogger(CashflowOutbox.class);
 
@@ -34,13 +44,19 @@ public class CashflowOutbox {
     private final ObjectMapper json;
     private final RestClient http;
     private final ServiceTokenProvider tokens;
+    /** null = gửi HTTP. */
+    private final KafkaTemplate<String, String> kafka;
 
     public CashflowOutbox(InternalRestClientFactory httpFactory, JdbcTemplate jdbc, ObjectMapper json, @Value("${app.sales-url}") String salesUrl,
-                          @Value("${app.jwt.secret}") String secret) {
+                          @Value("${app.jwt.secret}") String secret,
+                          @Value("${app.cashflow.transport:http}") String transport,
+                          @Value("${spring.kafka.bootstrap-servers:localhost:9094}") String kafkaServers) {
         this.jdbc = jdbc;
         this.json = json;
         this.http = httpFactory.create(salesUrl);
         this.tokens = new ServiceTokenProvider(secret, "product-service");
+        this.kafka = "kafka".equalsIgnoreCase(transport.trim()) ? KafkaProducers.reliable(kafkaServers, "product-service-cashflow") : null;
+        log.info("Cashflow outbox transport: {}", kafka == null ? "http" : "kafka (" + TOPIC + ")");
     }
 
     /** Phiếu nhập hoàn thành có trả tiền NCC → phiếu chi PC{mã phiếu nhập}. */
@@ -153,9 +169,7 @@ public class CashflowOutbox {
         for (var row : pending) {
             UUID id = (UUID) row.get("id");
             try {
-                http.post().uri("/internal/cashflows").header("Authorization", "Bearer " + tokens.token())
-                        .header("Content-Type", "application/json").body((String) row.get("payload"))
-                        .retrieve().toBodilessEntity();
+                deliver((String) row.get("payload"));
                 jdbc.update("update outbox_cashflows set sent_at = now(), last_error = null where id = ?", id);
             } catch (Exception e) {
                 jdbc.update("update outbox_cashflows set attempts = attempts + 1, last_error = ? where id = ?",
@@ -163,6 +177,24 @@ public class CashflowOutbox {
                 log.warn("Cashflow outbox {} not delivered yet: {}", id, e.getMessage());
                 return;
             }
+        }
+    }
+
+    private void deliver(String payload) throws Exception {
+        if (kafka == null) {
+            http.post().uri("/internal/cashflows").header("Authorization", "Bearer " + tokens.token())
+                    .header("Content-Type", "application/json").body(payload)
+                    .retrieve().toBodilessEntity();
+            return;
+        }
+        String key = json.readTree(payload).path("sourceId").asText(null);
+        kafka.send(TOPIC, key, payload).get(35, TimeUnit.SECONDS); // chờ ack (acks=all) — lỗi thì giữ lại, lần sau gửi tiếp
+    }
+
+    @Override
+    public void destroy() {
+        if (kafka != null) {
+            kafka.getProducerFactory().reset();
         }
     }
 }

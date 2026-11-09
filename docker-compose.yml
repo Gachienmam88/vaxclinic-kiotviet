@@ -37,7 +37,7 @@ services:
     ports: ["9000:9000", "9001:9001"]
     volumes: [miniodata:/data]
 
-  # Kafka 1 node (KRaft, không cần Zookeeper) — lịch sử thao tác (topic audit.events).
+  # Kafka 1 node (KRaft, không cần Zookeeper) — topic audit.events (lịch sử thao tác), cashflow.events (Sổ quỹ).
   # Container dùng kafka:9092; service chạy trên máy (scripts/*.ps1) dùng localhost:9094.
   kafka:
     image: apache/kafka:3.9.0
@@ -57,7 +57,8 @@ services:
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
       KAFKA_LOG_RETENTION_HOURS: 168
       KAFKA_HEAP_OPTS: -Xmx512m -Xms256m
-    ports: ["9094:9094"]
+    # Kafka dev chưa bật xác thực → chỉ mở cho máy này (không mở ra LAN)
+    ports: ["127.0.0.1:9094:9094"]
     volumes: [kafkadata:/var/lib/kafka/data]
     healthcheck:
       test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 > /dev/null 2>&1"]
@@ -85,6 +86,7 @@ services:
     build: { context: ./backend, args: { MODULE: product-service } }
     environment:
       AUDIT_TRANSPORT: ${AUDIT_TRANSPORT:-kafka}
+      CASHFLOW_TRANSPORT: ${CASHFLOW_TRANSPORT:-kafka}
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       DB_URL: jdbc:postgresql://postgres:5432/product_db
       DB_USER: ${DB_USER}
@@ -101,6 +103,7 @@ services:
     build: { context: ./backend, args: { MODULE: sales-service } }
     environment:
       AUDIT_TRANSPORT: ${AUDIT_TRANSPORT:-kafka}
+      CASHFLOW_TRANSPORT: ${CASHFLOW_TRANSPORT:-kafka}
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       DB_URL: jdbc:postgresql://postgres:5432/sales_db
       DB_USER: ${DB_USER}

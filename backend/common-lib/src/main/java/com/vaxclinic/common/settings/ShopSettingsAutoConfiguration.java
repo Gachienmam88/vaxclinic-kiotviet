@@ -4,6 +4,7 @@ import com.vaxclinic.common.audit.AuditLogger;
 import com.vaxclinic.common.audit.HttpAuditLogger;
 import com.vaxclinic.common.audit.KafkaAuditLogger;
 import com.vaxclinic.common.http.InternalHttpAutoConfiguration;
+import com.vaxclinic.common.kafka.KafkaProducers;
 import com.vaxclinic.common.http.InternalRestClientFactory;
 import com.vaxclinic.common.security.ServiceTokenProvider;
 import org.springframework.beans.factory.annotation.Value;
@@ -13,12 +14,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
-import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.common.serialization.StringSerializer;
-import org.springframework.kafka.core.DefaultKafkaProducerFactory;
-import org.springframework.kafka.core.KafkaTemplate;
-
-import java.util.Map;
 
 /** Service nào khai báo app.identity-url thì có ShopSettingsClient (đọc thiết lập) và AuditLogger (ghi lịch sử thao tác). */
 @AutoConfiguration(after = InternalHttpAutoConfiguration.class)
@@ -53,20 +48,6 @@ public class ShopSettingsAutoConfiguration {
         if (!"kafka".equalsIgnoreCase(transport.trim())) {
             return httpLogger;
         }
-        return new KafkaAuditLogger(new KafkaTemplate<>(auditProducerFactory(kafkaServers, serviceName)), httpLogger, serviceName);
-    }
-
-    /** Producer riêng cho audit: acks=all + idempotent; không chặn quá 2 giây khi Kafka chết (rồi rơi về HTTP). */
-    static DefaultKafkaProducerFactory<String, String> auditProducerFactory(String servers, String serviceName) {
-        return new DefaultKafkaProducerFactory<>(Map.of(
-                ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, servers,
-                ProducerConfig.CLIENT_ID_CONFIG, serviceName + "-audit",
-                ProducerConfig.ACKS_CONFIG, "all",
-                ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, true,
-                ProducerConfig.LINGER_MS_CONFIG, 20,
-                ProducerConfig.MAX_BLOCK_MS_CONFIG, 2000,
-                ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG, 10_000,
-                ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG, 30_000),
-                new StringSerializer(), new StringSerializer());
+        return new KafkaAuditLogger(KafkaProducers.reliable(kafkaServers, serviceName + "-audit"), httpLogger, serviceName);
     }
 }

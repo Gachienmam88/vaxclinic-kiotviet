@@ -19,6 +19,9 @@ app:
   # Lịch sử thao tác: http (mặc định) | kafka (topic audit.events; broker: SPRING_KAFKA_BOOTSTRAP_SERVERS)
   audit:
     transport: ${AUDIT_TRANSPORT:http}
+  # Phiếu thu/chi tự động vào Sổ quỹ (product → sales): http (mặc định) | kafka (topic cashflow.events)
+  cashflow:
+    transport: ${CASHFLOW_TRANSPORT:http}
   jwt:
     secret: ${JWT_SECRET}
   # sales-service (Sổ quỹ) nhận phiếu chi trả NCC qua outbox

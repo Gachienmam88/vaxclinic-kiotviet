@@ -21,6 +21,9 @@ Browser ──▶ Next.js (frontend, BFF giữ JWT trong cookie httpOnly)
   (bỏ trùng theo `event_id`). Kafka lỗi thì tự rơi về HTTP `/internal/audit-logs`. Chọn bằng `AUDIT_TRANSPORT=kafka|http`
   (Docker Compose mặc định `kafka`; chạy jar trên máy mặc định `http`, muốn dùng Kafka thì đặt thêm
   `SPRING_KAFKA_BOOTSTRAP_SERVERS=localhost:9094`).
+- Phiếu chi trả NCC vào Sổ quỹ: phiếu nhập trả tiền → outbox (product, cùng transaction) → Kafka topic `cashflow.events`
+  (key = id chứng từ) → sales-service ghi Sổ quỹ (idempotent). Chọn bằng `CASHFLOW_TRANSPORT=kafka|http`.
+  Demo (cần Docker stack đang chạy): `python scripts/kafka-demo-cashflow.py`.
 
 ## Chạy trên máy dev
 1. `cp .env.example .env` rồi điền secret (JWT_SECRET ≥ 32 ký tự, ADMIN_PASSWORD ≥ 8 ký tự). Cổng bị trùng thì đổi `POSTGRES_PORT`, `GATEWAY_PORT`.
