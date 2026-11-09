@@ -40,11 +40,13 @@ public class InvoiceWriter {
     private final ShipmentInvoiceHooks shipments;
     private final InvoiceExtraPayments extraPayments;
     private final CheckoutAttemptService checkouts;
+    private final InvoiceEvents events;
 
     public InvoiceWriter(InvoiceRepository invoices, CustomerRepository customers, CashVoucherRepository vouchers,
                          CashbookWriter cashbook, DebtLedger debt, InvoiceLineBuilder lineBuilder,
                          OrderDepositLedger orderDeposits, ShipmentInvoiceHooks shipments, InvoiceExtraPayments extraPayments,
-                         CheckoutAttemptService checkouts) {
+                         CheckoutAttemptService checkouts, InvoiceEvents events) {
+        this.events = events;
         this.checkouts = checkouts;
         this.extraPayments = extraPayments;
         this.orderDeposits = orderDeposits;
@@ -132,6 +134,7 @@ public class InvoiceWriter {
             Customer c = customers.findById(customer.getId()).orElseThrow();
             c.setTotalSales(c.getTotalSales().add(inv.getTotal()));
         }
+        events.completed(inv); // app.events.enabled: cùng transaction (outbox) → integration tự phát hành HĐĐT nếu bật
         return inv.getId();
     }
 
@@ -164,6 +167,7 @@ public class InvoiceWriter {
             Customer c = customers.findById(inv.getCustomerId()).orElseThrow();
             c.setTotalSales(c.getTotalSales().subtract(inv.getTotal()));
         }
+        events.cancelled(inv);
     }
 
     @Transactional
@@ -175,6 +179,7 @@ public class InvoiceWriter {
                     .orElseThrow(() -> BusinessException.badRequest("LINE_NOT_FOUND", "Dòng hàng không thuộc hóa đơn"))
                     .setTaxCode(c.taxCode());
         }
+        events.updated(inv);
     }
 
     @Transactional
@@ -193,6 +198,7 @@ public class InvoiceWriter {
             inv.setSalesChannel(channel);
         }
         inv.setNote(req.note());
+        events.updated(inv);
     }
 
     /** Bảng giá + kênh bán (đã kiểm tra ở InvoiceService); dùng chung khi tạo và sửa hóa đơn. */

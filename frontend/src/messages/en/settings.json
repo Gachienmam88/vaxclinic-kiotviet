@@ -164,6 +164,8 @@
     "seriesPlaceholder": "e.g. 2C26MAA",
     "invoiceName": "Invoice name",
     "sendEmail": "Automatically email the invoice to the customer (if they have an email)",
+    "autoPublish": "Automatically publish the e-invoice when an invoice is completed",
+    "autoPublishHint": "Off by default. Completed invoices are published right away (requires business events enabled); cancelling / editing an invoice does NOT cancel its e-invoice.",
     "test": "Test connection",
     "saved": "Settings saved",
     "testOk": "Connected to MISA meInvoice successfully"

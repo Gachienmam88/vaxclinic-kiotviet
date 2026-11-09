@@ -10,17 +10,24 @@ import com.vaxclinic.integration.einvoice.dto.EInvoiceDtos.RecordStatus;
 import com.vaxclinic.integration.einvoice.dto.EInvoiceDtos.SettingsRequest;
 import com.vaxclinic.integration.einvoice.repository.EInvoiceRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
  * Phát hành hóa đơn điện tử cho 1 hóa đơn bán:
  * lấy dữ liệu từ sales-service (/internal) → dựng payload MISA → gọi MISA → lưu kết quả (einvoice_records).
  * Thử lại dùng LẠI RefID cũ → MISA chống trùng; đã PUBLISHED thì không gửi nữa.
+ * app.events.enabled=true: ghi kết quả + sự kiện einvoice.status-changed cùng 1 transaction ({@link EInvoiceEvents});
+ * tắt → chạy đúng như trước (không transaction, không sự kiện).
+ * Dùng chung cho phát hành tay (POST /api/einvoices/{id}/publish) và tự động (SalesInvoiceEventHandler).
  */
 @Service
 public class EInvoiceService {
@@ -29,19 +36,29 @@ public class EInvoiceService {
     private final SecretCipher cipher;
     private final MisaClient misa;
     private final SalesInvoiceClient sales;
+    private final EInvoiceEvents events;
+    private final TransactionTemplate tx;
+    private final TransactionTemplate newTx;
 
-    public EInvoiceService(EInvoiceRepository repo, SecretCipher cipher, MisaClient misa, SalesInvoiceClient sales) {
+    public EInvoiceService(EInvoiceRepository repo, SecretCipher cipher, MisaClient misa, SalesInvoiceClient sales,
+                           EInvoiceEvents events, PlatformTransactionManager txManager) {
         this.repo = repo;
         this.cipher = cipher;
         this.misa = misa;
         this.sales = sales;
+        this.events = events;
+        this.tx = txManager == null ? null : new TransactionTemplate(txManager);
+        this.newTx = txManager == null ? null : new TransactionTemplate(txManager);
+        if (newTx != null) {
+            newTx.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+        }
     }
 
     /** Không bao giờ trả mật khẩu; chỉ báo đã có hay chưa. */
     public Map<String, Object> settings() {
         var rows = repo.findSettingsRows();
         if (rows.isEmpty()) {
-            return Map.of("configured", false, "environment", "TEST", "invoiceName", "Hóa đơn bán hàng");
+            return Map.of("configured", false, "environment", "TEST", "invoiceName", "Hóa đơn bán hàng", "autoPublish", false);
         }
         var s = rows.get(0);
         var out = new HashMap<String, Object>();
@@ -53,6 +70,7 @@ public class EInvoiceService {
         out.put("invSeries", s.get("inv_series"));
         out.put("invoiceName", s.get("invoice_name"));
         out.put("sendEmail", s.get("send_email"));
+        out.put("autoPublish", Boolean.TRUE.equals(s.get("auto_publish")));
         return out;
     }
 
@@ -60,7 +78,8 @@ public class EInvoiceService {
     public Map<String, Object> saveSettings(SettingsRequest r) {
         String enc = r.password() == null || r.password().isBlank() ? null : cipher.encrypt(r.password());
         repo.upsertSettings(r.environment() == null ? "TEST" : r.environment(), r.appId().trim(), r.taxCode().trim(),
-                r.username().trim(), enc, r.invSeries().trim().toUpperCase(), r.invoiceName().trim(), r.sendEmail());
+                r.username().trim(), enc, r.invSeries().trim().toUpperCase(), r.invoiceName().trim(), r.sendEmail(),
+                r.autoPublish());
         return settings();
     }
 
@@ -93,7 +112,13 @@ public class EInvoiceService {
         }
         UUID refId = existing.isEmpty() ? UUID.randomUUID() : (UUID) existing.get(0).get("ref_id");
         if (existing.isEmpty()) {
-            repo.insertFailedRecord(invoiceId, inv.code(), refId);
+            if (events.enabled()) {
+                // Commit riêng TRƯỚC khi gọi MISA (kể cả khi đang trong transaction của consumer Kafka): lần thử lại
+                // dùng lại đúng RefID này → MISA chống trùng, như khi không có transaction.
+                newTx.executeWithoutResult(st -> repo.insertFailedRecord(invoiceId, inv.code(), refId));
+            } else {
+                repo.insertFailedRecord(invoiceId, inv.code(), refId);
+            }
         }
         var b = inv.buyer();
         var source = new MisaInvoicePayload.Source(inv.code(), inv.soldAt(), inv.paymentMethod(), inv.discount(), inv.total(),
@@ -108,8 +133,51 @@ public class EInvoiceService {
         } catch (BusinessException e) {
             r = new MisaClient.PublishResult(false, null, null, null, null, null, e.getMessage());
         }
-        repo.updateRecordResult(invoiceId, r.ok() ? "PUBLISHED" : "FAILED", r);
+        if (events.enabled()) {
+            saveResult(existing.isEmpty() ? null : (String) existing.get(0).get("status"), invoiceId, inv.code(), r);
+        } else {
+            repo.updateRecordResult(invoiceId, r.ok() ? "PUBLISHED" : "FAILED", r);
+        }
         return repo.getRecord(invoiceId);
+    }
+
+    /** Kết quả phát hành + sự kiện đổi trạng thái: cùng 1 transaction (chỉ khi app.events.enabled). */
+    private void saveResult(String previousStatus, UUID invoiceId, String invoiceCode, MisaClient.PublishResult r) {
+        String status = r.ok() ? "PUBLISHED" : "FAILED";
+        tx.executeWithoutResult(st -> {
+            repo.updateRecordResult(invoiceId, status, r);
+            events.statusChanged(previousStatus, invoiceId, invoiceCode, status, r.invSeries(), r.invNo(), r.invCode(), r.error());
+        });
+    }
+
+    /** Thiết lập "Tự động phát hành HĐĐT khi hoàn thành hóa đơn" (mặc định tắt). */
+    public boolean autoPublish() {
+        return repo.autoPublish();
+    }
+
+    /**
+     * Tự động phát hành không tới được bước gọi MISA (VD chưa thiết lập kết nối): ghi FAILED vào einvoice_records như
+     * khi phát hành lỗi → hiện ở danh sách hóa đơn + cảnh báo Hộp thư đến; người dùng sửa thiết lập rồi phát hành lại.
+     * Chỉ gọi khi app.events.enabled (consumer Kafka). Đã PUBLISHED thì không đụng tới.
+     */
+    public void recordFailure(UUID invoiceId, String invoiceCode, String error) {
+        var existing = repo.findRecordRows(invoiceId);
+        if (!existing.isEmpty() && "PUBLISHED".equals(existing.get(0).get("status"))) {
+            return;
+        }
+        tx.executeWithoutResult(st -> {
+            if (existing.isEmpty()) {
+                repo.insertFailedRecord(invoiceId, invoiceCode, UUID.randomUUID());
+            }
+            saveResult(existing.isEmpty() ? null : (String) existing.get(0).get("status"), invoiceId, invoiceCode,
+                    new MisaClient.PublishResult(false, null, null, null, null, null, error));
+        });
+    }
+
+    /** Bản ghi phát hành HĐĐT của hóa đơn (nếu có). */
+    public Optional<Map<String, Object>> record(UUID invoiceId) {
+        var rows = repo.findRecordRows(invoiceId);
+        return rows.isEmpty() ? Optional.empty() : Optional.of(rows.get(0));
     }
 
     /** Trạng thái HĐĐT của nhiều hóa đơn (cột / bộ lọc ở danh sách hóa đơn). */

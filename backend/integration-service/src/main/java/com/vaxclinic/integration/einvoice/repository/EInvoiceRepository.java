@@ -28,16 +28,25 @@ public class EInvoiceRepository {
         return jdbc.queryForMap("select * from einvoice_settings where id = 1");
     }
 
-    /** passwordEnc null = giữ mật khẩu cũ. */
+    /** passwordEnc null = giữ mật khẩu cũ; autoPublish null = giữ nguyên (dòng mới: tắt). */
     public void upsertSettings(String environment, String appId, String taxCode, String username, String passwordEnc,
-                               String invSeries, String invoiceName, boolean sendEmail) {
+                               String invSeries, String invoiceName, boolean sendEmail, Boolean autoPublish) {
         jdbc.update("""
-                insert into einvoice_settings(id, environment, app_id, tax_code, username, password_enc, inv_series, invoice_name, send_email, updated_at)
-                values (1,?,?,?,?,?,?,?,?, now())
+                insert into einvoice_settings(id, environment, app_id, tax_code, username, password_enc, inv_series, invoice_name, send_email,
+                  auto_publish, updated_at)
+                values (1,?,?,?,?,?,?,?,?, coalesce(cast(? as boolean), false), now())
                 on conflict (id) do update set environment = excluded.environment, app_id = excluded.app_id, tax_code = excluded.tax_code,
                   username = excluded.username, password_enc = coalesce(excluded.password_enc, einvoice_settings.password_enc),
-                  inv_series = excluded.inv_series, invoice_name = excluded.invoice_name, send_email = excluded.send_email, updated_at = now()""",
-                environment, appId, taxCode, username, passwordEnc, invSeries, invoiceName, sendEmail);
+                  inv_series = excluded.inv_series, invoice_name = excluded.invoice_name, send_email = excluded.send_email,
+                  auto_publish = coalesce(cast(? as boolean), einvoice_settings.auto_publish), updated_at = now()""",
+                environment, appId, taxCode, username, passwordEnc, invSeries, invoiceName, sendEmail, autoPublish, autoPublish);
+    }
+
+    /** Thiết lập "Tự động phát hành HĐĐT khi hoàn thành hóa đơn" (chưa có dòng thiết lập → tắt). */
+    public boolean autoPublish() {
+        Boolean on = jdbc.query("select auto_publish from einvoice_settings where id = 1",
+                rs -> rs.next() ? rs.getBoolean(1) : Boolean.FALSE);
+        return Boolean.TRUE.equals(on);
     }
 
     public List<Map<String, Object>> findRecordRows(UUID invoiceId) {
