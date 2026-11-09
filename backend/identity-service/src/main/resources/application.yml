@@ -23,6 +23,12 @@ app:
   # Lịch sử thao tác: http (mặc định) | kafka (topic audit.events; broker: SPRING_KAFKA_BOOTSTRAP_SERVERS)
   audit:
     transport: ${AUDIT_TRANSPORT:http}
+  # Cảnh báo vào Hộp thư đến: http (mặc định) | kafka (topic notification.events, lỗi thì gửi HTTP)
+  notification:
+    transport: ${NOTIFICATION_TRANSPORT:http}
+  # Phiếu chi lương / tạm ứng vào Sổ quỹ (identity → sales): http (mặc định) | kafka (topic cashflow.events)
+  cashflow:
+    transport: ${CASHFLOW_TRANSPORT:http}
   # Sự kiện nghiệp vụ qua Kafka (event_outbox → Kafka → service khác). false = các luồng chạy HTTP như cũ
   events:
     enabled: ${EVENTS_ENABLED:false}

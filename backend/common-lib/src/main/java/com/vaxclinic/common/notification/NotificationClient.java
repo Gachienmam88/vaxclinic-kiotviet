@@ -1,18 +1,24 @@
 package com.vaxclinic.common.notification;
 
+import com.vaxclinic.common.events.EventEnvelope;
 import com.vaxclinic.common.security.ServiceTokenProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.web.client.RestClient;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Gửi cảnh báo vào "Hộp thư đến" (identity-service /internal/notifications). Các job cảnh báo ở từng service dùng
  * {@link #sync}: gửi toàn bộ cảnh báo đang đúng của các loại mình phụ trách → identity tạo mới / giữ nguyên (chống trùng
  * theo dedupeKey) và tự đóng các cảnh báo cùng loại không còn trong danh sách. Lỗi gọi HTTP chỉ log cảnh báo
  * (job chạy lại lần sau), không ném ra ngoài.
+ * <p>
+ * Kênh gửi: HTTP (mặc định) hoặc Kafka topic {@value #TOPIC} khi có {@code kafka} (app.notification.transport=kafka):
+ * chờ Kafka xác nhận (tối đa 3 giây), lỗi thì gửi HTTP như cũ. Mọi bản tin chung 1 key → identity xử lý đúng thứ tự gửi.
  */
 public class NotificationClient {
 
@@ -35,22 +41,41 @@ public class NotificationClient {
     public record SyncRequest(List<String> types, List<Item> items) {
     }
 
+    public static final String TOPIC = "notification.events";
+    public static final String TYPE_PUBLISH = "notification.publish";
+    public static final String TYPE_SYNC = "notification.sync";
+
+    /** Nội dung bản tin notification.publish. */
+    public record PublishRequest(List<Item> items) {
+    }
+
     private final RestClient http;
     private final ServiceTokenProvider tokens;
+    private final KafkaTemplate<String, String> kafka;
+    private final String source;
 
     public NotificationClient(RestClient http, ServiceTokenProvider tokens) {
+        this(http, tokens, null, null);
+    }
+
+    /** kafka null = chỉ HTTP. */
+    public NotificationClient(RestClient http, ServiceTokenProvider tokens, KafkaTemplate<String, String> kafka, String source) {
         this.http = http;
         this.tokens = tokens;
+        this.kafka = kafka;
+        this.source = source;
     }
 
     /** Đồng bộ trọn bộ cảnh báo của các loại `types`. Trả false nếu không gửi được. */
     public boolean sync(List<String> types, List<Item> items) {
-        return post("/internal/notifications/sync", new SyncRequest(types, items), types.toString());
+        var req = new SyncRequest(types, items);
+        return viaKafka(TYPE_SYNC, req, types.toString()) || post("/internal/notifications/sync", req, types.toString());
     }
 
     /** Thêm cảnh báo dạng sự kiện (VD nhận chuyển khoản) — gửi lại cùng dedupeKey không tạo trùng. */
     public boolean publish(List<Item> items) {
-        return items.isEmpty() || post("/internal/notifications", items, items.size() + " items");
+        return items.isEmpty() || viaKafka(TYPE_PUBLISH, new PublishRequest(items), items.size() + " items")
+                || post("/internal/notifications", items, items.size() + " items");
     }
 
     public Settings settings() {
@@ -61,6 +86,26 @@ public class NotificationClient {
         } catch (RuntimeException e) {
             log.warn("Cannot load notification settings: {}", e.getMessage());
             return Settings.DEFAULT;
+        }
+    }
+
+    private boolean viaKafka(String type, Object data, String what) {
+        if (kafka == null) {
+            return false;
+        }
+        try {
+            kafka.send(TOPIC, "notifications", EventEnvelope.of(type, source, data).toJson()).get(3, TimeUnit.SECONDS);
+            return true;
+        } catch (Exception e) {
+            log.warn("Kafka notification send failed ({}), falling back to HTTP: {}", what, e.getMessage());
+            return false;
+        }
+    }
+
+    /** Đóng producer Kafka (gọi khi tắt service). */
+    public void close() {
+        if (kafka != null) {
+            kafka.getProducerFactory().reset();
         }
     }
 

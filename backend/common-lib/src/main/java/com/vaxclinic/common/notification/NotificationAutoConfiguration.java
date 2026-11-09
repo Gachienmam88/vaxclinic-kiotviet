@@ -13,10 +13,15 @@ import org.springframework.context.annotation.Bean;
 @ConditionalOnProperty("app.identity-url")
 public class NotificationAutoConfiguration {
 
-    @Bean
+    /** app.notification.transport: http (mặc định) | kafka (topic notification.events, lỗi thì gửi HTTP). */
+    @Bean(destroyMethod = "close")
     public NotificationClient notificationClient(InternalRestClientFactory http, @Value("${app.identity-url}") String identityUrl,
                                                  @Value("${app.jwt.secret}") String secret,
-                                                 @Value("${spring.application.name}") String serviceName) {
-        return new NotificationClient(http.create(identityUrl), new ServiceTokenProvider(secret, serviceName));
+                                                 @Value("${spring.application.name}") String serviceName,
+                                                 @Value("${app.notification.transport:http}") String transport,
+                                                 @Value("${spring.kafka.bootstrap-servers:localhost:9094}") String kafkaServers) {
+        var kafka = "kafka".equalsIgnoreCase(transport.trim())
+                ? com.vaxclinic.common.kafka.KafkaProducers.reliable(kafkaServers, serviceName + "-notification") : null;
+        return new NotificationClient(http.create(identityUrl), new ServiceTokenProvider(secret, serviceName), kafka, serviceName);
     }
 }
