@@ -15,15 +15,23 @@ public class BusinessException extends RuntimeException {
     }
 
     public static BusinessException notFound(String code, String message) {
-        return new BusinessException(HttpStatus.NOT_FOUND, code, message);
+        return new ResourceNotFoundException(code, message);
     }
 
     public static BusinessException badRequest(String code, String message) {
-        return new BusinessException(HttpStatus.BAD_REQUEST, code, message);
+        return new ValidationException(code, message);
     }
 
     public static BusinessException conflict(String code, String message) {
-        return new BusinessException(HttpStatus.CONFLICT, code, message);
+        return new ConflictException(code, message);
+    }
+
+    public static BusinessException forbidden(String code, String message) {
+        return new ForbiddenException(code, message);
+    }
+
+    public static BusinessException upstream(String code, String message) {
+        return new UpstreamServiceException(code, message);
     }
 
     public HttpStatus getStatus() {
