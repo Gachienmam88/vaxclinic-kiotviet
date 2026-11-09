@@ -24,6 +24,11 @@ Browser ──▶ Next.js (frontend, BFF giữ JWT trong cookie httpOnly)
 - Phiếu chi trả NCC vào Sổ quỹ: phiếu nhập trả tiền → outbox (product, cùng transaction) → Kafka topic `cashflow.events`
   (key = id chứng từ) → sales-service ghi Sổ quỹ (idempotent). Chọn bằng `CASHFLOW_TRANSPORT=kafka|http`.
   Demo (cần Docker stack đang chạy): `python scripts/kafka-demo-cashflow.py`.
+- Sự kiện nghiệp vụ (`EVENTS_ENABLED=true`, common-lib `events`: outbox cùng transaction → Kafka → bên nhận bỏ trùng):
+  hủy hóa đơn / trả hàng theo hóa đơn → hoàn kho (`stock.commands`); hóa đơn hoàn thành / sửa / hủy → integration
+  (`sales.invoice-events`, tùy chọn tự phát hành HĐĐT, mặc định tắt); trạng thái HĐĐT → sales (`einvoice.events`).
+  Cảnh báo Hộp thư đến qua `notification.events` (`NOTIFICATION_TRANSPORT`), phiếu chi lương/tạm ứng qua `cashflow.events`.
+  Lỗi nghiệp vụ không xử lý được → topic `<topic>.DLT` + log ERROR. Demo 4 luồng: `python scripts/kafka-demo-all.py`.
 
 ## Chạy trên máy dev
 1. `cp .env.example .env` rồi điền secret (JWT_SECRET ≥ 32 ký tự, ADMIN_PASSWORD ≥ 8 ký tự). Cổng bị trùng thì đổi `POSTGRES_PORT`, `GATEWAY_PORT`.
