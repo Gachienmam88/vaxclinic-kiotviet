@@ -5,11 +5,10 @@ import com.vaxclinic.sales.common.Actor;
 import com.vaxclinic.sales.customer.CustomerDtos.CustomerListResponse;
 import com.vaxclinic.sales.customer.CustomerDtos.CustomerRequest;
 import com.vaxclinic.sales.customer.CustomerDtos.CustomerResponse;
+import com.vaxclinic.sales.customer.CustomerDtos.DebtLine;
 import com.vaxclinic.sales.debt.DebtService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
-import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -23,7 +22,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -36,23 +34,14 @@ public class CustomerController {
 
     private final CustomerService service;
     private final CustomerListQuery listQuery;
-    private final CustomerRepository customers;
     private final DebtService debt;
-    private final NamedParameterJdbcTemplate jdbc;
     private final AuditLogger audit;
 
-    public CustomerController(CustomerService service, CustomerListQuery listQuery, CustomerRepository customers,
-                              DebtService debt, NamedParameterJdbcTemplate jdbc, AuditLogger audit) {
+    public CustomerController(CustomerService service, CustomerListQuery listQuery, DebtService debt, AuditLogger audit) {
         this.audit = audit;
         this.service = service;
         this.listQuery = listQuery;
-        this.customers = customers;
         this.debt = debt;
-        this.jdbc = jdbc;
-    }
-
-    public record DebtLine(UUID id, String docType, String docCode, UUID docId, Instant occurredAt, BigDecimal amount,
-                           BigDecimal balanceAfter, String note) {
     }
 
     @GetMapping
@@ -72,7 +61,7 @@ public class CustomerController {
     /** Tên các nhóm khách hàng (API cũ — danh sách đầy đủ ở /api/customer-groups). */
     @GetMapping("/groups")
     public List<String> groups() {
-        return customers.findGroupNames();
+        return service.groupNames();
     }
 
     @GetMapping("/{id}")
@@ -102,11 +91,7 @@ public class CustomerController {
     /** Tab "Nợ cần thu từ khách" — mới nhất trước. */
     @GetMapping("/{id}/debts")
     public List<DebtLine> debts(@PathVariable UUID id) {
-        return jdbc.query("select * from customer_debt_ledger where customer_id = :id order by occurred_at desc, balance_after limit 200",
-                new MapSqlParameterSource("id", id), (rs, n) -> new DebtLine(rs.getObject("id", UUID.class),
-                        rs.getString("doc_type"), rs.getString("doc_code"), rs.getObject("doc_id", UUID.class),
-                        rs.getTimestamp("occurred_at").toInstant(), rs.getBigDecimal("amount"),
-                        rs.getBigDecimal("balance_after"), rs.getString("note")));
+        return listQuery.debtLines(id);
     }
 
     @PostMapping("/{id}/payments")

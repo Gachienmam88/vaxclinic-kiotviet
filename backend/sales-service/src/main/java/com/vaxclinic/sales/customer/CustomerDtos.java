@@ -70,4 +70,8 @@ public final class CustomerDtos {
     public record CustomerListResponse(List<CustomerListItem> items, long total, int page, int size,
                                        BigDecimal sumDebt, BigDecimal sumSales, BigDecimal sumNetSales) {
     }
+
+    public record DebtLine(UUID id, String docType, String docCode, UUID docId, Instant occurredAt, BigDecimal amount,
+                           BigDecimal balanceAfter, String note) {
+    }
 }

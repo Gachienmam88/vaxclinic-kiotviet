@@ -88,4 +88,14 @@ public class CashbookQuery {
     public List<String> categories() {
         return jdbc.getJdbcTemplate().queryForList("select distinct category from cash_vouchers order by category", String.class);
     }
+
+    /** Các hóa đơn được phân bổ từ phiếu (theo thời gian bán). */
+    public List<CashbookDtos.Allocated> allocations(UUID voucherId) {
+        return jdbc.query("""
+                select i.id, i.code, i.sold_at, i.total, a.amount from voucher_allocations a
+                join invoices i on i.id = a.invoice_id where a.voucher_id = :id order by i.sold_at""",
+                new MapSqlParameterSource("id", voucherId), (rs, n) -> new CashbookDtos.Allocated(rs.getObject("id", UUID.class),
+                        rs.getString("code"), rs.getTimestamp("sold_at").toInstant(), rs.getBigDecimal("total"),
+                        rs.getBigDecimal("amount")));
+    }
 }

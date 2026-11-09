@@ -84,6 +84,11 @@ public class CustomerService {
     private static final Map<String, String> FIELD_LABELS = Map.of("phone", "Số điện thoại", "email", "Email",
             "gender", "Giới tính", "birthday", "Ngày sinh", "address", "Địa chỉ", "facebook", "Facebook", "group", "Nhóm khách hàng");
 
+    /** Tên các nhóm khách hàng (API cũ — danh sách đầy đủ ở /api/customer-groups). */
+    public List<String> groupNames() {
+        return customers.findGroupNames();
+    }
+
     public Customer find(UUID id) {
         return customers.findById(id)
                 .orElseThrow(() -> BusinessException.notFound("CUSTOMER_NOT_FOUND", "Không tìm thấy khách hàng"));

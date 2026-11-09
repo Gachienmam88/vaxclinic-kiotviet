@@ -13,6 +13,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 /** Phiếu thu/chi tạo tay, hủy phiếu, và nhận phiếu tự động từ service khác (phiếu chi trả NCC). */
@@ -40,13 +42,29 @@ public class CashbookService {
     private final CashbookWriter writer;
     private final DebtLedger debt;
     private final com.vaxclinic.sales.common.SalesRules rules;
+    private final CashbookQuery query;
 
     public CashbookService(CashVoucherRepository vouchers, CashbookWriter writer, DebtLedger debt,
-                           com.vaxclinic.sales.common.SalesRules rules) {
+                           com.vaxclinic.sales.common.SalesRules rules, CashbookQuery query) {
         this.vouchers = vouchers;
         this.writer = writer;
         this.debt = debt;
         this.rules = rules;
+        this.query = query;
+    }
+
+    /** Chi tiết phiếu + các hóa đơn được phân bổ (GET /api/cashbook/{id}). */
+    @Transactional(readOnly = true)
+    public Map<String, Object> detail(UUID id) {
+        CashVoucher v = vouchers.findById(id)
+                .orElseThrow(() -> BusinessException.notFound("VOUCHER_NOT_FOUND", "Không tìm thấy phiếu"));
+        var allocations = query.allocations(id);
+        return Map.of("voucher", v, "allocations", allocations);
+    }
+
+    /** Tìm phiếu (không mở transaction riêng ngoài transaction của repository). */
+    public Optional<CashVoucher> find(UUID id) {
+        return vouchers.findById(id);
     }
 
     @Transactional

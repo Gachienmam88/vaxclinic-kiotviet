@@ -3,6 +3,7 @@ package com.vaxclinic.sales.customer;
 import com.vaxclinic.common.search.AccentInsensitiveSql;
 import com.vaxclinic.sales.customer.CustomerDtos.CustomerListItem;
 import com.vaxclinic.sales.customer.CustomerDtos.CustomerListResponse;
+import com.vaxclinic.sales.customer.CustomerDtos.DebtLine;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Component;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 /** Danh sách khách hàng + bộ lọc trái (nhóm, ngày tạo, người tạo, loại khách, giới tính) + dòng tổng. */
@@ -71,5 +73,14 @@ public class CustomerListQuery {
                         rs.getBigDecimal("total_sales").subtract(rs.getBigDecimal("total_returns"))));
         return new CustomerListResponse(items, ((Number) agg.get("cnt")).longValue(), f.page(), f.size(),
                 (BigDecimal) agg.get("debt"), (BigDecimal) agg.get("sales"), (BigDecimal) agg.get("net"));
+    }
+
+    /** Tab "Nợ cần thu từ khách" — mới nhất trước. */
+    public List<DebtLine> debtLines(UUID customerId) {
+        return jdbc.query("select * from customer_debt_ledger where customer_id = :id order by occurred_at desc, balance_after limit 200",
+                new MapSqlParameterSource("id", customerId), (rs, n) -> new DebtLine(rs.getObject("id", UUID.class),
+                        rs.getString("doc_type"), rs.getString("doc_code"), rs.getObject("doc_id", UUID.class),
+                        rs.getTimestamp("occurred_at").toInstant(), rs.getBigDecimal("amount"),
+                        rs.getBigDecimal("balance_after"), rs.getString("note")));
     }
 }
