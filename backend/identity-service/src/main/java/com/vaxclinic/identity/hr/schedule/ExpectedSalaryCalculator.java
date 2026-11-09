@@ -1,7 +1,6 @@
 package com.vaxclinic.identity.hr.schedule;
 
 import com.vaxclinic.identity.hr.payroll.PayRates;
-import com.vaxclinic.identity.hr.schedule.ShiftController.Shift;
 import com.vaxclinic.identity.hr.settings.HrSettingsService;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
@@ -38,7 +37,7 @@ public class ExpectedSalaryCalculator {
         var tk = settings.timekeeping();
         int startDay = settings.payroll().startDay();
         var holidays = settings.holidays();
-        Map<UUID, Shift> shifts = ShiftController.load(jdbc).stream().collect(Collectors.toMap(Shift::id, Function.identity()));
+        Map<UUID, Shift> shifts = ShiftRepository.load(jdbc).stream().collect(Collectors.toMap(Shift::id, Function.identity()));
         var emps = jdbc.query("select id, salary_type, salary_amount, main_branch_id from hr_employees where status = 'WORKING' and salary_type is not null",
                 (rs, i) -> new Emp(rs.getObject(1, UUID.class), rs.getString(2), rs.getBigDecimal(3), rs.getObject(4, UUID.class)));
         Map<UUID, BigDecimal> out = new HashMap<>();

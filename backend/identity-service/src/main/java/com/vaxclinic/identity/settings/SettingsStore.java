@@ -44,6 +44,11 @@ public class SettingsStore {
         }
     }
 
+    /** Xóa dòng của khóa (lần đọc sau → null, dùng mặc định). */
+    public void delete(String key) {
+        jdbc.update("delete from app_settings where key = ?", key);
+    }
+
     public ShopSettings shop() {
         return new ShopSettings(read("sales", ShopSettings.Sales.class),
                 read("customer", ShopSettings.CustomerRules.class), read("lock", ShopSettings.BookLock.class));

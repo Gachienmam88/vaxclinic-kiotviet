@@ -10,7 +10,6 @@ import com.vaxclinic.identity.hr.settings.HrSettings.Payroll;
 import com.vaxclinic.identity.hr.settings.HrSettings.Template;
 import com.vaxclinic.identity.hr.settings.HrSettings.Timekeeping;
 import jakarta.validation.Valid;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -41,12 +40,10 @@ public class HrSettingsController {
     }
 
     private final HrSettingsService settings;
-    private final JdbcTemplate jdbc;
     private final AuditLogger audit;
 
-    public HrSettingsController(HrSettingsService settings, JdbcTemplate jdbc, AuditLogger audit) {
+    public HrSettingsController(HrSettingsService settings, AuditLogger audit) {
         this.settings = settings;
-        this.jdbc = jdbc;
         this.audit = audit;
     }
 
@@ -59,14 +56,7 @@ public class HrSettingsController {
     /** Tiến độ Khởi tạo (6 bước) — đếm dữ liệu thật. */
     @GetMapping("/overview")
     public Map<String, Object> overview() {
-        return Map.of(
-                "employees", count("select count(*) from hr_employees where status = 'WORKING'"),
-                "shifts", count("select count(*) from hr_shifts where active"),
-                "schedules", count("select count(*) from hr_schedules"),
-                "timekeeping", count("select count(*) from app_settings where key in ('hr.mobile', 'hr.timekeeping')")
-                        + count("select count(*) from hr_attendance where source in ('PHONE', 'MACHINE')"),
-                "salaries", count("select count(*) from hr_employees where salary_type is not null"),
-                "payrolls", count("select count(*) from hr_payrolls where status <> 'CANCELLED'"));
+        return settings.overview();
     }
 
     @PutMapping("/timekeeping")
@@ -129,10 +119,5 @@ public class HrSettingsController {
 
     private static List<String> distinct(List<String> v) {
         return v == null ? List.of() : v.stream().map(String::trim).filter(s -> !s.isEmpty()).distinct().toList();
-    }
-
-    private long count(String sql) {
-        Long n = jdbc.queryForObject(sql, Long.class);
-        return n == null ? 0 : n;
     }
 }

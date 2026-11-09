@@ -4,7 +4,7 @@ import com.vaxclinic.common.settings.ShopSettings;
 import com.vaxclinic.identity.hr.attendance.AttendanceWriter;
 import com.vaxclinic.identity.hr.payroll.PayRates;
 import com.vaxclinic.identity.hr.payroll.PayrollService;
-import com.vaxclinic.identity.hr.schedule.ShiftController;
+import com.vaxclinic.identity.hr.schedule.ShiftRepository;
 import com.vaxclinic.identity.hr.settings.HrSettingsService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,7 +73,7 @@ public class HrJobs {
         }
         LocalDate today = LocalDate.now(ShopSettings.ZONE);
         Instant now = Instant.now();
-        var shifts = ShiftController.load(jdbc);
+        var shifts = ShiftRepository.load(jdbc);
         jdbc.query("""
                 select s.employee_id, s.shift_id, s.work_date, e.main_branch_id from hr_schedules s join hr_employees e on e.id = s.employee_id
                 where s.work_date between ? and ? and e.status = 'WORKING' and not exists (select 1 from hr_attendance a

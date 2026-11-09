@@ -5,7 +5,6 @@ import com.vaxclinic.common.error.BusinessException;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -37,12 +36,10 @@ public class PrintTemplateController {
     }
 
     private final SettingsStore store;
-    private final JdbcTemplate jdbc;
     private final AuditLogger audit;
 
-    public PrintTemplateController(SettingsStore store, JdbcTemplate jdbc, AuditLogger audit) {
+    public PrintTemplateController(SettingsStore store, AuditLogger audit) {
         this.store = store;
-        this.jdbc = jdbc;
         this.audit = audit;
     }
 
@@ -76,7 +73,7 @@ public class PrintTemplateController {
     @DeleteMapping("/{type}")
     @PreAuthorize("hasAuthority('settings.manage')")
     public Map<String, String> reset(@PathVariable String type, @AuthenticationPrincipal Jwt jwt) {
-        jdbc.update("delete from app_settings where key = ?", "print:" + checkType(type));
+        store.delete("print:" + checkType(type));
         log(jwt, "Mẫu in", "Đặt lại", "Đặt lại mẫu in mặc định " + type);
         return list();
     }

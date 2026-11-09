@@ -1,9 +1,13 @@
 package com.vaxclinic.identity.hr.employee;
 
+import com.vaxclinic.common.audit.AuditLogger;
 import com.vaxclinic.common.search.AccentInsensitiveSql;
 import com.vaxclinic.common.error.BusinessException;
 import com.vaxclinic.common.web.PageResponse;
 import com.vaxclinic.identity.hr.HrActor;
+import com.vaxclinic.identity.hr.HrCashflowOutbox;
+import com.vaxclinic.identity.hr.employee.EmployeeDtos.AdvanceItem;
+import com.vaxclinic.identity.hr.employee.EmployeeDtos.AdvanceRequest;
 import com.vaxclinic.identity.hr.employee.EmployeeDtos.BranchRef;
 import com.vaxclinic.identity.hr.employee.EmployeeDtos.Employee;
 import com.vaxclinic.identity.hr.employee.EmployeeDtos.EmployeeRequest;
@@ -17,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -36,9 +41,15 @@ public class EmployeeService {
             + " left join hr_job_titles j on j.id = e.job_title_id";
 
     private final JdbcTemplate jdbc;
+    private final EmployeeRepository employees;
+    private final HrCashflowOutbox outbox;
+    private final AuditLogger audit;
 
-    public EmployeeService(JdbcTemplate jdbc) {
+    public EmployeeService(JdbcTemplate jdbc, EmployeeRepository employees, HrCashflowOutbox outbox, AuditLogger audit) {
         this.jdbc = jdbc;
+        this.employees = employees;
+        this.outbox = outbox;
+        this.audit = audit;
     }
 
     public PageResponse<EmployeeRow> search(String status, UUID departmentId, UUID jobTitleId, UUID branchId, String q,
@@ -159,6 +170,44 @@ public class EmployeeService {
             jdbc.update("insert into hr_employee_pay_items(id, employee_id, item_type, name, kind, amount) values (?,?,?,?,?,?)",
                     UUID.randomUUID(), empId, type, it.name().trim(), kind, it.amount());
         }
+    }
+
+    /** Chỉ xóa được nhân viên chưa phát sinh chấm công / bảng lương; đã phát sinh → chuyển trạng thái "Đã nghỉ". */
+    @Transactional
+    public void delete(UUID id, HrActor actor) {
+        Employee e = get(id);
+        Long used = employees.usageCount(id);
+        if (used != null && used > 0) {
+            throw BusinessException.badRequest("EMPLOYEE_IN_USE", "Nhân viên đã có dữ liệu chấm công / lương, hãy chuyển sang trạng thái Đã nghỉ");
+        }
+        employees.delete(id);
+        actor.audit(audit, HrActor.FEATURE, "Xóa", e.code(), "Xóa nhân viên " + e.code() + " - " + e.name());
+    }
+
+    public List<AdvanceItem> advances(UUID id) {
+        return employees.advances(id);
+    }
+
+    /** Tạm ứng lương: tăng "Nợ và tạm ứng", ghi phiếu chi vào Sổ quỹ; trừ dần khi thanh toán bảng lương. */
+    @Transactional
+    public Employee advance(UUID id, AdvanceRequest req, HrActor actor) {
+        if (req.amount() == null) {
+            throw BusinessException.badRequest("INVALID_AMOUNT", "Nhập số tiền tạm ứng");
+        }
+        Employee e = get(id);
+        UUID branch = req.branchId() != null ? req.branchId() : e.mainBranchId();
+        if (branch == null) {
+            throw BusinessException.badRequest("BRANCH_REQUIRED", "Chọn chi nhánh chi tiền tạm ứng");
+        }
+        UUID advId = UUID.randomUUID();
+        Instant now = Instant.now();
+        employees.insertAdvance(advId, id, req.amount(), now, HrActor.blankToNull(req.note()), actor.id());
+        String code = "PCTU%06d".formatted(employees.nextPaymentCodeSeq());
+        outbox.paid(new HrCashflowOutbox.Payment("HR_ADVANCE", advId, code, req.fund() == null ? "CASH" : req.fund(),
+                "Chi tạm ứng lương nhân viên", req.amount(), now, branch, id, e.name(), e.phone(), actor,
+                "Tạm ứng lương " + e.code() + " - " + e.name() + (req.note() == null ? "" : ": " + req.note())));
+        actor.audit(audit, HrActor.FEATURE, "Tạm ứng", e.code(), "Tạm ứng " + HrActor.money(req.amount()) + " cho " + e.name());
+        return get(id);
     }
 
     public List<PayItem> payItems(UUID empId, String type) {
