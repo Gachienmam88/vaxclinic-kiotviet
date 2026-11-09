@@ -1,12 +1,12 @@
 package com.vaxclinic.sales.debt;
 
 import com.vaxclinic.common.error.BusinessException;
-import com.vaxclinic.sales.cashbook.CashVoucherRepository;
-import com.vaxclinic.sales.cashbook.CashbookWriter;
+import com.vaxclinic.sales.cashbook.repository.CashVoucherRepository;
+import com.vaxclinic.sales.cashbook.service.CashbookWriter;
 import com.vaxclinic.sales.common.Actor;
-import com.vaxclinic.sales.customer.Customer;
-import com.vaxclinic.sales.customer.CustomerRepository;
-import com.vaxclinic.sales.invoice.InvoiceRepository;
+import com.vaxclinic.sales.customer.entity.Customer;
+import com.vaxclinic.sales.customer.repository.CustomerRepository;
+import com.vaxclinic.sales.invoice.repository.InvoiceRepository;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.stereotype.Service;
