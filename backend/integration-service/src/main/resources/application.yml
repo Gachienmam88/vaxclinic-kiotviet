@@ -23,6 +23,9 @@ app:
   # Lịch sử thao tác: http (mặc định) | kafka (topic audit.events; broker: SPRING_KAFKA_BOOTSTRAP_SERVERS)
   audit:
     transport: ${AUDIT_TRANSPORT:http}
+  # Sự kiện nghiệp vụ qua Kafka (event_outbox → Kafka → service khác). false = các luồng chạy HTTP như cũ
+  events:
+    enabled: ${EVENTS_ENABLED:false}
   jwt:
     secret: ${JWT_SECRET}
   # AES-256 key (base64, 32 bytes) encrypting stored passwords of tax portal / MISA accounts

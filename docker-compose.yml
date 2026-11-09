@@ -70,6 +70,7 @@ services:
     build: { context: ./backend, args: { MODULE: identity-service } }
     environment:
       AUDIT_TRANSPORT: ${AUDIT_TRANSPORT:-kafka}
+      EVENTS_ENABLED: ${EVENTS_ENABLED:-true}
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       DB_URL: jdbc:postgresql://postgres:5432/identity_db
       DB_USER: ${DB_USER}
@@ -86,6 +87,7 @@ services:
     build: { context: ./backend, args: { MODULE: product-service } }
     environment:
       AUDIT_TRANSPORT: ${AUDIT_TRANSPORT:-kafka}
+      EVENTS_ENABLED: ${EVENTS_ENABLED:-true}
       CASHFLOW_TRANSPORT: ${CASHFLOW_TRANSPORT:-kafka}
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       DB_URL: jdbc:postgresql://postgres:5432/product_db
@@ -103,6 +105,7 @@ services:
     build: { context: ./backend, args: { MODULE: sales-service } }
     environment:
       AUDIT_TRANSPORT: ${AUDIT_TRANSPORT:-kafka}
+      EVENTS_ENABLED: ${EVENTS_ENABLED:-true}
       CASHFLOW_TRANSPORT: ${CASHFLOW_TRANSPORT:-kafka}
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       DB_URL: jdbc:postgresql://postgres:5432/sales_db
@@ -121,6 +124,7 @@ services:
     build: { context: ./backend, args: { MODULE: integration-service } }
     environment:
       AUDIT_TRANSPORT: ${AUDIT_TRANSPORT:-kafka}
+      EVENTS_ENABLED: ${EVENTS_ENABLED:-true}
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       DB_URL: jdbc:postgresql://postgres:5432/integration_db
       DB_USER: ${DB_USER}
