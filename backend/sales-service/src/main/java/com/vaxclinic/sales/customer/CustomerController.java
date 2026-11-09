@@ -2,6 +2,7 @@ package com.vaxclinic.sales.customer;
 
 import com.vaxclinic.common.audit.AuditLogger;
 import com.vaxclinic.sales.common.Actor;
+import com.vaxclinic.sales.customer.CustomerDtos.CodeResponse;
 import com.vaxclinic.sales.customer.CustomerDtos.CustomerListResponse;
 import com.vaxclinic.sales.customer.CustomerDtos.CustomerRequest;
 import com.vaxclinic.sales.customer.CustomerDtos.CustomerResponse;
@@ -24,7 +25,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -96,31 +96,31 @@ public class CustomerController {
 
     @PostMapping("/{id}/payments")
     @PreAuthorize("hasAuthority('sales.perform') or hasAuthority('cashbook.manage')")
-    public Map<String, String> pay(@PathVariable UUID id, @Valid @RequestBody DebtService.PaymentRequest req,
+    public CodeResponse pay(@PathVariable UUID id, @Valid @RequestBody DebtService.PaymentRequest req,
                                    @AuthenticationPrincipal Jwt jwt) {
         String code = debt.pay(id, req, Actor.of(jwt));
         Actor.of(jwt).audit(audit, req.branchId(), "Phiếu thu", "Thu nợ", code,
                 "Thu nợ khách " + service.find(id).getName() + ": " + Actor.money(req.amount()) + ", phiếu " + code);
-        return Map.of("code", code);
+        return new CodeResponse(code);
     }
 
     @PostMapping("/{id}/discounts")
     @PreAuthorize("hasAuthority('cashbook.manage')")
-    public Map<String, String> discount(@PathVariable UUID id, @Valid @RequestBody DebtService.PaymentRequest req,
+    public CodeResponse discount(@PathVariable UUID id, @Valid @RequestBody DebtService.PaymentRequest req,
                                         @AuthenticationPrincipal Jwt jwt) {
         String code = debt.discount(id, req, Actor.of(jwt));
         Actor.of(jwt).audit(audit, req.branchId(), "Khách hàng", "Chiết khấu", code,
                 "Chiết khấu thanh toán cho khách " + service.find(id).getName() + ": " + Actor.money(req.amount()));
-        return Map.of("code", code);
+        return new CodeResponse(code);
     }
 
     @PostMapping("/{id}/adjustments")
     @PreAuthorize("hasAuthority('cashbook.manage')")
-    public Map<String, String> adjust(@PathVariable UUID id, @Valid @RequestBody DebtService.AdjustRequest req,
+    public CodeResponse adjust(@PathVariable UUID id, @Valid @RequestBody DebtService.AdjustRequest req,
                                       @AuthenticationPrincipal Jwt jwt) {
         String code = debt.adjust(id, req);
         Actor.of(jwt).audit(audit, null, "Khách hàng", "Điều chỉnh nợ", code,
                 "Điều chỉnh công nợ khách " + service.find(id).getName() + " thành " + Actor.money(req.newDebt()));
-        return Map.of("code", code);
+        return new CodeResponse(code);
     }
 }

@@ -58,6 +58,10 @@ public final class SalesReturnDtos {
                                  BigDecimal refunded, String paymentMethod, String note, List<LineResponse> lines) {
     }
 
+    /** GET /api/sales-returns: total = số phiếu, sumTotal = tổng "cần trả khách" của bộ lọc. */
+    public record ListPage(List<ListItem> items, long total, BigDecimal sumTotal) {
+    }
+
     public record ListItem(UUID id, String code, Instant returnedAt, String invoiceCode, String customerName,
                            BigDecimal subtotal, BigDecimal fee, BigDecimal total, BigDecimal refunded, String status) {
     }

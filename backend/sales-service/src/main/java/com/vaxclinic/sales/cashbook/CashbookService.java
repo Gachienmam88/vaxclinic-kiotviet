@@ -13,7 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -55,11 +54,11 @@ public class CashbookService {
 
     /** Chi tiết phiếu + các hóa đơn được phân bổ (GET /api/cashbook/{id}). */
     @Transactional(readOnly = true)
-    public Map<String, Object> detail(UUID id) {
+    public CashbookDtos.VoucherDetail detail(UUID id) {
         CashVoucher v = vouchers.findById(id)
                 .orElseThrow(() -> BusinessException.notFound("VOUCHER_NOT_FOUND", "Không tìm thấy phiếu"));
         var allocations = query.allocations(id);
-        return Map.of("voucher", v, "allocations", allocations);
+        return new CashbookDtos.VoucherDetail(CashbookDtos.CashVoucherView.of(v), allocations);
     }
 
     /** Tìm phiếu (không mở transaction riêng ngoài transaction của repository). */

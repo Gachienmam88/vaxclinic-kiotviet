@@ -2,6 +2,7 @@ package com.vaxclinic.sales.invoice;
 
 import com.vaxclinic.sales.invoice.InvoiceSaleLookupQuery.LastPrice;
 import com.vaxclinic.sales.invoice.InvoiceSaleLookupQuery.ReturnableFilter;
+import com.vaxclinic.sales.invoice.InvoiceSaleLookupQuery.ReturnablePage;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -9,7 +10,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -34,7 +34,7 @@ public class InvoiceSaleLookupController {
 
     /** "Chọn hóa đơn trả hàng": lọc theo mã HĐ / mã vận đơn / lô / khách / hàng / thời gian / chi nhánh; mặc định 7 dòng. */
     @GetMapping("/api/invoices/returnable")
-    public Map<String, Object> returnable(@RequestParam(required = false) String code,
+    public ReturnablePage returnable(@RequestParam(required = false) String code,
                                           @RequestParam(required = false) String shipmentCode,
                                           @RequestParam(required = false) String lot,
                                           @RequestParam(required = false) String customer,

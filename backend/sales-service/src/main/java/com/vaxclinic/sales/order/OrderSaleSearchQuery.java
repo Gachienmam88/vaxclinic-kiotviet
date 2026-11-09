@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.util.Map;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -21,6 +21,9 @@ public class OrderSaleSearchQuery {
                                String note) {
     }
 
+    public record Page(List<SaleOrderItem> items, long total) {
+    }
+
     public record Filter(String code, String customer, String note, String productCode, String productName, Instant from,
                          Instant to, UUID branchId, int page, int size) {
     }
@@ -31,7 +34,7 @@ public class OrderSaleSearchQuery {
         this.jdbc = jdbc;
     }
 
-    public Map<String, Object> search(Filter f) {
+    public Page search(Filter f) {
         var p = new MapSqlParameterSource();
         var w = new StringBuilder(" from customer_orders o join customers c on c.id = o.customer_id"
                 + " where o.status in ('DRAFT', 'CONFIRMED')");
@@ -57,7 +60,7 @@ public class OrderSaleSearchQuery {
                 (rs, n) -> new SaleOrderItem(rs.getObject("id", UUID.class), rs.getString("code"),
                         rs.getTimestamp("ordered_at").toInstant(), rs.getString("customer_name"), rs.getBigDecimal("total"),
                         rs.getString("status"), rs.getString("note")));
-        return Map.of("items", items, "total", total == null ? 0L : total);
+        return new Page(items, total == null ? 0L : total);
     }
 
     private static boolean like(MapSqlParameterSource p, String name, String v) {

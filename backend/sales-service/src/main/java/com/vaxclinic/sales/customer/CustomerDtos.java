@@ -71,6 +71,14 @@ public final class CustomerDtos {
                                        BigDecimal sumDebt, BigDecimal sumSales, BigDecimal sumNetSales) {
     }
 
+    /** Mã chứng từ vừa tạo (thu nợ / chiết khấu / điều chỉnh công nợ). */
+    public record CodeResponse(String code) {
+    }
+
+    /** Xóa nhóm khách hàng: số khách được bỏ nhóm. */
+    public record GroupDeleteResponse(int unlinkedCustomers) {
+    }
+
     public record DebtLine(UUID id, String docType, String docCode, UUID docId, Instant occurredAt, BigDecimal amount,
                            BigDecimal balanceAfter, String note) {
     }

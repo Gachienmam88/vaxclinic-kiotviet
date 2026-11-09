@@ -20,7 +20,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 /** Khách hàng → Nhóm khách hàng (danh sách kèm số khách, thêm / sửa / xóa). */
@@ -62,12 +61,12 @@ public class CustomerGroupController {
     /** Xóa nhóm: khách đang thuộc nhóm được bỏ nhóm (không xóa khách). */
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('patient.manage')")
-    public Map<String, Integer> delete(@PathVariable UUID id, @AuthenticationPrincipal Jwt jwt) {
+    public CustomerDtos.GroupDeleteResponse delete(@PathVariable UUID id, @AuthenticationPrincipal Jwt jwt) {
         String name = service.find(id).getName();
         int unlinked = service.delete(id);
         Actor.of(jwt).audit(audit, null, "Nhóm khách hàng", "Xóa", name,
                 "Xóa nhóm khách hàng " + name + (unlinked > 0 ? ", bỏ nhóm của " + unlinked + " khách hàng" : ""));
-        return Map.of("unlinkedCustomers", unlinked);
+        return new CustomerDtos.GroupDeleteResponse(unlinked);
     }
 
     private static String discount(GroupResponse g) {

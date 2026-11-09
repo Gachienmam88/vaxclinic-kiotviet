@@ -6,7 +6,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Instant;
-import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -24,7 +23,7 @@ public class OrderSaleSearchController {
     }
 
     @GetMapping("/api/orders/sale-search")
-    public Map<String, Object> search(@RequestParam(required = false) String code,
+    public OrderSaleSearchQuery.Page search(@RequestParam(required = false) String code,
                                       @RequestParam(required = false) String customer,
                                       @RequestParam(required = false) String note,
                                       @RequestParam(required = false) String productCode,

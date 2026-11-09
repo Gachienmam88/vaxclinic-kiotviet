@@ -2,6 +2,7 @@ package com.vaxclinic.sales.salesreturn;
 
 import com.vaxclinic.common.audit.AuditLogger;
 import com.vaxclinic.sales.common.Actor;
+import com.vaxclinic.sales.salesreturn.SalesReturnDtos.ListPage;
 import com.vaxclinic.sales.salesreturn.SalesReturnDtos.ReturnRequest;
 import com.vaxclinic.sales.salesreturn.SalesReturnDtos.ReturnResponse;
 import jakarta.validation.Valid;
@@ -17,7 +18,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 /** /api/sales-returns: khách trả hàng (Đơn hàng → Trả hàng). */
@@ -39,7 +39,7 @@ public class SalesReturnController {
     }
 
     @GetMapping("/api/sales-returns")
-    public Map<String, Object> list(@RequestParam(required = false) String q, @RequestParam(required = false) List<String> statuses,
+    public ListPage list(@RequestParam(required = false) String q, @RequestParam(required = false) List<String> statuses,
                                     @RequestParam(required = false) Instant from, @RequestParam(required = false) Instant to,
                                     @RequestParam(required = false) UUID invoiceId,
                                     @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "15") int size) {

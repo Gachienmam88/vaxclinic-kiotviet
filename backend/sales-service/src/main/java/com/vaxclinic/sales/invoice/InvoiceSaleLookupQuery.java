@@ -9,7 +9,6 @@ import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -24,6 +23,9 @@ public class InvoiceSaleLookupQuery {
 
     public record ReturnableItem(UUID id, String code, Instant soldAt, String employeeName, String customerName,
                                  BigDecimal total) {
+    }
+
+    public record ReturnablePage(List<ReturnableItem> items, long total) {
     }
 
     /** Bộ lọc "Chọn hóa đơn trả hàng". */
@@ -53,7 +55,7 @@ public class InvoiceSaleLookupQuery {
     }
 
     /** "Chọn hóa đơn trả hàng": lọc theo mã HĐ / mã vận đơn / lô / khách / hàng / thời gian / chi nhánh; mặc định 7 dòng. */
-    public Map<String, Object> returnable(ReturnableFilter f) {
+    public ReturnablePage returnable(ReturnableFilter f) {
         var p = new MapSqlParameterSource();
         var w = new StringBuilder(" from invoices i left join customers c on c.id = i.customer_id where i.status = 'COMPLETED'");
         if (like(p, "code", f.code())) w.append(" and i.code ilike :code");
@@ -87,7 +89,7 @@ public class InvoiceSaleLookupQuery {
                 (rs, n) -> new ReturnableItem(rs.getObject("id", UUID.class), rs.getString("code"),
                         rs.getTimestamp("sold_at").toInstant(), rs.getString("employee"), rs.getString("customer_name"),
                         rs.getBigDecimal("total")));
-        return Map.of("items", items, "total", total == null ? 0L : total);
+        return new ReturnablePage(items, total == null ? 0L : total);
     }
 
     /** Thêm tham số ILIKE '%v%' nếu có giá trị. */

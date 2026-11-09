@@ -2,6 +2,7 @@ package com.vaxclinic.sales.salesreturn;
 
 import com.vaxclinic.sales.salesreturn.SalesReturnDtos.LineResponse;
 import com.vaxclinic.sales.salesreturn.SalesReturnDtos.ListItem;
+import com.vaxclinic.sales.salesreturn.SalesReturnDtos.ListPage;
 import com.vaxclinic.sales.salesreturn.SalesReturnDtos.ReturnResponse;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -10,7 +11,7 @@ import org.springframework.stereotype.Component;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
-import java.util.Map;
+import java.math.BigDecimal;
 import java.util.UUID;
 
 /** Đọc phiếu trả hàng: danh sách (có tổng) và chi tiết kèm dòng hàng. */
@@ -25,7 +26,7 @@ public class SalesReturnQuery {
         this.writer = writer;
     }
 
-    public Map<String, Object> list(String q, List<String> statuses, Instant from, Instant to, UUID invoiceId, int page, int size) {
+    public ListPage list(String q, List<String> statuses, Instant from, Instant to, UUID invoiceId, int page, int size) {
         var p = new MapSqlParameterSource();
         var w = new StringBuilder(" from sales_returns r left join invoices i on i.id = r.invoice_id where 1=1");
         if (q != null && !q.isBlank()) { w.append(" and (r.code ilike :q or i.code ilike :q or r.customer_name ilike :q)"); p.addValue("q", "%" + q.trim() + "%"); }
@@ -39,7 +40,7 @@ public class SalesReturnQuery {
                 (rs, n) -> new ListItem(rs.getObject("id", UUID.class), rs.getString("code"), rs.getTimestamp("returned_at").toInstant(),
                         rs.getString("invoice_code"), rs.getString("customer_name"), rs.getBigDecimal("subtotal"),
                         rs.getBigDecimal("fee"), rs.getBigDecimal("total"), rs.getBigDecimal("refunded"), rs.getString("status")));
-        return Map.of("items", items, "total", agg.get("cnt"), "sumTotal", agg.get("tot"));
+        return new ListPage(items, ((Number) agg.get("cnt")).longValue(), (BigDecimal) agg.get("tot"));
     }
 
     public ReturnResponse get(UUID id) {

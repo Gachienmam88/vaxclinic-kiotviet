@@ -2,11 +2,12 @@ package com.vaxclinic.sales.cashbook;
 
 import com.vaxclinic.common.error.BusinessException;
 import com.vaxclinic.sales.cashbook.CashbookDtos.BankAccountRequest;
+import com.vaxclinic.sales.cashbook.CashbookDtos.BankAccountView;
+import com.vaxclinic.sales.cashbook.CashbookDtos.VietQr;
 import com.vaxclinic.sales.common.Actor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 /** Tài khoản ngân hàng / ví điện tử nhận tiền (/api/bank-accounts). */
@@ -20,24 +21,24 @@ public class BankAccountService {
     }
 
     /** Mặc định chỉ trả tài khoản ngân hàng (ô chọn tài khoản tạo QR); kind=EWALLET → ví điện tử; kind=ALL → tất cả. */
-    public List<BankAccount> list(String kind) {
+    public List<BankAccountView> list(String kind) {
         return banks.findByActiveTrueOrderByBankNameAsc().stream()
-                .filter(b -> "ALL".equals(kind) || kind.equals(b.getKind())).toList();
+                .filter(b -> "ALL".equals(kind) || kind.equals(b.getKind())).map(BankAccountView::of).toList();
     }
 
-    public BankAccount create(BankAccountRequest req) {
+    public BankAccountView create(BankAccountRequest req) {
         var b = new BankAccount();
         b.setId(UUID.randomUUID());
         applyAccount(b, req);
-        return banks.save(b);
+        return BankAccountView.of(banks.save(b));
     }
 
     @org.springframework.transaction.annotation.Transactional
-    public BankAccount update(UUID id, BankAccountRequest req) {
+    public BankAccountView update(UUID id, BankAccountRequest req) {
         BankAccount b = banks.findById(id)
                 .orElseThrow(() -> BusinessException.notFound("BANK_ACCOUNT_NOT_FOUND", "Không tìm thấy tài khoản"));
         applyAccount(b, req);
-        return banks.save(b);
+        return BankAccountView.of(banks.save(b));
     }
 
     private static void applyAccount(BankAccount b, BankAccountRequest req) {
@@ -50,14 +51,14 @@ public class BankAccountService {
     }
 
     /** Nội dung mã VietQR cho tài khoản (frontend vẽ thành ảnh QR). */
-    public Map<String, String> vietQr(UUID id, long amount, String info) {
+    public VietQr vietQr(UUID id, long amount, String info) {
         BankAccount b = banks.findById(id)
                 .orElseThrow(() -> BusinessException.notFound("BANK_ACCOUNT_NOT_FOUND", "Không tìm thấy tài khoản"));
         if (b.getBankBin() == null || b.getBankBin().isBlank()) {
             throw BusinessException.badRequest("BANK_BIN_MISSING", "Tài khoản chưa có mã ngân hàng (BIN) để tạo QR");
         }
-        return Map.of("payload", VietQrPayload.build(b.getBankBin(), b.getAccountNo(), Math.max(amount, 0), info),
-                "bankName", b.getBankName(), "accountNo", b.getAccountNo(), "accountName", b.getAccountName());
+        return new VietQr(VietQrPayload.build(b.getBankBin(), b.getAccountNo(), Math.max(amount, 0), info),
+                b.getBankName(), b.getAccountNo(), b.getAccountName());
     }
 
     public void deactivate(UUID id) {
