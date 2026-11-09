@@ -1,5 +1,7 @@
 package com.vaxclinic.integration.einvoice;
 
+import com.vaxclinic.integration.einvoice.EInvoiceDtos.InvoiceStatus;
+import com.vaxclinic.integration.einvoice.EInvoiceDtos.RecordStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -59,16 +61,17 @@ public class EInvoiceRepository {
     }
 
     /** invoiceIds không rỗng. */
-    public List<Map<String, Object>> findRecordsByInvoiceIds(List<UUID> invoiceIds) {
+    public List<RecordStatus> findRecordsByInvoiceIds(List<UUID> invoiceIds) {
         String in = String.join(",", invoiceIds.stream().map(id -> "?").toList());
         return jdbc.queryForList("select invoice_id, invoice_code, status, inv_series, inv_no, inv_code, inv_date, transaction_id, error, updated_at"
-                + " from einvoice_records where invoice_id in (" + in + ")", invoiceIds.toArray());
+                + " from einvoice_records where invoice_id in (" + in + ")", invoiceIds.toArray())
+                .stream().map(RecordStatus::fromRow).toList();
     }
 
-    public List<Map<String, Object>> statuses() {
+    public List<InvoiceStatus> statuses() {
         return jdbc.query("select invoice_id, case when status = 'PUBLISHED' and coalesce(inv_code, '') <> '' then 'ACCEPTED'"
-                + " else status end st from einvoice_records", (rs, n) -> Map.of("invoiceId", rs.getObject(1, UUID.class).toString(),
-                "status", rs.getString(2)));
+                + " else status end st from einvoice_records", (rs, n) -> new InvoiceStatus(rs.getObject(1, UUID.class).toString(),
+                rs.getString(2)));
     }
 
     public boolean isPublished(UUID invoiceId) {

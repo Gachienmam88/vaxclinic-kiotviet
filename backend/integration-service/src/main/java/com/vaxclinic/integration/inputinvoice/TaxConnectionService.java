@@ -5,6 +5,7 @@ import com.vaxclinic.integration.common.SecretCipher;
 import com.vaxclinic.integration.inputinvoice.TaxConnectionDtos.ConnectionRequest;
 import com.vaxclinic.integration.inputinvoice.TaxConnectionDtos.ConnectionResponse;
 import com.vaxclinic.integration.inputinvoice.TaxConnectionDtos.SyncRequest;
+import com.vaxclinic.integration.inputinvoice.TaxConnectionDtos.SyncResult;
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
@@ -69,7 +70,7 @@ public class TaxConnectionService {
         return portal.captcha();
     }
 
-    public Map<String, Integer> sync(UUID id, SyncRequest req) {
+    public SyncResult sync(UUID id, SyncRequest req) {
         if (req.to().isBefore(req.from()) || ChronoUnit.DAYS.between(req.from(), req.to()) > 31) {
             throw BusinessException.badRequest("RANGE_INVALID", "Mỗi lần đồng bộ tối đa 1 tháng");
         }
@@ -87,7 +88,7 @@ public class TaxConnectionService {
                 }
             }
             repo.markSynced(id, Timestamp.from(Instant.now()));
-            return Map.of("found", invoices.size(), "added", added);
+            return new SyncResult(invoices.size(), added);
         } catch (BusinessException e) {
             repo.markError(id, e.getMessage());
             throw e;

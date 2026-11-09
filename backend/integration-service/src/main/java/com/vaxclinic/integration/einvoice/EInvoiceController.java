@@ -1,5 +1,9 @@
 package com.vaxclinic.integration.einvoice;
 
+import com.vaxclinic.integration.einvoice.EInvoiceDtos.InvoiceStatus;
+import com.vaxclinic.integration.einvoice.EInvoiceDtos.OkResponse;
+import com.vaxclinic.integration.einvoice.EInvoiceDtos.PublishedResponse;
+import com.vaxclinic.integration.einvoice.EInvoiceDtos.RecordStatus;
 import com.vaxclinic.integration.einvoice.EInvoiceDtos.SettingsRequest;
 import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -42,9 +46,9 @@ public class EInvoiceController {
     /** Thử đăng nhập MISA bằng thiết lập đã lưu. */
     @PostMapping("/api/einvoice/settings/test")
     @PreAuthorize("hasAuthority('user.manage')")
-    public Map<String, Object> test() {
+    public OkResponse test() {
         service.testConnection();
-        return Map.of("ok", true);
+        return new OkResponse(true);
     }
 
     @PostMapping("/api/einvoices/{invoiceId}/publish")
@@ -56,7 +60,7 @@ public class EInvoiceController {
     /** Trạng thái HĐĐT của nhiều hóa đơn (cột / bộ lọc ở danh sách hóa đơn). */
     @GetMapping("/api/einvoices")
     @PreAuthorize("hasAuthority('sales.perform') or hasAuthority('report.view')")
-    public List<Map<String, Object>> byInvoices(@RequestParam List<UUID> invoiceIds) {
+    public List<RecordStatus> byInvoices(@RequestParam List<UUID> invoiceIds) {
         return service.byInvoices(invoiceIds);
     }
 
@@ -66,14 +70,14 @@ public class EInvoiceController {
      */
     @GetMapping("/internal/einvoices/statuses")
     @PreAuthorize("hasAuthority('internal')")
-    public List<Map<String, Object>> statuses() {
+    public List<InvoiceStatus> statuses() {
         return service.statuses();
     }
 
     /** sales-service hỏi trước khi sửa / hủy hóa đơn (thiết lập "Chặn chỉnh sửa/hủy hóa đơn đã phát hành HĐĐT"). */
     @GetMapping("/internal/einvoices/{invoiceId}/published")
     @PreAuthorize("hasAuthority('internal')")
-    public Map<String, Object> published(@PathVariable UUID invoiceId) {
-        return Map.of("published", service.published(invoiceId));
+    public PublishedResponse published(@PathVariable UUID invoiceId) {
+        return new PublishedResponse(service.published(invoiceId));
     }
 }

@@ -2,20 +2,22 @@ package com.vaxclinic.integration.payment;
 
 import com.vaxclinic.common.error.BusinessException;
 import com.vaxclinic.integration.common.SecretCipher;
+import com.vaxclinic.integration.payment.SePayDtos.BankTransaction;
 import com.vaxclinic.integration.payment.SePayDtos.PaymentRequestBody;
+import com.vaxclinic.integration.payment.SePayDtos.PaymentRequestResponse;
 import com.vaxclinic.integration.payment.SePayDtos.SettingsRequest;
+import com.vaxclinic.integration.payment.SePayDtos.SettingsResponse;
 import com.vaxclinic.integration.payment.SePayDtos.Webhook;
 import com.vaxclinic.integration.payment.SePayDtos.WebhookOutcome;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
@@ -39,19 +41,17 @@ public class SePayService {
     }
 
     /** Không trả API key; chỉ báo đã nhập hay chưa. */
-    public Map<String, Object> settings() {
+    public SettingsResponse settings() {
         var rows = repo.findSettingsRows();
-        var out = new HashMap<String, Object>();
-        out.put("enabled", !rows.isEmpty() && (Boolean) rows.get(0).get("enabled"));
-        out.put("configured", !rows.isEmpty() && rows.get(0).get("api_key_enc") != null);
-        out.put("autoComplete", rows.isEmpty() || (Boolean) rows.get(0).get("auto_complete"));
-        return out;
+        return new SettingsResponse(!rows.isEmpty() && (Boolean) rows.get(0).get("enabled"),
+                !rows.isEmpty() && rows.get(0).get("api_key_enc") != null,
+                rows.isEmpty() || (Boolean) rows.get(0).get("auto_complete"));
     }
 
     /** Để trống API key = giữ key cũ. */
-    public Map<String, Object> saveSettings(SettingsRequest r) {
+    public SettingsResponse saveSettings(SettingsRequest r) {
         String enc = r.apiKey() == null || r.apiKey().isBlank() ? null : cipher.encrypt(r.apiKey().trim());
-        if (r.enabled() && enc == null && !Boolean.TRUE.equals(settings().get("configured"))) {
+        if (r.enabled() && enc == null && !settings().configured()) {
             throw BusinessException.badRequest("SEPAY_KEY_REQUIRED", "Nhập API key của SePay trước khi bật");
         }
         repo.upsertSettings(r.enabled(), enc, r.autoComplete());
@@ -101,8 +101,8 @@ public class SePayService {
     }
 
     /** jwt: người tạo (subject đọc sau khi kiểm tra SePay đã bật, như trước). */
-    public Map<String, Object> createRequest(PaymentRequestBody r, Jwt jwt) {
-        if (!Boolean.TRUE.equals(settings().get("enabled"))) {
+    public PaymentRequestResponse createRequest(PaymentRequestBody r, Jwt jwt) {
+        if (!settings().enabled()) {
             throw BusinessException.badRequest("SEPAY_DISABLED", "Chưa bật báo có tự động SePay");
         }
         var sb = new StringBuilder("VXC");
@@ -113,18 +113,18 @@ public class SePayService {
         return request(sb.toString());
     }
 
-    public Map<String, Object> request(String code) {
+    public PaymentRequestResponse request(String code) {
         var rows = repo.findPaymentRequestRows(code);
         if (rows.isEmpty()) {
             throw BusinessException.notFound("PAYMENT_REQUEST_NOT_FOUND", "Không tìm thấy yêu cầu thanh toán");
         }
         var r = rows.get(0);
-        return Map.of("code", r.get("code"), "amount", r.get("amount"), "paidAmount", r.get("paid_amount"), "status", r.get("status"),
-                "autoComplete", settings().get("autoComplete"));
+        return new PaymentRequestResponse((String) r.get("code"), (BigDecimal) r.get("amount"), (BigDecimal) r.get("paid_amount"),
+                (String) r.get("status"), settings().autoComplete());
     }
 
     /** Giao dịch ngân hàng SePay đã báo (mới nhất trước). */
-    public List<Map<String, Object>> transactions(int limit) {
+    public List<BankTransaction> transactions(int limit) {
         return repo.transactions(Math.min(limit, 500));
     }
 }

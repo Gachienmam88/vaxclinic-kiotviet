@@ -1,5 +1,6 @@
 package com.vaxclinic.integration.inputinvoice;
 
+import com.vaxclinic.integration.inputinvoice.InputInvoiceDtos.ImportResult;
 import com.vaxclinic.integration.inputinvoice.InputInvoiceDtos.Item;
 import com.vaxclinic.integration.inputinvoice.InputInvoiceDtos.Page;
 import com.vaxclinic.integration.inputinvoice.InputInvoiceDtos.ReceiptLink;
@@ -16,7 +17,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 /** Hóa đơn đầu vào → "Danh sách hóa đơn": lọc, xem chi tiết, nhập file XML, đánh dấu đã lập phiếu nhập. */
@@ -51,7 +51,7 @@ public class InputInvoiceController {
     /** Nhập 1 hoặc nhiều file XML hóa đơn tải từ cổng thuế. */
     @PostMapping("/api/input-invoices/import")
     @PreAuthorize("hasAuthority('inventory.manage')")
-    public Map<String, Object> importXml(@RequestParam("files") List<MultipartFile> files) throws IOException {
+    public ImportResult importXml(@RequestParam("files") List<MultipartFile> files) throws IOException {
         return service.importXml(files);
     }
 

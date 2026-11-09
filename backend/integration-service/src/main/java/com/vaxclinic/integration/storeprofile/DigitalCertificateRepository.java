@@ -1,11 +1,11 @@
 package com.vaxclinic.integration.storeprofile;
 
+import com.vaxclinic.integration.storeprofile.DigitalCertificateDtos.CertificateItem;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 /** digital_certificates (chỉ chứng thư công khai, không bao giờ lưu khóa bí mật). */
@@ -32,8 +32,9 @@ public class DigitalCertificateRepository {
         this.jdbc = jdbc;
     }
 
-    public List<Map<String, Object>> list() {
-        return jdbc.queryForList("select " + COLUMNS + " from digital_certificates order by expires_on desc, subject_name");
+    public List<CertificateItem> list() {
+        return jdbc.queryForList("select " + COLUMNS + " from digital_certificates order by expires_on desc, subject_name")
+                .stream().map(CertificateItem::fromRow).toList();
     }
 
     public void insert(Values v) {

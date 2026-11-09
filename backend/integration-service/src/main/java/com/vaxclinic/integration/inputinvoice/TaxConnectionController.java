@@ -2,7 +2,9 @@ package com.vaxclinic.integration.inputinvoice;
 
 import com.vaxclinic.integration.inputinvoice.TaxConnectionDtos.ConnectionRequest;
 import com.vaxclinic.integration.inputinvoice.TaxConnectionDtos.ConnectionResponse;
+import com.vaxclinic.integration.inputinvoice.TaxConnectionDtos.CreatedResponse;
 import com.vaxclinic.integration.inputinvoice.TaxConnectionDtos.SyncRequest;
+import com.vaxclinic.integration.inputinvoice.TaxConnectionDtos.SyncResult;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -16,7 +18,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -40,8 +41,8 @@ public class TaxConnectionController {
 
     @PostMapping("/api/tax-connections")
     @ResponseStatus(HttpStatus.CREATED)
-    public Map<String, UUID> create(@Valid @RequestBody ConnectionRequest req) {
-        return Map.of("id", service.create(req));
+    public CreatedResponse create(@Valid @RequestBody ConnectionRequest req) {
+        return new CreatedResponse(service.create(req));
     }
 
     /** Sửa thiết lập; để trống mật khẩu = giữ mật khẩu cũ. */
@@ -62,7 +63,7 @@ public class TaxConnectionController {
     }
 
     @PostMapping("/api/tax-connections/{id}/sync")
-    public Map<String, Integer> sync(@PathVariable UUID id, @Valid @RequestBody SyncRequest req) {
+    public SyncResult sync(@PathVariable UUID id, @Valid @RequestBody SyncRequest req) {
         return service.sync(id, req);
     }
 }

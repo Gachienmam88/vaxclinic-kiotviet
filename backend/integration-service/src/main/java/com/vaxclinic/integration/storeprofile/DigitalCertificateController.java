@@ -1,7 +1,9 @@
 package com.vaxclinic.integration.storeprofile;
 
 import com.vaxclinic.integration.storeprofile.CertificateFileParser.Parsed;
+import com.vaxclinic.integration.storeprofile.DigitalCertificateDtos.CertificateItem;
 import com.vaxclinic.integration.storeprofile.DigitalCertificateDtos.CertificateRequest;
+import com.vaxclinic.integration.storeprofile.DigitalCertificateDtos.ParsedCertificate;
 import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -18,7 +20,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.Base64;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -38,38 +39,30 @@ public class DigitalCertificateController {
     }
 
     @GetMapping
-    public List<Map<String, Object>> list() {
+    public List<CertificateItem> list() {
         return service.list();
     }
 
     /** Đọc file .cer để điền sẵn form; không lưu gì. */
     @PostMapping("/parse")
-    public Map<String, Object> parse(@RequestParam("file") MultipartFile file) throws IOException {
+    public ParsedCertificate parse(@RequestParam("file") MultipartFile file) throws IOException {
         Parsed p = CertificateFileParser.parse(file.getBytes());
-        var out = new java.util.HashMap<String, Object>();
-        out.put("subjectName", p.subjectName());
-        out.put("taxCode", p.taxCode());
-        out.put("provider", p.provider());
-        out.put("serialNumber", p.serialNumber());
-        out.put("activatedOn", p.activatedOn());
-        out.put("expiresOn", p.expiresOn());
-        out.put("issuer", p.issuer());
-        out.put("certificateBase64", Base64.getEncoder().encodeToString(p.der()));
-        return out;
+        return new ParsedCertificate(p.subjectName(), p.taxCode(), p.provider(), p.serialNumber(), p.activatedOn(),
+                p.expiresOn(), p.issuer(), Base64.getEncoder().encodeToString(p.der()));
     }
 
     @PostMapping
-    public List<Map<String, Object>> create(@Valid @RequestBody CertificateRequest r) {
+    public List<CertificateItem> create(@Valid @RequestBody CertificateRequest r) {
         return service.create(r);
     }
 
     @PutMapping("/{id}")
-    public List<Map<String, Object>> update(@PathVariable UUID id, @Valid @RequestBody CertificateRequest r) {
+    public List<CertificateItem> update(@PathVariable UUID id, @Valid @RequestBody CertificateRequest r) {
         return service.update(id, r);
     }
 
     @DeleteMapping("/{id}")
-    public List<Map<String, Object>> delete(@PathVariable UUID id) {
+    public List<CertificateItem> delete(@PathVariable UUID id) {
         return service.delete(id);
     }
 }

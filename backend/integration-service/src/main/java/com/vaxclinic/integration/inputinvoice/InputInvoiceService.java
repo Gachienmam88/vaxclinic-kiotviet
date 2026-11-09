@@ -1,6 +1,7 @@
 package com.vaxclinic.integration.inputinvoice;
 
 import com.vaxclinic.common.error.BusinessException;
+import com.vaxclinic.integration.inputinvoice.InputInvoiceDtos.ImportResult;
 import com.vaxclinic.integration.inputinvoice.InputInvoiceDtos.Item;
 import com.vaxclinic.integration.inputinvoice.InputInvoiceDtos.Page;
 import com.vaxclinic.integration.inputinvoice.InputInvoiceDtos.ReceiptLink;
@@ -10,7 +11,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 /** Hóa đơn đầu vào → "Danh sách hóa đơn": lọc, xem chi tiết, nhập file XML, đánh dấu đã lập phiếu nhập. */
@@ -40,7 +40,7 @@ public class InputInvoiceService {
     }
 
     /** Nhập 1 hoặc nhiều file XML hóa đơn tải từ cổng thuế. */
-    public Map<String, Object> importXml(List<MultipartFile> files) throws IOException {
+    public ImportResult importXml(List<MultipartFile> files) throws IOException {
         int added = 0;
         var errors = new java.util.ArrayList<String>();
         for (MultipartFile f : files) {
@@ -53,7 +53,7 @@ public class InputInvoiceService {
                 errors.add(f.getOriginalFilename() + ": " + e.getMessage());
             }
         }
-        return Map.of("files", files.size(), "added", added, "errors", errors);
+        return new ImportResult(files.size(), added, errors);
     }
 
     /** Gắn phiếu nhập đã lập từ hóa đơn này (trạng thái "Đã lập phiếu"). */

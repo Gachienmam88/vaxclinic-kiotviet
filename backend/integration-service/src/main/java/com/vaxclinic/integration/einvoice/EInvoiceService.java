@@ -2,6 +2,8 @@ package com.vaxclinic.integration.einvoice;
 
 import com.vaxclinic.common.error.BusinessException;
 import com.vaxclinic.integration.common.SecretCipher;
+import com.vaxclinic.integration.einvoice.EInvoiceDtos.InvoiceStatus;
+import com.vaxclinic.integration.einvoice.EInvoiceDtos.RecordStatus;
 import com.vaxclinic.integration.einvoice.EInvoiceDtos.SettingsRequest;
 import com.vaxclinic.integration.einvoice.SalesInvoiceClient.SalesInvoice;
 import org.springframework.stereotype.Service;
@@ -108,7 +110,7 @@ public class EInvoiceService {
     }
 
     /** Trạng thái HĐĐT của nhiều hóa đơn (cột / bộ lọc ở danh sách hóa đơn). */
-    public List<Map<String, Object>> byInvoices(List<UUID> invoiceIds) {
+    public List<RecordStatus> byInvoices(List<UUID> invoiceIds) {
         if (invoiceIds.isEmpty()) {
             return List.of();
         }
@@ -116,7 +118,7 @@ public class EInvoiceService {
     }
 
     /** ACCEPTED (đã phát hành, có mã CQT) / PUBLISHED (đã phát hành, chưa có mã CQT) / FAILED (phát hành lỗi). */
-    public List<Map<String, Object>> statuses() {
+    public List<InvoiceStatus> statuses() {
         return repo.statuses();
     }
 

@@ -1,8 +1,12 @@
 package com.vaxclinic.integration.payment;
 
+import com.vaxclinic.integration.payment.SePayDtos.BankTransaction;
 import com.vaxclinic.integration.payment.SePayDtos.PaymentRequestBody;
+import com.vaxclinic.integration.payment.SePayDtos.PaymentRequestResponse;
 import com.vaxclinic.integration.payment.SePayDtos.SettingsRequest;
+import com.vaxclinic.integration.payment.SePayDtos.SettingsResponse;
 import com.vaxclinic.integration.payment.SePayDtos.Webhook;
+import com.vaxclinic.integration.payment.SePayDtos.WebhookResponse;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,7 +25,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * Thanh toán QR báo có tự động qua SePay.
@@ -42,14 +45,14 @@ public class SePayController {
 
     /** Không trả API key; chỉ báo đã nhập hay chưa. */
     @GetMapping("/api/payments/sepay/settings")
-    public Map<String, Object> settings() {
+    public SettingsResponse settings() {
         return service.settings();
     }
 
     /** Để trống API key = giữ key cũ. */
     @PutMapping("/api/payments/sepay/settings")
     @PreAuthorize("hasAuthority('settings.manage')")
-    public Map<String, Object> saveSettings(@Valid @RequestBody SettingsRequest r) {
+    public SettingsResponse saveSettings(@Valid @RequestBody SettingsRequest r) {
         return service.saveSettings(r);
     }
 
@@ -59,35 +62,35 @@ public class SePayController {
      * Xử lý (trong 1 transaction) ở {@link SePayService#webhook}.
      */
     @PostMapping("/api/payments/sepay/webhook")
-    public ResponseEntity<Map<String, Object>> webhook(@RequestHeader(value = "Authorization", required = false) String auth,
+    public ResponseEntity<WebhookResponse> webhook(@RequestHeader(value = "Authorization", required = false) String auth,
                                                        @RequestBody Webhook w) {
         return switch (service.webhook(auth, w)) {
-            case NOT_ENABLED -> ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(Map.of("success", false));
+            case NOT_ENABLED -> ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(new WebhookResponse(false));
             case UNAUTHORIZED -> {
                 log.warn("SePay webhook rejected: wrong API key");
-                yield ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("success", false));
+                yield ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new WebhookResponse(false));
             }
-            case INVALID -> ResponseEntity.badRequest().body(Map.of("success", false));
-            case ACCEPTED -> ResponseEntity.ok(Map.of("success", true));
+            case INVALID -> ResponseEntity.badRequest().body(new WebhookResponse(false));
+            case ACCEPTED -> ResponseEntity.ok(new WebhookResponse(true));
         };
     }
 
     @PostMapping("/api/payment-requests")
     @PreAuthorize("hasAuthority('sales.perform') or hasAuthority('cashbook.manage')")
-    public Map<String, Object> createRequest(@Valid @RequestBody PaymentRequestBody r, @AuthenticationPrincipal Jwt jwt) {
+    public PaymentRequestResponse createRequest(@Valid @RequestBody PaymentRequestBody r, @AuthenticationPrincipal Jwt jwt) {
         return service.createRequest(r, jwt);
     }
 
     @GetMapping("/api/payment-requests/{code}")
     @PreAuthorize("hasAuthority('sales.perform') or hasAuthority('cashbook.manage')")
-    public Map<String, Object> request(@PathVariable String code) {
+    public PaymentRequestResponse request(@PathVariable String code) {
         return service.request(code);
     }
 
     /** Giao dịch ngân hàng SePay đã báo (mới nhất trước). */
     @GetMapping("/api/payments/transactions")
     @PreAuthorize("hasAuthority('cashbook.manage')")
-    public List<Map<String, Object>> transactions(@RequestParam(defaultValue = "100") int limit) {
+    public List<BankTransaction> transactions(@RequestParam(defaultValue = "100") int limit) {
         return service.transactions(limit);
     }
 }

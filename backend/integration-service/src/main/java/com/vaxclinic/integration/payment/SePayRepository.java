@@ -1,5 +1,6 @@
 package com.vaxclinic.integration.payment;
 
+import com.vaxclinic.integration.payment.SePayDtos.BankTransaction;
 import com.vaxclinic.integration.payment.SePayDtos.Webhook;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -67,9 +68,10 @@ public class SePayRepository {
         return jdbc.queryForList("select code, amount, paid_amount, status, paid_at from payment_requests where code = ?", code);
     }
 
-    public List<Map<String, Object>> transactions(int limit) {
+    public List<BankTransaction> transactions(int limit) {
         return jdbc.queryForList("""
                 select sepay_id, gateway, transaction_date, account_number, transfer_type, amount, content, reference_code,
-                  payment_code, received_at from bank_transactions order by received_at desc limit ?""", limit);
+                  payment_code, received_at from bank_transactions order by received_at desc limit ?""", limit)
+                .stream().map(BankTransaction::fromRow).toList();
     }
 }

@@ -2,12 +2,12 @@ package com.vaxclinic.integration.storeprofile;
 
 import com.vaxclinic.common.error.BusinessException;
 import com.vaxclinic.integration.storeprofile.CertificateFileParser.Parsed;
+import com.vaxclinic.integration.storeprofile.DigitalCertificateDtos.CertificateItem;
 import com.vaxclinic.integration.storeprofile.DigitalCertificateDtos.CertificateRequest;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -25,21 +25,21 @@ public class DigitalCertificateService {
         this.alerts = alerts;
     }
 
-    public List<Map<String, Object>> list() {
+    public List<CertificateItem> list() {
         return repo.list();
     }
 
-    public List<Map<String, Object>> create(CertificateRequest r) {
+    public List<CertificateItem> create(CertificateRequest r) {
         save(UUID.randomUUID(), r, true);
         return list();
     }
 
-    public List<Map<String, Object>> update(UUID id, CertificateRequest r) {
+    public List<CertificateItem> update(UUID id, CertificateRequest r) {
         save(id, r, false);
         return list();
     }
 
-    public List<Map<String, Object>> delete(UUID id) {
+    public List<CertificateItem> delete(UUID id) {
         repo.delete(id);
         alerts.syncQuietly();
         return list();

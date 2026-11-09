@@ -23,4 +23,8 @@ public final class InputInvoiceDtos {
 
     public record ReceiptLink(UUID receiptId, String receiptCode) {
     }
+
+    /** Kết quả nhập file XML: số file, số hóa đơn mới, lỗi từng file ("tên file: lý do"). */
+    public record ImportResult(int files, int added, List<String> errors) {
+    }
 }

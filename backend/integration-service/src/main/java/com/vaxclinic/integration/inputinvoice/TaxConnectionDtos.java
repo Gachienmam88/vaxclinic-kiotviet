@@ -24,4 +24,12 @@ public final class TaxConnectionDtos {
     public record ConnectionResponse(UUID id, String taxCode, String username, boolean active, Instant lastSyncedAt,
                                      String lastError) {
     }
+
+    /** POST /api/tax-connections (201). */
+    public record CreatedResponse(UUID id) {
+    }
+
+    /** Kết quả đồng bộ: số hóa đơn cổng trả về, số hóa đơn mới. */
+    public record SyncResult(int found, int added) {
+    }
 }
