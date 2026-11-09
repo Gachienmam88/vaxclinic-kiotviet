@@ -1,8 +1,8 @@
 package com.vaxclinic.sales.debt;
 
 import com.vaxclinic.common.error.BusinessException;
-import com.vaxclinic.sales.customer.Customer;
-import com.vaxclinic.sales.customer.CustomerRepository;
+import com.vaxclinic.sales.customer.entity.Customer;
+import com.vaxclinic.sales.customer.repository.CustomerRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;

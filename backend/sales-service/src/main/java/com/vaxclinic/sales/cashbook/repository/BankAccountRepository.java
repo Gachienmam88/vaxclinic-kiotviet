@@ -1,0 +1,12 @@
+package com.vaxclinic.sales.cashbook.repository;
+
+import com.vaxclinic.sales.cashbook.entity.BankAccount;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.List;
+import java.util.UUID;
+
+public interface BankAccountRepository extends JpaRepository<BankAccount, UUID> {
+
+    List<BankAccount> findByActiveTrueOrderByBankNameAsc();
+}
