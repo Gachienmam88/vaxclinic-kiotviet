@@ -2,6 +2,7 @@ package com.vaxclinic.identity.audit.repository;
 
 import com.vaxclinic.identity.audit.dto.AuditLogItem;
 import com.vaxclinic.common.audit.AuditLogger.AuditEvent;
+import com.vaxclinic.common.audit.AuditMessage;
 import com.vaxclinic.common.settings.ShopSettings;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -43,6 +44,36 @@ public class AuditLogRepository {
             ps.setString(7, cut(e.docCode(), 50));
             ps.setString(8, cut(e.detail(), 1000));
         });
+    }
+
+    /** Ghi lô bản tin Kafka; bản tin đã ghi (trùng event_id) bị bỏ qua. Trả về số dòng thực sự thêm mới. */
+    public int insertMessages(List<AuditMessage> messages) {
+        int[] counts = jdbc.batchUpdate("insert into audit_logs(occurred_at, user_id, user_name, branch_id, feature, action, doc_code,"
+                + " detail, event_id) values (?,?,?,?,?,?,?,?,?) on conflict (event_id) do nothing", new org.springframework.jdbc.core.BatchPreparedStatementSetter() {
+            @Override
+            public void setValues(java.sql.PreparedStatement ps, int i) throws java.sql.SQLException {
+                AuditEvent e = messages.get(i).event();
+                ps.setTimestamp(1, Timestamp.from(e.occurredAt() == null ? Instant.now() : e.occurredAt()));
+                ps.setObject(2, e.userId());
+                ps.setString(3, cut(e.userName(), 150));
+                ps.setObject(4, e.branchId());
+                ps.setString(5, cut(e.feature(), 50));
+                ps.setString(6, cut(e.action(), 30));
+                ps.setString(7, cut(e.docCode(), 50));
+                ps.setString(8, cut(e.detail(), 1000));
+                ps.setObject(9, messages.get(i).eventId());
+            }
+
+            @Override
+            public int getBatchSize() {
+                return messages.size();
+            }
+        });
+        int inserted = 0;
+        for (int c : counts) {
+            inserted += Math.max(c, 0);
+        }
+        return inserted;
     }
 
     private static String cut(String s, int max) {

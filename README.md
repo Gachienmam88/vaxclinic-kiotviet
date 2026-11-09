@@ -16,7 +16,11 @@ Browser ──▶ Next.js (frontend, BFF giữ JWT trong cookie httpOnly)
 ```
 - Backend: Java 17, Spring Boot 3.5, Spring Cloud Gateway, Spring Security (JWT HS256), JPA + Flyway, Maven multi-module (`backend/`).
 - Frontend: Next.js 15 App Router, Tailwind 4, shadcn/ui (Base UI), TanStack Query (`frontend/`).
-- Hạ tầng dev: Docker Compose (Postgres 16, Redis, RabbitMQ, MinIO).
+- Hạ tầng dev: Docker Compose (Postgres 16, Kafka 3.9 KRaft, Redis, RabbitMQ, MinIO).
+- Lịch sử thao tác: product/sales/integration gửi vào Kafka topic `audit.events`, identity-service đọc và ghi DB
+  (bỏ trùng theo `event_id`). Kafka lỗi thì tự rơi về HTTP `/internal/audit-logs`. Chọn bằng `AUDIT_TRANSPORT=kafka|http`
+  (Docker Compose mặc định `kafka`; chạy jar trên máy mặc định `http`, muốn dùng Kafka thì đặt thêm
+  `SPRING_KAFKA_BOOTSTRAP_SERVERS=localhost:9094`).
 
 ## Chạy trên máy dev
 1. `cp .env.example .env` rồi điền secret (JWT_SECRET ≥ 32 ký tự, ADMIN_PASSWORD ≥ 8 ký tự). Cổng bị trùng thì đổi `POSTGRES_PORT`, `GATEWAY_PORT`.

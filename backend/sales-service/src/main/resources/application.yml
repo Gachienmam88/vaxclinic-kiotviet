@@ -16,6 +16,9 @@ spring:
     enabled: true
 
 app:
+  # Lịch sử thao tác: http (mặc định) | kafka (topic audit.events; broker: SPRING_KAFKA_BOOTSTRAP_SERVERS)
+  audit:
+    transport: ${AUDIT_TRANSPORT:http}
   jwt:
     secret: ${JWT_SECRET}
   # product-service: trừ / hoàn kho khi bán, hủy hóa đơn

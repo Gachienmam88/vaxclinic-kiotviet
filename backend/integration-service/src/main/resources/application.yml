@@ -20,6 +20,9 @@ spring:
       max-request-size: 50MB
 
 app:
+  # Lịch sử thao tác: http (mặc định) | kafka (topic audit.events; broker: SPRING_KAFKA_BOOTSTRAP_SERVERS)
+  audit:
+    transport: ${AUDIT_TRANSPORT:http}
   jwt:
     secret: ${JWT_SECRET}
   # AES-256 key (base64, 32 bytes) encrypting stored passwords of tax portal / MISA accounts

@@ -2,6 +2,7 @@ package com.vaxclinic.common.settings;
 
 import com.vaxclinic.common.audit.AuditLogger;
 import com.vaxclinic.common.audit.HttpAuditLogger;
+import com.vaxclinic.common.audit.KafkaAuditLogger;
 import com.vaxclinic.common.http.InternalHttpAutoConfiguration;
 import com.vaxclinic.common.http.InternalRestClientFactory;
 import com.vaxclinic.common.security.ServiceTokenProvider;
@@ -12,6 +13,12 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
+import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.common.serialization.StringSerializer;
+import org.springframework.kafka.core.DefaultKafkaProducerFactory;
+import org.springframework.kafka.core.KafkaTemplate;
+
+import java.util.Map;
 
 /** Service nào khai báo app.identity-url thì có ShopSettingsClient (đọc thiết lập) và AuditLogger (ghi lịch sử thao tác). */
 @AutoConfiguration(after = InternalHttpAutoConfiguration.class)
@@ -31,12 +38,35 @@ public class ShopSettingsAutoConfiguration {
         return event -> settings.refreshAsync();
     }
 
-    /** Lịch sử thao tác gửi về identity-service (identity-service tự khai báo AuditLogger ghi thẳng DB). */
+    /**
+     * Lịch sử thao tác gửi về identity-service (identity-service tự khai báo AuditLogger ghi thẳng DB).
+     * app.audit.transport: http (mặc định, POST /internal/audit-logs) | kafka (topic audit.events, lỗi thì rơi về HTTP).
+     */
     @Bean
     @ConditionalOnMissingBean(AuditLogger.class)
     public AuditLogger auditLogger(InternalRestClientFactory http, @Value("${app.identity-url}") String identityUrl,
                                    @Value("${app.jwt.secret}") String secret,
-                                   @Value("${spring.application.name}") String serviceName) {
-        return new HttpAuditLogger(http.create(identityUrl), new ServiceTokenProvider(secret, serviceName));
+                                   @Value("${spring.application.name}") String serviceName,
+                                   @Value("${app.audit.transport:http}") String transport,
+                                   @Value("${spring.kafka.bootstrap-servers:localhost:9094}") String kafkaServers) {
+        var httpLogger = new HttpAuditLogger(http.create(identityUrl), new ServiceTokenProvider(secret, serviceName));
+        if (!"kafka".equalsIgnoreCase(transport.trim())) {
+            return httpLogger;
+        }
+        return new KafkaAuditLogger(new KafkaTemplate<>(auditProducerFactory(kafkaServers, serviceName)), httpLogger, serviceName);
+    }
+
+    /** Producer riêng cho audit: acks=all + idempotent; không chặn quá 2 giây khi Kafka chết (rồi rơi về HTTP). */
+    static DefaultKafkaProducerFactory<String, String> auditProducerFactory(String servers, String serviceName) {
+        return new DefaultKafkaProducerFactory<>(Map.of(
+                ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, servers,
+                ProducerConfig.CLIENT_ID_CONFIG, serviceName + "-audit",
+                ProducerConfig.ACKS_CONFIG, "all",
+                ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, true,
+                ProducerConfig.LINGER_MS_CONFIG, 20,
+                ProducerConfig.MAX_BLOCK_MS_CONFIG, 2000,
+                ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG, 10_000,
+                ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG, 30_000),
+                new StringSerializer(), new StringSerializer());
     }
 }

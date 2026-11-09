@@ -37,10 +37,39 @@ services:
     ports: ["9000:9000", "9001:9001"]
     volumes: [miniodata:/data]
 
+  # Kafka 1 node (KRaft, không cần Zookeeper) — lịch sử thao tác (topic audit.events).
+  # Container dùng kafka:9092; service chạy trên máy (scripts/*.ps1) dùng localhost:9094.
+  kafka:
+    image: apache/kafka:3.9.0
+    environment:
+      CLUSTER_ID: vaxclinic-kafka-dev-001
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093,EXTERNAL://:9094
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,EXTERNAL://localhost:9094
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_LOG_RETENTION_HOURS: 168
+      KAFKA_HEAP_OPTS: -Xmx512m -Xms256m
+    ports: ["9094:9094"]
+    volumes: [kafkadata:/var/lib/kafka/data]
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 > /dev/null 2>&1"]
+      interval: 10s
+      retries: 12
+
   identity-service:
     profiles: [app]
     build: { context: ./backend, args: { MODULE: identity-service } }
     environment:
+      AUDIT_TRANSPORT: ${AUDIT_TRANSPORT:-kafka}
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       DB_URL: jdbc:postgresql://postgres:5432/identity_db
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
@@ -49,11 +78,14 @@ services:
       ADMIN_PASSWORD: ${ADMIN_PASSWORD}
     depends_on:
       postgres: { condition: service_healthy }
+      kafka: { condition: service_started }
 
   product-service:
     profiles: [app]
     build: { context: ./backend, args: { MODULE: product-service } }
     environment:
+      AUDIT_TRANSPORT: ${AUDIT_TRANSPORT:-kafka}
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       DB_URL: jdbc:postgresql://postgres:5432/product_db
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
@@ -62,11 +94,14 @@ services:
       IDENTITY_URL: http://identity-service:8081
     depends_on:
       postgres: { condition: service_healthy }
+      kafka: { condition: service_started }
 
   sales-service:
     profiles: [app]
     build: { context: ./backend, args: { MODULE: sales-service } }
     environment:
+      AUDIT_TRANSPORT: ${AUDIT_TRANSPORT:-kafka}
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       DB_URL: jdbc:postgresql://postgres:5432/sales_db
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
@@ -76,11 +111,14 @@ services:
       INTEGRATION_URL: http://integration-service:8088
     depends_on:
       postgres: { condition: service_healthy }
+      kafka: { condition: service_started }
 
   integration-service:
     profiles: [app]
     build: { context: ./backend, args: { MODULE: integration-service } }
     environment:
+      AUDIT_TRANSPORT: ${AUDIT_TRANSPORT:-kafka}
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       DB_URL: jdbc:postgresql://postgres:5432/integration_db
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
@@ -90,6 +128,7 @@ services:
       IDENTITY_URL: http://identity-service:8081
     depends_on:
       postgres: { condition: service_healthy }
+      kafka: { condition: service_started }
 
   gateway-service:
     profiles: [app]
@@ -105,4 +144,5 @@ services:
 
 volumes:
   pgdata:
+  kafkadata:
   miniodata:
