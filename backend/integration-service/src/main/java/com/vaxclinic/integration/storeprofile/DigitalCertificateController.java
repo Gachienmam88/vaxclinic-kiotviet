@@ -1,13 +1,8 @@
 package com.vaxclinic.integration.storeprofile;
 
-import com.vaxclinic.common.error.BusinessException;
 import com.vaxclinic.integration.storeprofile.CertificateFileParser.Parsed;
+import com.vaxclinic.integration.storeprofile.DigitalCertificateDtos.CertificateRequest;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,7 +16,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.time.LocalDate;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
@@ -37,29 +31,15 @@ import java.util.UUID;
 @PreAuthorize("hasAuthority('settings.manage')")
 public class DigitalCertificateController {
 
-    public record CertificateRequest(@NotBlank(message = "Nhập tên chủ thể") @Size(max = 300) String subjectName,
-                                     @Size(max = 20) String taxCode, @Size(max = 150) String representative,
-                                     @NotNull @Pattern(regexp = "USB_TOKEN|HSM|RMS", message = "Loại chữ ký không hợp lệ") String signatureType,
-                                     @Size(max = 100) String provider, @Size(max = 100) String serialNumber,
-                                     LocalDate activatedOn, @NotNull(message = "Nhập ngày hết hạn") LocalDate expiresOn,
-                                     @NotNull @Pattern(regexp = "PENDING|APPROVED|REVOKED", message = "Trạng thái chứng thư không hợp lệ") String certStatus,
-                                     boolean active, String certificateBase64) {
-    }
+    private final DigitalCertificateService service;
 
-    private static final String COLUMNS = "id, subject_name, tax_code, representative, signature_type, provider, serial_number,"
-            + " activated_on, expires_on, cert_status, active, issuer, cert_der is not null as has_certificate, updated_at";
-
-    private final JdbcTemplate jdbc;
-    private final CertificateExpiryAlerts alerts;
-
-    public DigitalCertificateController(JdbcTemplate jdbc, CertificateExpiryAlerts alerts) {
-        this.jdbc = jdbc;
-        this.alerts = alerts;
+    public DigitalCertificateController(DigitalCertificateService service) {
+        this.service = service;
     }
 
     @GetMapping
     public List<Map<String, Object>> list() {
-        return jdbc.queryForList("select " + COLUMNS + " from digital_certificates order by expires_on desc, subject_name");
+        return service.list();
     }
 
     /** Đọc file .cer để điền sẵn form; không lưu gì. */
@@ -80,52 +60,16 @@ public class DigitalCertificateController {
 
     @PostMapping
     public List<Map<String, Object>> create(@Valid @RequestBody CertificateRequest r) {
-        save(UUID.randomUUID(), r, true);
-        return list();
+        return service.create(r);
     }
 
     @PutMapping("/{id}")
     public List<Map<String, Object>> update(@PathVariable UUID id, @Valid @RequestBody CertificateRequest r) {
-        save(id, r, false);
-        return list();
+        return service.update(id, r);
     }
 
     @DeleteMapping("/{id}")
     public List<Map<String, Object>> delete(@PathVariable UUID id) {
-        jdbc.update("delete from digital_certificates where id = ?", id);
-        alerts.syncQuietly();
-        return list();
-    }
-
-    /** Có file chứng thư → chủ thể / MST / serial / ngày lấy theo file (nguồn đáng tin hơn nhập tay). */
-    private void save(UUID id, CertificateRequest r, boolean insert) {
-        Parsed p = r.certificateBase64() == null || r.certificateBase64().isBlank() ? null : CertificateFileParser.parseBase64(r.certificateBase64());
-        String subject = p != null && p.subjectName() != null ? p.subjectName() : r.subjectName().trim();
-        String taxCode = p != null && p.taxCode() != null ? p.taxCode() : blank(r.taxCode());
-        String serial = p != null ? p.serialNumber() : blank(r.serialNumber());
-        LocalDate from = p != null ? p.activatedOn() : r.activatedOn();
-        LocalDate to = p != null ? p.expiresOn() : r.expiresOn();
-        if (from != null && to.isBefore(from)) {
-            throw BusinessException.badRequest("INVALID_CERT_DATES", "Ngày hết hạn phải sau ngày kích hoạt");
-        }
-        Object[] args = {subject, taxCode, blank(r.representative()), r.signatureType(), blank(r.provider()), serial, from, to,
-                r.certStatus(), r.active(), p == null ? null : p.issuer(), p == null ? null : p.der(), id};
-        if (insert) {
-            jdbc.update("insert into digital_certificates(subject_name, tax_code, representative, signature_type, provider, serial_number,"
-                    + " activated_on, expires_on, cert_status, active, issuer, cert_der, id) values (?,?,?,?,?,?,?,?,?,?,?,?,?)", args);
-        } else {
-            // không gửi file mới → giữ chứng thư đã lưu
-            int n = jdbc.update("update digital_certificates set subject_name = ?, tax_code = ?, representative = ?, signature_type = ?,"
-                    + " provider = ?, serial_number = ?, activated_on = ?, expires_on = ?, cert_status = ?, active = ?,"
-                    + " issuer = coalesce(?, issuer), cert_der = coalesce(?, cert_der), updated_at = now() where id = ?", args);
-            if (n == 0) {
-                throw BusinessException.notFound("CERT_NOT_FOUND", "Không tìm thấy chữ ký số");
-            }
-        }
-        alerts.syncQuietly();
-    }
-
-    private static String blank(String s) {
-        return s == null || s.isBlank() ? null : s.trim();
+        return service.delete(id);
     }
 }
